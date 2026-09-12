@@ -40,8 +40,7 @@ final class M3VisualParityOracle {
         try {
             Files.createDirectories(outputDir);
             buildScene(singleplayer);
-            singleplayer.getClientLevel().waitForChunksRender();
-            context.waitTicks(5);
+            settle(context, 20);
 
             BlockLensConfig allOn = withDecorationEnabled(original, true);
             require(decorationEnabledCount(allOn) == EXPECTED_DECORATION_CAPABILITIES,
@@ -49,16 +48,14 @@ final class M3VisualParityOracle {
             installRuntimeConfig(allOn);
             reloadResources(context);
             requireModelPipeline("all 13 enabled after resource reload");
-            singleplayer.getClientLevel().waitForChunksRender(false);
-            context.waitTicks(5);
+            settle(context, 15);
             Path allOnImage = takeScreenshot(context, outputDir, "m3-all13-on");
 
             // A second reload while features stay ON proves the wrapper is rebuilt from the
             // currently active baked resource-pack model rather than retaining stale model state.
             reloadResources(context);
             requireModelPipeline("all 13 enabled after second resource reload");
-            singleplayer.getClientLevel().waitForChunksRender(false);
-            context.waitTicks(5);
+            settle(context, 15);
             Path reloadedImage = takeScreenshot(context, outputDir, "m3-all13-reloaded");
 
             BlockLensConfig allOff = withDecorationEnabled(original, false);
@@ -67,8 +64,7 @@ final class M3VisualParityOracle {
             installRuntimeConfig(allOff);
             reloadResources(context);
             requireModelPipeline("all 13 disabled after resource reload");
-            singleplayer.getClientLevel().waitForChunksRender(false);
-            context.waitTicks(5);
+            settle(context, 15);
             Path allOffImage = takeScreenshot(context, outputDir, "m3-all13-off-active-pack");
 
             ImageMetrics on = inspect(allOnImage);
@@ -137,6 +133,10 @@ final class M3VisualParityOracle {
 
         // Fixed spectator camera: deterministic framing, no held item animation.
         server.runCommand("tp @a 0 -54 15 180 18");
+    }
+
+    private static void settle(ClientGameTestContext context, int ticks) {
+        context.waitTicks(ticks);
     }
 
     private static BlockLensConfig withDecorationEnabled(BlockLensConfig base, boolean enabled) {
