@@ -36,8 +36,12 @@ final class RepositoryContractTest {
     @Test
     void clientSmokeIsSharedAndExecutedForEveryVersion() throws IOException {
         Path gameTestSource = root().resolve("gametest/java/dev/blocklens/gametest/BlockLensSmokeClientGameTest.java");
+        Path adapterOracleSource = root().resolve("gametest/java/dev/blocklens/gametest/MinecraftStateAdapterOracle.java");
+        Path retiredPlainJUnitOracle = root().resolve(
+                "version-tests/java/dev/blocklens/fabric/MinecraftStateAdapterTest.java");
         Path gameTestMetadata = root().resolve("gametest/resources/fabric.mod.json");
         String source = Files.readString(gameTestSource);
+        String adapterOracle = Files.readString(adapterOracleSource);
         String metadata = Files.readString(gameTestMetadata);
         String convention = Files.readString(root().resolve("gradle/version-module.gradle"));
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
@@ -46,6 +50,15 @@ final class RepositoryContractTest {
         assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 37"));
         assertTrue(source.contains("context.worldBuilder().create()"));
         assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
+        assertTrue(source.contains("MinecraftStateAdapterOracle.verify()"));
+
+        assertTrue(adapterOracle.contains("MinecraftStateAdapter.interpret"));
+        assertTrue(adapterOracle.contains("BuiltInRegistries.BLOCK.getValue"));
+        assertTrue(adapterOracle.contains("white_glazed_terracotta"));
+        assertTrue(adapterOracle.contains("white_stained_glass_pane"));
+        assertFalse(Files.exists(retiredPlainJUnitOracle),
+                "mapped BlockState oracle must run after real client bootstrap, not in plain JUnit");
+
         assertTrue(metadata.contains("\"fabric-client-gametest\""));
         assertTrue(metadata.contains("dev.blocklens.gametest.BlockLensSmokeClientGameTest"));
 
