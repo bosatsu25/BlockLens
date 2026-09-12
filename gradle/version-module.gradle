@@ -52,10 +52,13 @@ tasks.named('sourcesJar') {
 tasks.register('versionSmokeContract') {
     group = 'verification'
     description = "Checks the ${blockLensMinecraftVersion} remapped runtime artifact structure and client-only metadata."
-    dependsOn tasks.named('remapJar')
+    // Loom registers remapJar late in project configuration. String dependency
+    // defers resolution until the task graph is ready instead of forcing eager lookup.
+    dependsOn 'remapJar'
 
     doLast {
-        File runtimeJar = tasks.named('remapJar').get().archiveFile.get().asFile
+        def remapTask = tasks.getByName('remapJar')
+        File runtimeJar = remapTask.archiveFile.get().asFile
         new java.util.zip.ZipFile(runtimeJar).withCloseable { archive ->
             for (String required : [
                     'fabric.mod.json',
@@ -86,10 +89,11 @@ tasks.register('versionSmokeContract') {
 tasks.register('verifyRuntimeJarBudget') {
     group = 'verification'
     description = "Checks BlockLens ${blockLensMinecraftVersion} runtime JAR against the source-pack size budget."
-    dependsOn tasks.named('remapJar')
+    dependsOn 'remapJar'
 
     doLast {
-        File runtimeJar = tasks.named('remapJar').get().archiveFile.get().asFile
+        def remapTask = tasks.getByName('remapJar')
+        File runtimeJar = remapTask.archiveFile.get().asFile
         long bytes = runtimeJar.length()
         long hardMax = Long.parseLong(rootProject.runtime_jar_hard_max_bytes)
         long stretch = Long.parseLong(rootProject.runtime_jar_stretch_bytes)
