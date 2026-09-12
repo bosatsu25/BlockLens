@@ -9,6 +9,7 @@ import dev.blocklens.core.state.SemanticState.Half;
 import dev.blocklens.core.state.SemanticState.MountFace;
 import dev.blocklens.core.state.SemanticState.SlabType;
 import dev.blocklens.core.state.SemanticState.StairShape;
+import dev.blocklens.core.state.VisibilityStateKind;
 import java.util.Objects;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,7 +17,7 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
 
-/** Minecraft 26.1.2 BlockState -> common semantic-state boundary. */
+/** Minecraft 26.1.2 BlockState -> common semantic-state boundary for all BlockLens capabilities. */
 public final class MinecraftStateAdapter {
     private MinecraftStateAdapter() {
     }
@@ -24,8 +25,31 @@ public final class MinecraftStateAdapter {
     public static SemanticState interpret(CapabilityId capability, BlockState state) {
         Objects.requireNonNull(capability, "capability");
         Objects.requireNonNull(state, "state");
-        return switch (DecorationStateKind.forCapability(capability)) {
-            case NONE -> SemanticState.empty();
+
+        VisibilityStateKind visibilityKind = VisibilityStateKind.forCapability(capability);
+        if (visibilityKind != VisibilityStateKind.NONE) {
+            return switch (visibilityKind) {
+                case NONE -> throw new IllegalStateException("unreachable NONE visibility kind");
+                case STATIC_OUTLINE -> SemanticState.empty();
+                case SCULK_BLOOM -> SemanticState.sculkCatalyst(
+                        require(state, BlockStateProperties.BLOOM));
+                case TRIPWIRE -> SemanticState.tripwire(
+                        require(state, BlockStateProperties.NORTH),
+                        require(state, BlockStateProperties.EAST),
+                        require(state, BlockStateProperties.SOUTH),
+                        require(state, BlockStateProperties.WEST),
+                        require(state, BlockStateProperties.POWERED),
+                        require(state, BlockStateProperties.ATTACHED));
+            };
+        }
+
+        DecorationStateKind decorationKind = DecorationStateKind.forCapability(capability);
+        if (decorationKind == DecorationStateKind.NONE) {
+            // Resource highlights and Nether Tweaks do not require BlockState semantics.
+            return SemanticState.empty();
+        }
+        return switch (decorationKind) {
+            case NONE -> throw new IllegalStateException("unreachable NONE decoration kind");
             case FACING -> SemanticState.facing(facing(require(state, BlockStateProperties.HORIZONTAL_FACING)));
             case FACING_HONEY_LEVEL -> SemanticState.beehive(
                     facing(require(state, BlockStateProperties.HORIZONTAL_FACING)),
