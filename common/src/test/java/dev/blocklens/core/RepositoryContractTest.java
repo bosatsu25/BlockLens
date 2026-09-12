@@ -34,6 +34,44 @@ final class RepositoryContractTest {
     }
 
     @Test
+    void clientSmokeIsSharedAndExecutedForEveryVersion() throws IOException {
+        Path gameTestSource = root().resolve("gametest/java/dev/blocklens/gametest/BlockLensSmokeClientGameTest.java");
+        Path gameTestMetadata = root().resolve("gametest/resources/fabric.mod.json");
+        String source = Files.readString(gameTestSource);
+        String metadata = Files.readString(gameTestMetadata);
+        String convention = Files.readString(root().resolve("gradle/version-module.gradle"));
+        String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
+
+        assertTrue(source.contains("implements FabricClientGameTest"));
+        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 37"));
+        assertTrue(source.contains("context.worldBuilder().create()"));
+        assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
+        assertTrue(metadata.contains("\"fabric-client-gametest\""));
+        assertTrue(metadata.contains("dev.blocklens.gametest.BlockLensSmokeClientGameTest"));
+
+        assertTrue(convention.contains("enableClientGameTests = true"));
+        assertTrue(convention.contains("rootProject.file('gametest/java')"));
+        assertTrue(convention.contains("rootProject.file('gametest/resources')"));
+        assertTrue(ci.contains(":versions:${{ matrix.module }}:runClientGameTest"));
+
+        assertFalse(Files.exists(root().resolve("versions/mc26_1_2/src/gametest")));
+        assertFalse(Files.exists(root().resolve("versions/mc26_2/src/gametest")));
+    }
+
+    @Test
+    void runtimeArtifactAuditsStayEnabled() throws IOException {
+        String convention = Files.readString(root().resolve("gradle/version-module.gradle"));
+        String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
+
+        assertTrue(convention.contains("forbiddenPayloadMarkers"));
+        assertTrue(convention.contains("respackopts.json5"));
+        assertTrue(convention.contains("Runtime JAR contains forbidden residue entry"));
+        assertTrue(ci.contains("Verify reproducible runtime JAR"));
+        assertTrue(ci.contains("first_sha"));
+        assertTrue(ci.contains("second_sha"));
+    }
+
+    @Test
     void startupSourceContainsNoNetworkTelemetryOrReflectionDiscovery() throws IOException {
         List<String> banned = List.of(
                 "Class.forName(",
