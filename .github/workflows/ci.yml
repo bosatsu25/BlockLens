@@ -43,7 +43,7 @@ jobs:
         run: gradle --stacktrace :common:qualityGate
 
   version-build:
-    name: ${{ matrix.minecraft }} / build + smoke + budget
+    name: ${{ matrix.minecraft }} / build + client smoke + budget
     needs: common-quality
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -81,6 +81,11 @@ jobs:
           :versions:${{ matrix.module }}:versionSmokeContract
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
 
+      - name: Run client GameTest Minecraft ${{ matrix.minecraft }}
+        run: >-
+          xvfb-run -a gradle --stacktrace
+          :versions:${{ matrix.module }}:runClientGameTest
+
       - name: Resolve runtime artifact
         id: runtime
         shell: bash
@@ -88,7 +93,7 @@ jobs:
           set -euo pipefail
           mapfile -t jars < <(find "versions/${{ matrix.module }}/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print)
           if [[ "${#jars[@]}" -ne 1 ]]; then
-            echo "Expected exactly one remapped runtime JAR, found ${#jars[@]}" >&2
+            echo "Expected exactly one runtime JAR, found ${#jars[@]}" >&2
             printf '%s\n' "${jars[@]}" >&2
             exit 1
           fi
@@ -104,6 +109,7 @@ jobs:
             echo "### BlockLens ${{ matrix.minecraft }}"
             echo "- Runtime JAR: \`$bytes bytes\`"
             echo "- SHA-256: \`$sha256\`"
+            echo "- Client GameTest: \`PASS\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload verified runtime JAR
