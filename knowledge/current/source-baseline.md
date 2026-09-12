@@ -1,6 +1,6 @@
 # Source Baseline — AMATERAS Resource Pack
 
-Status: **authoritative migration baseline**
+Status: **authoritative migration baseline — M0 complete**
 
 This document pins the exact source files used to define BlockLens M0.
 
@@ -43,6 +43,33 @@ Approximate container overhead ratio:
 ```
 
 This is a major reason the mod rewrite can plausibly beat the source ZIP by more than 50%: the source representation uses thousands of small files.
+
+## M0 dependency analysis
+
+Automated analysis of all 336 `.rpo` gate files found:
+
+```text
+RPO conditions mapped:             37 / 37
+RPO rules parsed:                 336 / 336
+Non-RPO source assets:          4,196
+Assets reachable from gates:    4,101
+Reachable ratio:                97.74%
+Candidate unreferenced assets:     95
+Shared transitive dependencies:     6
+```
+
+The complete human-readable mapping is in [`capability-map.md`](capability-map.md).
+The machine-readable product contract is in [`capability-contract.tsv`](capability-contract.tsv).
+
+Important findings include:
+
+- `stairs`: 58 gated blockstates and 2,320 source variants.
+- `slabs`: 61 gated blockstates.
+- `trapdoor`: 32 gated files; 21 current block targets plus item-model gates in the source pack.
+- `stringtweaks`: `tripwire` attached/powered/connectivity states are explicitly represented.
+- `nethertweaks`: 33 texture gates plus the magma-block model; 27 Nether-oriented target blocks/materials.
+- `stainedglass`: source behavior is specifically "Make stained glasses opaque".
+- `gaming.*`: source blockstates redirect to dedicated animated highlight textures/models.
 
 ## RPO preset contents
 
@@ -107,6 +134,22 @@ Exactly five capabilities are enabled in this RPO:
 5. `stringtweaks`
 
 This preset is a **reference configuration**, not the complete capability scope.
+
+## Licensing posture
+
+No explicit license file was found in the supplied resource-pack ZIP.
+
+Therefore the baseline policy is fail-closed:
+
+- source binaries are reference evidence, not automatically redistributable BlockLens assets,
+- runtime-generated geometry/markers and independently implemented rendering are preferred,
+- any retained source binary requires an explicit redistribution-rights decision before public release.
+
+## M0 exit decision
+
+**PASS.** The source capability set is sufficiently mapped to begin implementation.
+
+M0 does not claim that every final BlockLens pixel must copy the original pack. It freezes the source user value, target/state semantics, gated source roots, and reference configuration so the implementation can be tested for parity while using a smaller and more maintainable runtime design.
 
 ## Baseline change policy
 
