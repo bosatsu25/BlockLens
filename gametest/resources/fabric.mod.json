@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "blocklens-gametest",
+  "version": "1.0.0",
+  "name": "BlockLens Client GameTests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "dev.blocklens.gametest.BlockLensSmokeClientGameTest"
+    ]
+  },
+  "depends": {
+    "blocklens": "*",
+    "fabric-client-gametest-api-v1": "*"
+  }
+}
