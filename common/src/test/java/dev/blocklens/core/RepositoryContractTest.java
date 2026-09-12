@@ -37,11 +37,13 @@ final class RepositoryContractTest {
     void clientSmokeIsSharedAndExecutedForEveryVersion() throws IOException {
         Path gameTestSource = root().resolve("gametest/java/dev/blocklens/gametest/BlockLensSmokeClientGameTest.java");
         Path adapterOracleSource = root().resolve("gametest/java/dev/blocklens/gametest/MinecraftStateAdapterOracle.java");
+        Path targetOracleSource = root().resolve("gametest/java/dev/blocklens/gametest/MinecraftDecorationTargetOracle.java");
         Path retiredPlainJUnitOracle = root().resolve(
                 "version-tests/java/dev/blocklens/fabric/MinecraftStateAdapterTest.java");
         Path gameTestMetadata = root().resolve("gametest/resources/fabric.mod.json");
         String source = Files.readString(gameTestSource);
         String adapterOracle = Files.readString(adapterOracleSource);
+        String targetOracle = Files.readString(targetOracleSource);
         String metadata = Files.readString(gameTestMetadata);
         String convention = Files.readString(root().resolve("gradle/version-module.gradle"));
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
@@ -51,11 +53,15 @@ final class RepositoryContractTest {
         assertTrue(source.contains("context.worldBuilder().create()"));
         assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
         assertTrue(source.contains("MinecraftStateAdapterOracle.verify()"));
+        assertTrue(source.contains("MinecraftDecorationTargetOracle.verify()"));
 
         assertTrue(adapterOracle.contains("MinecraftStateAdapter.interpret"));
         assertTrue(adapterOracle.contains("BuiltInRegistries.BLOCK.getValue"));
         assertTrue(adapterOracle.contains("white_glazed_terracotta"));
         assertTrue(adapterOracle.contains("white_stained_glass_pane"));
+        assertTrue(targetOracle.contains("MinecraftDecorationTargetIndex.build()"));
+        assertTrue(targetOracle.contains("bindingCount() == 254"));
+        assertTrue(targetOracle.contains("DecorationTargetCatalog.targets"));
         assertFalse(Files.exists(retiredPlainJUnitOracle),
                 "mapped BlockState oracle must run after real client bootstrap, not in plain JUnit");
 
@@ -69,6 +75,34 @@ final class RepositoryContractTest {
 
         assertFalse(Files.exists(root().resolve("versions/mc26_1_2/src/gametest")));
         assertFalse(Files.exists(root().resolve("versions/mc26_2/src/gametest")));
+    }
+
+    @Test
+    void m3SharedRenderPolicyAndExactTargetCatalogStayPresent() throws IOException {
+        String policy = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/DecorationRenderPolicy.java"));
+        String descriptor = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/DecorationRenderDescriptor.java"));
+        String cue = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/DecorationVisualCue.java"));
+        String catalog = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/DecorationTargetCatalog.java"));
+        String v2612 = Files.readString(root().resolve(
+                "versions/mc26_1_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationTargetIndex.java"));
+        String v262 = Files.readString(root().resolve(
+                "versions/mc26_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationTargetIndex.java"));
+
+        assertTrue(policy.contains("config.isEnabled(capability)"));
+        assertTrue(policy.contains("DecorationRenderDescriptor.of"));
+        assertTrue(descriptor.contains("DecorationVisualCue.forCapability"));
+        assertTrue(cue.contains("OPAQUE_STAINED_GLASS"));
+        assertTrue(catalog.contains("CapabilityId.STAIRS"));
+        assertTrue(catalog.contains("CapabilityId.STAINED_GLASS"));
+        assertTrue(catalog.contains("CapabilityId.TRAPDOOR"));
+        assertTrue(v2612.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
+        assertTrue(v262.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
+        assertFalse(catalog.contains("endsWith(\"_stairs\")"),
+                "M3 exact M0 target scope must not silently broaden by suffix");
     }
 
     @Test
