@@ -26,12 +26,12 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             MinecraftDecorationTargetOracle.verify();
         });
 
-        // Do not depend on version-specific TestSingleplayerContext accessors here.
-        // Creating the world, allowing client ticks, and closing the context exercises
-        // the join/leave lifecycle on both supported Minecraft lines.
-        try (TestSingleplayerContext ignored = context.worldBuilder().create()) {
+        // Creating the world exercises join/leave lifecycle on both supported lines. M3 then uses
+        // the same deterministic world to capture actual framebuffer evidence for ON/reload/OFF.
+        try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             context.waitTicks(20);
             context.runOnClient(client -> verifyRuntime("singleplayer world joined", false));
+            M3VisualParityOracle.verify(context, singleplayer);
         }
 
         context.runOnClient(client -> verifyRuntime("singleplayer world closed", false));
