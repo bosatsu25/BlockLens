@@ -26,6 +26,9 @@ final class M3VisualEvidenceContractTest {
         assertTrue(visual.contains("m3-all13-reloaded"));
         assertTrue(visual.contains("m3-all13-off-active-pack"));
         assertTrue(visual.contains("reloadResourcePacks()"));
+        assertTrue(visual.contains("waitForReloadOverlayFade(context)"));
+        assertTrue(visual.contains("RELOAD_OVERLAY_FADE_MILLIS"));
+        assertTrue(visual.contains("Thread.sleep(RELOAD_OVERLAY_FADE_MILLIS)"));
         assertTrue(visual.contains("MinecraftTerrainInvalidator::invalidateAll"));
         assertTrue(visual.contains("TERRAIN_REBUILD_SETTLE_TICKS"));
         assertTrue(visual.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 254"));
