@@ -13,7 +13,6 @@ import dev.blocklens.core.state.SemanticState.Half;
 import dev.blocklens.core.state.SemanticState.MountFace;
 import dev.blocklens.core.state.SemanticState.SlabType;
 import dev.blocklens.core.state.SemanticState.StairShape;
-import java.util.EnumSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -128,6 +127,28 @@ final class DecorationQuadCuePolicyTest {
 
         SemanticState openWest = SemanticState.trapdoor(Facing.WEST, Half.TOP, true);
         assertTint(CapabilityId.TRAPDOOR, openWest, DecorationQuadFace.WEST, 0xFF90FF90);
+    }
+
+    @Test
+    void incompleteSemanticFallbackBranchesRemainSafeAndIdentityBased() {
+        SemanticState empty = SemanticState.empty();
+        assertIdentity(CapabilityId.ANVIL, empty, DecorationQuadFace.NORTH);
+        assertIdentity(CapabilityId.LOG, empty, DecorationQuadFace.EAST);
+        assertIdentity(CapabilityId.SLABS, empty, DecorationQuadFace.UP);
+        assertIdentity(CapabilityId.GRINDSTONE, SemanticState.facing(Facing.NORTH), DecorationQuadFace.UP);
+
+        SemanticState stairWithoutShape = SemanticState.facing(Facing.NORTH);
+        assertTint(CapabilityId.STAIRS, stairWithoutShape, DecorationQuadFace.NORTH, 0xFFFFFF90);
+        assertIdentity(CapabilityId.STAIRS, empty, DecorationQuadFace.UP);
+
+        SemanticState trapdoorWithoutHalf = SemanticState.facing(Facing.SOUTH);
+        assertIdentity(CapabilityId.TRAPDOOR, trapdoorWithoutHalf, DecorationQuadFace.UP);
+
+        SemanticState closedWithoutFacing = SemanticState.trapdoor(Facing.NONE, Half.BOTTOM, false);
+        assertTint(CapabilityId.TRAPDOOR, closedWithoutFacing, DecorationQuadFace.UP, 0xFFFFFF90);
+
+        SemanticState openWithoutFacing = SemanticState.trapdoor(Facing.NONE, Half.BOTTOM, true);
+        assertIdentity(CapabilityId.TRAPDOOR, openWithoutFacing, DecorationQuadFace.NORTH);
     }
 
     @Test
