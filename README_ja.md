@@ -6,13 +6,13 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 AMATERASリソースパックで得られていた視認性・状態把握の価値を、何千個ものstate別JSON/PNGをそのまま抱える方式ではなく、**共通の状態解釈 + 共有レンダリング + 最小限の固有アセット**として再構築します。
 
-目的は「リソースパックをJARに詰めること」ではありません。**37機能のユーザー価値を維持しながら、保守性・設定・Minecraftバージョン差分・品質保証・性能・配布物サイズを改善すること**が目的です。
+目的は「リソースパックをJARに詰めること」ではありません。**37機能のユーザー価値を維持しながら、保守性・設定・Minecraftバージョン差分・テスト可能性・性能評価・配布物サイズを改善すること**が目的です。
 
-> **現在の状態:** M0・M1は完了済みです。M2の共通Semantic State Engineと26.1.2 / 26.2両対応adapterはPR #9で実装済みです。次の主実装は13個のDecoration / Orientation機能の実描画です。現時点では37機能すべての表示パリティ完成を主張しません。
+> **現在の状態:** M0・M1・M2は完了済みです。M3は共通Render Descriptor、M0準拠の254 target、procedural visual grammar、Minecraft 26.1.2 / 26.2両方のzero-scan baked-model pipelineまで実装しています。ただし、代表的な実描画のvisual parityと13機能同時ONのゲーム内検証が完了するまでは**M3完了とは扱いません**。現時点では37機能すべての表示パリティ完成を主張しません。
 
 ## BlockLensが解決したいこと
 
-元のリソースパックは有用ですが、状態の組み合わせを大量の小さなJSON・モデル・PNGで表現しています。BlockLensでは、同じ意味をコード上のsemantic stateとして1回だけ表し、共有レンダラーへ渡します。
+元のリソースパックは有用ですが、状態の組み合わせを大量の小さなJSON・モデル・PNGで表現しています。BlockLensでは、同じ意味をsemantic stateとして1回だけ表し、共通render policyへ渡します。
 
 ```mermaid
 flowchart LR
@@ -20,10 +20,8 @@ flowchart LR
     B --> C[Semantic State Engine\nfacing / axis / half / shape / connections]
     C --> D[共有Visual Semantics\noverlay / outline / marker]
     D --> E[薄いMinecraft Adapter\n26.1.2 + 26.2]
-    E --> F[BlockLens\n軽量なclient-only runtime]
+    E --> F[BlockLens\nsmall client-only runtime]
 ```
-
-移行の基本原則は次です。
 
 ```text
 大量のstate別 JSON / PNG
@@ -104,7 +102,37 @@ M2では、BlockLensが必要とする情報だけをMinecraft非依存の形へ
 - honey level
 - open / lit / in-wall / powered / attached
 
-Version moduleはmapped `BlockState` をこの共通表現へ変換するだけにし、製品仕様を重複させません。
+Mapped `BlockState`はMinecraft version境界でこの共通表現へ変換し、製品仕様をversion別に複製しません。
+
+## M3 Procedural Decoration Pipeline
+
+M3ではAMATERASのtextureをBlockLensへコピーしません。固定したsource packはbehavior / visual evidenceとして扱い、Minecraft本体またはユーザーのactive resource packがbakeしたmodelに、BlockLens独自のprocedural cueを適用します。
+
+```mermaid
+flowchart LR
+    A[M0 exact target catalog\n254 bindings] --> B[Raw-ID target index\nmodel-load時]
+    B --> C[BlockState semantic adapter\nmodel-bake時]
+    C --> D[Common Render Descriptor]
+    D --> E[WrapperBlockStateModel]
+    E --> F{対象機能がON?}
+    F -- no --> G[元baked modelをそのままemit]
+    F -- yes --> H[共通quad cueを適用]
+    H --> I[base model + BlockLens追加情報]
+```
+
+重要な設計:
+
+- M0で凍結した254 targetだけをexactに扱い、suffixで勝手に対象を増やさない
+- 13機能のtoggleはすべて独立
+- X / Y / Z軸はsource intentに基づく赤 / 緑 / 青の共通visual grammar
+- Stained Glassはsourceの意味どおり**opaque / solid-layer behavior**として扱う
+- semantic state解釈はmodel bake時に行い、毎frameは行わない
+- whole-world scanなし、毎frame registry scanなし
+- render hot pathのON/OFF判定はprimitive capability bitmask
+- wrapperが担当するM3機能がすべてOFFなら元baked modelを直接emit
+- resource reload時は新しくbakeされたactive-resource-pack modelを再度wrapし、AMATERASのbase textureを所有しない
+
+M3の現在仕様: [`knowledge/current/m3-visual-semantics.md`](knowledge/current/m3-visual-semantics.md)
 
 ## 開発状況
 
@@ -112,8 +140,8 @@ Version moduleはmapped `BlockState` をこの共通表現へ変換するだけ�
 | --- | --- | --- |
 | M0 — Source baseline freeze | ✅ 完了 | 37/37機能の根拠・machine-readable contract |
 | M1 — Dual-version quality scaffold | ✅ 完了 | Java 25 / config / CI / GameTest / artifact audit / size・load baseline |
-| M2 — Shared state engine | 🔧 PR #9で実装済み | semantic model / 両version adapter / cross-version oracle / bounded lookup |
-| M3 — 13 Decoration / Orientation | ⏭ 次 | shared render semantics + visual parity |
+| M2 — Shared state engine | ✅ 完了 | semantic model / 両version adapter / real-client oracle / composable bounded lookup |
+| M3 — 13 Decoration / Orientation | 🔧 実装中 | exact target / render policy / procedural quad grammar / 両version model wrapperまで実装、実描画パリティ検証が残る |
 | M4–M7 | 予定 | outline / resource highlight / Nether Tweaks / 全機能相互作用 |
 | M8 | 予定 | performance / load / size 最終hardening |
 | M9 | 予定 | release readiness / public artifact audit |
@@ -164,19 +192,7 @@ flowchart TD
     P --> GREEN([CI GREEN])
 ```
 
-現在の自動品質ゲート:
-
-- JUnit 5
-- 37機能exact contract
-- cross-version state/config parity
-- JaCoCo selected coverage gate
-- PIT mutation gate
-- 両Minecraft版Fabric Client GameTest
-- config persistence
-- runtime JAR structure/privacy/residue audit
-- clean rebuild SHA-256 reproducibility
-- runtime JAR byte budget
-- startup/load structural contract
+現在はJUnit 5、37機能exact contract、cross-version semantic/config parity、JaCoCo、PIT、両Minecraft版Client GameTest、M3 exact-target/model-pipeline oracle、config persistence、runtime JAR privacy/residue audit、clean rebuild SHA-256 reproducibility、JAR byte budget、startup/load structural contractを自動化しています。
 
 ## Engineering Graph Loop
 
@@ -203,17 +219,17 @@ flowchart LR
 
 失敗時は必ず **DIAGNOSE → FIX → VERIFY** に戻します。「修正したはず」でCIを飛ばしてDONEにはしません。
 
-正式ルール・各nodeのexit condition・`DONE / BLOCKED / PARTIAL`の完了状態は [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) を正本とします。
+正式ルール・各nodeのexit condition・`DONE / BLOCKED / PARTIAL`は [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) を正本とします。
 
 ## Repository構成
 
 ```text
 BlockLens/
-├─ common/                  # 共通product policy / config / semantic state / contracts
+├─ common/                  # 共通product/config/state/render policy + contracts
 ├─ versions/
-│  ├─ mc26_1_2/            # 26.1.2用の薄いadapter
-│  └─ mc26_2/              # 26.2用の薄いadapter
-├─ gametest/                # 両version共通Client GameTest
+│  ├─ mc26_1_2/            # 26.1.2用の薄いMinecraft/Fabric adapter
+│  └─ mc26_2/              # 26.2用の薄いMinecraft/Fabric adapter
+├─ gametest/                # 両version共通の実Client integration oracle
 ├─ gradle/                  # version module共通build rule
 ├─ knowledge/
 │  ├─ index.md
@@ -226,15 +242,8 @@ BlockLens/
 
 Java 25が必要です。
 
-共通semantic/config品質ゲート:
-
 ```bash
 ./gradlew qualityGate
-```
-
-build系を含むCI entry point:
-
-```bash
 ./gradlew ciGate
 ```
 
@@ -250,15 +259,17 @@ startupやrender hot pathで不要な処理を行わないことを設計ルー�
 - 通常起動時のlegacy RPO parseなし
 - OFF機能のgeometry eager生成なし
 - 毎frameのwhole-world / unbounded chunk scanなし
+- M3 wrapperで毎frame registry scan / BlockState reinterpretationなし
 - 変化していないgeometryの毎frame rebuildなし
-- target/capability lookupは可能な限りbounded / O(1)
-- reload / world transition時は明示的にcache/stateを破棄
+- target lookupはraw-IDベースでbounded
+- render enable判定はprimitive config mask
+- reload / world transitionではBlockLensが所有するstateを明確に管理する
 
 性能改善は推測で主張せず、startup/load・resource reload・runtime/frame・allocation/memory・JAR bytesを別々に測定します。
 
 ## Resource Pack / Shader Compatibility
 
-可能な限りMinecraft本体またはユーザーが有効化しているresource packのtextureを保ち、その上へBlockLensの情報を重ねる方向です。
+可能な限りMinecraft本体またはユーザーが有効化しているresource packのmodel/textureをbaseとして保ち、BlockLensが必要な追加情報だけを適用します。
 
 Shader/backend互換性は「Vanillaで動いた」だけでは対応扱いにしません。26.2 OpenGLは必須検証track、Vulkanは別のexperimental trackとして管理します。
 
@@ -271,12 +282,13 @@ Shader/backend互換性は「Vanillaで動いた」だけでは対応扱いに�
 - 無関係なgameplay automationを追加すること
 - 現在ONの5 RPO項目だけを製品全体として扱うこと
 - 未検証shader/backendを「対応」と表記すること
+- model wrapperがcompileできたことだけでM3 visual parity完了と主張すること
 
 ## Source / Licenseについて
 
-AMATERASリソースパックは**behavior / visual reference baseline**として扱います。内部構造をそのままBlockLensの実装へコピーすることは目標ではありません。
+AMATERASリソースパックは**behavior / visual reference baseline**として扱います。内部構造やbinary assetをそのままBlockLensへコピーすることは目標ではありません。
 
-baselineには他作者へのattributionが含まれており、redistribution permissionがあるとは仮定しません。公開前に、runtime JARへ残る第三者texture / model / textなどのライセンス・再配布可否を必ず確認します。可能なものはオリジナルコード・描画処理で機能価値を再実装します。
+baselineには他作者へのattributionが含まれており、redistribution permissionがあるとは仮定しません。公開前に、runtime JARへ残る第三者texture / model / textなどのライセンス・再配布可否を必ず確認します。M3では現状、source binaryをコピーせずオリジナルのprocedural描画処理を優先しています。
 
 ## ドキュメント
 
@@ -287,6 +299,7 @@ baselineには他作者へのattributionが含まれており、redistribution p
 - Quality strategy: [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md)
 - Performance strategy: [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md)
 - Roadmap: [`knowledge/current/roadmap.md`](knowledge/current/roadmap.md)
+- M3 visual semantics: [`knowledge/current/m3-visual-semantics.md`](knowledge/current/m3-visual-semantics.md)
 - Engineering Graph Loop: [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md)
 
 `knowledge/current/` が現在仕様の正本です。READMEはユーザー向けの要約であり、current specificationと食い違った場合はREADME側を修正します。

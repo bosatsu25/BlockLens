@@ -71,11 +71,11 @@ Exit criteria:
 
 Verified baseline: [`m1-baseline.md`](m1-baseline.md). GitHub Actions run `34683630501` passed common quality plus both version build/reproducibility/Client GameTest jobs.
 
-## M2 — Shared state engine and version adapters
+## M2 — Shared state engine and version adapters ✅
 
 Goal: represent block orientation/state once and keep mapped Minecraft API differences at thin adapter boundaries.
 
-Initial semantic set:
+Semantic set:
 
 - facing
 - axis
@@ -83,15 +83,19 @@ Initial semantic set:
 - shape
 - open/closed
 - connections
+- honey level
+- mount face
 - powered/attached when required
 
 Tasks:
 
-- [ ] pure Java semantic model in `common`
-- [ ] 26.1.2 state adapter
-- [ ] 26.2 state adapter
-- [ ] cross-version oracle tests proving equivalent semantic output
-- [ ] bounded target-to-capability lookup design
+- [x] pure Java semantic model in `common`
+- [x] 26.1.2 state adapter
+- [x] 26.2 state adapter
+- [x] cross-version oracle tests proving equivalent semantic output
+- [x] bounded composable target-to-capability lookup design
+- [x] real-client mapped-state oracle after Minecraft registry bootstrap
+- [x] simultaneous target overlap support through capability bitsets
 
 Exit criteria:
 
@@ -100,9 +104,11 @@ Exit criteria:
 - both adapters produce equivalent semantics for shared Minecraft states
 - no reflection/classpath feature discovery
 
-## M3 — Decoration/orientation parity
+Evidence: PR #9 merged as `67ac8f18347a6c6343d0aea6bd51a418dac0d632`; GitHub Actions run `34685138049` passed common JUnit/JaCoCo/PIT plus both 26.1.2 and 26.2 build/reproducibility/Client GameTest/artifact jobs.
 
-Goal: implement all 13 decoration/orientation capabilities on both versions.
+## M3 — Decoration/orientation parity 🔧
+
+Goal: implement all 13 decoration/orientation capabilities on both versions without copying the source pack's binary assets.
 
 Targets:
 
@@ -120,6 +126,30 @@ Targets:
 - Wood
 - Log
 
+Implemented foundation:
+
+- [x] Minecraft-independent render descriptor and visual-cue policy
+- [x] exact M0 target catalog: 254 bindings, machine-checked against `capability-contract.tsv`
+- [x] 26.1.2 raw registry target index
+- [x] 26.2 raw registry target index
+- [x] shared procedural quad grammar derived from source visual intent
+- [x] Stained Glass modeled as opaque/solid-layer behavior rather than a generic orientation marker
+- [x] independent toggle policy for all 13 capabilities
+- [x] all 13 enabled simultaneously at pure common-policy level
+- [x] model-bake semantic interpretation; no per-frame BlockState reinterpretation
+- [x] `WrapperBlockStateModel` integration for 26.1.2
+- [x] `WrapperBlockStateModel` integration for 26.2
+- [x] model pipeline is zero-world-scan and bounded by exact raw-ID target lookup
+- [x] OFF fast path emits the original baked active-resource-pack model directly
+- [x] primitive 64-bit enabled mask for render hot-path checks
+- [x] Client GameTest target oracle verifies exact target scope and model-pipeline execution
+- [ ] representative rendered visual parity evidence
+- [ ] all 13 simultaneously verified in rendered in-game scenarios on 26.1.2
+- [ ] all 13 simultaneously verified in rendered in-game scenarios on 26.2
+- [ ] resource reload / active resource-pack visual regression evidence
+
+Current visual/runtime contract: [`m3-visual-semantics.md`](m3-visual-semantics.md).
+
 Exit criteria:
 
 - 13/13 on 26.1.2 and 26.2
@@ -127,6 +157,8 @@ Exit criteria:
 - representative visual parity PASS
 - all 13 simultaneously PASS
 - startup/reload/runtime no-regression evidence retained
+
+M3 remains **in progress** until the rendered visual and all-13 integration evidence above passes; code presence alone is not DONE.
 
 ## M4 — Outline and fine visibility parity
 

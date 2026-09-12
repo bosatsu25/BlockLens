@@ -37,9 +37,6 @@ fabricApi {
 }
 
 sourceSets {
-    test {
-        java.srcDir rootProject.file('version-tests/java')
-    }
     gametest {
         java.srcDir rootProject.file('gametest/java')
         resources.srcDir rootProject.file('gametest/resources')
@@ -93,10 +90,17 @@ tasks.register('versionSmokeContract') {
                     'fabric.mod.json',
                     'dev/blocklens/fabric/BlockLensClient.class',
                     'dev/blocklens/fabric/MinecraftStateAdapter.class',
+                    'dev/blocklens/fabric/MinecraftDecorationTargetIndex.class',
+                    'dev/blocklens/fabric/MinecraftDecorationModelPlugin.class',
+                    'dev/blocklens/fabric/MinecraftDecorationModel.class',
                     'dev/blocklens/core/CapabilityId.class',
                     'dev/blocklens/core/BlockLensConfig.class',
                     'dev/blocklens/core/state/SemanticState.class',
                     'dev/blocklens/core/state/DecorationStateKind.class',
+                    'dev/blocklens/core/render/DecorationRenderDescriptor.class',
+                    'dev/blocklens/core/render/DecorationRenderPolicy.class',
+                    'dev/blocklens/core/render/DecorationTargetCatalog.class',
+                    'dev/blocklens/core/render/DecorationQuadCuePolicy.class',
                     'assets/blocklens/lang/en_us.json',
                     'assets/blocklens/lang/ja_jp.json']) {
                 if (archive.getEntry(required) == null) {
@@ -114,7 +118,7 @@ tasks.register('versionSmokeContract') {
 
             List entries = archive.entries().toList().findAll { !it.directory }
             if (entries.any { entry -> entry.name.endsWith('.jar') }) {
-                throw new GradleException('Runtime JAR must not contain nested dependency JARs in the baseline scaffold')
+                throw new GradleException('Runtime JAR must not contain nested dependency JARs')
             }
 
             List<String> forbiddenNames = [

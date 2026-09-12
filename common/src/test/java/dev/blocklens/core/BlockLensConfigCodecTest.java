@@ -12,13 +12,16 @@ final class BlockLensConfigCodecTest {
     void defaultsMatchPinnedFiveFeaturePreset() {
         BlockLensConfig config = BlockLensConfig.defaults();
         int enabled = 0;
+        long expectedMask = 0L;
         for (CapabilityId capability : CapabilityId.values()) {
             if (config.isEnabled(capability)) {
                 enabled++;
+                expectedMask |= 1L << capability.ordinal();
             }
         }
 
         assertEquals(5, enabled);
+        assertEquals(expectedMask, config.enabledMask());
         assertTrue(config.isEnabled(CapabilityId.BLUE_ICE));
         assertTrue(config.isEnabled(CapabilityId.DEAD_CORAL));
         assertTrue(config.isEnabled(CapabilityId.POWDER_SNOW));
@@ -37,8 +40,30 @@ final class BlockLensConfigCodecTest {
         String encoded = BlockLensConfigCodec.encode(expected);
         BlockLensConfig actual = BlockLensConfigCodec.decode(encoded);
         assertEquals(expected.asMap(), actual.asMap());
+        assertEquals(expected.enabledMask(), actual.enabledMask());
         assertTrue(encoded.startsWith("# BlockLens native config v1\n"));
         assertEquals(38, encoded.lines().count());
+    }
+
+    @Test
+    void enabledMaskTracksIndependentToggleChangesExactly() {
+        BlockLensConfig config = BlockLensConfig.defaults();
+        long original = config.enabledMask();
+
+        config = config.withEnabled(CapabilityId.ANVIL, true);
+        long anvilBit = 1L << CapabilityId.ANVIL.ordinal();
+        assertEquals(original | anvilBit, config.enabledMask());
+        assertTrue(config.isEnabled(CapabilityId.ANVIL));
+
+        config = config.withEnabled(CapabilityId.BLUE_ICE, false);
+        long blueIceBit = 1L << CapabilityId.BLUE_ICE.ordinal();
+        assertEquals((original | anvilBit) & ~blueIceBit, config.enabledMask());
+        assertFalse(config.isEnabled(CapabilityId.BLUE_ICE));
+
+        // withEnabled remains immutable: earlier snapshots do not change.
+        BlockLensConfig unchangedDefaults = BlockLensConfig.defaults();
+        assertFalse(unchangedDefaults.isEnabled(CapabilityId.ANVIL));
+        assertTrue(unchangedDefaults.isEnabled(CapabilityId.BLUE_ICE));
     }
 
     @Test
@@ -57,6 +82,7 @@ final class BlockLensConfigCodecTest {
         assertTrue(config.isEnabled(CapabilityId.ANVIL));
         assertFalse(config.isEnabled(CapabilityId.DIAMOND_ORE));
         assertTrue(config.isEnabled(CapabilityId.BLUE_ICE));
+        assertTrue((config.enabledMask() & (1L << CapabilityId.ANVIL.ordinal())) != 0L);
     }
 
     @Test

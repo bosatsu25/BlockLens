@@ -23,6 +23,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         context.runOnClient(client -> {
             verifyRuntime("initial client launch", true);
             MinecraftStateAdapterOracle.verify();
+            MinecraftDecorationTargetOracle.verify();
         });
 
         // Do not depend on version-specific TestSingleplayerContext accessors here.

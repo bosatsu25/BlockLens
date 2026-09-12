@@ -4,9 +4,9 @@
 
 BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It rebuilds the useful visual ideas of the AMATERAS resource-pack baseline as compact, testable code instead of shipping thousands of state-specific JSON/PNG files.
 
-The project goal is not "make a resource pack into a JAR." The goal is to preserve the **37-capability visual contract** while improving maintainability, cross-version behavior, configuration, performance evidence, and artifact size.
+The goal is not "put a resource pack in a JAR." The goal is to preserve the **37-capability visual contract** while improving maintainability, cross-version behavior, configuration, testability, performance evidence, and artifact size.
 
-> **Current project state:** M0 and M1 are complete. The M2 shared semantic-state engine and dual-version adapters are implemented in PR #9. Visual rendering parity for the 13 decoration/orientation capabilities is the next implementation layer; BlockLens does **not** yet claim full 37-feature visual parity.
+> **Current state:** M0, M1, and M2 are complete. M3 now has the shared render descriptors, exact 254-target catalog, procedural visual grammar, and zero-scan baked-model pipeline implemented for Minecraft 26.1.2 and 26.2. M3 remains **in progress** until representative rendered visual parity and all-13 simultaneous in-game verification pass. BlockLens does **not** yet claim full 37-feature visual parity.
 
 ## Why BlockLens?
 
@@ -20,8 +20,6 @@ flowchart LR
     D --> E[Thin Minecraft adapters\n26.1.2 + 26.2]
     E --> F[BlockLens\nsmall client-only runtime]
 ```
-
-The migration rule is:
 
 ```text
 many state-specific JSON / PNG variants
@@ -90,7 +88,7 @@ flowchart TD
 
 ### Shared semantic state
 
-M2 represents only the information BlockLens needs instead of retaining mapped Minecraft objects in common policy:
+M2 represents only the information BlockLens needs instead of retaining mapped Minecraft objects in common product policy:
 
 - horizontal facing
 - axis
@@ -102,7 +100,37 @@ M2 represents only the information BlockLens needs instead of retaining mapped M
 - honey level
 - open / lit / in-wall / powered / attached flags
 
-The semantic state is compact and Minecraft-independent. Version modules translate mapped `BlockState` values into that shared representation.
+Mapped `BlockState` values are translated at the Minecraft-version boundary. The shared state is compact and Minecraft-independent.
+
+## M3 procedural decoration pipeline
+
+M3 does **not** copy AMATERAS textures into BlockLens. The pinned source is behavioral/visual evidence; BlockLens applies original procedural cues to the model already baked by Minecraft or the user's active resource pack.
+
+```mermaid
+flowchart LR
+    A[Exact M0 target catalog\n254 bindings] --> B[Raw-ID target index\nmodel-load time]
+    B --> C[BlockState semantic adapter\nmodel-bake time]
+    C --> D[Common render descriptor]
+    D --> E[WrapperBlockStateModel]
+    E --> F{represented feature ON?}
+    F -- no --> G[emit original baked model]
+    F -- yes --> H[apply common quad cue]
+    H --> I[base model + BlockLens visual information]
+```
+
+Important properties:
+
+- exact M0 scope; no suffix-based automatic expansion
+- all 13 controls remain independent
+- X/Y/Z orientation uses a shared red/green/blue visual grammar derived from source intent
+- Stained Glass is modeled as **opaque/solid-layer behavior**, matching the source meaning
+- semantic interpretation occurs at model bake, not every frame
+- no whole-world scan and no per-frame registry scan
+- runtime config uses a primitive capability bitmask for the OFF fast path
+- when no represented M3 feature is enabled, the original baked model is emitted directly
+- model reload naturally wraps newly baked active-resource-pack models rather than owning copied base textures
+
+Authoritative M3 visual contract: [`knowledge/current/m3-visual-semantics.md`](knowledge/current/m3-visual-semantics.md).
 
 ## Development status
 
@@ -110,8 +138,8 @@ The semantic state is compact and Minecraft-independent. Version modules transla
 | --- | --- | --- |
 | M0 — source baseline freeze | ✅ Complete | 37/37 capability evidence and machine-readable contract |
 | M1 — dual-version quality scaffold | ✅ Complete | Java 25, config, CI, GameTest, reproducible artifacts, size/load baseline |
-| M2 — shared state engine | 🔧 Implemented in PR #9 | semantic model, both adapters, cross-version oracle, bounded lookup |
-| M3 — 13 decoration/orientation visuals | ⏭ Next | shared render semantics + visual parity |
+| M2 — shared state engine | ✅ Complete | semantic model, both adapters, real-client cross-version oracle, composable bounded lookup |
+| M3 — 13 decoration/orientation visuals | 🔧 In progress | exact targets, render policy, procedural quad grammar, dual-version model wrappers; rendered parity evidence remains |
 | M4–M7 | Planned | outline, resource highlights, Nether Tweaks, full interaction hardening |
 | M8 | Planned | final performance/load/size hardening |
 | M9 | Planned | release-readiness and public artifact audit |
@@ -162,19 +190,7 @@ flowchart TD
     P --> GREEN([CI GREEN])
 ```
 
-Current automated quality includes:
-
-- JUnit 5
-- exact 37-capability contract tests
-- cross-version state/config parity contracts
-- selected JaCoCo verification
-- selected PIT mutation testing
-- Fabric Client GameTest on both supported versions
-- config persistence checks
-- runtime JAR structure/privacy/residue audit
-- clean-rebuild SHA-256 reproducibility audit
-- runtime JAR byte budget
-- startup/load structural contracts
+Current automated quality includes JUnit 5, exact 37-capability contracts, cross-version semantic/config parity, selected JaCoCo and PIT gates, Fabric Client GameTest on both supported versions, exact M3 target/model-pipeline oracles, config persistence, runtime JAR structure/privacy/residue audit, reproducible SHA-256 rebuilds, JAR byte budgets, and startup/load structural contracts.
 
 ## Engineering Graph Loop
 
@@ -207,11 +223,11 @@ The authoritative rules, exit criteria, and `DONE / BLOCKED / PARTIAL` terminal 
 
 ```text
 BlockLens/
-├─ common/                  # shared product policy, config, semantic state, contracts
+├─ common/                  # shared product/config/state/render policy + contracts
 ├─ versions/
 │  ├─ mc26_1_2/            # thin 26.1.2 Minecraft/Fabric adapter
 │  └─ mc26_2/              # thin 26.2 Minecraft/Fabric adapter
-├─ gametest/                # shared Client GameTest source/resources
+├─ gametest/                # shared real-client integration oracles
 ├─ gradle/                  # version-module convention and build rules
 ├─ knowledge/
 │  ├─ index.md
@@ -224,15 +240,8 @@ BlockLens/
 
 Java 25 is required.
 
-Shared semantic/config quality gate:
-
 ```bash
 ./gradlew qualityGate
-```
-
-Full build-oriented CI entry point:
-
-```bash
 ./gradlew ciGate
 ```
 
@@ -248,15 +257,17 @@ BlockLens intentionally avoids work that does not belong on startup or the rende
 - no normal-path legacy RPO parsing
 - no eager geometry generation for disabled features
 - no whole-world or unbounded loaded-chunk scan each frame
+- no per-frame registry scan or BlockState reinterpretation in M3 wrappers
 - no per-frame rebuilding of unchanged retained geometry
-- bounded target/capability lookup where practical
-- explicit cache invalidation and cleanup around reload/world transitions
+- bounded/raw-ID target lookup where practical
+- primitive config mask for frequent render enable checks
+- explicit cache/state ownership around reload/world transitions
 
-Performance claims require evidence. Startup/load, resource reload, runtime frame behavior, allocations/memory, and JAR bytes are measured as separate budgets.
+Performance claims require evidence. Startup/load, resource reload, runtime frame behavior, allocations/memory, and JAR bytes are separate budgets.
 
 ## Resource-pack and shader compatibility direction
 
-BlockLens prefers to preserve the texture supplied by Minecraft or the user's active resource pack, then layer the additional visual information on top where technically safe.
+BlockLens prefers to preserve the model/texture supplied by Minecraft or the user's active resource pack, then apply only the extra BlockLens visual information where technically safe.
 
 Shader/backend compatibility is verified rather than assumed. Minecraft 26.2 OpenGL is a required track; Vulkan is tracked separately and is not claimed merely because OpenGL passes.
 
@@ -269,12 +280,13 @@ Shader/backend compatibility is verified rather than assumed. Minecraft 26.2 Ope
 - adding unrelated gameplay automation
 - treating the currently enabled five RPO options as the complete product
 - claiming shader/backend compatibility without verification
+- claiming M3 visual parity merely because model-wrapper code compiles
 
 ## Source and licensing note
 
 The AMATERAS resource pack is used as a **behavioral/visual reference baseline**. Its internal structure is not the target architecture for BlockLens.
 
-The baseline contains attribution to other creators and no redistribution permission should be assumed from this repository. Before public release, every third-party texture, model, text, or other retained asset must have its redistribution/license status verified. Functional ideas can instead be reimplemented with original code/rendering where appropriate.
+The baseline contains attribution to other creators and no redistribution permission should be assumed from this repository. Before public release, every third-party texture, model, text, or other retained asset must have its redistribution/license status verified. BlockLens currently prefers original procedural code for M3 instead of copying the source binary assets.
 
 ## Project documentation
 
@@ -285,6 +297,7 @@ The baseline contains attribution to other creators and no redistribution permis
 - Quality strategy: [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md)
 - Performance strategy: [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md)
 - Roadmap: [`knowledge/current/roadmap.md`](knowledge/current/roadmap.md)
+- M3 visual semantics: [`knowledge/current/m3-visual-semantics.md`](knowledge/current/m3-visual-semantics.md)
 - Engineering Graph Loop: [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md)
 
 `knowledge/current/` is the source of truth. README files are user-facing summaries and must be corrected when they fall behind current specifications.
