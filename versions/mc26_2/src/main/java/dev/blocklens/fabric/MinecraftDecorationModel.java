@@ -6,7 +6,13 @@ import dev.blocklens.core.render.DecorationQuadCuePolicy;
 import dev.blocklens.core.render.DecorationQuadFace;
 import dev.blocklens.core.render.DecorationQuadInstruction;
 import dev.blocklens.core.render.DecorationRenderDescriptor;
+import dev.blocklens.core.render.ResourceHighlightCue;
+import dev.blocklens.core.render.VisibilityQuadCuePolicy;
+import dev.blocklens.core.render.VisibilityRenderDescriptor;
+import dev.blocklens.core.render.VisibilityRenderPolicy;
+import dev.blocklens.core.state.DecorationStateKind;
 import dev.blocklens.core.state.SemanticState;
+import dev.blocklens.core.state.VisibilityStateKind;
 import java.util.Objects;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
@@ -20,11 +26,20 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
-/** Minecraft 26.2 baked-model wrapper for M3 decoration cues. */
+/**
+ * Minecraft 26.2 baked-model wrapper shared by the M3-M7 rendering families.
+ *
+ * <p>Semantic interpretation and descriptor selection happen once during model bake. The render hot
+ * path keeps the verified primitive config-mask fast path, then composes orientation, resource, and
+ * visibility cues on the active baked model. Nether Tweaks remains fail-closed until its exact
+ * source visual contract is captured.</p>
+ */
 final class MinecraftDecorationModel extends WrapperBlockStateModel {
-    private final DecorationRenderDescriptor[] descriptors;
+    private final DecorationRenderDescriptor[] decorationDescriptors;
+    private final VisibilityRenderDescriptor[] visibilityDescriptors;
+    private final ResourceHighlightCue[] resourceCues;
     private final long[] descriptorBits;
-    private final long representedCapabilityMask;
+    private final long representedRenderableMask;
 
     MinecraftDecorationModel(
             BlockStateModel wrapped,
@@ -36,17 +51,33 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         if (capabilities.length == 0 || capabilities.length != semanticStates.length) {
             throw new IllegalArgumentException("capability/state arrays must be non-empty and have equal length");
         }
-        this.descriptors = new DecorationRenderDescriptor[capabilities.length];
-        this.descriptorBits = new long[capabilities.length];
+
+        int count = capabilities.length;
+        this.decorationDescriptors = new DecorationRenderDescriptor[count];
+        this.visibilityDescriptors = new VisibilityRenderDescriptor[count];
+        this.resourceCues = new ResourceHighlightCue[count];
+        this.descriptorBits = new long[count];
         long represented = 0L;
-        for (int i = 0; i < capabilities.length; i++) {
+
+        for (int i = 0; i < count; i++) {
             CapabilityId capability = Objects.requireNonNull(capabilities[i], "capability");
+            SemanticState state = Objects.requireNonNull(semanticStates[i], "semanticState");
             long bit = 1L << capability.ordinal();
-            this.descriptors[i] = DecorationRenderDescriptor.of(capability, semanticStates[i]);
-            this.descriptorBits[i] = bit;
+
+            if (DecorationStateKind.isDecorationCapability(capability)) {
+                decorationDescriptors[i] = DecorationRenderDescriptor.of(capability, state);
+            } else if (VisibilityStateKind.isVisibilityCapability(capability)) {
+                visibilityDescriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state);
+            } else if (capability.category() == CapabilityId.Category.RESOURCE) {
+                resourceCues[i] = ResourceHighlightCue.forCapability(capability);
+            } else {
+                // NETHER_TWEAKS: target scope is known, visual rule is intentionally fail-closed.
+                continue;
+            }
+            descriptorBits[i] = bit;
             represented |= bit;
         }
-        this.representedCapabilityMask = represented;
+        this.representedRenderableMask = represented;
     }
 
     @Override
@@ -57,7 +88,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             BlockState state,
             RandomSource random,
             Predicate<@Nullable Direction> cullTest) {
-        long enabledCapabilities = BlockLensRuntime.config().enabledMask() & representedCapabilityMask;
+        long enabledCapabilities = BlockLensRuntime.config().enabledMask() & representedRenderableMask;
         if (enabledCapabilities == 0L) {
             super.emitQuads(emitter, level, pos, state, random, cullTest);
             return;
@@ -65,17 +96,34 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
 
         emitter.pushTransform(quad -> {
             DecorationQuadFace face = face(quad.nominalFace());
-            for (int i = 0; i < descriptors.length; i++) {
-                if ((enabledCapabilities & descriptorBits[i]) == 0L) {
+            for (int i = 0; i < descriptorBits.length; i++) {
+                long bit = descriptorBits[i];
+                if (bit == 0L || (enabledCapabilities & bit) == 0L) {
                     continue;
                 }
-                DecorationQuadInstruction instruction =
-                        DecorationQuadCuePolicy.instruction(descriptors[i], face);
+
+                DecorationQuadInstruction instruction;
+                DecorationRenderDescriptor decoration = decorationDescriptors[i];
+                if (decoration != null) {
+                    instruction = DecorationQuadCuePolicy.instruction(decoration, face);
+                } else {
+                    VisibilityRenderDescriptor visibility = visibilityDescriptors[i];
+                    if (visibility != null) {
+                        instruction = VisibilityQuadCuePolicy.instruction(visibility);
+                    } else {
+                        ResourceHighlightCue resource = resourceCues[i];
+                        instruction = DecorationQuadInstruction.emissiveTint(resource.accentArgb());
+                    }
+                }
+
                 if (instruction.forceSolid()) {
                     quad.chunkLayer(ChunkSectionLayer.SOLID);
                 }
                 if (instruction.changesColor()) {
                     quad.multiplyColor(instruction.multiplyArgb());
+                }
+                if (instruction.emissive()) {
+                    quad.emissive(true);
                 }
             }
             return true;
@@ -98,7 +146,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         if (wrappedKey == null) {
             return null;
         }
-        long enabledCapabilities = BlockLensRuntime.config().enabledMask() & representedCapabilityMask;
+        long enabledCapabilities = BlockLensRuntime.config().enabledMask() & representedRenderableMask;
         if (enabledCapabilities == 0L) {
             return wrappedKey;
         }
