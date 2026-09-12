@@ -32,7 +32,7 @@ final class M5M6CapabilityContractTest {
         hashes.put(CapabilityId.COPPER_ORE, "32bd21f1f1ed7002bcfb4ed035ffb0e29d4da1b33534cb198e586a06d34d79aa");
         hashes.put(CapabilityId.DEEPSLATE_COAL_ORE, "ec73667f055dcfd107207ec5952b799d68e0e0fe3d41b90cf808c7ce895ff8df");
         hashes.put(CapabilityId.DEEPSLATE_COPPER_ORE, "a7048b41f0117ff813af83565a72d20fe1d4e06a90b913fcc746ff090eed1ae9");
-        hashes.put(CapabilityId.DEEPSLATE_DIAMOND_ORE, "de4517e82d649c77ca1a3bce4a0a344c3f51a14d69d5190b30291b65a4796f97");
+        hashes.put(CapabilityId.DEEPSLATE_DIAMOND_ORE, "de4517f602c9dcf1b52c51755191240cc70b91f5b0c71cc3eff714c451a18a90");
         hashes.put(CapabilityId.DEEPSLATE_EMERALD_ORE, "6d4973de277c29524c0191c154b81af939518a5cb5277c3cd48c21d60aa8d723");
         hashes.put(CapabilityId.DEEPSLATE_GOLD_ORE, "7e095c4a085c571aab153c55c6f23734eeed4042318d0fe1fac9c5f534e80aa0");
         hashes.put(CapabilityId.DEEPSLATE_IRON_ORE, "2522a68501834fdc27924bbf0f57320b5a485339b607d24b529b50bd54e3163e");
