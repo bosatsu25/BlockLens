@@ -88,7 +88,7 @@ pitest {
             'dev.blocklens.core.state.TargetCapabilityIndex',
             'dev.blocklens.core.render.DecorationVisualCue',
             'dev.blocklens.core.render.DecorationRenderDescriptor',
-            'dev/blocklens/core/render/DecorationRenderPolicy',
+            'dev.blocklens.core.render.DecorationRenderPolicy',
             'dev.blocklens.core.render.DecorationQuadInstruction',
             'dev.blocklens.core.render.DecorationQuadCuePolicy',
             'dev.blocklens.core.render.VisibilityVisualCue',
