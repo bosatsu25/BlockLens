@@ -67,6 +67,9 @@ public final class SemanticState {
     }
 
     public static SemanticState beehive(Facing facing, int honeyLevel) {
+        if (honeyLevel < 0 || honeyLevel > 5) {
+            throw new IllegalArgumentException("honeyLevel must be 0..5: " + honeyLevel);
+        }
         return create(facing, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
                 0, honeyLevel, false, false, false, false, false);
     }
