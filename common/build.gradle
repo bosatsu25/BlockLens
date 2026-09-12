@@ -29,7 +29,8 @@ def coverageGateClasses = [
         'dev/blocklens/core/state/TargetCapabilityIndex*.class',
         'dev/blocklens/core/render/DecorationVisualCue*.class',
         'dev/blocklens/core/render/DecorationRenderDescriptor*.class',
-        'dev/blocklens/core/render/DecorationRenderPolicy*.class'
+        'dev/blocklens/core/render/DecorationRenderPolicy*.class',
+        'dev/blocklens/core/render/DecorationTargetCatalog*.class'
 ]
 
 def coverageGateClassDirectories = providers.provider {
@@ -75,8 +76,8 @@ pitest {
             'dev.blocklens.core.render.DecorationRenderDescriptor',
             'dev.blocklens.core.render.DecorationRenderPolicy'
     ]
-    // Mutation tests intentionally exclude repository/filesystem contract tests.
-    // PIT runs tests in an isolated JVM; only deterministic pure tests belong here.
+    // Mutation tests intentionally exclude repository/filesystem contract tests and the
+    // large exact M0 target-data table; deterministic policy logic remains mutation-gated.
     targetTests = [
             'dev.blocklens.core.CapabilityIdTest',
             'dev.blocklens.core.BlockLensConfigCodecTest',
