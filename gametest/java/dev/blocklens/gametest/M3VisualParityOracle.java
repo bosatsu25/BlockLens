@@ -32,6 +32,7 @@ final class M3VisualParityOracle {
     private static final int MIN_RESOURCE_PACK_MARKER_PIXELS = 25;
     private static final int RESOURCE_RELOAD_TIMEOUT_TICKS = 1200;
     private static final int TERRAIN_REBUILD_SETTLE_TICKS = 30;
+    private static final long RELOAD_OVERLAY_FADE_MILLIS = 1_500L;
 
     private M3VisualParityOracle() {
     }
@@ -179,6 +180,20 @@ final class M3VisualParityOracle {
         // Surface a reload failure only after Client GameTest has kept ticking the client until the
         // future completed. Joining immediately can starve reload work that needs subsequent ticks.
         reload.join();
+        waitForReloadOverlayFade(context);
+    }
+
+    private static void waitForReloadOverlayFade(ClientGameTestContext context) {
+        // Manual resource reload completion and LoadingOverlay removal are separate stages. The
+        // overlay uses real-time fade timing, while Client GameTest ticks may advance faster than
+        // wall-clock time. Sleep only the Test thread so the Render thread can finish the fade.
+        try {
+            Thread.sleep(RELOAD_OVERLAY_FADE_MILLIS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("interrupted while waiting for resource reload overlay fade", exception);
+        }
+        context.waitTicks(2);
     }
 
     private static void invalidateTerrain(ClientGameTestContext context) {
