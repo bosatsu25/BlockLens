@@ -29,6 +29,7 @@ final class M3VisualParityOracle {
     private static final int EXPECTED_DECORATION_CAPABILITIES = 13;
     private static final int MIN_DIFFERENT_PIXELS = 250;
     private static final int MIN_RESOURCE_PACK_MARKER_PIXELS = 25;
+    private static final int RESOURCE_RELOAD_TIMEOUT_TICKS = 1200;
 
     private M3VisualParityOracle() {
     }
@@ -168,6 +169,9 @@ final class M3VisualParityOracle {
 
     private static void reloadResources(ClientGameTestContext context) {
         CompletableFuture<Void> reload = context.computeOnClient(client -> client.reloadResourcePacks());
+        context.waitFor(client -> reload.isDone(), RESOURCE_RELOAD_TIMEOUT_TICKS);
+        // Surface a reload failure only after Client GameTest has kept ticking the client until the
+        // future completed. Joining immediately can starve reload work that needs subsequent ticks.
         reload.join();
     }
 
