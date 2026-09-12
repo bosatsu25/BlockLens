@@ -4,24 +4,20 @@ Status: **authoritative migration strategy**
 
 ## Goal
 
-Rebuild the visual value of the supplied AMATERAS resource pack as a Fabric client mod while preserving all 37 source capabilities and reducing the runtime artifact below 50% of the source ZIP size.
+Rebuild the visual value of the supplied AMATERAS resource pack as a Fabric client mod while preserving all 37 source capabilities, supporting **Minecraft 26.1.2 and 26.2**, and reducing each runtime artifact below 50% of the source ZIP size.
 
-This is a **black-box / behavior-first reimplementation strategy**. The source pack is used to establish observable visual behavior and supported block-state combinations. The mod should not simply preserve the source pack's internal file structure.
+This is a **black-box / behavior-first reimplementation strategy**. The source pack establishes observable visual behavior and supported block-state combinations. The mod must not preserve the source pack's internal file explosion merely for convenience.
 
 ## M0 — Freeze the source baseline
 
 Before production implementation:
 
-- record the source ZIP hash,
-- record ZIP size and file counts,
+- record source ZIP/RPO hashes,
+- record ZIP size/file counts,
 - map every RPO key to affected files,
-- map every RPO key to affected block IDs and block states,
+- map every RPO key to affected block IDs/states,
 - capture representative screenshots/golden references,
-- classify each source asset as:
-  - behavior-defining,
-  - reusable/minimal unique visual asset,
-  - duplicate/generated/static state expansion,
-  - or irrelevant packaging overhead.
+- classify source assets as behavior-defining, minimal/reusable visual asset, duplicate/static state expansion, or packaging overhead.
 
 Current measured baseline:
 
@@ -36,29 +32,48 @@ compressed payload:     1,279,563 bytes
 container overhead:     1,087,302 bytes
 ```
 
-## M1 — Create the minimal mod scaffold
+## M1 — Create dual-version mod/quality scaffold
 
-Create a client-only Fabric project for Minecraft 26.1.2 / Java 25 with:
+Create a client-only Fabric/Java 25 multi-project for:
 
-- `fabric.mod.json`,
-- a single client entrypoint,
-- native BlockLens configuration,
-- capability catalog containing all 37 source keys,
-- unit-test infrastructure,
-- CI build/test/artifact audit.
+- Minecraft 26.1.2
+- Minecraft 26.2
+
+Shape:
+
+```text
+common/
+versions/mc26_1_2/
+versions/mc26_2/
+```
+
+Add:
+
+- per-version `fabric.mod.json`/runtime artifact,
+- common 37-capability catalog,
+- shared config schema,
+- JUnit 5,
+- selected JaCoCo/PIT gates,
+- `qualityGate` / `ciGate`,
+- per-version client smoke/GameTest,
+- functional/version parity contracts,
+- reproducible artifact audit,
+- per-version JAR-size reporting,
+- startup/resource-reload evidence path.
 
 Acceptance:
 
-- clean Java 25 build,
-- client-only metadata,
-- 37 capability IDs present and contract-tested,
-- all capabilities configurable even before render implementations are complete.
+- clean Java 25 builds for both targets,
+- 37 capability IDs contract-tested,
+- same config semantics on both versions,
+- no server dependency,
+- first per-version size/load baselines recorded.
 
-## M2 — State/orientation family
+## M2 — State/orientation family + version adapters
 
-Implement the common state interpreter and marker renderer for the 13 decoration/orientation capabilities.
+Implement a stable common semantic model and thin Minecraft adapters.
 
-Prioritize reusable semantics:
+Shared semantics:
 
 - facing,
 - axis,
@@ -66,19 +81,30 @@ Prioritize reusable semantics:
 - shape,
 - open/closed,
 - connection,
-- powered/attached where source behavior requires it.
+- powered/attached where required.
 
-Do not implement 13 unrelated rendering systems if the visual semantics can be shared.
+Do not duplicate product policy in version directories.
+
+Acceptance:
+
+- same semantic oracle passes for 26.1.2 and 26.2,
+- no runtime reflection feature discovery,
+- target lookup is bounded/deterministic.
+
+## M3 — Decoration/orientation parity
+
+Implement all 13 decoration/orientation capabilities on both versions with common render semantics and version-specific render glue only where required.
 
 Acceptance per capability:
 
 - affected block/state set matches source baseline,
 - visual meaning is equivalent,
-- enable/disable is independent,
+- enable/disable independent,
 - no change when disabled,
-- resource-pack compatibility verified for representative packs.
+- representative resource-pack compatibility,
+- both Minecraft lines PASS.
 
-## M3 — Outline/fine-visibility family
+## M4 — Outline/fine-visibility family
 
 Implement:
 
@@ -88,19 +114,16 @@ Implement:
 - Sculk Catalyst,
 - String Tweaks.
 
-Use one or more shared outline/fine-line renderers as appropriate.
-
 Acceptance:
 
-- thin/hidden targets remain readable,
-- adjacent/connected state remains correct where source behavior depends on it,
-- simultaneous enablement has deterministic composition.
+- thin/hidden targets readable,
+- state/connection behavior correct,
+- deterministic simultaneous composition,
+- both versions PASS.
 
-## M4 — Resource highlighting family
+## M5 — Resource highlighting family
 
-Implement all 18 resource/highlight capabilities.
-
-Preferred strategy:
+Implement all 18 resource/highlight capabilities using:
 
 ```text
 active block texture/model
@@ -108,67 +131,73 @@ active block texture/model
 BlockLens resource cue
 ```
 
-rather than shipping complete replacement textures for every ore/state.
+Acceptance:
+
+- every source resource independently configurable,
+- normal/deepslate variants remain separately addressable,
+- dark-area visibility intentional/tested,
+- shader OFF verified,
+- supported shader paths verified before claims,
+- 26.2 OpenGL verified,
+- 26.2 Vulkan tracked separately as experimental compatibility evidence.
+
+## M6 — Nether Tweaks
+
+Capture exact source behavior first. Do not infer the feature solely from its name.
 
 Acceptance:
 
-- each source resource can be independently enabled,
-- normal and deepslate variants remain separately addressable because the source configuration exposes them separately,
-- dark-area visibility is intentional and tested,
-- shader-on and shader-off behavior is verified before compatibility is claimed.
+- explicit target/state/visual mapping,
+- parity evidence,
+- independent config,
+- both versions PASS.
 
-## M5 — Nether Tweaks
-
-Capture exact source behavior first because the single RPO key is broader than a precise contract.
-
-Do not guess the behavior based only on the key name.
-
-Acceptance:
-
-- explicit mapped targets and visuals,
-- parity evidence stored in baseline data/tests,
-- independent configuration retained.
-
-## M6 — Compatibility and accessibility hardening
+## M7 — Compatibility and accessibility hardening
 
 After source parity exists:
 
-- test with active third-party resource packs,
-- test representative shader packs,
-- introduce color/pattern accessibility options only if they do not erase source parity,
-- verify all-capabilities-ON mode,
-- verify world/resource reload transitions.
+- active third-party resource packs,
+- representative shader packs,
+- all-capabilities-ON,
+- world/resource reload transitions,
+- config parity across versions,
+- 26.2 OpenGL/Vulkan tracks kept distinct.
 
-Enhancements beyond parity must be labeled as BlockLens-native behavior rather than silently changing the source-equivalence contract.
+Enhancements beyond parity must be labeled BlockLens-native rather than silently changing source equivalence.
 
-## M7 — Size and performance optimization
+## M8 — Load/runtime/size optimization
 
-Only after parity gates are green:
+Optimization is continuously guarded from M1, then deliberately hardened here.
 
-1. measure runtime JAR,
-2. identify largest entries,
-3. remove remaining static duplication,
-4. losslessly optimize required PNGs,
-5. inspect JSON/model generation,
-6. profile render/update paths,
-7. repeat parity tests.
+Order:
 
-Targets:
+1. compare per-version startup/load baselines,
+2. compare resource reload duration,
+3. inspect runtime JAR/top entries,
+4. remove remaining static duplication,
+5. verify lazy initialization,
+6. verify bounded lookup/caches,
+7. losslessly optimize required PNGs,
+8. profile render/update paths,
+9. rerun parity/version tests.
+
+Per-version size targets:
 
 - required: `< 1,183,433 bytes`,
 - stretch: `<= 716,800 bytes`.
 
-A size reduction is rejected if any parity/quality gate regresses.
+A reduction is rejected if parity, cross-version correctness, diagnostics, startup/reload, or runtime performance regresses.
 
-## M8 — Release readiness
+## M9 — Release readiness
 
 Before public distribution:
 
-- clean-room build from repository,
-- full automated test suite,
-- functional parity report,
-- shader/resource-pack compatibility matrix,
-- runtime artifact audit,
+- clean-room build,
+- full automated quality suite,
+- functional/version parity report,
+- shader/resource-pack/backend compatibility matrix,
+- per-version runtime artifact audit,
 - no private/local data,
-- license/redistribution review for every retained third-party asset,
-- release notes describing supported Minecraft/Fabric/Java versions.
+- license/redistribution review,
+- release notes identifying exact Minecraft/Fabric/Java support,
+- SHA-256 for both artifacts.
