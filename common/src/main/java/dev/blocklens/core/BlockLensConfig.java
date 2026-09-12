@@ -8,9 +8,17 @@ import java.util.Objects;
 /** Native BlockLens configuration independent of Minecraft/Fabric APIs. */
 public final class BlockLensConfig {
     private final EnumMap<CapabilityId, Boolean> enabled;
+    private final long enabledMask;
 
     private BlockLensConfig(EnumMap<CapabilityId, Boolean> enabled) {
         this.enabled = enabled;
+        long mask = 0L;
+        for (CapabilityId capability : CapabilityId.values()) {
+            if (Boolean.TRUE.equals(enabled.get(capability))) {
+                mask |= bit(capability);
+            }
+        }
+        this.enabledMask = mask;
     }
 
     public static BlockLensConfig defaults() {
@@ -31,7 +39,12 @@ public final class BlockLensConfig {
     }
 
     public boolean isEnabled(CapabilityId capability) {
-        return enabled.get(Objects.requireNonNull(capability, "capability"));
+        return (enabledMask & bit(Objects.requireNonNull(capability, "capability"))) != 0L;
+    }
+
+    /** Immutable primitive capability mask for render/runtime hot paths. */
+    public long enabledMask() {
+        return enabledMask;
     }
 
     public BlockLensConfig withEnabled(CapabilityId capability, boolean value) {
@@ -43,5 +56,13 @@ public final class BlockLensConfig {
 
     public Map<CapabilityId, Boolean> asMap() {
         return Collections.unmodifiableMap(enabled);
+    }
+
+    private static long bit(CapabilityId capability) {
+        int ordinal = capability.ordinal();
+        if (ordinal >= Long.SIZE) {
+            throw new IllegalStateException("BlockLens capability count exceeds 64-bit config mask capacity");
+        }
+        return 1L << ordinal;
     }
 }
