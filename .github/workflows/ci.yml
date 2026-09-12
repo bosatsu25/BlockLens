@@ -81,6 +81,35 @@ jobs:
           :versions:${{ matrix.module }}:versionSmokeContract
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
 
+      - name: Verify reproducible runtime JAR Minecraft ${{ matrix.minecraft }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime_dir="versions/${{ matrix.module }}/build/libs"
+          mapfile -t first_candidates < <(find "$runtime_dir" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print)
+          if [[ "${#first_candidates[@]}" -ne 1 ]]; then
+            echo "Expected one first-build runtime JAR, found ${#first_candidates[@]}" >&2
+            printf '%s\n' "${first_candidates[@]}" >&2
+            exit 1
+          fi
+          first_sha="$(sha256sum "${first_candidates[0]}" | cut -d' ' -f1)"
+
+          gradle --stacktrace :common:clean :versions:${{ matrix.module }}:clean :versions:${{ matrix.module }}:build
+
+          mapfile -t second_candidates < <(find "$runtime_dir" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print)
+          if [[ "${#second_candidates[@]}" -ne 1 ]]; then
+            echo "Expected one second-build runtime JAR, found ${#second_candidates[@]}" >&2
+            printf '%s\n' "${second_candidates[@]}" >&2
+            exit 1
+          fi
+          second_sha="$(sha256sum "${second_candidates[0]}" | cut -d' ' -f1)"
+
+          if [[ "$first_sha" != "$second_sha" ]]; then
+            echo "Runtime JAR is not reproducible: first=$first_sha second=$second_sha" >&2
+            exit 1
+          fi
+          echo "Reproducible runtime SHA-256: $second_sha" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run client GameTest Minecraft ${{ matrix.minecraft }}
         run: >-
           xvfb-run -a gradle --stacktrace
@@ -110,6 +139,8 @@ jobs:
             echo "- Runtime JAR: \`$bytes bytes\`"
             echo "- SHA-256: \`$sha256\`"
             echo "- Client GameTest: \`PASS\`"
+            echo "- Reproducible artifact: \`PASS\`"
+            echo "- Privacy/residue audit: \`PASS\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload verified runtime JAR
