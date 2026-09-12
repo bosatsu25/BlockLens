@@ -38,7 +38,7 @@ final class MinecraftStateAdapterTest {
     void beehiveAndCampfireMapSecondaryState() {
         BlockState beehive = Blocks.BEEHIVE.defaultBlockState()
                 .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.SOUTH)
-                .setValue(BlockStateProperties.HONEY_LEVEL, 5);
+                .setValue(BlockStateProperties.LEVEL_HONEY, 5);
         SemanticState hive = MinecraftStateAdapter.interpret(CapabilityId.BEEHIVE, beehive);
         assertEquals(Facing.SOUTH, hive.facing());
         assertEquals(5, hive.level());
