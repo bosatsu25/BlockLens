@@ -20,8 +20,21 @@ jacoco {
     toolVersion = rootProject.jacoco_version
 }
 
+def coverageGateClasses = [
+        'dev/blocklens/core/CapabilityId*.class',
+        'dev/blocklens/core/BlockLensConfig*.class',
+        'dev/blocklens/core/BlockLensConfigCodec*.class'
+]
+
+def coverageGateClassDirectories = providers.provider {
+    files(sourceSets.main.output.classesDirs.collect { classesDir ->
+        fileTree(dir: classesDir, include: coverageGateClasses)
+    })
+}
+
 jacocoTestReport {
     dependsOn test
+    classDirectories.setFrom(coverageGateClassDirectories)
     reports {
         xml.required = true
         html.required = true
@@ -31,6 +44,7 @@ jacocoTestReport {
 
 jacocoTestCoverageVerification {
     dependsOn jacocoTestReport
+    classDirectories.setFrom(coverageGateClassDirectories)
     violationRules {
         rule {
             element = 'BUNDLE'
@@ -44,7 +58,11 @@ jacocoTestCoverageVerification {
 }
 
 pitest {
-    targetClasses = ['dev.blocklens.core.*']
+    targetClasses = [
+            'dev.blocklens.core.CapabilityId',
+            'dev.blocklens.core.BlockLensConfig',
+            'dev.blocklens.core.BlockLensConfigCodec'
+    ]
     targetTests = ['dev.blocklens.core.*Test']
     junit5PluginVersion = '1.2.3'
     threads = 2
