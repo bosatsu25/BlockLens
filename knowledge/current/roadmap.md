@@ -106,7 +106,7 @@ Exit criteria:
 
 Evidence: PR #9 merged as `67ac8f18347a6c6343d0aea6bd51a418dac0d632`; GitHub Actions run `34685138049` passed common JUnit/JaCoCo/PIT plus both 26.1.2 and 26.2 build/reproducibility/Client GameTest/artifact jobs.
 
-## M3 — Decoration/orientation parity 🔧
+## M3 — Decoration/orientation parity ✅
 
 Goal: implement all 13 decoration/orientation capabilities on both versions without copying the source pack's binary assets.
 
@@ -126,7 +126,7 @@ Targets:
 - Wood
 - Log
 
-Implemented foundation:
+Implemented and verified:
 
 - [x] Minecraft-independent render descriptor and visual-cue policy
 - [x] exact M0 target catalog: 254 bindings, machine-checked against `capability-contract.tsv`
@@ -143,10 +143,10 @@ Implemented foundation:
 - [x] OFF fast path emits the original baked active-resource-pack model directly
 - [x] primitive 64-bit enabled mask for render hot-path checks
 - [x] Client GameTest target oracle verifies exact target scope and model-pipeline execution
-- [ ] representative rendered visual parity evidence
-- [ ] all 13 simultaneously verified in rendered in-game scenarios on 26.1.2
-- [ ] all 13 simultaneously verified in rendered in-game scenarios on 26.2
-- [ ] resource reload / active resource-pack visual regression evidence
+- [x] representative rendered visual parity evidence
+- [x] all 13 simultaneously verified in rendered in-game scenarios on 26.1.2
+- [x] all 13 simultaneously verified in rendered in-game scenarios on 26.2
+- [x] resource reload / active resource-pack visual regression evidence
 
 Current visual/runtime contract: [`m3-visual-semantics.md`](m3-visual-semantics.md).
 
@@ -158,7 +158,7 @@ Exit criteria:
 - all 13 simultaneously PASS
 - startup/reload/runtime no-regression evidence retained
 
-M3 remains **in progress** until the rendered visual and all-13 integration evidence above passes; code presence alone is not DONE.
+Evidence: PR #11 final validation head passed GitHub Actions run `34712828259`: common JUnit/JaCoCo/PIT plus both version build/reproducibility/Client GameTest/artifact jobs. Deterministic framebuffer evidence verifies all-13 ON, resource reload, fixed target-ROI differences, active resource-pack preservation, and OFF restoration. CI evidence is OpenGL/llvmpipe; 26.2 Vulkan remains a separate later track.
 
 ## M4 — Outline and fine visibility parity
 
