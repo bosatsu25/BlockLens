@@ -15,6 +15,7 @@ Read these before implementation or review:
 9. [`current/migration-plan.md`](current/migration-plan.md) — resource-pack-to-mod migration strategy and phases
 10. [`current/quality-strategy.md`](current/quality-strategy.md) — automated tests, functional parity, rendering, compatibility, performance, and artifact gates
 11. [`current/roadmap.md`](current/roadmap.md) — implementation order and acceptance criteria
+12. [`current/engineering-loop.md`](current/engineering-loop.md) — authoritative Graph Loop for discovery, implementation, verification, diagnosis/fix cycles, PR/CI, and completion states
 
 ## Rule
 
