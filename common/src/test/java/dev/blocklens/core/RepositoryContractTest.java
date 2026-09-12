@@ -36,8 +36,12 @@ final class RepositoryContractTest {
     @Test
     void clientSmokeIsSharedAndExecutedForEveryVersion() throws IOException {
         Path gameTestSource = root().resolve("gametest/java/dev/blocklens/gametest/BlockLensSmokeClientGameTest.java");
+        Path adapterOracleSource = root().resolve("gametest/java/dev/blocklens/gametest/MinecraftStateAdapterOracle.java");
+        Path retiredPlainJUnitOracle = root().resolve(
+                "version-tests/java/dev/blocklens/fabric/MinecraftStateAdapterTest.java");
         Path gameTestMetadata = root().resolve("gametest/resources/fabric.mod.json");
         String source = Files.readString(gameTestSource);
+        String adapterOracle = Files.readString(adapterOracleSource);
         String metadata = Files.readString(gameTestMetadata);
         String convention = Files.readString(root().resolve("gradle/version-module.gradle"));
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
@@ -46,6 +50,15 @@ final class RepositoryContractTest {
         assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 37"));
         assertTrue(source.contains("context.worldBuilder().create()"));
         assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
+        assertTrue(source.contains("MinecraftStateAdapterOracle.verify()"));
+
+        assertTrue(adapterOracle.contains("MinecraftStateAdapter.interpret"));
+        assertTrue(adapterOracle.contains("BuiltInRegistries.BLOCK.getValue"));
+        assertTrue(adapterOracle.contains("white_glazed_terracotta"));
+        assertTrue(adapterOracle.contains("white_stained_glass_pane"));
+        assertFalse(Files.exists(retiredPlainJUnitOracle),
+                "mapped BlockState oracle must run after real client bootstrap, not in plain JUnit");
+
         assertTrue(metadata.contains("\"fabric-client-gametest\""));
         assertTrue(metadata.contains("dev.blocklens.gametest.BlockLensSmokeClientGameTest"));
 
@@ -69,6 +82,35 @@ final class RepositoryContractTest {
         assertTrue(ci.contains("Verify reproducible runtime JAR"));
         assertTrue(ci.contains("first_sha"));
         assertTrue(ci.contains("second_sha"));
+    }
+
+    @Test
+    void engineeringGraphLoopAndBilingualReadmesRemainDocumented() throws IOException {
+        String agents = Files.readString(root().resolve("AGENTS.md"));
+        String index = Files.readString(root().resolve("knowledge/index.md"));
+        String graphLoop = Files.readString(root().resolve("knowledge/current/engineering-loop.md"));
+        String englishReadme = Files.readString(root().resolve("README.md"));
+        String japaneseReadme = Files.readString(root().resolve("README_ja.md"));
+
+        assertTrue(agents.contains("## Engineering Graph Loop"));
+        assertTrue(agents.contains("DIAGNOSE -> FIX -> VERIFY"));
+        assertTrue(agents.contains("DONE`, `BLOCKED`, or explicitly scoped `PARTIAL`"));
+
+        assertTrue(index.contains("current/engineering-loop.md"));
+        assertTrue(graphLoop.contains("DISCOVER"));
+        assertTrue(graphLoop.contains("IMPLEMENT"));
+        assertTrue(graphLoop.contains("SELF REVIEW"));
+        assertTrue(graphLoop.contains("ISSUE UPDATE"));
+        assertTrue(graphLoop.contains("DIAGNOSE"));
+        assertTrue(graphLoop.contains("PARTIAL"));
+        assertTrue(graphLoop.contains("```mermaid"));
+
+        assertTrue(englishReadme.contains("[日本語](README_ja.md)"));
+        assertTrue(japaneseReadme.contains("[English](README.md)"));
+        assertTrue(englishReadme.contains("## Engineering Graph Loop"));
+        assertTrue(japaneseReadme.contains("## Engineering Graph Loop"));
+        assertTrue(englishReadme.contains("```mermaid"));
+        assertTrue(japaneseReadme.contains("```mermaid"));
     }
 
     @Test

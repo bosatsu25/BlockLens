@@ -37,6 +37,9 @@ fabricApi {
 }
 
 sourceSets {
+    test {
+        java.srcDir rootProject.file('version-tests/java')
+    }
     gametest {
         java.srcDir rootProject.file('gametest/java')
         resources.srcDir rootProject.file('gametest/resources')
@@ -89,8 +92,11 @@ tasks.register('versionSmokeContract') {
             for (String required : [
                     'fabric.mod.json',
                     'dev/blocklens/fabric/BlockLensClient.class',
+                    'dev/blocklens/fabric/MinecraftStateAdapter.class',
                     'dev/blocklens/core/CapabilityId.class',
                     'dev/blocklens/core/BlockLensConfig.class',
+                    'dev/blocklens/core/state/SemanticState.class',
+                    'dev/blocklens/core/state/DecorationStateKind.class',
                     'assets/blocklens/lang/en_us.json',
                     'assets/blocklens/lang/ja_jp.json']) {
                 if (archive.getEntry(required) == null) {
