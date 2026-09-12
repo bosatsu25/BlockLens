@@ -29,7 +29,7 @@ public final class MinecraftStateAdapter {
             case FACING -> SemanticState.facing(facing(require(state, BlockStateProperties.HORIZONTAL_FACING)));
             case FACING_HONEY_LEVEL -> SemanticState.beehive(
                     facing(require(state, BlockStateProperties.HORIZONTAL_FACING)),
-                    require(state, BlockStateProperties.HONEY_LEVEL));
+                    require(state, BlockStateProperties.LEVEL_HONEY));
             case FACING_LIT -> SemanticState.campfire(
                     facing(require(state, BlockStateProperties.HORIZONTAL_FACING)),
                     require(state, BlockStateProperties.LIT));
