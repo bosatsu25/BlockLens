@@ -23,7 +23,9 @@ jacoco {
 def coverageGateClasses = [
         'dev/blocklens/core/CapabilityId*.class',
         'dev/blocklens/core/BlockLensConfig*.class',
-        'dev/blocklens/core/BlockLensConfigCodec*.class'
+        'dev/blocklens/core/BlockLensConfigCodec*.class',
+        'dev/blocklens/core/state/SemanticState*.class',
+        'dev/blocklens/core/state/DecorationStateKind*.class'
 ]
 
 def coverageGateClassDirectories = providers.provider {
@@ -61,13 +63,17 @@ pitest {
     targetClasses = [
             'dev.blocklens.core.CapabilityId',
             'dev.blocklens.core.BlockLensConfig',
-            'dev.blocklens.core.BlockLensConfigCodec'
+            'dev.blocklens.core.BlockLensConfigCodec',
+            'dev.blocklens.core.state.SemanticState',
+            'dev.blocklens.core.state.DecorationStateKind'
     ]
     // Mutation tests intentionally exclude repository/filesystem contract tests.
     // PIT runs tests in an isolated JVM; only deterministic pure tests belong here.
     targetTests = [
             'dev.blocklens.core.CapabilityIdTest',
-            'dev.blocklens.core.BlockLensConfigCodecTest'
+            'dev.blocklens.core.BlockLensConfigCodecTest',
+            'dev.blocklens.core.state.SemanticStateTest',
+            'dev.blocklens.core.state.DecorationStateKindTest'
     ]
     junit5PluginVersion = '1.2.3'
     threads = 2
