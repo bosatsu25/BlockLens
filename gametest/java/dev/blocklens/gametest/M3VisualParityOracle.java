@@ -4,6 +4,7 @@ import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.fabric.MinecraftDecorationModelPlugin;
+import dev.blocklens.fabric.MinecraftTerrainInvalidator;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -181,10 +182,9 @@ final class M3VisualParityOracle {
     }
 
     private static void invalidateTerrain(ClientGameTestContext context) {
-        // Block model changes do not imply that already-compiled terrain meshes have been discarded.
-        // Rebuild all visible sections after config/resource changes so framebuffer evidence observes
-        // the current BlockLens geometry state rather than a retained chunk mesh from the prior phase.
-        context.runOnClient(client -> client.levelRenderer.allChanged());
+        // Minecraft 26.2 moved terrain dirtiness from LevelRenderer to LevelExtractor. Keep that
+        // version split in the adapters and let the shared visual oracle express only the contract.
+        context.runOnClient(MinecraftTerrainInvalidator::invalidateAll);
     }
 
     private static void requireModelPipeline(String phase) {
