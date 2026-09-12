@@ -14,6 +14,9 @@ import dev.blocklens.core.state.SemanticState.MountFace;
 import dev.blocklens.core.state.SemanticState.SlabType;
 import dev.blocklens.core.state.SemanticState.StairShape;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
@@ -28,7 +31,7 @@ final class MinecraftStateAdapterTest {
                 .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.WEST);
         assertEquals(Facing.WEST, MinecraftStateAdapter.interpret(CapabilityId.ANVIL, anvil).facing());
 
-        BlockState terracotta = Blocks.WHITE_GLAZED_TERRACOTTA.defaultBlockState()
+        BlockState terracotta = block("white_glazed_terracotta").defaultBlockState()
                 .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.EAST);
         assertEquals(Facing.EAST,
                 MinecraftStateAdapter.interpret(CapabilityId.GLAZED_TERRACOTTA, terracotta).facing());
@@ -94,7 +97,7 @@ final class MinecraftStateAdapterTest {
         assertEquals(SlabType.DOUBLE,
                 MinecraftStateAdapter.interpret(CapabilityId.SLABS, slab).slabType());
 
-        BlockState pane = Blocks.WHITE_STAINED_GLASS_PANE.defaultBlockState()
+        BlockState pane = block("white_stained_glass_pane").defaultBlockState()
                 .setValue(BlockStateProperties.NORTH, true)
                 .setValue(BlockStateProperties.EAST, false)
                 .setValue(BlockStateProperties.SOUTH, true)
@@ -107,7 +110,7 @@ final class MinecraftStateAdapterTest {
 
         // Full stained-glass blocks have no pane connection properties and map to no connections.
         SemanticState fullGlass = MinecraftStateAdapter.interpret(
-                CapabilityId.STAINED_GLASS, Blocks.WHITE_STAINED_GLASS.defaultBlockState());
+                CapabilityId.STAINED_GLASS, block("white_stained_glass").defaultBlockState());
         assertEquals(0, fullGlass.connectionMask());
     }
 
@@ -145,5 +148,17 @@ final class MinecraftStateAdapterTest {
                 null, Blocks.STONE.defaultBlockState()));
         assertThrows(NullPointerException.class, () -> MinecraftStateAdapter.interpret(
                 CapabilityId.STAIRS, null));
+    }
+
+    private static Block block(String path) {
+        Identifier id = Identifier.tryParse("minecraft:" + path);
+        if (id == null) {
+            throw new AssertionError("Invalid test block id: " + path);
+        }
+        Block block = BuiltInRegistries.BLOCK.getValue(id);
+        if (block == null || !id.equals(BuiltInRegistries.BLOCK.getKey(block))) {
+            throw new AssertionError("Required test block is not registered: " + id);
+        }
+        return block;
     }
 }
