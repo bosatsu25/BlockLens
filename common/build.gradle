@@ -63,7 +63,12 @@ pitest {
             'dev.blocklens.core.BlockLensConfig',
             'dev.blocklens.core.BlockLensConfigCodec'
     ]
-    targetTests = ['dev.blocklens.core.*Test']
+    // Mutation tests intentionally exclude repository/filesystem contract tests.
+    // PIT runs tests in an isolated JVM; only deterministic pure tests belong here.
+    targetTests = [
+            'dev.blocklens.core.CapabilityIdTest',
+            'dev.blocklens.core.BlockLensConfigCodecTest'
+    ]
     junit5PluginVersion = '1.2.3'
     threads = 2
     outputFormats = ['HTML', 'XML']
