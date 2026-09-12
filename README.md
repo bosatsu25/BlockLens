@@ -2,7 +2,20 @@
 
 BlockLens is a Minecraft Java Edition client-side visual inspection mod project.
 
-The project starts from the visual utility provided by the supplied AMATERAS resource pack, but the goal is **not** to wrap the resource pack inside a JAR. BlockLens will re-design the behavior as code-driven rendering and state inspection so that the same user value can be delivered with fewer static assets, clearer configuration, better maintainability, and measurable performance characteristics.
+The project starts from the visual utility provided by the supplied AMATERAS resource pack, but the goal is **not** to wrap the resource pack inside a JAR. BlockLens re-designs the behavior as code-driven rendering and state inspection so that the same user value can be delivered with fewer static assets, clearer configuration, better maintainability, automated quality gates, and measurable load/runtime performance.
+
+## Supported Minecraft versions
+
+BlockLens is designed from the start for two first-class Fabric targets:
+
+- **Minecraft Java Edition 26.1.2**
+- **Minecraft Java Edition 26.2**
+- Java baseline: **25**
+- Side: **client only**
+
+Each Minecraft line will receive its own verified runtime JAR. The product/config/capability contract should remain common across both versions, with only thin Minecraft/Fabric adapter code differing where required.
+
+See [`knowledge/current/versioning.md`](knowledge/current/versioning.md).
 
 ## Project goal
 
@@ -12,17 +25,61 @@ Priority order:
 
 1. Functional equivalence
 2. Correctness and rendering-state accuracy
-3. Compatibility and fail-soft behavior
-4. Performance and memory efficiency
-5. Maintainability and testability
+3. Cross-version compatibility and fail-soft behavior
+4. Startup/resource-reload/runtime performance and memory efficiency
+5. Maintainability and automated testability
 6. Runtime artifact size
 
-The initial hard size target is:
+## Automated quality direction
 
-- Source resource-pack ZIP: **2,366,865 bytes**
-- 50% threshold: **1,183,433 bytes**
-- BlockLens runtime JAR acceptance target: **< 1,183,433 bytes**
-- Stretch target: **<= 700 KiB**, only if functional parity and quality gates remain green
+BlockLens adopts the strongest reusable quality ideas from ChiseTweaks, scaled to this project:
+
+- JUnit 5 unit/contract tests
+- exact 37-capability Functional Parity Gate
+- 26.1.2 / 26.2 Version Parity Gate
+- selected JaCoCo coverage verification
+- selected PIT mutation testing
+- per-version client smoke/GameTests
+- reproducible artifact audit
+- config persistence/migration tests
+- per-version JAR-size budgets
+- structural startup/load-performance contracts
+
+Target Gradle entry points:
+
+```text
+qualityGate
+ciGate
+```
+
+## Lightweight and load-performance goals
+
+BlockLens treats these as separate budgets:
+
+1. startup / initialization cost
+2. resource reload cost
+3. runtime / render cost and allocations
+4. memory / retained state
+5. runtime JAR byte size
+
+Normal startup should avoid runtime reflection/classpath feature scanning, startup networking, telemetry, legacy RPO parsing, and eager geometry creation for disabled features.
+
+Performance improvements are measured rather than assumed. Baselines are recorded separately for 26.1.2 and 26.2.
+
+Minecraft 26.2 also has a separate experimental Vulkan verification track; OpenGL success is not treated as proof of Vulkan compatibility.
+
+See [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md).
+
+## Size targets
+
+Source resource-pack ZIP: **2,366,865 bytes**
+
+For **each supported runtime JAR**:
+
+- hard acceptance target: **< 1,183,433 bytes**
+- stretch target: **<= 700 KiB (716,800 bytes)**
+
+A smaller JAR fails if functional parity, version parity, rendering correctness, diagnostics, or measured performance regresses.
 
 ## Source baseline
 
@@ -36,7 +93,7 @@ The supplied resource pack currently contains:
 - 1,279,563 bytes compressed payload
 - approximately 1,087,302 bytes of ZIP/container overhead
 
-This means a major part of the current size is caused by thousands of small static files. BlockLens should replace repeated state/model/resource definitions with shared code where doing so preserves appearance and behavior.
+A major part of the current size comes from thousands of small static files. BlockLens should replace repeated state/model/resource definitions with shared code where doing so preserves appearance and behavior.
 
 ## Capability baseline
 
@@ -57,15 +114,18 @@ The supplied RPO preset currently enables five capabilities:
 - Sculk Catalyst
 - String Tweaks
 
-See [`knowledge/current/product-spec.md`](knowledge/current/product-spec.md) for the authoritative current specification.
+See [`knowledge/current/product-spec.md`](knowledge/current/product-spec.md).
 
 ## Core design direction
 
 ```text
-Minecraft block state / world state
+Minecraft/Fabric 26.1.2 or 26.2
             |
             v
-     BlockLens state model
+     thin version adapter
+            |
+            v
+     BlockLens common state model
             |
       +-----+-------------------+
       |                         |
@@ -74,7 +134,10 @@ Orientation / shape       Highlight / outline
       |                         |
       +-----------+-------------+
                   v
-          Shared render layer
+          shared render semantics
+                  |
+                  v
+        version render adapter
                   |
                   v
       Vanilla or active pack texture
@@ -87,6 +150,7 @@ BlockLens should prefer the texture already supplied by Minecraft or the user's 
 
 - Embedding the original resource pack unchanged inside a mod JAR
 - Cutting features merely to hit a size number
+- Duplicating the whole codebase for each Minecraft version
 - Requiring a server-side BlockLens component
 - Sending custom gameplay packets solely for visual features
 - Making unrelated gameplay automation part of this project
@@ -102,4 +166,4 @@ Current specifications and decisions live under [`knowledge/current/`](knowledge
 
 **M0 — Baseline/specification capture.**
 
-No production implementation should begin until the resource-pack capability map and functional-parity contracts are fixed.
+The supported-version, automated-test, performance, and artifact-size architecture is now fixed in current specs. Production feature implementation should begin only after the source resource-pack capability map and functional-parity baseline are complete.
