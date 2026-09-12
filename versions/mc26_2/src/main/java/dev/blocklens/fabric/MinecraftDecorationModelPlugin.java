@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Zero-scan model-bake integration for the 26.2 M3 decoration pipeline. */
+/** Zero-scan model-bake integration for the 26.2 all-capability BlockLens pipeline. */
 public final class MinecraftDecorationModelPlugin {
     private static final CapabilityId[] CAPABILITIES = CapabilityId.values();
     private static final AtomicInteger WRAPPED_MODELS = new AtomicInteger();
@@ -65,7 +65,7 @@ public final class MinecraftDecorationModelPlugin {
             cursor++;
         }
         if (cursor != count) {
-            throw new IllegalStateException("M3 target mask could not be fully decoded");
+            throw new IllegalStateException("BlockLens target mask could not be fully decoded");
         }
         WRAPPED_MODELS.incrementAndGet();
         return new MinecraftDecorationModel(model, capabilities, semanticStates);
