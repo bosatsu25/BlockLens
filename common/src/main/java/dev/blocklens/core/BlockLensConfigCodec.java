@@ -37,7 +37,7 @@ public final class BlockLensConfigCodec {
             }
 
             int separator = line.indexOf('=');
-            if (separator <= 0 || separator == line.length() - 1) {
+            if (separator == -1) {
                 continue;
             }
 
