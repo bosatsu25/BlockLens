@@ -35,7 +35,8 @@ final class MinecraftStateAdapterOracle {
         axisCapabilitiesProduceTheSameCommonAxisSemantics();
         slabAndPaneConnectionsMapWithoutMinecraftTypesEscapingCommon();
         stairsAndTrapdoorMapExactSourceSemantics();
-        nonDecorationReturnsEmptyAndMismatchedTargetFailsFast();
+        visibilityCapabilitiesMapBloomAndAllTripwireFlags();
+        statelessCapabilitiesReturnEmptyAndMismatchesFailFast();
     }
 
     private static void facingCapabilitiesMapToCommonFacing() {
@@ -146,18 +147,54 @@ final class MinecraftStateAdapterOracle {
                 "trapdoor semantic mismatch");
     }
 
-    private static void nonDecorationReturnsEmptyAndMismatchedTargetFailsFast() {
+    private static void visibilityCapabilitiesMapBloomAndAllTripwireFlags() {
+        require(MinecraftStateAdapter.interpret(
+                        CapabilityId.BLUE_ICE, Blocks.BLUE_ICE.defaultBlockState()).equals(SemanticState.empty()),
+                "static outline should not invent state semantics");
+
+        BlockState catalyst = Blocks.SCULK_CATALYST.defaultBlockState()
+                .setValue(BlockStateProperties.BLOOM, true);
+        require(MinecraftStateAdapter.interpret(CapabilityId.SCULK_CATALYST, catalyst).bloom(),
+                "sculk catalyst bloom semantic mismatch");
+
+        BlockState tripwire = Blocks.TRIPWIRE.defaultBlockState()
+                .setValue(BlockStateProperties.NORTH, true)
+                .setValue(BlockStateProperties.EAST, false)
+                .setValue(BlockStateProperties.SOUTH, true)
+                .setValue(BlockStateProperties.WEST, true)
+                .setValue(BlockStateProperties.POWERED, true)
+                .setValue(BlockStateProperties.ATTACHED, false);
+        SemanticState stringState = MinecraftStateAdapter.interpret(CapabilityId.STRING_TWEAKS, tripwire);
+        require(stringState.connected(Facing.NORTH), "tripwire north connection missing");
+        require(!stringState.connected(Facing.EAST), "tripwire east connection unexpected");
+        require(stringState.connected(Facing.SOUTH), "tripwire south connection missing");
+        require(stringState.connected(Facing.WEST), "tripwire west connection missing");
+        require(stringState.powered() && !stringState.attached(), "tripwire power/attached semantic mismatch");
+    }
+
+    private static void statelessCapabilitiesReturnEmptyAndMismatchesFailFast() {
         require(MinecraftStateAdapter.interpret(
                         CapabilityId.OBSIDIAN, Blocks.OBSIDIAN.defaultBlockState()).equals(SemanticState.empty()),
-                "non-decoration capability must return empty semantics");
+                "resource capability must return empty semantics");
+        require(MinecraftStateAdapter.interpret(
+                        CapabilityId.NETHER_TWEAKS, Blocks.NETHERRACK.defaultBlockState()).equals(SemanticState.empty()),
+                "Nether Tweaks must remain stateless until render policy consumes exact targets");
 
-        boolean failedFast = false;
+        boolean decorationFailedFast = false;
         try {
             MinecraftStateAdapter.interpret(CapabilityId.STAIRS, Blocks.STONE.defaultBlockState());
         } catch (IllegalArgumentException expected) {
-            failedFast = true;
+            decorationFailedFast = true;
         }
-        require(failedFast, "mismatched decoration target must fail fast");
+        require(decorationFailedFast, "mismatched decoration target must fail fast");
+
+        boolean visibilityFailedFast = false;
+        try {
+            MinecraftStateAdapter.interpret(CapabilityId.SCULK_CATALYST, Blocks.STONE.defaultBlockState());
+        } catch (IllegalArgumentException expected) {
+            visibilityFailedFast = true;
+        }
+        require(visibilityFailedFast, "mismatched stateful visibility target must fail fast");
     }
 
     private static Block block(String path) {
