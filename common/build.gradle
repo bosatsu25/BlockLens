@@ -30,7 +30,10 @@ def coverageGateClasses = [
         'dev/blocklens/core/render/DecorationVisualCue*.class',
         'dev/blocklens/core/render/DecorationRenderDescriptor*.class',
         'dev/blocklens/core/render/DecorationRenderPolicy*.class',
-        'dev/blocklens/core/render/DecorationTargetCatalog*.class'
+        'dev/blocklens/core/render/DecorationTargetCatalog*.class',
+        'dev/blocklens/core/render/DecorationQuadFace*.class',
+        'dev/blocklens/core/render/DecorationQuadInstruction*.class',
+        'dev/blocklens/core/render/DecorationQuadCuePolicy*.class'
 ]
 
 def coverageGateClassDirectories = providers.provider {
@@ -74,17 +77,20 @@ pitest {
             'dev.blocklens.core.state.TargetCapabilityIndex',
             'dev.blocklens.core.render.DecorationVisualCue',
             'dev.blocklens.core.render.DecorationRenderDescriptor',
-            'dev.blocklens.core.render.DecorationRenderPolicy'
+            'dev.blocklens.core.render.DecorationRenderPolicy',
+            'dev.blocklens.core.render.DecorationQuadInstruction',
+            'dev.blocklens.core.render.DecorationQuadCuePolicy'
     ]
     // Mutation tests intentionally exclude repository/filesystem contract tests and the
-    // large exact M0 target-data table; deterministic policy logic remains mutation-gated.
+    // large exact M0 target-data table; deterministic product-policy logic remains mutation-gated.
     targetTests = [
             'dev.blocklens.core.CapabilityIdTest',
             'dev.blocklens.core.BlockLensConfigCodecTest',
             'dev.blocklens.core.state.SemanticStateTest',
             'dev.blocklens.core.state.DecorationStateKindTest',
             'dev.blocklens.core.state.TargetCapabilityIndexTest',
-            'dev.blocklens.core.render.DecorationRenderPolicyTest'
+            'dev.blocklens.core.render.DecorationRenderPolicyTest',
+            'dev.blocklens.core.render.DecorationQuadCuePolicyTest'
     ]
     junit5PluginVersion = '1.2.3'
     threads = 2
