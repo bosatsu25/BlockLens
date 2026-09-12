@@ -1,6 +1,5 @@
 package dev.blocklens.fabric;
 
-import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.DecorationQuadCuePolicy;
@@ -24,12 +23,14 @@ import org.jspecify.annotations.Nullable;
 /**
  * Minecraft 26.1.2 baked-model wrapper for M3 decoration cues.
  *
- * <p>Semantic interpretation happens once during model bake. The render hot path only reads the
- * current immutable config snapshot and applies common quad instructions to the already-baked base
+ * <p>Semantic interpretation happens once during model bake. The render hot path only performs a
+ * primitive config-mask intersection and applies common quad instructions to the already-baked base
  * model, preserving active resource-pack textures.</p>
  */
 final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private final DecorationRenderDescriptor[] descriptors;
+    private final long[] descriptorBits;
+    private final long representedCapabilityMask;
 
     MinecraftDecorationModel(
             BlockStateModel wrapped,
@@ -42,9 +43,16 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             throw new IllegalArgumentException("capability/state arrays must be non-empty and have equal length");
         }
         this.descriptors = new DecorationRenderDescriptor[capabilities.length];
+        this.descriptorBits = new long[capabilities.length];
+        long represented = 0L;
         for (int i = 0; i < capabilities.length; i++) {
-            this.descriptors[i] = DecorationRenderDescriptor.of(capabilities[i], semanticStates[i]);
+            CapabilityId capability = Objects.requireNonNull(capabilities[i], "capability");
+            long bit = 1L << capability.ordinal();
+            this.descriptors[i] = DecorationRenderDescriptor.of(capability, semanticStates[i]);
+            this.descriptorBits[i] = bit;
+            represented |= bit;
         }
+        this.representedCapabilityMask = represented;
     }
 
     @Override
@@ -55,9 +63,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             BlockState state,
             RandomSource random,
             Predicate<@Nullable Direction> cullTest) {
-        BlockLensConfig config = BlockLensRuntime.config();
-        long enabledMask = enabledMask(config);
-        if (enabledMask == 0L) {
+        long enabledCapabilities = BlockLensRuntime.config().enabledMask() & representedCapabilityMask;
+        if (enabledCapabilities == 0L) {
             super.emitQuads(emitter, level, pos, state, random, cullTest);
             return;
         }
@@ -65,7 +72,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         emitter.pushTransform(quad -> {
             DecorationQuadFace face = face(quad.nominalFace());
             for (int i = 0; i < descriptors.length; i++) {
-                if ((enabledMask & (1L << i)) == 0L) {
+                if ((enabledCapabilities & descriptorBits[i]) == 0L) {
                     continue;
                 }
                 DecorationQuadInstruction instruction =
@@ -97,21 +104,11 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         if (wrappedKey == null) {
             return null;
         }
-        long enabledMask = enabledMask(BlockLensRuntime.config());
-        if (enabledMask == 0L) {
+        long enabledCapabilities = BlockLensRuntime.config().enabledMask() & representedCapabilityMask;
+        if (enabledCapabilities == 0L) {
             return wrappedKey;
         }
-        return new GeometryKey(wrappedKey, enabledMask);
-    }
-
-    private long enabledMask(BlockLensConfig config) {
-        long mask = 0L;
-        for (int i = 0; i < descriptors.length; i++) {
-            if (config.isEnabled(descriptors[i].capability())) {
-                mask |= 1L << i;
-            }
-        }
-        return mask;
+        return new GeometryKey(wrappedKey, enabledCapabilities);
     }
 
     private static DecorationQuadFace face(@Nullable Direction direction) {
@@ -128,6 +125,6 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         };
     }
 
-    private record GeometryKey(Object wrappedKey, long enabledMask) {
+    private record GeometryKey(Object wrappedKey, long enabledCapabilities) {
     }
 }
