@@ -14,6 +14,7 @@ public final class BlockLensClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        long startedNanos = System.nanoTime();
         BlockLensConfig config;
         try {
             config = BlockLensConfigFiles.loadOrCreate(FabricLoader.getInstance().getConfigDir());
@@ -22,11 +23,13 @@ public final class BlockLensClient implements ClientModInitializer {
             config = BlockLensConfig.defaults();
         }
 
-        BlockLensRuntime.initialize("26.1.2", config);
+        long initializationNanos = System.nanoTime() - startedNanos;
+        BlockLensRuntime.initialize("26.1.2", config, initializationNanos);
         LOGGER.log(
                 System.Logger.Level.INFO,
-                "BlockLens initialized for Minecraft {0}; capabilities={1}",
+                "BlockLens initialized for Minecraft {0}; capabilities={1}; initMicros={2}",
                 BlockLensRuntime.minecraftVersion(),
-                CapabilityId.values().length);
+                CapabilityId.values().length,
+                initializationNanos / 1_000L);
     }
 }
