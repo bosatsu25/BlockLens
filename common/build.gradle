@@ -38,6 +38,7 @@ def coverageGateClasses = [
         'dev/blocklens/core/render/VisibilityVisualCue*.class',
         'dev/blocklens/core/render/VisibilityRenderDescriptor*.class',
         'dev/blocklens/core/render/VisibilityRenderPolicy*.class',
+        'dev/blocklens/core/render/VisibilityQuadCuePolicy*.class',
         'dev/blocklens/core/render/VisibilityTargetCatalog*.class',
         'dev/blocklens/core/render/ResourceTargetCatalog*.class',
         'dev/blocklens/core/render/ResourceHighlightCue*.class',
@@ -94,6 +95,7 @@ pitest {
             'dev.blocklens.core.render.VisibilityVisualCue',
             'dev.blocklens.core.render.VisibilityRenderDescriptor',
             'dev.blocklens.core.render.VisibilityRenderPolicy',
+            'dev.blocklens.core.render.VisibilityQuadCuePolicy',
             'dev.blocklens.core.render.ResourceHighlightCue',
             'dev.blocklens.core.render.ResourceHighlightPolicy'
     ]
@@ -109,6 +111,7 @@ pitest {
             'dev.blocklens.core.render.DecorationRenderPolicyTest',
             'dev.blocklens.core.render.DecorationQuadCuePolicyTest',
             'dev.blocklens.core.render.VisibilityRenderPolicyTest',
+            'dev.blocklens.core.render.VisibilityQuadCuePolicyTest',
             'dev.blocklens.core.render.ResourceHighlightPolicyTest'
     ]
     junit5PluginVersion = '1.2.3'
