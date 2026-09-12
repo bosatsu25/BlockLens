@@ -62,6 +62,8 @@ final class RepositoryContractTest {
         assertTrue(targetOracle.contains("MinecraftDecorationTargetIndex.build()"));
         assertTrue(targetOracle.contains("bindingCount() == 254"));
         assertTrue(targetOracle.contains("DecorationTargetCatalog.targets"));
+        assertTrue(targetOracle.contains("MinecraftDecorationModelPlugin.isModelPipelineReady()"));
+        assertTrue(targetOracle.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 254"));
         assertFalse(Files.exists(retiredPlainJUnitOracle),
                 "mapped BlockState oracle must run after real client bootstrap, not in plain JUnit");
 
@@ -85,8 +87,12 @@ final class RepositoryContractTest {
                 "common/src/main/java/dev/blocklens/core/render/DecorationRenderDescriptor.java"));
         String cue = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/DecorationVisualCue.java"));
+        String quadPolicy = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/DecorationQuadCuePolicy.java"));
         String catalog = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/DecorationTargetCatalog.java"));
+        String config = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/BlockLensConfig.java"));
         String v2612 = Files.readString(root().resolve(
                 "versions/mc26_1_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationTargetIndex.java"));
         String v262 = Files.readString(root().resolve(
@@ -96,13 +102,49 @@ final class RepositoryContractTest {
         assertTrue(policy.contains("DecorationRenderDescriptor.of"));
         assertTrue(descriptor.contains("DecorationVisualCue.forCapability"));
         assertTrue(cue.contains("OPAQUE_STAINED_GLASS"));
+        assertTrue(quadPolicy.contains("case OPAQUE_STAINED_GLASS -> DecorationQuadInstruction.OPAQUE"));
+        assertTrue(quadPolicy.contains("case X ->"));
+        assertTrue(quadPolicy.contains("case Y ->"));
+        assertTrue(quadPolicy.contains("case Z ->"));
         assertTrue(catalog.contains("CapabilityId.STAIRS"));
         assertTrue(catalog.contains("CapabilityId.STAINED_GLASS"));
         assertTrue(catalog.contains("CapabilityId.TRAPDOOR"));
+        assertTrue(config.contains("private final long enabledMask"));
+        assertTrue(config.contains("public long enabledMask()"));
         assertTrue(v2612.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
         assertTrue(v262.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
         assertFalse(catalog.contains("endsWith(\"_stairs\")"),
                 "M3 exact M0 target scope must not silently broaden by suffix");
+    }
+
+    @Test
+    void m3ModelPipelineRemainsZeroScanAndHasPrimitiveOffFastPath() throws IOException {
+        for (String module : List.of("mc26_1_2", "mc26_2")) {
+            Path sourceRoot = root().resolve("versions").resolve(module).resolve("src/main/java/dev/blocklens/fabric");
+            String client = Files.readString(sourceRoot.resolve("BlockLensClient.java"));
+            String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
+            String model = Files.readString(sourceRoot.resolve("MinecraftDecorationModel.java"));
+
+            assertTrue(client.contains("MinecraftDecorationModelPlugin.register()"));
+            assertTrue(plugin.contains("ModelModifier.WRAP_PHASE"));
+            assertTrue(plugin.contains("BuiltInRegistries.BLOCK.getId(state.getBlock())"));
+            assertTrue(plugin.contains("targetIndex.mask(rawId)"));
+            assertTrue(plugin.contains("MinecraftStateAdapter.interpret(capability, state)"));
+
+            assertTrue(model.contains("BlockLensRuntime.config().enabledMask() & representedCapabilityMask"));
+            assertTrue(model.contains("if (enabledCapabilities == 0L)"));
+            assertTrue(model.contains("super.emitQuads(emitter, level, pos, state, random, cullTest)"));
+            assertTrue(model.contains("quad.chunkLayer(ChunkSectionLayer.SOLID)"));
+            assertTrue(model.contains("quad.multiplyColor(instruction.multiplyArgb())"));
+            assertTrue(model.contains("wrapped.createGeometryKey"));
+
+            assertFalse(plugin.contains("level.getBlockState("),
+                    "M3 model classification must not scan world state");
+            assertFalse(model.contains("BuiltInRegistries"),
+                    "M3 render hot path must not perform registry lookup");
+            assertFalse(model.contains("MinecraftStateAdapter.interpret"),
+                    "M3 render hot path must not reinterpret BlockState");
+        }
     }
 
     @Test
@@ -113,6 +155,8 @@ final class RepositoryContractTest {
         assertTrue(convention.contains("forbiddenPayloadMarkers"));
         assertTrue(convention.contains("respackopts.json5"));
         assertTrue(convention.contains("Runtime JAR contains forbidden residue entry"));
+        assertTrue(convention.contains("MinecraftDecorationModelPlugin.class"));
+        assertTrue(convention.contains("DecorationQuadCuePolicy.class"));
         assertTrue(ci.contains("Verify reproducible runtime JAR"));
         assertTrue(ci.contains("first_sha"));
         assertTrue(ci.contains("second_sha"));
@@ -131,6 +175,7 @@ final class RepositoryContractTest {
         assertTrue(agents.contains("DONE`, `BLOCKED`, or explicitly scoped `PARTIAL`"));
 
         assertTrue(index.contains("current/engineering-loop.md"));
+        assertTrue(index.contains("current/m3-visual-semantics.md"));
         assertTrue(graphLoop.contains("DISCOVER"));
         assertTrue(graphLoop.contains("IMPLEMENT"));
         assertTrue(graphLoop.contains("SELF REVIEW"));
