@@ -86,9 +86,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t jars < <(find "versions/${{ matrix.module }}/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' -print)
+          mapfile -t jars < <(find "versions/${{ matrix.module }}/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print)
           if [[ "${#jars[@]}" -ne 1 ]]; then
-            echo "Expected exactly one runtime JAR, found ${#jars[@]}" >&2
+            echo "Expected exactly one remapped runtime JAR, found ${#jars[@]}" >&2
             printf '%s\n' "${jars[@]}" >&2
             exit 1
           fi
