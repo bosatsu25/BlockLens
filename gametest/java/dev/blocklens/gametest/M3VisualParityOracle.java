@@ -121,8 +121,8 @@ final class M3VisualParityOracle {
 
     private static void buildScene(TestSingleplayerContext singleplayer) {
         var server = singleplayer.getServer();
-        server.runCommand("gamerule doDaylightCycle false");
-        server.runCommand("gamerule doWeatherCycle false");
+        server.runCommand("gamerule minecraft:advance_time false");
+        server.runCommand("gamerule minecraft:advance_weather false");
         server.runCommand("time set noon");
         server.runCommand("weather clear");
         server.runCommand("gamemode spectator @a");
