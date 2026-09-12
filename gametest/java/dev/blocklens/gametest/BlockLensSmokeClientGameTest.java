@@ -14,16 +14,16 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.loader.api.FabricLoader;
 
-/**
- * Shared client smoke test compiled and executed against every supported Minecraft version.
- * It intentionally validates only M1 runtime contracts; rendering parity is added with later milestones.
- */
+/** Shared client smoke and integration oracle executed against every supported Minecraft version. */
 public final class BlockLensSmokeClientGameTest implements FabricClientGameTest {
     private static final int EXPECTED_CAPABILITY_COUNT = 37;
 
     @Override
     public void runTest(ClientGameTestContext context) {
-        context.runOnClient(client -> verifyRuntime("initial client launch", true));
+        context.runOnClient(client -> {
+            verifyRuntime("initial client launch", true);
+            MinecraftStateAdapterOracle.verify();
+        });
 
         // Do not depend on version-specific TestSingleplayerContext accessors here.
         // Creating the world, allowing client ticks, and closing the context exercises
