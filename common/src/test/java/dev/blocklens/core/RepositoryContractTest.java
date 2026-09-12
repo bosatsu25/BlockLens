@@ -72,6 +72,35 @@ final class RepositoryContractTest {
     }
 
     @Test
+    void engineeringGraphLoopAndBilingualReadmesRemainDocumented() throws IOException {
+        String agents = Files.readString(root().resolve("AGENTS.md"));
+        String index = Files.readString(root().resolve("knowledge/index.md"));
+        String graphLoop = Files.readString(root().resolve("knowledge/current/engineering-loop.md"));
+        String englishReadme = Files.readString(root().resolve("README.md"));
+        String japaneseReadme = Files.readString(root().resolve("README_ja.md"));
+
+        assertTrue(agents.contains("## Engineering Graph Loop"));
+        assertTrue(agents.contains("DIAGNOSE -> FIX -> VERIFY"));
+        assertTrue(agents.contains("DONE`, `BLOCKED`, or explicitly scoped `PARTIAL`"));
+
+        assertTrue(index.contains("current/engineering-loop.md"));
+        assertTrue(graphLoop.contains("DISCOVER"));
+        assertTrue(graphLoop.contains("IMPLEMENT"));
+        assertTrue(graphLoop.contains("SELF REVIEW"));
+        assertTrue(graphLoop.contains("ISSUE UPDATE"));
+        assertTrue(graphLoop.contains("DIAGNOSE"));
+        assertTrue(graphLoop.contains("PARTIAL"));
+        assertTrue(graphLoop.contains("```mermaid"));
+
+        assertTrue(englishReadme.contains("[日本語](README_ja.md)"));
+        assertTrue(japaneseReadme.contains("[English](README.md)"));
+        assertTrue(englishReadme.contains("## Engineering Graph Loop"));
+        assertTrue(japaneseReadme.contains("## Engineering Graph Loop"));
+        assertTrue(englishReadme.contains("```mermaid"));
+        assertTrue(japaneseReadme.contains("```mermaid"));
+    }
+
+    @Test
     void startupSourceContainsNoNetworkTelemetryOrReflectionDiscovery() throws IOException {
         List<String> banned = List.of(
                 "Class.forName(",
