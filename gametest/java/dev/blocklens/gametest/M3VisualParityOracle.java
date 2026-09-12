@@ -28,7 +28,11 @@ final class M3VisualParityOracle {
     private static final int WIDTH = 640;
     private static final int HEIGHT = 360;
     private static final int EXPECTED_DECORATION_CAPABILITIES = 13;
-    private static final int MIN_DIFFERENT_PIXELS = 250;
+    private static final int TARGET_MIN_X = 90;
+    private static final int TARGET_MIN_Y = 205;
+    private static final int TARGET_MAX_X = 550;
+    private static final int TARGET_MAX_Y = 285;
+    private static final int MIN_TARGET_DIFFERENT_PIXELS = 150;
     private static final int MIN_RESOURCE_PACK_MARKER_PIXELS = 25;
     private static final int RESOURCE_RELOAD_TIMEOUT_TICKS = 1200;
     private static final int TERRAIN_REBUILD_SETTLE_TICKS = 30;
@@ -77,14 +81,14 @@ final class M3VisualParityOracle {
             ImageMetrics on = inspect(allOnImage);
             ImageMetrics reloaded = inspect(reloadedImage);
             ImageMetrics off = inspect(allOffImage);
-            int onOffDifference = differentPixelCount(on.image(), off.image());
-            int reloadedOffDifference = differentPixelCount(reloaded.image(), off.image());
+            int onOffDifference = targetDifferentPixelCount(on.image(), off.image());
+            int reloadedOffDifference = targetDifferentPixelCount(reloaded.image(), off.image());
 
-            require(onOffDifference >= MIN_DIFFERENT_PIXELS,
-                    "M3 all-on screenshot is not visually distinct from OFF; differentPixels="
+            require(onOffDifference >= MIN_TARGET_DIFFERENT_PIXELS,
+                    "M3 all-on target region is not visually distinct from OFF; differentPixels="
                             + onOffDifference);
-            require(reloadedOffDifference >= MIN_DIFFERENT_PIXELS,
-                    "M3 rendering did not survive resource reload; differentPixels="
+            require(reloadedOffDifference >= MIN_TARGET_DIFFERENT_PIXELS,
+                    "M3 target rendering did not survive resource reload; differentPixels="
                             + reloadedOffDifference);
 
             // The GameTest mod overrides white_glazed_terracotta with vanilla magenta_concrete.
@@ -117,6 +121,8 @@ final class M3VisualParityOracle {
 
     private static void buildScene(TestSingleplayerContext singleplayer) {
         var server = singleplayer.getServer();
+        server.runCommand("gamerule doDaylightCycle false");
+        server.runCommand("gamerule doWeatherCycle false");
         server.runCommand("time set noon");
         server.runCommand("weather clear");
         server.runCommand("gamemode spectator @a");
@@ -125,7 +131,8 @@ final class M3VisualParityOracle {
         // Front row: seven representative capabilities.
         server.runCommand("setblock -6 -59 2 minecraft:anvil[facing=north]");
         server.runCommand("setblock -4 -59 2 minecraft:beehive[facing=south,honey_level=5]");
-        server.runCommand("setblock -2 -59 2 minecraft:campfire[facing=east,lit=true]");
+        // Keep the representative campfire unlit so screenshot comparison has no smoke particles.
+        server.runCommand("setblock -2 -59 2 minecraft:campfire[facing=east,lit=false]");
         server.runCommand("setblock 0 -59 2 minecraft:white_glazed_terracotta[facing=north]");
         server.runCommand("setblock 2 -59 2 minecraft:grindstone[face=wall,facing=east]");
         server.runCommand("setblock 4 -59 2 minecraft:oak_fence_gate[facing=west,open=true,in_wall=false]");
@@ -252,12 +259,12 @@ final class M3VisualParityOracle {
         return new ImageMetrics(image, magentaPixels, nonBlackPixels, Files.size(imagePath));
     }
 
-    private static int differentPixelCount(BufferedImage left, BufferedImage right) {
+    private static int targetDifferentPixelCount(BufferedImage left, BufferedImage right) {
         require(left.getWidth() == right.getWidth() && left.getHeight() == right.getHeight(),
                 "visual parity images have different dimensions");
         int different = 0;
-        for (int y = 0; y < left.getHeight(); y++) {
-            for (int x = 0; x < left.getWidth(); x++) {
+        for (int y = TARGET_MIN_Y; y < TARGET_MAX_Y; y++) {
+            for (int x = TARGET_MIN_X; x < TARGET_MAX_X; x++) {
                 int a = left.getRGB(x, y);
                 int b = right.getRGB(x, y);
                 int delta = Math.abs(((a >>> 16) & 0xFF) - ((b >>> 16) & 0xFF))
@@ -284,6 +291,7 @@ final class M3VisualParityOracle {
         String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
                 + "decorationCapabilities=" + EXPECTED_DECORATION_CAPABILITIES + "\n"
                 + "wrappedModels=" + MinecraftDecorationModelPlugin.wrappedModelCount() + "\n"
+                + "targetRegion=" + TARGET_MIN_X + "," + TARGET_MIN_Y + "-" + TARGET_MAX_X + "," + TARGET_MAX_Y + "\n"
                 + "onFile=" + onPath.getFileName() + "\n"
                 + "onBytes=" + on.fileBytes() + "\n"
                 + "onMagentaPixels=" + on.magentaPixels() + "\n"
@@ -293,8 +301,8 @@ final class M3VisualParityOracle {
                 + "offFile=" + offPath.getFileName() + "\n"
                 + "offBytes=" + off.fileBytes() + "\n"
                 + "offMagentaPixels=" + off.magentaPixels() + "\n"
-                + "onOffDifferentPixels=" + onOffDifference + "\n"
-                + "reloadedOffDifferentPixels=" + reloadedOffDifference + "\n";
+                + "onOffTargetDifferentPixels=" + onOffDifference + "\n"
+                + "reloadedOffTargetDifferentPixels=" + reloadedOffDifference + "\n";
         Files.writeString(
                 outputDir.resolve("m3-visual-manifest.txt"),
                 manifest,
