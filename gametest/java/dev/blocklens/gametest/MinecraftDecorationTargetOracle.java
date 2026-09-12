@@ -4,12 +4,13 @@ import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.DecorationTargetCatalog;
 import dev.blocklens.core.state.DecorationStateKind;
 import dev.blocklens.core.state.TargetCapabilityIndex;
+import dev.blocklens.fabric.MinecraftDecorationModelPlugin;
 import dev.blocklens.fabric.MinecraftDecorationTargetIndex;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 
-/** Verifies exact M0 decoration targets against the bootstrapped registry of each Minecraft line. */
+/** Verifies exact M0 decoration targets and the baked-model pipeline on every supported client. */
 final class MinecraftDecorationTargetOracle {
     private MinecraftDecorationTargetOracle() {
     }
@@ -33,6 +34,11 @@ final class MinecraftDecorationTargetOracle {
             }
         }
         require(checked == 254, "expected to verify 254 target bindings but got " + checked);
+        require(MinecraftDecorationModelPlugin.isModelPipelineReady(),
+                "M3 decoration model pipeline was not registered during model loading");
+        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 254,
+                "expected at least one wrapped state model per M0 target; wrapped="
+                        + MinecraftDecorationModelPlugin.wrappedModelCount());
     }
 
     private static Block block(String path) {
