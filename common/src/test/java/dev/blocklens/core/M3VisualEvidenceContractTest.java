@@ -26,12 +26,25 @@ final class M3VisualEvidenceContractTest {
         assertTrue(visual.contains("m3-all13-reloaded"));
         assertTrue(visual.contains("m3-all13-off-active-pack"));
         assertTrue(visual.contains("reloadResourcePacks()"));
-        assertTrue(visual.contains("levelRenderer.allChanged()"));
+        assertTrue(visual.contains("MinecraftTerrainInvalidator::invalidateAll"));
         assertTrue(visual.contains("TERRAIN_REBUILD_SETTLE_TICKS"));
         assertTrue(visual.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 254"));
         assertTrue(visual.contains("differentPixelCount"));
         assertTrue(visual.contains("MIN_RESOURCE_PACK_MARKER_PIXELS"));
         assertTrue(visual.contains("installRuntimeConfig(original)"));
+    }
+
+    @Test
+    void terrainInvalidationStaysVersionSpecific() throws IOException {
+        String mc2612 = Files.readString(root().resolve(
+                "versions/mc26_1_2/src/main/java/dev/blocklens/fabric/MinecraftTerrainInvalidator.java"));
+        String mc262 = Files.readString(root().resolve(
+                "versions/mc26_2/src/main/java/dev/blocklens/fabric/MinecraftTerrainInvalidator.java"));
+
+        assertTrue(mc2612.contains("client.levelRenderer.allChanged()"));
+        assertTrue(mc262.contains("client.levelExtractor.allChanged()"));
+        assertFalse(mc2612.contains("levelExtractor"));
+        assertFalse(mc262.contains("levelRenderer.allChanged()"));
     }
 
     @Test
