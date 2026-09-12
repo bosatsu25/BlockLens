@@ -33,7 +33,7 @@ def coverageGateClassDirectories = providers.provider {
 }
 
 jacocoTestReport {
-    dependsOn test
+    dependsOn tasks.named('test')
     classDirectories.setFrom(coverageGateClassDirectories)
     reports {
         xml.required = true
@@ -43,7 +43,7 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-    dependsOn jacocoTestReport
+    dependsOn tasks.named('jacocoTestReport')
     classDirectories.setFrom(coverageGateClassDirectories)
     violationRules {
         rule {
@@ -77,8 +77,8 @@ pitest {
 tasks.register('qualityGate') {
     group = 'verification'
     description = 'Shared BlockLens semantic/config quality gate.'
-    dependsOn test
-    dependsOn jacocoTestReport
-    dependsOn jacocoTestCoverageVerification
-    dependsOn pitest
+    dependsOn tasks.named('test')
+    dependsOn tasks.named('jacocoTestReport')
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+    dependsOn tasks.named('pitest')
 }
