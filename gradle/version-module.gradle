@@ -49,16 +49,20 @@ tasks.named('sourcesJar') {
     reproducibleFileOrder = true
 }
 
+// Loom 1.17 can operate in either remapping or non-remapping mode depending on
+// the target Minecraft line. In remapping mode the distributable artifact is
+// remapJar; in non-remapping mode Loom deliberately uses jar directly.
+def runtimeJarTask = tasks.findByName('remapJar') != null
+        ? tasks.named('remapJar')
+        : tasks.named('jar')
+
 tasks.register('versionSmokeContract') {
     group = 'verification'
-    description = "Checks the ${blockLensMinecraftVersion} remapped runtime artifact structure and client-only metadata."
-    // Loom registers remapJar late in project configuration. String dependency
-    // defers resolution until the task graph is ready instead of forcing eager lookup.
-    dependsOn 'remapJar'
+    description = "Checks the ${blockLensMinecraftVersion} runtime artifact structure and client-only metadata."
+    dependsOn runtimeJarTask
 
     doLast {
-        def remapTask = tasks.getByName('remapJar')
-        File runtimeJar = remapTask.archiveFile.get().asFile
+        File runtimeJar = runtimeJarTask.get().archiveFile.get().asFile
         new java.util.zip.ZipFile(runtimeJar).withCloseable { archive ->
             for (String required : [
                     'fabric.mod.json',
@@ -89,11 +93,10 @@ tasks.register('versionSmokeContract') {
 tasks.register('verifyRuntimeJarBudget') {
     group = 'verification'
     description = "Checks BlockLens ${blockLensMinecraftVersion} runtime JAR against the source-pack size budget."
-    dependsOn 'remapJar'
+    dependsOn runtimeJarTask
 
     doLast {
-        def remapTask = tasks.getByName('remapJar')
-        File runtimeJar = remapTask.archiveFile.get().asFile
+        File runtimeJar = runtimeJarTask.get().archiveFile.get().asFile
         long bytes = runtimeJar.length()
         long hardMax = Long.parseLong(rootProject.runtime_jar_hard_max_bytes)
         long stretch = Long.parseLong(rootProject.runtime_jar_stretch_bytes)
