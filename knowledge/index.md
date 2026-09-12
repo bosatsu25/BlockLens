@@ -17,6 +17,7 @@ Read these before implementation or review:
 11. [`current/roadmap.md`](current/roadmap.md) — implementation order and acceptance criteria
 12. [`current/engineering-loop.md`](current/engineering-loop.md) — authoritative Graph Loop for discovery, implementation, verification, diagnosis/fix cycles, PR/CI, and completion states
 13. [`current/m3-visual-semantics.md`](current/m3-visual-semantics.md) — completed M3 source-derived visual intent, procedural cue policy, zero-scan model pipeline, resource-pack restoration rules, and verified dual-version framebuffer evidence
+14. [`current/m4-visual-semantics.md`](current/m4-visual-semantics.md) — authoritative M4 source-derived outline/fine-line semantics, exact five-capability scope, tripwire 64-state contract, and implementation/verification plan
 
 ## Rule
 
