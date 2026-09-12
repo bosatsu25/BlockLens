@@ -1,0 +1,91 @@
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(Integer.parseInt(rootProject.java_version))
+    }
+    withSourcesJar()
+}
+
+version = "${rootProject.mod_version}+mc${blockLensMinecraftVersion}"
+base {
+    archivesName = "${rootProject.archives_base_name}-${blockLensMinecraftVersion}"
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${blockLensMinecraftVersion}"
+    implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${blockLensFabricApiVersion}"
+    implementation project(':common')
+
+    testImplementation platform('org.junit:junit-bom:5.14.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraft_version', blockLensMinecraftVersion
+    inputs.property 'loader_version', rootProject.loader_version
+    filesMatching('fabric.mod.json') {
+        expand(
+                version: project.version,
+                minecraft_version: blockLensMinecraftVersion,
+                loader_version: rootProject.loader_version)
+    }
+}
+
+tasks.named('jar') {
+    dependsOn project(':common').tasks.named('classes')
+    from(project(':common').sourceSets.main.output)
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    exclude '**/*Test.class', '**/test/**'
+}
+
+tasks.named('sourcesJar') {
+    from(project(':common').sourceSets.main.allSource)
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+tasks.register('verifyRuntimeJarBudget') {
+    group = 'verification'
+    description = "Checks BlockLens ${blockLensMinecraftVersion} runtime JAR against the source-pack size budget."
+    dependsOn tasks.named('remapJar')
+
+    doLast {
+        File runtimeJar = tasks.named('remapJar').get().archiveFile.get().asFile
+        long bytes = runtimeJar.length()
+        long hardMax = Long.parseLong(rootProject.runtime_jar_hard_max_bytes)
+        long stretch = Long.parseLong(rootProject.runtime_jar_stretch_bytes)
+        logger.lifecycle(
+                'BlockLens {} runtime JAR: {} bytes (hard < {}, stretch <= {})',
+                blockLensMinecraftVersion,
+                bytes,
+                hardMax + 1L,
+                stretch)
+
+        if (bytes > stretch) {
+            logger.lifecycle('Largest compressed runtime entries:')
+            new java.util.zip.ZipFile(runtimeJar).withCloseable { archive ->
+                archive.entries().toList()
+                        .findAll { !it.directory }
+                        .sort { left, right -> Long.compare(right.compressedSize, left.compressedSize) }
+                        .take(12)
+                        .each { entry ->
+                            logger.lifecycle('  {} bytes compressed / {} raw  {}', entry.compressedSize, entry.size, entry.name)
+                        }
+            }
+        }
+
+        if (bytes > hardMax) {
+            throw new GradleException(
+                    "BlockLens ${blockLensMinecraftVersion} runtime JAR is ${bytes} bytes; hard maximum is ${hardMax} bytes.")
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyRuntimeJarBudget')
+}
