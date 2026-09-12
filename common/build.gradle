@@ -1,0 +1,89 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id 'info.solidsoft.pitest'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(Integer.parseInt(rootProject.java_version))
+    }
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.14.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+jacoco {
+    toolVersion = rootProject.jacoco_version
+}
+
+def coverageGateClasses = [
+        'dev/blocklens/core/CapabilityId*.class',
+        'dev/blocklens/core/BlockLensConfig*.class',
+        'dev/blocklens/core/BlockLensConfigCodec*.class'
+]
+
+def coverageGateClassDirectories = providers.provider {
+    files(sourceSets.main.output.classesDirs.collect { classesDir ->
+        fileTree(dir: classesDir, include: coverageGateClasses)
+    })
+}
+
+jacocoTestReport {
+    dependsOn tasks.named('test')
+    classDirectories.setFrom(coverageGateClassDirectories)
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn tasks.named('jacocoTestReport')
+    classDirectories.setFrom(coverageGateClassDirectories)
+    violationRules {
+        rule {
+            element = 'BUNDLE'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = new BigDecimal(rootProject.quality_line_threshold)
+            }
+        }
+    }
+}
+
+pitest {
+    targetClasses = [
+            'dev.blocklens.core.CapabilityId',
+            'dev.blocklens.core.BlockLensConfig',
+            'dev.blocklens.core.BlockLensConfigCodec'
+    ]
+    // Mutation tests intentionally exclude repository/filesystem contract tests.
+    // PIT runs tests in an isolated JVM; only deterministic pure tests belong here.
+    targetTests = [
+            'dev.blocklens.core.CapabilityIdTest',
+            'dev.blocklens.core.BlockLensConfigCodecTest'
+    ]
+    junit5PluginVersion = '1.2.3'
+    threads = 2
+    outputFormats = ['HTML', 'XML']
+    timestampedReports = false
+    failWhenNoMutations = true
+    mutationThreshold = Integer.parseInt(rootProject.quality_mutation_threshold)
+    coverageThreshold = Integer.parseInt(rootProject.quality_coverage_threshold)
+    testStrengthThreshold = Integer.parseInt(rootProject.quality_test_strength_threshold)
+}
+
+tasks.register('qualityGate') {
+    group = 'verification'
+    description = 'Shared BlockLens semantic/config quality gate.'
+    dependsOn tasks.named('test')
+    dependsOn tasks.named('jacocoTestReport')
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+    dependsOn tasks.named('pitest')
+}

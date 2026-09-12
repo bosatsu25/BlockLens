@@ -14,19 +14,19 @@ Every implementation milestone after M1 must preserve:
 
 Performance and size are continuous gates, not tasks postponed until the end.
 
-## M0 — Baseline freeze
+## M0 — Baseline freeze ✅
 
 Goal: make the source resource pack reproducible as a specification before coding.
 
 Tasks:
 
-- [ ] Record SHA-256 of supplied ZIP and RPO
-- [ ] Map 37 RPO keys to source files
-- [ ] Map source files to Minecraft block IDs/states
-- [ ] Identify duplicate/generated assets
-- [ ] Capture representative screenshots/golden references
-- [ ] Document ambiguous capabilities, especially `nethertweaks`
-- [ ] Classify retained third-party assets and licensing risk
+- [x] Record SHA-256 of supplied ZIP and RPO
+- [x] Map 37 RPO keys to source files
+- [x] Map source files to Minecraft block IDs/states
+- [x] Identify duplicate/generated/unreachable assets
+- [x] Capture machine golden references from pinned source hashes, path sets, tooltips, target/state mappings, and dependency counts
+- [x] Document ambiguous capabilities, especially `nethertweaks`
+- [x] Classify retained third-party assets and licensing risk
 
 Exit criteria:
 
@@ -34,28 +34,31 @@ Exit criteria:
 - no capability is defined only by guesswork
 - baseline measurements are reproducible
 
-## M1 — Dual-version Fabric/Java 25 scaffold + quality foundation
+Evidence: Issue #1 completed; `source-baseline.md`, `capability-map.md`, and `capability-contract.tsv` are authoritative.
+
+## M1 — Dual-version Fabric/Java 25 scaffold + quality foundation ✅
 
 Goal: establish a minimal buildable client-only mod for **26.1.2 and 26.2** with the full quality contract in place before feature implementation expands.
 
 Tasks:
 
-- [ ] Gradle multi-project layout: `common`, `versions/mc26_1_2`, `versions/mc26_2`
-- [ ] Fabric metadata/runtime artifact per version
-- [ ] one client entrypoint per artifact
-- [ ] 37-capability common catalog
-- [ ] native shared configuration schema
-- [ ] English/Japanese translation skeleton
-- [ ] JUnit 5
-- [ ] JaCoCo selected-policy coverage gate
-- [ ] PIT selected-policy mutation gate
-- [ ] `qualityGate` and `ciGate`
-- [ ] GitHub Actions version matrix / isolated per-version jobs
-- [ ] client GameTest/smoke path for both versions
-- [ ] functional-parity/version-parity contracts
-- [ ] reproducible artifact audit
-- [ ] per-version JAR byte report/budget
-- [ ] startup/resource-reload performance evidence harness or documented reproducible capture path
+- [x] Gradle multi-project layout: `common`, `versions/mc26_1_2`, `versions/mc26_2`
+- [x] Fabric metadata/runtime artifact per version
+- [x] one client entrypoint per artifact
+- [x] 37-capability common catalog
+- [x] native shared configuration schema
+- [x] English/Japanese translation skeleton
+- [x] JUnit 5
+- [x] JaCoCo selected-policy coverage gate
+- [x] PIT selected-policy mutation gate
+- [x] `qualityGate` and `ciGate`
+- [x] GitHub Actions version matrix / isolated per-version jobs
+- [x] client GameTest/smoke path for both versions
+- [x] functional-parity/version-parity contracts
+- [x] reproducible artifact audit
+- [x] per-version JAR byte report/budget
+- [x] startup/resource-load performance evidence path and recorded BlockLens initialization baseline
+- [x] runtime artifact privacy/residue audit
 
 Exit criteria:
 
@@ -65,6 +68,8 @@ Exit criteria:
 - no server dependency
 - automated quality entry points PASS
 - first per-version load/size baselines recorded
+
+Verified baseline: [`m1-baseline.md`](m1-baseline.md). GitHub Actions run `34683630501` passed common quality plus both version build/reproducibility/Client GameTest jobs.
 
 ## M2 — Shared state engine and version adapters
 

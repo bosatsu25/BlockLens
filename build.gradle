@@ -1,0 +1,48 @@
+plugins {
+    id 'base'
+    id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+    id 'info.solidsoft.pitest' version '1.19.0' apply false
+}
+
+allprojects {
+    group = project.maven_group
+    version = project.mod_version
+
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.fabricmc.net/' }
+    }
+}
+
+subprojects {
+    tasks.withType(JavaCompile).configureEach {
+        options.release = Integer.parseInt(rootProject.java_version)
+        options.encoding = 'UTF-8'
+        options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:unchecked', '-Werror'])
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        failFast = false
+        systemProperty 'file.encoding', 'UTF-8'
+        systemProperty 'blocklens.repoRoot', rootProject.projectDir.absolutePath
+    }
+}
+
+tasks.register('qualityGate') {
+    group = 'verification'
+    description = 'Runs the shared semantic/configuration quality gates and both version contract tests.'
+    dependsOn ':common:qualityGate'
+    dependsOn ':versions:mc26_1_2:test'
+    dependsOn ':versions:mc26_2:test'
+}
+
+tasks.register('ciGate') {
+    group = 'verification'
+    description = 'Strict BlockLens CI entry point for common quality plus both supported runtime artifacts.'
+    dependsOn 'qualityGate'
+    dependsOn ':versions:mc26_1_2:build'
+    dependsOn ':versions:mc26_1_2:verifyRuntimeJarBudget'
+    dependsOn ':versions:mc26_2:build'
+    dependsOn ':versions:mc26_2:verifyRuntimeJarBudget'
+}
