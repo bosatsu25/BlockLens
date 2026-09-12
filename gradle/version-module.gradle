@@ -49,6 +49,40 @@ tasks.named('sourcesJar') {
     reproducibleFileOrder = true
 }
 
+tasks.register('versionSmokeContract') {
+    group = 'verification'
+    description = "Checks the ${blockLensMinecraftVersion} remapped runtime artifact structure and client-only metadata."
+    dependsOn tasks.named('remapJar')
+
+    doLast {
+        File runtimeJar = tasks.named('remapJar').get().archiveFile.get().asFile
+        new java.util.zip.ZipFile(runtimeJar).withCloseable { archive ->
+            for (String required : [
+                    'fabric.mod.json',
+                    'dev/blocklens/fabric/BlockLensClient.class',
+                    'dev/blocklens/core/CapabilityId.class',
+                    'dev/blocklens/core/BlockLensConfig.class',
+                    'assets/blocklens/lang/en_us.json',
+                    'assets/blocklens/lang/ja_jp.json']) {
+                if (archive.getEntry(required) == null) {
+                    throw new GradleException("Runtime JAR missing required entry: ${required}")
+                }
+            }
+
+            String metadata = archive.getInputStream(archive.getEntry('fabric.mod.json')).getText('UTF-8')
+            if (!metadata.contains('"environment": "client"')) {
+                throw new GradleException('fabric.mod.json must remain client-only')
+            }
+            if (!metadata.contains("\"minecraft\": \"=${blockLensMinecraftVersion}\"")) {
+                throw new GradleException("fabric.mod.json is not pinned to Minecraft ${blockLensMinecraftVersion}")
+            }
+            if (archive.entries().toList().any { entry -> entry.name.endsWith('.jar') }) {
+                throw new GradleException('Runtime JAR must not contain nested dependency JARs in the baseline scaffold')
+            }
+        }
+    }
+}
+
 tasks.register('verifyRuntimeJarBudget') {
     group = 'verification'
     description = "Checks BlockLens ${blockLensMinecraftVersion} runtime JAR against the source-pack size budget."
@@ -87,5 +121,6 @@ tasks.register('verifyRuntimeJarBudget') {
 }
 
 tasks.named('check') {
+    dependsOn tasks.named('versionSmokeContract')
     dependsOn tasks.named('verifyRuntimeJarBudget')
 }
