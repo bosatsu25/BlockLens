@@ -31,8 +31,14 @@ final class M3VisualEvidenceContractTest {
         assertTrue(visual.contains("Thread.sleep(RELOAD_OVERLAY_FADE_MILLIS)"));
         assertTrue(visual.contains("MinecraftTerrainInvalidator::invalidateAll"));
         assertTrue(visual.contains("TERRAIN_REBUILD_SETTLE_TICKS"));
+        assertTrue(visual.contains("gamerule doDaylightCycle false"));
+        assertTrue(visual.contains("gamerule doWeatherCycle false"));
+        assertTrue(visual.contains("minecraft:campfire[facing=east,lit=false]"));
+        assertTrue(visual.contains("TARGET_MIN_X"));
+        assertTrue(visual.contains("TARGET_MAX_Y"));
+        assertTrue(visual.contains("MIN_TARGET_DIFFERENT_PIXELS"));
+        assertTrue(visual.contains("targetDifferentPixelCount"));
         assertTrue(visual.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 254"));
-        assertTrue(visual.contains("differentPixelCount"));
         assertTrue(visual.contains("MIN_RESOURCE_PACK_MARKER_PIXELS"));
         assertTrue(visual.contains("installRuntimeConfig(original)"));
     }
