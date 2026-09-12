@@ -21,6 +21,22 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'blocklens-gametest'
+        enableGameTests = false
+        enableClientGameTests = true
+    }
+}
+
+sourceSets {
+    gametest {
+        java.srcDir rootProject.file('gametest/java')
+        resources.srcDir rootProject.file('gametest/resources')
+    }
+}
+
 processResources {
     inputs.property 'version', project.version
     inputs.property 'minecraft_version', blockLensMinecraftVersion
