@@ -158,7 +158,7 @@ Exit criteria:
 - all 13 simultaneously PASS
 - startup/reload/runtime no-regression evidence retained
 
-Evidence: PR #11 validation run `34712828259` passed common JUnit/JaCoCo/PIT plus both 26.1.2 and 26.2 build/reproducibility/Client GameTest/artifact jobs. Deterministic framebuffer evidence verifies all-13 ON, resource reload, fixed target-ROI differences, active resource-pack preservation, and OFF restoration. The current namespaced time/weather gamerules are also verified by both client logs. CI evidence is OpenGL/llvmpipe; 26.2 Vulkan remains a separate later track.
+Evidence: PR #11 validation run `34712828259` passed common JUnit/JaCoCo/PIT plus both 26.1.2 and 26.2 build/reproducibility/Client GameTest/artifact jobs on the finalized visual oracle before documentation-only completion commits. Deterministic framebuffer evidence verifies all-13 ON, resource reload, fixed target-ROI differences, active resource-pack preservation, and OFF restoration. The current namespaced time/weather gamerules are verified by both client logs. CI evidence is OpenGL/llvmpipe; 26.2 Vulkan remains a separate later track.
 
 ## M4 — Outline and fine visibility parity
 
