@@ -134,7 +134,7 @@ flowchart TD
 
 ### Final rendered evidence
 
-GitHub Actions run `34712828259` on PR #11 is the final M3 evidence run. Common JUnit/JaCoCo/PIT and both version jobs passed. Each version produced three real 640x360 client framebuffer captures plus a manifest and screenshot SHA-256 file.
+GitHub Actions run `34712828259` on PR #11 is the evidence run for the finalized M3 visual oracle before documentation-only completion commits. Common JUnit/JaCoCo/PIT and both version jobs passed. Each version produced three real 640x360 client framebuffer captures plus a manifest and screenshot SHA-256 file.
 
 The oracle is intentionally deterministic:
 
