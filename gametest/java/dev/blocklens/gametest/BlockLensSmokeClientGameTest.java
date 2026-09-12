@@ -25,15 +25,14 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
     public void runTest(ClientGameTestContext context) {
         context.runOnClient(client -> verifyRuntime("initial client launch"));
 
-        try (TestSingleplayerContext world = context.worldBuilder().create()) {
-            world.getClientLevel().waitForChunksDownload();
+        // Do not depend on version-specific TestSingleplayerContext accessors here.
+        // Creating the world, allowing client ticks, and closing the context exercises
+        // the join/leave lifecycle on both supported Minecraft lines.
+        try (TestSingleplayerContext ignored = context.worldBuilder().create()) {
             context.waitTicks(20);
             context.runOnClient(client -> verifyRuntime("singleplayer world joined"));
         }
 
-        // The world context closing exercises the disconnect path. M1 has no world-owned
-        // renderer state yet, so the contract here is that common runtime/config state remains valid.
-        context.waitTicks(5);
         context.runOnClient(client -> verifyRuntime("singleplayer world closed"));
     }
 
