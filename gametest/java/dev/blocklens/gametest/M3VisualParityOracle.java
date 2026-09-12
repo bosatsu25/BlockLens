@@ -30,6 +30,7 @@ final class M3VisualParityOracle {
     private static final int MIN_DIFFERENT_PIXELS = 250;
     private static final int MIN_RESOURCE_PACK_MARKER_PIXELS = 25;
     private static final int RESOURCE_RELOAD_TIMEOUT_TICKS = 1200;
+    private static final int TERRAIN_REBUILD_SETTLE_TICKS = 30;
 
     private M3VisualParityOracle() {
     }
@@ -49,14 +50,16 @@ final class M3VisualParityOracle {
             installRuntimeConfig(allOn);
             reloadResources(context);
             requireModelPipeline("all 13 enabled after resource reload");
-            settle(context, 15);
+            invalidateTerrain(context);
+            settle(context, TERRAIN_REBUILD_SETTLE_TICKS);
             Path allOnImage = takeScreenshot(context, outputDir, "m3-all13-on");
 
             // A second reload while features stay ON proves the wrapper is rebuilt from the
             // currently active baked resource-pack model rather than retaining stale model state.
             reloadResources(context);
             requireModelPipeline("all 13 enabled after second resource reload");
-            settle(context, 15);
+            invalidateTerrain(context);
+            settle(context, TERRAIN_REBUILD_SETTLE_TICKS);
             Path reloadedImage = takeScreenshot(context, outputDir, "m3-all13-reloaded");
 
             BlockLensConfig allOff = withDecorationEnabled(original, false);
@@ -65,7 +68,8 @@ final class M3VisualParityOracle {
             installRuntimeConfig(allOff);
             reloadResources(context);
             requireModelPipeline("all 13 disabled after resource reload");
-            settle(context, 15);
+            invalidateTerrain(context);
+            settle(context, TERRAIN_REBUILD_SETTLE_TICKS);
             Path allOffImage = takeScreenshot(context, outputDir, "m3-all13-off-active-pack");
 
             ImageMetrics on = inspect(allOnImage);
@@ -105,6 +109,7 @@ final class M3VisualParityOracle {
             throw new AssertionError("M3 visual parity evidence failed", exception);
         } finally {
             installRuntimeConfig(original);
+            invalidateTerrain(context);
         }
     }
 
@@ -173,6 +178,13 @@ final class M3VisualParityOracle {
         // Surface a reload failure only after Client GameTest has kept ticking the client until the
         // future completed. Joining immediately can starve reload work that needs subsequent ticks.
         reload.join();
+    }
+
+    private static void invalidateTerrain(ClientGameTestContext context) {
+        // Block model changes do not imply that already-compiled terrain meshes have been discarded.
+        // Rebuild all visible sections after config/resource changes so framebuffer evidence observes
+        // the current BlockLens geometry state rather than a retained chunk mesh from the prior phase.
+        context.runOnClient(client -> client.levelRenderer.allChanged());
     }
 
     private static void requireModelPipeline(String phase) {
