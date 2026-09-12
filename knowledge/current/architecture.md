@@ -4,16 +4,17 @@ Status: **authoritative current architecture direction**
 
 ## 1. Architecture objective
 
-Replace repeated static resource-pack state definitions with a small number of reusable runtime concepts while preserving independently controllable user-facing capabilities.
+Replace repeated static resource-pack state definitions with a small number of reusable runtime concepts while preserving independently controllable user-facing capabilities across **Minecraft 26.1.2 and 26.2**.
 
 The architecture must optimize for:
 
 - functional parity,
 - predictable rendering behavior,
 - active resource-pack compatibility,
-- low runtime overhead,
+- low startup/reload/runtime overhead,
 - minimal static asset duplication,
-- and testable state interpretation.
+- testable state interpretation,
+- and thin Minecraft-version adapters.
 
 ## 2. High-level model
 
@@ -21,10 +22,13 @@ The architecture must optimize for:
 Minecraft / active resource pack
              |
              v
-      Block / BlockState
+     version-specific adapter
              |
              v
-      State Interpreter
+      Block / BlockState semantic input
+             |
+             v
+      State Interpreter (common)
              |
    +---------+----------+
    |                    |
@@ -38,6 +42,9 @@ Visual semantics     Feature policy
        Render Descriptor
              |
              v
+     version render adapter
+             |
+             v
        Shared Renderers
    +---------+----------+
    |         |          |
@@ -48,15 +55,51 @@ Visual semantics     Feature policy
          Minecraft
 ```
 
-## 3. Suggested module boundaries
+## 3. Multi-project boundary
 
-Names are conceptual until implementation begins.
+Use:
+
+```text
+common/
+versions/mc26_1_2/
+versions/mc26_2/
+test-support/   (only if justified)
+```
+
+### `common`
+
+Pure/testable product logic shared by both versions:
+
+- 37-capability catalog
+- config schema/migration policy
+- functional-parity contracts
+- stable state semantic model
+- render descriptors
+- composition/precedence rules
+- performance budget policy
+
+Avoid Fabric and mapped Minecraft imports here.
+
+### `versions/mc26_1_2`
+
+Only 26.1.2-specific Fabric/Minecraft glue:
+
+- state extraction
+- mixins/events/hooks
+- registry adapters
+- render API bridge
+- optional compatibility integration
+- metadata/resources required only by this version
+
+### `versions/mc26_2`
+
+Equivalent boundary for 26.2. Do not duplicate product policy merely because mapped APIs differ.
+
+## 4. Core module boundaries
 
 ### `core/state`
 
-Pure state interpretation.
-
-Responsibilities:
+Pure state interpretation:
 
 - orientation/facing
 - slab half/type
@@ -67,82 +110,70 @@ Responsibilities:
 - connection booleans
 - powered/attached-like state where relevant
 
-Rules:
-
-- no rendering API calls,
-- deterministic input/output,
-- strongly unit-testable.
+No rendering API calls.
 
 ### `core/catalog`
 
-Defines the 37 capability contracts.
+Defines all 37 capability contracts:
 
-Each entry should carry only stable product information such as:
+- capability ID
+- source RPO key
+- category
+- default/preset mapping
+- target matcher family
+- render semantic type
 
-- capability ID,
-- source RPO key,
-- category,
-- default/preset mapping,
-- target matcher or matcher family,
-- render semantic type.
-
-The catalog is the primary functional-parity contract.
+No runtime reflection/classpath discovery. The catalog is compiled/static and contract-tested.
 
 ### `config`
 
-Responsibilities:
+- persistent enable/disable state
+- shared schema across both Minecraft versions
+- config migration
+- corruption-safe fallback
 
-- persistent enable/disable state,
-- style/accessibility options when added,
-- migration of older BlockLens configs,
-- current preset import if an RPO-import feature is later justified.
-
-The first release does **not** need runtime RPO parsing if the native config already represents all capabilities cleanly.
+Normal startup does not parse the legacy RPO.
 
 ### `render`
 
-Shared rendering infrastructure.
+Shared semantic renderer families:
 
-Candidate renderer families:
+1. orientation/state marker
+2. highlight overlay
+3. outline
+4. fine-line
 
-1. **Orientation/state marker renderer**
-   - arrows, axis marks, top/bottom markers, shape hints
-
-2. **Highlight overlay renderer**
-   - ore/resource overlays
-   - color/pattern cues
-
-3. **Outline renderer**
-   - powder snow, blue ice, dead coral, sculk catalyst and similar visibility aids
-
-4. **Fine-line renderer**
-   - string/tripwire-like thin geometry visibility
-
-Do not create one renderer class per source RPO toggle unless the behavior is actually unique.
+Do not create one renderer per source toggle without a real behavior difference.
 
 ### `compat`
 
-Optional compatibility boundaries.
+Optional, fail-soft boundaries:
 
-Initial concerns:
-
-- Iris/shader enabled state where necessary
-- third-party resource-pack interaction
-- Fabric/Minecraft-version abstraction if future version support is added
-
-All optional compatibility must fail soft.
+- Iris/shader state where required
+- active resource-pack interaction
+- 26.2 OpenGL/Vulkan backend-sensitive behavior where evidence requires it
 
 ### `ui`
 
-The UI should be organized around user intent, not source-file organization.
+Organize around user intent, preserve independent control of all 37 capabilities, and keep the same user-facing contract across supported Minecraft versions.
 
-Current product grouping may evolve, but must preserve independent control of all 37 capabilities.
+## 5. Startup/load ownership
 
-Avoid exposing implementation jargon such as model JSON count, RPO rule filenames, or renderer class names.
+BlockLens startup should be deliberately small:
 
-## 4. Static assets policy
+- one client entrypoint per version artifact
+- static capability catalog
+- no startup network/update checks
+- no telemetry
+- no classpath/reflection feature scan
+- no eager geometry generation for disabled features
+- lazy renderer/compatibility initialization when safe
 
-Use static assets only when they carry information that cannot be represented reliably and efficiently by shared runtime rendering.
+Any expensive initialization must be measurable and justified.
+
+## 6. Static assets policy
+
+Use static assets only when they carry information that shared runtime rendering cannot represent reliably and efficiently.
 
 Prefer:
 
@@ -152,7 +183,7 @@ many state-specific full textures
 one reusable marker/overlay asset + code-driven placement
 ```
 
-Prefer:
+and:
 
 ```text
 full replacement ore texture
@@ -160,32 +191,21 @@ full replacement ore texture
 current ore texture + BlockLens overlay
 ```
 
-Benefits:
+Keep common assets shared when the format is compatible; isolate version-specific assets only when Minecraft requires it.
 
-- smaller JAR,
-- better compatibility with active packs,
-- less duplication,
-- fewer version-specific resource files.
+## 7. Rendering-state ownership
 
-## 5. Rendering-state ownership
+BlockLens owns only the extra visual information it creates.
 
-BlockLens should own only the additional visual information it creates.
+- feature OFF must restore normal rendering
+- world/disconnect/resource-reload transitions must clear retained state safely
+- compatibility failure disables/isolate only the affected path when possible
 
-It should not silently take ownership of unrelated vanilla/resource-pack rendering state.
-
-Examples:
-
-- If a feature is OFF, BlockLens must not alter that feature's target rendering.
-- Disabling BlockLens should restore normal rendering without requiring a resource reload unless technically unavoidable.
-- World/disconnect/resource-reload transitions must clear retained BlockLens state safely.
-
-## 6. Simultaneous feature behavior
+## 8. Simultaneous feature behavior
 
 All capabilities are assumed compatible unless explicitly documented otherwise.
 
-When multiple features affect one target, define deterministic composition rather than arbitrary priority.
-
-Candidate composition rule:
+Composition candidate:
 
 ```text
 base texture/model
@@ -194,45 +214,47 @@ base texture/model
   -> outline/fine-line cue
 ```
 
-If two features genuinely conflict visually, document and test the chosen precedence instead of making them mutually exclusive by default.
+Conflicts require deterministic precedence and regression tests, not default mutual exclusion.
 
-## 7. Shader strategy
+## 9. Shader/backend strategy
 
-Do not claim shader compatibility merely because vanilla rendering works.
-
-Architecture should permit:
+Do not claim compatibility merely because vanilla rendering works.
 
 ```text
 Render semantic
       |
-      +-> Standard path
+      +-> standard OpenGL path
       |
-      +-> Shader-compatible path (only if required by evidence)
+      +-> shader-compatible path (only if required)
+      |
+      +-> 26.2 Vulkan verification/adaptation path (only if required)
 ```
 
-Avoid one implementation per shader pack. Prefer one compatibility abstraction with targeted exceptions only when measured/verified.
+Avoid one implementation per shader pack or backend unless evidence forces it.
 
-## 8. Performance constraints
+## 10. Performance constraints
 
-- No whole-world scan.
-- No unbounded loaded-chunk scan each tick.
-- No per-frame rebuilding of static geometry without state change.
-- Cache only what has a clear invalidation path.
-- Keep hot-path allocations near zero where practical.
-- Prefer change-driven rebuilds.
-- Bound all queues and retained collections.
+- no whole-world scan
+- no unbounded loaded-chunk scan each tick
+- no per-frame rebuild of unchanged static geometry
+- explicit invalidation for caches
+- render-hot-path allocations near zero where practical
+- bounded queues/collections
+- O(1) or bounded target-to-capability lookup where practical
+- no runtime reflection discovery
+- no startup networking
 
-## 9. Artifact-size strategy
+Detailed budgets are in `performance-strategy.md`.
 
-Largest expected savings come from removing duplication, not from stripping debug information or reducing code readability.
+## 11. Artifact-size strategy
 
 Priority:
 
-1. collapse repeated JSON/state definitions into code,
-2. eliminate duplicate textures/models where shared runtime markers are equivalent,
-3. losslessly optimize remaining PNGs,
-4. minimize generated metadata/resources,
-5. use normal JAR compression efficiently,
-6. only then inspect class-level size if still necessary.
+1. collapse repeated JSON/state definitions into code
+2. eliminate duplicate textures/models where equivalent
+3. minimize startup/reload metadata work
+4. losslessly optimize remaining PNGs
+5. use reproducible JAR compression
+6. inspect class-level size only if materially useful
 
-Do not use artifact-size pressure as justification for unsafe obfuscation, loss of diagnostics, or feature deletion.
+Never trade away diagnostics, correctness, or capability parity for byte count.
