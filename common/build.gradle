@@ -1,0 +1,66 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id 'info.solidsoft.pitest'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(Integer.parseInt(rootProject.java_version))
+    }
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.14.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+jacoco {
+    toolVersion = rootProject.jacoco_version
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            element = 'BUNDLE'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = new BigDecimal(rootProject.quality_line_threshold)
+            }
+        }
+    }
+}
+
+pitest {
+    targetClasses = ['dev.blocklens.core.*']
+    targetTests = ['dev.blocklens.core.*Test']
+    junit5PluginVersion = '1.2.3'
+    threads = 2
+    outputFormats = ['HTML', 'XML']
+    timestampedReports = false
+    failWhenNoMutations = true
+    mutationThreshold = Integer.parseInt(rootProject.quality_mutation_threshold)
+    coverageThreshold = Integer.parseInt(rootProject.quality_coverage_threshold)
+    testStrengthThreshold = Integer.parseInt(rootProject.quality_test_strength_threshold)
+}
+
+tasks.register('qualityGate') {
+    group = 'verification'
+    description = 'Shared BlockLens semantic/config quality gate.'
+    dependsOn test
+    dependsOn jacocoTestReport
+    dependsOn jacocoTestCoverageVerification
+    dependsOn pitest
+}
