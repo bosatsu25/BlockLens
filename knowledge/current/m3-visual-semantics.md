@@ -1,6 +1,6 @@
 # M3 Decoration / Orientation Visual Semantics
 
-Status: **authoritative current M3 visual contract — implementation in progress**
+Status: **authoritative current M3 visual contract — DONE**
 
 This document separates two things that must not be conflated:
 
@@ -108,12 +108,13 @@ The native config remains the source of enable/disable truth. `BlockLensConfig` 
 
 ## 6. Compatibility / rendering-state contract
 
-- Feature OFF must use normal baked Minecraft/active-resource-pack rendering.
-- Enabling one M3 feature must not implicitly disable another.
-- All 13 being enabled at once is a required test condition.
-- Stained Glass solid-layer behavior must be isolated to that capability and must not leak to unrelated models.
-- Geometry/cache keys must reflect enabled BlockLens rendering state when it affects emitted geometry.
-- Resource reload must rebuild wrapped models from the newly baked active-resource-pack models rather than retaining stale model instances.
+- Feature OFF uses normal baked Minecraft/active-resource-pack rendering.
+- Enabling one M3 feature does not implicitly disable another.
+- All 13 enabled simultaneously is a required and verified test condition.
+- Stained Glass solid-layer behavior is isolated to that capability and must not leak to unrelated models.
+- Geometry changes are followed by terrain invalidation before rendered evidence is sampled.
+- Resource reload rebuilds wrapped models from newly baked active-resource-pack models rather than retaining stale model instances.
+- Minecraft-version rendering invalidation stays at thin adapter boundaries: 26.1.2 uses `LevelRenderer.allChanged()`; 26.2 uses `LevelExtractor.allChanged()`.
 
 ## 7. Verification layers
 
@@ -127,11 +128,37 @@ flowchart TD
     T --> V2[26.2 registry + model pipeline Client GameTest]
     V1 --> A[Runtime JAR / reproducibility / size audit]
     V2 --> A
-    A --> VIS[Representative visual parity evidence]
-    VIS --> ALL[All 13 simultaneously]
+    A --> VIS[Rendered visual parity evidence]
+    VIS --> ALL[All 13 simultaneously + reload + OFF restoration]
 ```
 
-Current automated contracts already cover semantic combinations, independent toggles at policy level, exact target scope, registry availability, and model-pipeline registration. Representative rendered visual parity and final all-13 in-game evidence remain required before M3 is DONE.
+### Final rendered evidence
+
+GitHub Actions run `34712828259` on PR #11 is the final M3 evidence run. Common JUnit/JaCoCo/PIT and both version jobs passed. Each version produced three real 640x360 client framebuffer captures plus a manifest and screenshot SHA-256 file.
+
+The oracle is intentionally deterministic:
+
+- all 13 representative capabilities are present in one scene,
+- time and weather progression are disabled with the current namespaced gamerules `minecraft:advance_time=false` and `minecraft:advance_weather=false`,
+- the representative campfire is unlit to remove smoke-particle image noise,
+- resource-reload completion is followed by LoadingOverlay fade time before capture,
+- changed terrain is explicitly invalidated before capture,
+- visual comparison is restricted to the fixed target ROI `90,205-550,285`, not the whole framebuffer,
+- a GameTest-only white-glazed-terracotta override to vanilla magenta concrete proves the active baked resource-pack base survives with BlockLens ON and OFF.
+
+| Minecraft | Wrapped models | Marker pixels ON/OFF | ON vs OFF ROI pixels | Reloaded ON vs OFF ROI pixels |
+| --- | ---: | ---: | ---: | ---: |
+| 26.1.2 | 7,577 | 270 / 270 | 345 | 335 |
+| 26.2 | 7,577 | 270 / 270 | 368 | 335 |
+
+The required ROI difference is 150 pixels, so both first-ON and reload-ON captures remain measurably distinct from OFF while the active resource-pack marker remains unchanged. OFF restoration therefore has rendered evidence rather than only structural/model-pipeline evidence.
+
+Runtime artifacts in the same run remained compact and reproducible:
+
+- 26.1.2: 63,337 bytes
+- 26.2: 63,335 bytes
+
+The CI renderer for this evidence is OpenGL/llvmpipe. This M3 evidence **does not claim 26.2 Vulkan verification**; Vulkan remains a separate later compatibility track.
 
 ## 8. Licensing boundary
 
