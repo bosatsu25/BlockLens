@@ -26,6 +26,8 @@ final class M3VisualEvidenceContractTest {
         assertTrue(visual.contains("m3-all13-reloaded"));
         assertTrue(visual.contains("m3-all13-off-active-pack"));
         assertTrue(visual.contains("reloadResourcePacks()"));
+        assertTrue(visual.contains("levelRenderer.allChanged()"));
+        assertTrue(visual.contains("TERRAIN_REBUILD_SETTLE_TICKS"));
         assertTrue(visual.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 254"));
         assertTrue(visual.contains("differentPixelCount"));
         assertTrue(visual.contains("MIN_RESOURCE_PACK_MARKER_PIXELS"));
