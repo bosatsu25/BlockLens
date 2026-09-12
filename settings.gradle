@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'BlockLens'
+
+include 'common'
+include 'versions:mc26_1_2'
+include 'versions:mc26_2'
+
+project(':versions:mc26_1_2').projectDir = file('versions/mc26_1_2')
+project(':versions:mc26_2').projectDir = file('versions/mc26_2')
