@@ -23,20 +23,20 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
 
     @Override
     public void runTest(ClientGameTestContext context) {
-        context.runOnClient(client -> verifyRuntime("initial client launch"));
+        context.runOnClient(client -> verifyRuntime("initial client launch", true));
 
         // Do not depend on version-specific TestSingleplayerContext accessors here.
         // Creating the world, allowing client ticks, and closing the context exercises
         // the join/leave lifecycle on both supported Minecraft lines.
         try (TestSingleplayerContext ignored = context.worldBuilder().create()) {
             context.waitTicks(20);
-            context.runOnClient(client -> verifyRuntime("singleplayer world joined"));
+            context.runOnClient(client -> verifyRuntime("singleplayer world joined", false));
         }
 
-        context.runOnClient(client -> verifyRuntime("singleplayer world closed"));
+        context.runOnClient(client -> verifyRuntime("singleplayer world closed", false));
     }
 
-    private static void verifyRuntime(String phase) {
+    private static void verifyRuntime(String phase, boolean reportBaseline) {
         require(CapabilityId.values().length == EXPECTED_CAPABILITY_COUNT,
                 phase + ": expected 37 capabilities");
 
@@ -49,6 +49,8 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         require(minecraftVersion.equals(BlockLensRuntime.minecraftVersion()),
                 phase + ": runtime version mismatch; expected " + minecraftVersion
                         + " but was " + BlockLensRuntime.minecraftVersion());
+        require(BlockLensRuntime.initializationNanos() >= 0L,
+                phase + ": initialization timing must be non-negative");
 
         Path configPath = FabricLoader.getInstance()
                 .getConfigDir()
@@ -63,6 +65,13 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
                     phase + ": persisted config differs from runtime config");
         } catch (IOException exception) {
             throw new AssertionError(phase + ": failed to read native config", exception);
+        }
+
+        if (reportBaseline) {
+            System.out.println(
+                    "BLOCKLENS_M1_BASELINE minecraft=" + minecraftVersion
+                            + " initNanos=" + BlockLensRuntime.initializationNanos()
+                            + " capabilities=" + EXPECTED_CAPABILITY_COUNT);
         }
     }
 
