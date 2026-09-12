@@ -38,7 +38,12 @@ def coverageGateClasses = [
         'dev/blocklens/core/render/VisibilityVisualCue*.class',
         'dev/blocklens/core/render/VisibilityRenderDescriptor*.class',
         'dev/blocklens/core/render/VisibilityRenderPolicy*.class',
-        'dev/blocklens/core/render/VisibilityTargetCatalog*.class'
+        'dev/blocklens/core/render/VisibilityTargetCatalog*.class',
+        'dev/blocklens/core/render/ResourceTargetCatalog*.class',
+        'dev/blocklens/core/render/ResourceHighlightCue*.class',
+        'dev/blocklens/core/render/ResourceHighlightPolicy*.class',
+        'dev/blocklens/core/render/NetherTweaksTargetCatalog*.class',
+        'dev/blocklens/core/render/BlockLensTargetCatalog*.class'
 ]
 
 def coverageGateClassDirectories = providers.provider {
@@ -83,12 +88,14 @@ pitest {
             'dev.blocklens.core.state.TargetCapabilityIndex',
             'dev.blocklens.core.render.DecorationVisualCue',
             'dev.blocklens.core.render.DecorationRenderDescriptor',
-            'dev.blocklens.core.render.DecorationRenderPolicy',
+            'dev/blocklens/core/render/DecorationRenderPolicy',
             'dev.blocklens.core.render.DecorationQuadInstruction',
             'dev.blocklens.core.render.DecorationQuadCuePolicy',
             'dev.blocklens.core.render.VisibilityVisualCue',
             'dev.blocklens.core.render.VisibilityRenderDescriptor',
-            'dev.blocklens.core.render.VisibilityRenderPolicy'
+            'dev.blocklens.core.render.VisibilityRenderPolicy',
+            'dev.blocklens.core.render.ResourceHighlightCue',
+            'dev.blocklens.core.render.ResourceHighlightPolicy'
     ]
     // Mutation tests intentionally exclude repository/filesystem contract tests and the
     // large exact M0 target-data tables; deterministic product-policy logic remains mutation-gated.
@@ -101,7 +108,8 @@ pitest {
             'dev.blocklens.core.state.TargetCapabilityIndexTest',
             'dev.blocklens.core.render.DecorationRenderPolicyTest',
             'dev.blocklens.core.render.DecorationQuadCuePolicyTest',
-            'dev.blocklens.core.render.VisibilityRenderPolicyTest'
+            'dev.blocklens.core.render.VisibilityRenderPolicyTest',
+            'dev.blocklens.core.render.ResourceHighlightPolicyTest'
     ]
     junit5PluginVersion = '1.2.3'
     threads = 2
