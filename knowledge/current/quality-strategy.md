@@ -4,77 +4,80 @@ Status: **authoritative current quality strategy**
 
 ## 1. Quality objective
 
-BlockLens must become smaller than the source resource pack **without losing or silently changing the visual capabilities being migrated**.
-
-Artifact size is a release gate, but it is not the primary quality goal.
+BlockLens must become smaller and faster to load than the source resource-pack approach **without losing or silently changing the visual capabilities being migrated**, and must preserve that contract on both **Minecraft 26.1.2 and 26.2**.
 
 Priority:
 
 1. correctness
 2. functional parity
 3. rendering stability
-4. compatibility
+4. cross-version compatibility
 5. configuration persistence
-6. performance/memory
+6. startup/reload/runtime performance and memory
 7. maintainability/testability
 8. artifact size
 
 ## 2. Functional Parity Gate
 
-The most important regression gate.
+CI must detect accidental changes to:
 
-At minimum, CI must detect accidental changes to:
+- total capability count: **37**
+- exact source RPO keys
+- category membership
+- supported target/block-state mappings once captured
+- native config keys/defaults/preset mapping
+- feature independence
+- required rendering semantics
+- client-only metadata
+- Fabric entrypoints
+- optional compatibility boundaries
 
-- total capability count: **37**,
-- source RPO keys,
-- category membership,
-- supported target/block-state mapping once captured,
-- native config keys/defaults/preset mapping,
-- feature enable/disable independence,
-- required rendering semantics,
-- client-only metadata,
-- Fabric entrypoints,
-- optional compatibility boundaries.
+The same contract must pass for 26.1.2 and 26.2.
 
-A smaller JAR with a missing capability is a failed build.
+A smaller or faster artifact with a missing capability is a failed build.
 
-## 3. Test layers
+## 3. Automated test stack
 
-### Layer A — Pure Java unit tests
+BlockLens should adopt the strongest reusable parts of the ChiseTweaks quality model while keeping the implementation proportional to this smaller product.
 
-Target deterministic policy/state code:
+### Layer A — JUnit 5 pure Java tests
 
-- block-state interpretation,
-- orientation/axis mapping,
-- stair/slab/trapdoor semantics,
-- capability catalog,
-- config policy,
-- composition/precedence rules,
-- source-preset conversion.
+Target deterministic common code:
 
-Use equivalence partitioning and boundary-value analysis for state/property combinations where applicable.
+- block-state interpretation
+- orientation/axis mapping
+- stair/slab/trapdoor semantics
+- capability catalog
+- config policy/migration
+- composition/precedence
+- source-preset conversion
+- performance budget policy
+- version-parity policy
 
-### Layer B — Contract tests
+Use parameterized tests, equivalence partitioning, boundary-value analysis, and state-transition tests where appropriate.
 
-Verify repository/product contracts:
+### Layer B — Repository/contract tests
 
-- exactly 37 capability IDs,
-- exact source-key set,
-- no duplicate capability IDs,
-- every capability has user-facing name/description keys,
-- every capability has config representation,
-- current RPO reference preset contains exactly the expected five enabled keys,
-- no feature is accidentally marked server-required.
+Verify:
 
-### Layer C — Resource/render descriptor tests
+- exactly 37 capability IDs and source keys
+- no duplicate IDs
+- every capability has translations/config representation
+- reference preset contains exactly the expected five enabled keys
+- client-only metadata on both version artifacts
+- both version projects exist and are wired into CI
+- config schema is identical across versions unless an explicit exception fixture exists
+- no accidental startup networking/telemetry contract
 
-Without requiring a full Minecraft render, verify that target states produce expected render descriptors.
+### Layer C — Render-descriptor/state tests
+
+Verify semantic output independently of Minecraft rendering where possible.
 
 Examples:
 
 ```text
 stairs[facing=north,half=top,shape=outer_left]
- -> expected semantic descriptor
+ -> expected descriptor
 ```
 
 ```text
@@ -82,69 +85,127 @@ log[axis=x]
  -> expected axis marker
 ```
 
-Golden descriptor tests are preferable to brittle internal implementation assertions.
+Prefer golden semantic descriptors over assertions tied to internal class structure.
 
-### Layer D — Minecraft integration/smoke tests
+### Layer D — JaCoCo coverage gate
 
-Where automation is practical:
+Use JaCoCo on selected deterministic product logic rather than chasing repository-wide vanity coverage.
 
-- mod loads on Minecraft 26.1.2,
-- no missing mixin/entrypoint/class errors,
-- config loads/saves,
-- resource reload completes,
-- world join/leave does not leak retained state,
-- toggling features does not require restart unless explicitly documented.
+Coverage targets should include:
 
-### Layer E — Visual regression
+- capability catalog/policy
+- state interpretation
+- config migration
+- composition rules
+- performance/version budget policy
 
-For source-parity features, maintain representative golden references.
+Freeze numeric thresholds only after the first stable scaffold is measured.
 
-Verify:
+### Layer E — PIT mutation gate
 
-- correct target is marked,
-- direction/state cue is correct,
-- OFF means vanilla/resource-pack rendering is not altered by BlockLens,
-- all relevant faces/states remain correct,
-- combinations do not hide one another unexpectedly.
+Use PIT for semantic policy classes where a surviving mutation would represent a meaningful defect.
 
-Visual regression can begin as a documented/manual checklist if automated screenshot comparison is not yet reliable, but high-risk features should move toward machine-comparable evidence.
+Do not dilute mutation scores with mapping glue, rendering coordinates, or Fabric wrappers that are better validated by boundary/integration tests.
 
-### Layer F — Compatibility matrix
+### Layer F — Minecraft client GameTest / smoke tests
+
+Run against **both** supported Minecraft lines.
 
 At minimum verify:
 
-- vanilla/no extra resource pack,
-- representative third-party resource pack,
-- shader OFF,
-- shader ON for supported representative shader packs,
-- all 37 capabilities enabled simultaneously.
+- game/client launches with BlockLens
+- no missing mixin/entrypoint/class errors
+- config loads/saves
+- representative feature can initialize/toggle
+- resource reload completes
+- world join/leave clears state
+- no server-side BlockLens requirement
 
-Do not advertise a compatibility claim that has not been tested.
+Version-specific smoke tasks must fail independently so one supported line cannot hide the other's failure.
 
-### Layer G — Performance and memory
+### Layer G — Visual regression
 
-Measure before claiming improvement.
+Maintain representative golden evidence for source-parity features.
 
-Useful metrics:
+Verify:
 
-- median frame time,
-- P95/P99 frame time,
-- allocation rate in render/update paths,
-- heap growth across world transitions,
-- resource reload duration,
-- startup duration,
-- retained geometry/cache counts,
-- CPU time attributable to BlockLens.
+- correct target/cue
+- correct direction/state
+- OFF leaves base rendering unchanged by BlockLens
+- simultaneous features compose correctly
+- representative resource-pack compatibility
 
-Required scenarios:
+Start manual only where automation is not yet reliable; promote high-risk cases toward machine-comparable screenshot/descriptor evidence.
 
-1. BlockLens installed, all features OFF
-2. one representative orientation feature ON
-3. one representative outline/fine feature ON
-4. resource highlights ON
-5. all features ON
+### Layer H — Compatibility matrix
 
-## 4. Artifact size gate
+At minimum:
+
+- 26.1.2 vanilla/resource-pack baseline
+- 26.2 OpenGL baseline
+- 26.2 Vulkan experimental verification track
+- representative third-party resource pack
+- shader OFF
+- supported representative shader ON
+- all 37 capabilities ON simultaneously
+
+Do not advertise untested compatibility.
+
+### Layer I — Performance/memory
+
+Measure separately per Minecraft version:
+
+- startup duration
+- BlockLens initialization where measurable
+- resource reload duration
+- median/P95/P99 frame time
+- allocation rate
+- heap/cache/retained geometry behavior
+- runtime JAR bytes
+
+For 26.2, do not combine OpenGL and Vulkan results into one number.
+
+## 4. CI entry points
+
+Target Gradle entry points modeled after ChiseTweaks:
+
+```text
+qualityGate
+ciGate
+```
+
+`qualityGate` should aggregate, as appropriate:
+
+- JUnit
+- JaCoCo report/verification
+- PIT
+- functional-parity contracts
+- version-parity contracts
+- artifact-size budget checks
+
+`ciGate` should add:
+
+- reproducible builds
+- both version runtime artifacts
+- source artifact where retained
+- per-version artifact audit
+
+GitHub Actions should run isolated version matrix jobs or equivalent per-version tasks so failures are attributable to 26.1.2 vs 26.2.
+
+## 5. Fast CI without weakening gates
+
+Heavy tests should not be repeated unnecessarily, but verified artifacts must never be promoted from unrelated code.
+
+Allowed optimizations include:
+
+- Gradle dependency/build cache
+- path-based classification for documentation-only changes
+- reuse/promotion only when source tree identity/provenance is proven
+- common pure-Java tests once plus version-specific smoke/build jobs for each target
+
+Do not skip functional parity or version build verification merely to shorten CI.
+
+## 6. Artifact size gate
 
 Source baseline:
 
@@ -152,108 +213,99 @@ Source baseline:
 2,366,865 bytes
 ```
 
-Hard BlockLens runtime-JAR maximum:
+For **each** supported runtime JAR:
 
 ```text
-1,183,432 bytes
+hard maximum: < 1,183,433 bytes
+stretch goal: <= 716,800 bytes (700 KiB)
 ```
 
-(`50%` is intentionally strict: the JAR must be **less than** half of 2,366,865 bytes.)
+CI reports per version:
 
-Stretch goal:
+- current bytes
+- delta from frozen version baseline
+- largest compressed entries
+- class/assets/metadata contribution
 
-```text
-716,800 bytes (700 KiB)
-```
+After the first verified implementation, freeze a per-version no-growth budget similar to ChiseTweaks: baseline + explicitly allowed growth, capped by the hard maximum.
 
-CI should report:
+## 7. Startup/resource-load gates
 
-- current JAR bytes,
-- delta from previous baseline,
-- largest JAR entries,
-- total assets vs classes vs metadata size.
+CI and local performance tooling must distinguish byte size from load cost.
 
-Do not fail normal feature development merely for temporary growth below the hard release ceiling unless a milestone explicitly freezes a tighter no-growth budget.
+Structural CI gates should reject regressions such as:
 
-## 5. Source-pack baseline integrity
+- runtime reflection/classpath feature discovery
+- startup network/update checks
+- normal-path legacy RPO parsing
+- eager geometry creation for disabled features
+- unbounded registry/resource scanning
+- repeated immutable catalog creation in hot paths
 
-Record and pin a SHA-256 for the source ZIP/RPO when those files are added to a private test-fixture location or when hashes are documented.
+Numeric startup/reload thresholds will be frozen only after reproducible M1 baselines exist.
 
-The source baseline should not silently change during optimization.
+## 8. Source baseline integrity
 
-If the source pack is updated intentionally:
+Pin source ZIP/RPO SHA-256. Intentional source-pack updates require:
 
-1. treat it as a new baseline version,
-2. diff capability/assets,
-3. update parity fixtures,
-4. rerun migration assessment.
+1. new baseline version
+2. capability/asset diff
+3. parity fixture update
+4. full migration reassessment
 
-## 6. Configuration persistence
+## 9. Configuration persistence
 
 Test:
 
-- default values,
-- current RPO reference preset,
-- save/reload round trip,
-- unknown key handling,
-- missing key migration,
-- corrupt config fallback,
-- upgrade migration when config schema changes.
+- defaults
+- reference preset
+- save/reload round trip
+- unknown/missing keys
+- corrupt fallback
+- schema upgrades
+- same persisted semantics on both Minecraft versions
 
 Configuration failure must not corrupt the game instance.
 
-## 7. Fail-soft policy
-
-Optional integrations must isolate failure.
+## 10. Fail-soft policy
 
 Examples:
 
-- Iris missing -> standard render path still works.
-- Shader-state query fails -> disable only shader-specific optimization/path and remain usable.
-- A single capability cannot initialize -> report/disable that capability rather than crashing all BlockLens if safely possible.
+- Iris missing -> standard path works
+- shader/backend query fails -> isolate only that optional path
+- one capability initialization failure -> isolate/report it when safe rather than crashing all BlockLens
 
-Do not swallow errors silently. Keep actionable logging without spamming every frame/tick.
+Errors remain actionable but must not spam every frame/tick.
 
-## 8. Security/privacy/release artifact checks
+## 11. Security/privacy/release artifact checks
 
-Before release ensure the JAR/repository contains no accidental:
+Release artifacts/repository must not accidentally contain:
 
-- local absolute paths,
-- server IPs,
-- tokens/secrets,
-- account identifiers,
-- logs/crash reports,
-- world saves,
-- caches,
-- unrelated user files.
+- local paths
+- server IPs
+- secrets/tokens
+- account identifiers
+- logs/crash reports
+- saves/caches
+- unrelated user files
 
-BlockLens has no reason to include telemetry, arbitrary external process execution, or silent network update behavior in the baseline product.
+Baseline BlockLens has no telemetry, arbitrary process execution, or silent network updater.
 
-## 9. Licensing gate
+## 12. Licensing gate
 
-Before public release, inventory every retained non-code asset and confirm its redistribution/license status.
+Inventory retained non-code assets before public release. If rights are unclear, recreate the visual cue independently, generate it at runtime, or require the original pack separately.
 
-If rights are unclear:
+## 13. Definition of Done
 
-- recreate the visual cue independently,
-- use runtime-generated geometry,
-- or require the original pack separately rather than redistributing its asset.
-
-Private development status does not remove the need to resolve this before publication.
-
-## 10. Definition of Done
-
-A capability is not done when code merely exists.
-
-Done means, as applicable:
+A capability is done only after applicable:
 
 ```text
-spec captured
- -> implementation
- -> unit/contract tests
- -> build
- -> visual/state regression
- -> compatibility check
- -> performance sanity check
+spec
+ -> implementation in common/version adapter
+ -> unit/contracts
+ -> both-version build
+ -> integration/render regression
+ -> compatibility/performance sanity
+ -> artifact audit
  -> knowledge update
 ```
