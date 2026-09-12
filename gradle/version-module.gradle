@@ -10,9 +10,15 @@ base {
     archivesName = "${rootProject.archives_base_name}-${blockLensMinecraftVersion}"
 }
 
+def blockLensArtifactVersion = project.version.toString()
+def blockLensMinecraftVersionValue = blockLensMinecraftVersion.toString()
+def blockLensLoaderVersionValue = rootProject.loader_version.toString()
+def runtimeHardMaxBytes = Long.parseLong(rootProject.runtime_jar_hard_max_bytes.toString())
+def runtimeStretchBytes = Long.parseLong(rootProject.runtime_jar_stretch_bytes.toString())
+
 dependencies {
-    minecraft "com.mojang:minecraft:${blockLensMinecraftVersion}"
-    implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    minecraft "com.mojang:minecraft:${blockLensMinecraftVersionValue}"
+    implementation "net.fabricmc:fabric-loader:${blockLensLoaderVersionValue}"
     implementation "net.fabricmc.fabric-api:fabric-api:${blockLensFabricApiVersion}"
     implementation project(':common')
 
@@ -38,14 +44,14 @@ sourceSets {
 }
 
 processResources {
-    inputs.property 'version', project.version
-    inputs.property 'minecraft_version', blockLensMinecraftVersion
-    inputs.property 'loader_version', rootProject.loader_version
+    inputs.property 'version', blockLensArtifactVersion
+    inputs.property 'minecraft_version', blockLensMinecraftVersionValue
+    inputs.property 'loader_version', blockLensLoaderVersionValue
     filesMatching('fabric.mod.json') {
         expand(
-                version: project.version,
-                minecraft_version: blockLensMinecraftVersion,
-                loader_version: rootProject.loader_version)
+                version: blockLensArtifactVersion,
+                minecraft_version: blockLensMinecraftVersionValue,
+                loader_version: blockLensLoaderVersionValue)
     }
 }
 
@@ -74,7 +80,7 @@ def runtimeJarTask = tasks.findByName('remapJar') != null
 
 tasks.register('versionSmokeContract') {
     group = 'verification'
-    description = "Checks the ${blockLensMinecraftVersion} runtime artifact structure and client-only metadata."
+    description = "Checks the ${blockLensMinecraftVersionValue} runtime artifact structure, metadata, privacy, and residue."
     dependsOn runtimeJarTask
 
     doLast {
@@ -96,11 +102,52 @@ tasks.register('versionSmokeContract') {
             if (!metadata.contains('"environment": "client"')) {
                 throw new GradleException('fabric.mod.json must remain client-only')
             }
-            if (!metadata.contains("\"minecraft\": \"=${blockLensMinecraftVersion}\"")) {
-                throw new GradleException("fabric.mod.json is not pinned to Minecraft ${blockLensMinecraftVersion}")
+            if (!metadata.contains("\"minecraft\": \"=${blockLensMinecraftVersionValue}\"")) {
+                throw new GradleException("fabric.mod.json is not pinned to Minecraft ${blockLensMinecraftVersionValue}")
             }
-            if (archive.entries().toList().any { entry -> entry.name.endsWith('.jar') }) {
+
+            List entries = archive.entries().toList().findAll { !it.directory }
+            if (entries.any { entry -> entry.name.endsWith('.jar') }) {
                 throw new GradleException('Runtime JAR must not contain nested dependency JARs in the baseline scaffold')
+            }
+
+            List<String> forbiddenNames = [
+                    '.DS_Store',
+                    'Thumbs.db',
+                    '.env',
+                    '.log',
+                    '.jfr',
+                    '.hprof',
+                    'crash-reports/',
+                    'logs/',
+                    'saves/',
+                    'screenshots/',
+                    '.git/',
+                    '.idea/',
+                    '.vscode/',
+                    'respackopts.json5',
+                    '.rpo'
+            ]
+            List<String> forbiddenPayloadMarkers = [
+                    '/home/runner/work/',
+                    'C:\\Users\\',
+                    '/Users/',
+                    'github_pat_',
+                    '-----BEGIN PRIVATE KEY-----'
+            ]
+
+            for (def entry : entries) {
+                String entryName = entry.name
+                if (forbiddenNames.any { marker -> entryName.contains(marker) }) {
+                    throw new GradleException("Runtime JAR contains forbidden residue entry: ${entryName}")
+                }
+
+                byte[] bytes = archive.getInputStream(entry).withCloseable { stream -> stream.readAllBytes() }
+                String payload = new String(bytes, java.nio.charset.StandardCharsets.ISO_8859_1)
+                String leaked = forbiddenPayloadMarkers.find { marker -> payload.contains(marker) }
+                if (leaked != null) {
+                    throw new GradleException("Runtime JAR entry ${entryName} contains forbidden private/local marker: ${leaked}")
+                }
             }
         }
     }
@@ -108,22 +155,20 @@ tasks.register('versionSmokeContract') {
 
 tasks.register('verifyRuntimeJarBudget') {
     group = 'verification'
-    description = "Checks BlockLens ${blockLensMinecraftVersion} runtime JAR against the source-pack size budget."
+    description = "Checks BlockLens ${blockLensMinecraftVersionValue} runtime JAR against the source-pack size budget."
     dependsOn runtimeJarTask
 
     doLast {
         File runtimeJar = runtimeJarTask.get().archiveFile.get().asFile
         long bytes = runtimeJar.length()
-        long hardMax = Long.parseLong(rootProject.runtime_jar_hard_max_bytes)
-        long stretch = Long.parseLong(rootProject.runtime_jar_stretch_bytes)
         logger.lifecycle(
                 'BlockLens {} runtime JAR: {} bytes (hard < {}, stretch <= {})',
-                blockLensMinecraftVersion,
+                blockLensMinecraftVersionValue,
                 bytes,
-                hardMax + 1L,
-                stretch)
+                runtimeHardMaxBytes + 1L,
+                runtimeStretchBytes)
 
-        if (bytes > stretch) {
+        if (bytes > runtimeStretchBytes) {
             logger.lifecycle('Largest compressed runtime entries:')
             new java.util.zip.ZipFile(runtimeJar).withCloseable { archive ->
                 archive.entries().toList()
@@ -136,9 +181,9 @@ tasks.register('verifyRuntimeJarBudget') {
             }
         }
 
-        if (bytes > hardMax) {
+        if (bytes > runtimeHardMaxBytes) {
             throw new GradleException(
-                    "BlockLens ${blockLensMinecraftVersion} runtime JAR is ${bytes} bytes; hard maximum is ${hardMax} bytes.")
+                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; hard maximum is ${runtimeHardMaxBytes} bytes.")
         }
     }
 }
