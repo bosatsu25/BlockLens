@@ -160,21 +160,34 @@ Exit criteria:
 
 Evidence: PR #11 validation run `34712828259` passed common JUnit/JaCoCo/PIT plus both 26.1.2 and 26.2 build/reproducibility/Client GameTest/artifact jobs on the finalized visual oracle before documentation-only completion commits. Deterministic framebuffer evidence verifies all-13 ON, resource reload, fixed target-ROI differences, active resource-pack preservation, and OFF restoration. The current namespaced time/weather gamerules are verified by both client logs. CI evidence is OpenGL/llvmpipe; 26.2 Vulkan remains a separate later track.
 
-## M4 — Outline and fine visibility parity
+## M4–M7 — Full parity implementation train 🔧
 
-Goal: implement Blue Ice, Dead Coral, Powder Snow, Sculk Catalyst, and String Tweaks through shared runtime rendering.
+Goal: finish the remaining 24 capabilities and immediately harden the complete 37-capability product. **M4, M5, M6, and M7 are acceptance subtracks, not separate implementation stops.** Work continues on one integration branch/PR until the full-product gates pass.
 
-Exit criteria:
+### Track A — Outline / fine visibility (former M4)
 
-- 5/5 on both versions
-- state/connection-sensitive behavior correct
-- OFF restores normal rendering
-- combined M3+M4 PASS
-- no render-state leakage through reload/world transitions
+Targets:
 
-## M5 — Resource highlighting parity
+- Blue Ice
+- Dead Coral
+- Powder Snow
+- Sculk Catalyst
+- String Tweaks
 
-Goal: implement all 18 resource/highlight capabilities.
+Acceptance:
+
+- [x] source-backed target/state/cue contract frozen in common code
+- [x] 24 exact target bindings
+- [x] Sculk `bloom` semantic retained
+- [x] all 64 tripwire source states represented
+- [x] selected JaCoCo/PIT policy gate includes M4 common code
+- [ ] 5/5 runtime rendering on 26.1.2
+- [ ] 5/5 runtime rendering on 26.2
+- [ ] OFF restores normal rendering
+- [ ] combined M3+M4 rendered evidence
+- [ ] reload/world-transition state cleanup
+
+### Track B — Resource highlighting (former M5)
 
 Targets:
 
@@ -189,53 +202,63 @@ Targets:
 - Lapis / Deepslate Lapis
 - Redstone / Deepslate Redstone
 
-Exit criteria:
+Acceptance:
 
-- 18/18 independently controllable on both versions
-- active resource-pack texture preserved where intended
-- shader OFF PASS
-- supported shader ON paths PASS
-- 26.2 OpenGL PASS
-- 26.2 Vulkan tracked separately and only claimed if verified
+- [ ] 18/18 exact target bindings and independent toggles
+- [ ] active base resource-pack texture/model preserved where intended
+- [ ] shared highlight policy; no per-version product-policy duplication
+- [ ] dark-area/high-visibility behavior verified
+- [ ] shader OFF PASS on both versions
+- [ ] 26.2 OpenGL PASS
+- [ ] representative supported shader path verified before support is claimed
+- [ ] Vulkan remains a separate experimental track and is not implied by OpenGL success
 
-## M6 — Nether Tweaks parity
+### Track C — Nether Tweaks (former M6)
 
-Goal: implement `nethertweaks` only after exact source behavior is captured.
+Target scope is the M0 exact 27-block Nether-oriented set.
 
-Exit criteria:
+Acceptance:
 
-- affected targets/states documented
-- no guessed behavior
-- source parity evidence exists
-- independent toggle/regression tests on both versions
+- [ ] exact source behavior documented from pinned evidence
+- [ ] no guessed behavior
+- [ ] independent toggle
+- [ ] 26.1.2 and 26.2 adapters/rendering
+- [ ] interaction with orientation, outline/string, and resource highlighting
 
-## M7 — Full parity and interaction hardening
+### Track D — Full-product hardening (former M7)
 
 Required scenarios per supported Minecraft line:
 
 - [ ] all 37 capabilities supported
-- [ ] all capabilities ON simultaneously
+- [ ] all 37 capabilities ON simultaneously
 - [ ] supplied reference preset reproduced
 - [ ] config save/reload
 - [ ] resource reload
 - [ ] world join/leave
 - [ ] dimension changes
 - [ ] active third-party resource pack
-- [ ] representative shader packs
+- [ ] shader OFF
+- [ ] supported representative shader path(s)
 - [ ] no server-side BlockLens
 - [ ] no custom gameplay/network requirement
+- [ ] target lookup remains bounded / zero-world-scan
+- [ ] OFF fast path remains intact
 
 Additional 26.2 tracks:
 
 - [ ] OpenGL
 - [ ] Vulkan experimental verification where available
 
-Exit criteria:
+Full-train exit criteria:
 
-- Functional Parity Gate PASS
-- Version Parity Gate PASS
-- visual regression PASS
-- compatibility matrix documented
+- Functional Parity Gate PASS for all 37 capabilities
+- Version Parity Gate PASS on 26.1.2 and 26.2
+- all-37 simultaneous visual/integration regression PASS
+- reload/world/dimension transitions do not retain stale render state
+- active resource-pack preservation PASS
+- compatibility matrix accurately documents verified graphics paths
+
+Implementation rule: do **not** stop merely because Track A/B/C individually passes. Continue directly to the full-product Track D gate unless a concrete source ambiguity or failing regression requires diagnosis.
 
 ## M8 — Performance, load, and size hardening
 
