@@ -96,6 +96,28 @@ Normal BlockLens startup must avoid unnecessary work:
 
 Prefer static catalogs, bounded lookup tables, lazy initialization, event/change-driven invalidation, and retained rendering with explicit cleanup.
 
+## Engineering Graph Loop
+
+The authoritative workflow is [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md).
+
+Every meaningful change follows this graph unless the current specification explicitly narrows a node:
+
+```text
+DISCOVER -> PLAN -> IMPLEMENT -> VERIFY -> SELF REVIEW -> DOCUMENT -> PR -> CI -> ISSUE UPDATE -> DONE
+                                  ^                                      |
+                                  |                                      |
+                                  +------- DIAGNOSE <- FIX <--------------+
+```
+
+Rules:
+
+- Failure in VERIFY, SELF REVIEW, or CI must loop through DIAGNOSE -> FIX -> VERIFY; do not skip directly to DONE.
+- Preserve failing evidence before editing and repair the smallest root cause that explains it.
+- Add or strengthen a regression test whenever a defect is mechanically representable.
+- A GitHub Actions result counts only for the current head SHA.
+- Minecraft integration changes must traverse both 26.1.2 and 26.2 branches of the verification graph.
+- Only `DONE`, `BLOCKED`, or explicitly scoped `PARTIAL` are valid terminal states; PARTIAL must never be reported as DONE.
+
 ## Implementation workflow
 
 For meaningful changes, aim for:
