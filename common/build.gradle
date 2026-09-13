@@ -44,6 +44,7 @@ def coverageGateClasses = [
         'dev/blocklens/core/render/ResourceHighlightCue*.class',
         'dev/blocklens/core/render/ResourceHighlightPolicy*.class',
         'dev/blocklens/core/render/NetherTweaksTargetCatalog*.class',
+        'dev/blocklens/core/render/NetherTweaksVisualCue*.class',
         'dev/blocklens/core/render/BlockLensTargetCatalog*.class'
 ]
 
@@ -97,7 +98,8 @@ pitest {
             'dev.blocklens.core.render.VisibilityRenderPolicy',
             'dev.blocklens.core.render.VisibilityQuadCuePolicy',
             'dev.blocklens.core.render.ResourceHighlightCue',
-            'dev.blocklens.core.render.ResourceHighlightPolicy'
+            'dev.blocklens.core.render.ResourceHighlightPolicy',
+            'dev.blocklens.core.render.NetherTweaksVisualCue'
     ]
     // Mutation tests intentionally exclude repository/filesystem contract tests and the
     // large exact M0 target-data tables; deterministic product-policy logic remains mutation-gated.
@@ -112,7 +114,8 @@ pitest {
             'dev.blocklens.core.render.DecorationQuadCuePolicyTest',
             'dev.blocklens.core.render.VisibilityRenderPolicyTest',
             'dev.blocklens.core.render.VisibilityQuadCuePolicyTest',
-            'dev.blocklens.core.render.ResourceHighlightPolicyTest'
+            'dev.blocklens.core.render.ResourceHighlightPolicyTest',
+            'dev.blocklens.core.render.NetherTweaksVisualCueTest'
     ]
     junit5PluginVersion = '1.2.3'
     threads = 2
