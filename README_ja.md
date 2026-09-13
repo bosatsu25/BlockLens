@@ -6,7 +6,7 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 製品契約は**独立設定可能な37機能**です。Minecraft固有差分は薄いadapter境界へ閉じ込め、設定・状態解釈・target policy・render semanticsはMinecraft **26.1.2**と**26.2**で共有します。
 
-> **現在の状態:** M0〜M7のcore behaviorは実装・継続検証済みです。現在はM8のperformance / load / size hardeningを進行中です。37機能を維持したまま、両対応Minecraft版のverified runtime JAR baselineは**93,068 bytes**です。
+> **現在の状態:** M0〜M8は完了しています。37機能を維持したまま両Minecraft版で検証済みで、最終M8 runtime JARは**88,973 bytes**です。no-growth、100 KiB release budget、real-client performance、frame percentile、reload retention、visual regressionをCI gateとして保持します。
 
 ## 対応環境
 
@@ -22,31 +22,6 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 | 検証済みrenderer path | default / shader-OFF OpenGL CI path |
 | Vulkan | experimental track |
 
-## なぜ元リソパより大幅に小さいのか
-
-固定した元リソースパックは **2,366,865 bytes**、ZIP entry数は**4,535**です。多数の小さなJSON / PNG / RPOで挙動を表現しており、ZIP/container overheadだけでも約**45.9%**あります。
-
-BlockLensではその挙動をshared semantic codeと、ごく少数のBlockLens所有resourceへ移しています。
-
-| Artifact | サイズ | 元リソパ比 |
-| --- | ---: | ---: |
-| 固定AMATERAS resource pack | **2,366,865 B** | 100% |
-| 絶対条件（50%未満） | **< 1,183,433 B** | < 50% |
-| BlockLens release budget | **<= 102,400 B (100 KiB)** | <= 4.33% |
-| verified M8 baseline | **93,068 B** | **3.93%** |
-
-つまり、37機能という製品scopeを維持しながら、固定source ZIP比で約**96.1%削減**しています。
-
-### M8 サイズルール
-
-1. runtime JARは必ず **1,183,433 B未満**を維持する。
-2. 通常のBlockLens release budgetは **100 KiB**。
-3. **93,068 B**を現在のverified no-growth baselineとして固定する。
-4. baselineを超える増加はregressionとして扱い、意図的な再baselineにはレビュー根拠を必須とする。
-5. CI/Gradleでcompressed category totalsと最大entryを含むdeterministic size reportを生成する。
-
-目的はcode golfではありません。保守性・テスト容易性・実行時挙動を壊してまでbyte数を削る方針は取りません。
-
 ## 37機能の構成
 
 ```mermaid
@@ -60,13 +35,8 @@ flowchart TB
     D --> D1[Anvil · Beehive · Campfire · Glazed Terracotta]
     D --> D2[Grindstone · Fence Gate · Froglight · Slabs]
     D --> D3[Stained Glass · Stairs · Trapdoor · Wood · Log]
-
-    R --> R1[Obsidian · Ancient Debris]
-    R --> R2[Diamond · Gold · Emerald · Coal]
-    R --> R3[Iron · Copper · Lapis · Redstone]
-    R2 --> R4[通常 + Deepslate variants]
-    R3 --> R5[通常 + Deepslate variants]
-
+    R --> R1[Obsidian · Ancient Debris · 8 ore families]
+    R --> R2[通常 + deepslate variants]
     O --> O1[Blue Ice · Dead Coral · Powder Snow · Sculk Catalyst · String Tweaks]
 ```
 
@@ -88,18 +58,18 @@ flowchart TD
     CUE --> OUT[base model + BlockLens visual information]
 ```
 
-現在のruntime原則:
+runtime原則:
 
-- **323 capability-to-target bindings**
-- **320 unique Minecraft block targets**
+- **323 capability-to-target bindings** / **320 unique Minecraft block targets**
 - whole-world target scanなし
 - 毎frame registry scanなし
 - semantic解釈はmodel bake時
 - render hot pathはprimitive enabled-capability mask
 - 担当機能がOFFならactive baseを直接emit
-- 不要なrepeat allocationはbounded immutable cue/instruction再利用へ置換
+- immutable cue/instructionをbounded reuse
+- repeated resource reloadでもretained-capability構造が増加しないことを実Clientで検証
 
-## 実装済みVisual Family
+## Visual Family
 
 ### M3 — Decoration / Orientation · 13 ✅
 
@@ -109,13 +79,13 @@ axis、stairs、slab、trapdoor、gate、beehive、campfire、grindstone、stain
 
 Blue Ice / Dead Coral / Powder Snow / Sculk Catalyst / String Tweaksを実装済みです。Sculk bloom stateを保持し、Tripwireは**64 semantic stateすべて**を回帰テストしています。
 
-M8 hardeningでは、M4 visual cueごとに**immutable emissive quad instructionを1個だけ保持**し、emitted quadごとに同じrecordを生成する処理を除去しています。
+M8ではvisibility cueごとにimmutable emissive quad instructionを1個だけ保持し、両version adapterから直接再利用します。
 
 ### M5 — Resource Highlighting · 18 ✅ core/rendered parity
 
 18個すべてのResource Highlightを実装しています。active baked base modelを維持したままfull-bright procedural accentを追加し、resource-only ONとall-OFFを比較するdark-area実Client oracleもあります。
 
-M8ではResource Highlightもcueごとのimmutable instructionを再利用します。これは**構造的にallocation siteを除去した**という事実であり、whole-client CI timingのノイズが大きいため「FPSが何%向上した」といった主張はしていません。
+M8ではresource cueごとのimmutable instruction再利用と重複color state削除も実施しました。これは構造的なallocation-site削減であり、whole-client CIのノイズが大きいため「FPSが何%向上した」という主張はしていません。
 
 ### M6 — Nether Tweaks · exact 27 targets ✅ core parity
 
@@ -123,44 +93,64 @@ source-derived visual grammarをprocedural palette logicと、BlockLens所有の
 
 ## M7 Automated Core Integration Gate
 
-Minecraft **26.1.2 / 26.2**で同じFabric Client GameTestを実行し、次を自動検証します。
+Minecraft **26.1.2 / 26.2**で同じFabric Client GameTestを実行し、37機能同時ON、native config save/reload、resource reload、deterministic framebuffer、dimension往復、Nether Tweaks単独、固定5機能preset、M5暗所、all-OFF復元、bounded lookup、BlockLens所有model resolutionを検証します。
 
-- 37機能すべて同時ON
-- config codec/mask round-trip
-- 実`config/blocklens.properties` save → reload → 完全復元
-- 37機能ONでresource reload
-- deterministic framebuffer evidence
-- Overworld → Nether → Overworld往復
-- Nether Tweaks単独
-- 固定5機能reference preset
-- M5 resource-only dark-area evidence
-- 37機能all-OFF / active base復元
-- bounded zero-world-scan target lookup
-- BlockLens所有model resolution
+representative shader-ON、より広いthird-party resource-pack matrix、Vulkan experimental verificationは別のcompatibility/release trackであり、core gateのGREENだけで対応済みとは扱いません。
 
-## M8 Performance / Size Hardening
+## M8 Performance / Load / Size Hardening ✅
 
-M8は **measure → 不要な処理を構造的に除去 → behavior gate再実行 → evidence記録** の順番で進めます。
+M8は完了しました。最終検証は **GitHub Actions `34738345474` (run #223)** です。
 
-最初のreal-client baselineでは次を記録しています。
+### Artifact size
 
-- resource reload warmup + raw samples
-- reload median / nearest-rank P95
-- OFF vs Resource Highlight ON rebuild timing
-- JVM thread-allocation delta
-- BlockLens initialization timing
-- wrapped model count
+固定した元リソースパックは **2,366,865 B** です。
 
-whole-client rebuild/allocation windowにはrunner noiseと大きなoutlierが確認されています。そのため現時点では、これらのsampleから**測定上の高速化を主張しません**。
+| Artifact / rule | サイズ | 元リソパ比 |
+| --- | ---: | ---: |
+| 固定AMATERAS resource pack | **2,366,865 B** | 100% |
+| 絶対条件 | **< 1,183,433 B** | < 50% |
+| BlockLens release budget | **<= 102,400 B (100 KiB)** | <= 4.33% |
+| PR #17 pre-optimization baseline | **93,068 B** | 3.93% |
+| **最終M8 runtime JAR** | **88,973 B** | **3.76%** |
 
-代わりに、次の構造改善を明確に保証します。
+最終artifactはPR #17 baselineより **4,095 B（4.4%）小さく**、37機能を維持したまま固定source ZIP比で **96.24%削減**しています。**88,973 Bを両Minecraft版の最終no-growth baseline**としてfreezeします。
 
-- M5のrepeat immutable instruction constructionを除去
-- 現在のM8 hardeningでM4のrepeat immutable instruction constructionも除去
-- retained instruction数はenum value数でbounded
-- world scan / registry scanを新規導入しない
-- M3/M5/M7 behavior evidenceをregression authorityとして維持
-- JAR sizeを第一級のCI contractとして扱う
+CI/Gradleはexact bytes、entry count、compressed category totals、最大20 entryを含むdeterministic JAR reportも生成し、retired runtime-policy bytecodeの再混入を拒否します。
+
+### Real-client regression evidence
+
+複数回の実測を踏まえ、M8では「高速化率」ではなく粗いmedian-based regression guardを固定しました。
+
+- resource reload median: **<= 6.0 s**
+- rebuild median: **<= 2.5 s**
+- total / render-relevant allocation median: **<= 32 MiB**
+
+最終run #223:
+
+| Metric | 26.1.2 | 26.2 |
+| --- | ---: | ---: |
+| reload median | **3.842 s** | **4.069 s** |
+| OFF / Resource-ON rebuild median | **1.493 / 1.510 s** | **1.532 / 1.512 s** |
+| OFF frame-main median | **5.026 ms** | **5.054 ms** |
+| Resource-ON frame-main median | **5.078 ms** | **5.092 ms** |
+| Resource-ON frame-main P95 | **7.969 ms** | **11.441 ms** |
+| Resource-ON frame-main P99 | **12.009 ms** | **12.538 ms** |
+
+frame metricは**main render-pass duration**であり、present-to-presentの完全なframe timeではありません。P95/P99 tailはevidenceとして保存しますが、FPS改善の宣伝値には使いません。
+
+### Reload retention / cache evidence
+
+両versionとも3回のmeasured reloadで完全一致しました。
+
+```text
+wrapped models:             7820, 7820, 7820
+retained capability slots:  7827, 7827, 7827
+max capabilities/model:        2,    2,    2
+Nether wrapped models:         33,   33,   33
+reloadRetentionStable=true
+```
+
+Nether overlayはwrapper単位のlazy cacheとone-attempt guardを維持し、quad emissionへ計測counterは追加していません。
 
 M8 evidence正本: [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md)
 
@@ -176,19 +166,8 @@ M8 evidence正本: [`knowledge/current/m8-performance.md`](knowledge/current/m8-
 | M5 | ✅ Core/rendered parity | 18 Resource Highlights + dark-area evidence |
 | M6 | ✅ Core parity | exact 27 Nether targets |
 | M7 | ✅ Automated core gate | all-37 / config / reload / dimension / preset / OFF復元 |
-| M8 | 🔧 進行中 | performance / allocation / reload / retained-memory / **100 KiB size hardening** |
+| M8 | ✅ 完了 | performance/load/retention evidence + 最終 **88,973 B** no-growth baseline |
 | M9 | 予定 | release readiness / public artifact audit |
-
-## 現在のArtifact Evidence
-
-PR #17最終確認: **GitHub Actions `34736446316`**。
-
-| Minecraft | Runtime JAR | Client GameTest / quality gates |
-| --- | ---: | --- |
-| 26.1.2 | **93,068 B** | PASS |
-| 26.2 | **93,068 B** | PASS |
-
-両versionでM8 performance manifest、M3/M5/M7 visual evidence、reproducible runtime JARも生成済みです。
 
 ## Automated Quality
 
@@ -207,7 +186,7 @@ flowchart TD
     S2 --> GREEN
 ```
 
-runtime / compatibility変更は、current headで両Minecraft版がGREENになるまで完了扱いにしません。
+runtime / compatibility変更はcurrent headで両Minecraft版がGREENになるまで完了扱いにしません。
 
 ## Engineering Graph Loop
 
@@ -222,7 +201,6 @@ flowchart LR
     PR --> CI[CI]
     CI --> U[ISSUE UPDATE]
     U --> DONE([DONE])
-
     V -- fail --> X[DIAGNOSE]
     R -- defect --> X
     CI -- fail --> X
@@ -231,18 +209,6 @@ flowchart LR
 ```
 
 実装しただけでは完了ではありません。失敗時は**DIAGNOSE → FIX → VERIFY**へ戻ります。
-
-## まだ未完了の項目
-
-core gateがGREENでも全互換性を検証済みという意味ではありません。残件には次があります。
-
-- representative shader-ON verification
-- broader third-party resource-pack compatibility evidence
-- Minecraft 26.2 Vulkan experimental verification
-- 有用なperformance toleranceを固定できる回数のM8 repeated observation
-- reproducibleなframe-time percentile evidence
-- retained cache / geometry / lazy-initialization evidence
-- M9 licensing / attribution / public release audit
 
 ## Build / Verify
 
@@ -253,7 +219,7 @@ Java 25が必要です。
 ./gradlew ciGate
 ```
 
-version別buildではruntime artifact budgetも検証し、`build/reports/blocklens/runtime-jar-size.txt`へcompressed category totalsと最大entryを出力します。
+version別buildではruntime artifact budgetも検証し、`build/reports/blocklens/runtime-jar-size.txt`へsize evidenceを出力します。
 
 ## Project Documentation
 
@@ -263,8 +229,8 @@ version別buildではruntime artifact budgetも検証し、`build/reports/blockl
 - [`knowledge/current/architecture.md`](knowledge/current/architecture.md) — architecture
 - [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md) — quality strategy
 - [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md) — performance strategy
-- [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md) — M8 evidence / limitation
+- [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md) — M8正本
 - [`knowledge/current/roadmap.md`](knowledge/current/roadmap.md) — roadmap
 - [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) — Graph Loop
 
-`knowledge/current/`を正本とします。READMEでは、evidenceで確認できていないcompatibilityやperformanceを過大に主張しません。
+`knowledge/current/`を正本とします。READMEではevidenceで確認できていないcompatibilityやperformanceを過大に主張しません。
