@@ -42,4 +42,23 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(strategy.contains(
                 "Absolute performance thresholds should be frozen only after a reproducible baseline exists."));
     }
+
+    @Test
+    void resourceHighlightRenderPathReusesPrebuiltInstructionsOnBothVersions() throws IOException {
+        String cue = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/ResourceHighlightCue.java"));
+        String model2612 = Files.readString(root().resolve(
+                "versions/mc26_1_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
+        String model262 = Files.readString(root().resolve(
+                "versions/mc26_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
+
+        assertTrue(cue.contains("private final DecorationQuadInstruction instruction;"));
+        assertTrue(cue.contains("this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);"));
+        assertTrue(cue.contains("public DecorationQuadInstruction instruction()"));
+
+        assertTrue(model2612.contains("instruction = resource.instruction();"));
+        assertTrue(model262.contains("instruction = resource.instruction();"));
+        assertFalse(model2612.contains("DecorationQuadInstruction.emissiveTint(resource.accentArgb())"));
+        assertFalse(model262.contains("DecorationQuadInstruction.emissiveTint(resource.accentArgb())"));
+    }
 }
