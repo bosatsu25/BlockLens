@@ -142,11 +142,26 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(versionModule.contains("runtimeReleaseBudgetBytes"));
         assertTrue(versionModule.contains("deliberately rebaseline with reviewed justification"));
         assertTrue(versionModule.contains("dependsOn tasks.named('writeRuntimeJarSizeReport')"));
-        assertFalse(versionModule.contains("'dev/blocklens/core/render/DecorationRenderPolicy.class',"));
+        assertTrue(occurrences(versionModule,
+                "dev/blocklens/core/render/DecorationRenderPolicy.class") == 1,
+                "retired DecorationRenderPolicy bytecode must appear only in the explicit rejection list");
         assertTrue(versionModule.contains("Runtime JAR contains retired policy bytecode"));
 
         // Every version CI job runs `build`; `check` therefore generates the deterministic size report.
         assertTrue(ci.contains(":versions:${{ matrix.module }}:build"));
         assertTrue(ci.contains("Build and verify Minecraft ${{ matrix.minecraft }}"));
+    }
+
+    private static int occurrences(String text, String needle) {
+        int count = 0;
+        int from = 0;
+        while (true) {
+            int index = text.indexOf(needle, from);
+            if (index < 0) {
+                return count;
+            }
+            count++;
+            from = index + needle.length();
+        }
     }
 }
