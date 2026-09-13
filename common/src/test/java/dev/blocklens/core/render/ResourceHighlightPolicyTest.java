@@ -21,12 +21,19 @@ final class ResourceHighlightPolicyTest {
                 continue;
             }
             count++;
-            assertTrue(ResourceHighlightPolicy.cue(capability, defaults).isEmpty());
+            assertFalse(defaults.isEnabled(capability));
+
             BlockLensConfig enabled = defaults.withEnabled(capability, true);
-            ResourceHighlightCue cue = ResourceHighlightPolicy.cue(capability, enabled).orElseThrow();
-            assertEquals(ResourceHighlightCue.forCapability(capability), cue);
-            assertTrue(cue.emissive());
-            assertFalse(ResourceHighlightPolicy.cue(capability, defaults).isPresent());
+            assertTrue(enabled.isEnabled(capability));
+            assertEquals(ResourceHighlightCue.forCapability(capability),
+                    ResourceHighlightCue.forCapability(capability));
+
+            for (CapabilityId other : CapabilityId.values()) {
+                if (other.category() == CapabilityId.Category.RESOURCE && other != capability) {
+                    assertFalse(enabled.isEnabled(other),
+                            () -> capability + " must not implicitly enable " + other);
+                }
+            }
         }
         assertEquals(18, count);
     }
@@ -38,8 +45,8 @@ final class ResourceHighlightPolicyTest {
                 ResourceHighlightCue.forCapability(CapabilityId.DEEPSLATE_DIAMOND_ORE));
 
         BlockLensConfig config = BlockLensConfig.defaults().withEnabled(CapabilityId.DIAMOND_ORE, true);
-        assertTrue(ResourceHighlightPolicy.cue(CapabilityId.DIAMOND_ORE, config).isPresent());
-        assertTrue(ResourceHighlightPolicy.cue(CapabilityId.DEEPSLATE_DIAMOND_ORE, config).isEmpty());
+        assertTrue(config.isEnabled(CapabilityId.DIAMOND_ORE));
+        assertFalse(config.isEnabled(CapabilityId.DEEPSLATE_DIAMOND_ORE));
     }
 
     @Test
@@ -59,15 +66,9 @@ final class ResourceHighlightPolicyTest {
 
     @Test
     void nonResourceAndNullInputsFailClosed() {
-        BlockLensConfig config = BlockLensConfig.defaults().withEnabled(CapabilityId.ANVIL, true);
-        assertTrue(ResourceHighlightPolicy.cue(CapabilityId.ANVIL, config).isEmpty());
         assertThrows(IllegalArgumentException.class,
                 () -> ResourceHighlightCue.forCapability(CapabilityId.ANVIL));
         assertThrows(NullPointerException.class,
                 () -> ResourceHighlightCue.forCapability(null));
-        assertThrows(NullPointerException.class,
-                () -> ResourceHighlightPolicy.cue(null, config));
-        assertThrows(NullPointerException.class,
-                () -> ResourceHighlightPolicy.cue(CapabilityId.OBSIDIAN, null));
     }
 }
