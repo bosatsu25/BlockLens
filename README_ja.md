@@ -10,7 +10,18 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 製品契約は**独立設定可能な37機能**です。Minecraft固有差分は薄いadapter境界へ閉じ込め、設定、semantic state、target policy、rendering、品質gate、release automationはMinecraft **26.1.2**と**26.2**で共有します。
 
-> **現在の状態:** M0〜M9のrelease-readiness実装は完了しています。検証済みrelease lineは **v0.1.0** で、成功した`main` CIの成果物からのみ公開されます。アイコン同梱runtime JARのno-growth baselineは両Minecraft版で **95,333 B**、release budgetは厳格に **100 KiB** です。
+> **現在の状態:** **M0〜M9は完了し、BlockLens v0.1.0を正式公開・検証済みです。** Releaseは成功した`main` CI **#245 / `34768792311`**、commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`から生成され、公開JARはCIで検証したartifactそのものです。アイコン同梱no-growth baselineは **95,333 B**、release budgetは厳格に **100 KiB** です。
+
+## Release
+
+**v0.1.0** が最初の検証済みrelease lineです。
+
+| Minecraft | 公開JAR | サイズ | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.1.0.jar` | **95,332 B** | `191f579fe7d574c94614b611c01420fa6887684e2fabc597966515490f59d24b` |
+| 26.2 | `BlockLens-26.2-v0.1.0.jar` | **95,333 B** | `3848de8a07836d829d12ab5ed09ee650d5e1bebd4e0249b254436dda9c5a54be` |
+
+Releaseには`SHA256SUMS.txt`も同梱します。Release run **#3 / `34769093202`** は成功し、公開後にasset集合まで再検証しています。
 
 ## 対応環境
 
@@ -44,7 +55,7 @@ flowchart TB
     O --> O1[Blue Ice · Dead Coral · Powder Snow · Sculk Catalyst · String Tweaks]
 ```
 
-提供されたRPOで初期ONなのはBlue Ice / Dead Coral / Powder Snow / Sculk Catalyst / String Tweaksの5機能だけですが、これはpresetであり、製品契約そのものは37機能です。
+提供されたRPOで初期ONなのはBlue Ice / Dead Coral / Powder Snow / Sculk Catalyst / String Tweaksの5機能ですが、これはpresetであり、製品契約そのものは37機能です。
 
 ## Runtime Architecture
 
@@ -76,39 +87,52 @@ runtime原則:
 
 ## 技術基盤
 
-BlockLensのruntime自体は小さく保ちますが、周囲の開発・品質基盤はかなり厳格です。
+BlockLensのruntime自体は小さく保ちますが、開発・QA基盤は意図的に厳格にしています。
 
 | レイヤー | 技術 | BlockLensでの役割 |
 | --- | --- | --- |
 | 言語 | **Java 25** | 本体、shared semantic engine、Fabric adapter、test |
-| Build | **Gradle 9.5.1** | multi-project build、検証task、deterministic artifact |
-| Minecraft開発基盤 | **Fabric Loom 1.17.19** | Minecraft開発runtime・mapping・build統合 |
+| Build | **Gradle 9.5.1** | multi-project build、deterministic artifact、検証task |
+| Minecraft開発基盤 | **Fabric Loom 1.17.19** | mapping、開発runtime、build統合 |
 | Loader | **Fabric Loader 0.19.3** | client MOD loading |
 | Runtime API | **Fabric API** | version固有hook、Client GameTest連携 |
-| Unit / contract test | **JUnit Jupiter 5.14.4** | semantic/config/target-policy/repository/regression contract |
+| Unit / contract test | **JUnit Jupiter 5.14.4** | semantic/config/target-policy/repository/regression/release contract |
 | Test実行基盤 | **JUnit Platform** | Gradle上でのJUnit 5実行 |
-| Coverage | **JaCoCo 0.8.15** | line coverageの可視化とhard gate |
-| Mutation testing | **PIT 1.19.0** | product-policy logicのmutation score / test strength検証 |
+| Coverage | **JaCoCo 0.8.15** | line coverage可視化とhard gate |
+| Mutation testing | **PIT 1.19.0** | mutation coverage / score / test strength検証 |
 | PIT JUnit 5 adapter | **pitest-junit5-plugin 1.2.3** | JUnit 5 mutation test実行 |
-| 実Client integration | **Fabric Client GameTest** | Minecraft client起動、reload、dimension、render path検証 |
-| Headless graphics | **Xvfb / Ubuntu 24.04** | GitHub Actions上のreal-client framebuffer検証 |
-| CI/CD | **GitHub Actions** | quality gate、dual-version build、visual/performance evidence、release |
-| Artifact integrity | **SHA-256** | 再現性とrelease checksum |
-| Release publishing | **GitHub CLI (`gh`)** | CIで検証したJARそのものをGitHub Releaseへ公開 |
+| 実Client integration | **Fabric Client GameTest** | Minecraft client起動、reload、dimension、rendering検証 |
+| Headless graphics | **Xvfb / Ubuntu 24.04** | GitHub Actions上でのreal-client / framebuffer検証 |
+| CI/CD | **GitHub Actions** | quality gate、dual-version検証、evidence保存、release automation |
+| Artifact integrity | **SHA-256** | reproducibility、CI/Release byte同一性、公開checksum |
+| Release publishing | **GitHub CLI (`gh`) + GitHub REST API** | release制御とraw CI artifactの同一byte引き渡し |
 
-### 品質閾値
+### JavaとJUnit
 
-common product-policy surfaceには明示的なhard gateがあります。
+本体コードとtestは**Java 25**でcompileします。commonのsemantic/configuration層は**JUnit Jupiter 5.14.4**を**JUnit Platform**上で実行して検証します。またrepository contract testにより、build/releaseの構造自体も回帰対象にしています。
+
+たとえばM9では、CIが`archive:false`で保存したraw JARをRelease側が誤って展開しないことをJUnit contractで保護しています。つまりJUnitは単なるメソッド単体試験だけではなく、**リポジトリの品質・release設計そのものの契約試験**にも使っています。
+
+Java compileは`-Xlint:deprecation`、`-Xlint:unchecked`、**`-Werror`**を使用し、設定対象のwarningをrelease直前の後回し事項にせずbuild failureとして扱います。
+
+### JaCoCoとPIT
+
+common product-policy surfaceには以下のhard gateがあります。
 
 - JaCoCo line coverage: **96%以上**
 - PIT mutation coverage: **96%以上**
 - PIT mutation score: **96%以上**
 - PIT test strength: **96%以上**
-- Java compileは`-Xlint:deprecation`、`-Xlint:unchecked`、**`-Werror`**を使用
 
-「テストが存在する」だけでは完了にせず、重要なsemantic/config/render-policy logicのmutationを十分に検出できるかまで検証します。
+JaCoCoは重要コードが実行されたかを確認します。一方PITはロジックを意図的に変異させ、その変異をtestが検出できるか確認します。そのためBlockLensでは「coverageが高い」だけでtest品質が十分とは判断しません。
 
-## 自動品質パイプライン
+### Fabric Client GameTest
+
+unit testだけでは、Minecraftが実際に起動すること、resource/modelが解決すること、dimension遷移、resource reload、framebuffer描画などは保証できません。そのため両対応versionで**Fabric Client GameTest**を**Xvfb**上の実ClientとしてCI実行します。
+
+実Client gateではconfig round-trip、resource reload、Overworld/Nether往復、all-37 integration、all-OFF復元、M3/M5/M7 visual evidence、M8 load/performance/retention observation、BlockLens所有model resolutionまで検証します。
+
+## 自動品質・Releaseパイプライン
 
 ```mermaid
 flowchart TD
@@ -127,78 +151,50 @@ flowchart TD
     A2 --> GREEN
     GREEN -->|main pushのみ| REL[Release workflow]
     REL --> VER{v<mod_version> exists?}
-    VER -- yes --> STOP[重複releaseを作らない]
-    VER -- no --> DL[同じCI runのJARを取得]
-    DL --> RV[metadata/icon/size再検証]
+    VER -- yes --> STOP[successful no-op]
+    VER -- no --> RAW[exact raw CI JARを取得]
+    RAW --> RV[metadata/icon/size再検証]
     RV --> SHA[SHA256SUMS生成]
     SHA --> PUB[GitHub Release]
 ```
 
 ### Releaseの安全設計
 
-`.github/workflows/release.yml`はbuildとpublishを意図的に分離しています。
+`.github/workflows/release.yml`は検証と公開を意図的に分離しています。
 
 - `CI` workflowが成功した後だけ実行
 - **`main`へのpush**だけrelease候補
-- release jobはCIが検証した**同一commit SHA**をcheckout
-- release jobでは再buildせず、**成功したCI runが生成したruntime JARそのもの**をdownload
-- Minecraft version、mod version、client-only metadata、icon、size budgetをpublish直前に再検証
+- CIで検証した**同一commit SHA**をcheckout
+- Release jobではBlockLensを**再buildしない**
+- CI runtime JARはraw `archive:false` artifactとして保存し、Release側はGitHub Actions artifact APIからそのpayloadを直接取得
+- 取得payloadがJARとして正しいことをpublish前に検証
+- Minecraft version、mod version、client-only metadata、icon、size budgetを再検証
 - `gradle.properties`の`mod_version`をrelease versionの正本にする
-- `v<mod_version>`が既に存在すれば成功終了し、重複releaseを作らない
-- publish前にSHA-256 checksumを生成
+- `v<mod_version>`が存在すれば重複releaseを作らずsuccessful no-op
+- SHA-256 checksumを生成し、公開後にasset集合まで検証
 
-したがってREADMEだけを`main`で修正しても、既存の`v0.1.0`がもう一度作られることはありません。新releaseにはreviewされたversion bumpが必要です。
+このraw-artifact handoffはstatic testだけでなく、実際の**v0.1.0公開**で通過済みです。
 
-## Visual Family
+## Milestone Status
 
-### M3 — Decoration / Orientation · 13 ✅
+- **M0〜M7:** product contract、architecture、37 core capabilities、dual-version real-client gate完了
+- **M8:** performance / load / retention / size hardening完了
+- **M9:** release readinessとv0.1.0 live publication完了
 
-axis、stairs、slab、trapdoor、gate、beehive、campfire、grindstone、stained glass、wood/log orientation等をstate-aware procedural cueとして実装しています。
-
-### M4 — Outline / Fine Visibility · 5 ✅ core parity
-
-Blue Ice / Dead Coral / Powder Snow / Sculk Catalyst / String Tweaksを実装済みです。Sculk bloom stateを保持し、Tripwireは**64 semantic stateすべて**を回帰テストしています。
-
-### M5 — Resource Highlighting · 18 ✅ core/rendered parity
-
-18個すべてのResource Highlightを実装しています。active baked base modelを維持したままfull-bright procedural accentを追加し、dark-areaとdeterministic active-resource-packの実Client evidenceで保護します。
-
-### M6 — Nether Tweaks · exact 27 targets ✅ core parity
-
-source-derived visual grammarをprocedural palette logicとBlockLens所有の小さな`interior_fill` / `upper_band` modelで再構築しています。AMATERAS PNGは再配布しません。
-
-### M7 — Automated full-product gate ✅
-
-両Minecraft版で同じclient integration oracleを実行し、37機能、config round-trip、resource reload、dimension往復、Nether behavior、固定5機能preset、M5暗所、all-OFF復元、bounded lookup、owned model resolutionを検証します。
-
-### M8 — Performance / Load / Retention / Size Hardening ✅
-
-M8では「FPSが何%上がった」とは主張せず、evidence-basedなgross-regression guardを固定しています。
-
-- resource reload median: **6.0 s以下**
-- terrain rebuild median: **2.5 s以下**
-- allocation median: **32 MiB以下**
-
-アイコン追加前のM8 runtime baselineは **88,973 B** でした。M9では製品アセットであるアイコン分だけを実測した **95,333 B** へ明示的にrebaselineし、**100 KiB** release ceilingとsource-pack **<50%** hard maximumは維持します。
-
-### M9 — Release Readiness ✅
-
-M9ではrepository-owned icon、release metadata、publish直前再検証、SHA-256生成、成功した`main` CI artifactからのGitHub Release自動公開を追加しています。
+M8のicon追加前baselineは **88,973 B**。M9ではrepository-owned icon追加分だけを実測してshared baselineを **95,333 B** に固定しました。**100 KiB** release ceilingとsource-pack **<50%** hard maximumは緩和していません。
 
 ## 導入方法
 
 1. 対象Minecraft版のFabric Loaderを導入します。
 2. 対応するFabric APIを導入します。
 3. Java 25以上を使用します。
-4. GitHub Releasesから対象Minecraft版のJARを取得します。
+4. GitHub Releasesの`v0.1.0`から対象Minecraft版JARを取得します。
 5. JARをMinecraftの`mods`フォルダへ入れます。
 6. clientを起動します。
 
 BlockLensはclient-onlyのため、server側へBlockLensを導入する必要はありません。
 
 ## Build / Verify
-
-Java 25が必要です。
 
 ```bash
 ./gradlew qualityGate
@@ -224,7 +220,7 @@ version別buildは`build/reports/blocklens/runtime-jar-size.txt`へdeterministic
 - representative shader-ON: **現時点では対応を主張しない**
 - Minecraft 26.2 Vulkan: **experimental**
 
-Issue #5はshader-ON compatibilityの正本として残します。これは37機能のcore parityやrelease automationのblockerではなく、未検証組み合わせを対応済みと宣伝しないためのtrackです。
+Issue #5はshader-ONおよび外部compatibilityの正本として残します。未検証組み合わせはv0.1.0のadvertised support boundary外であり、隠れたrelease blockerではありません。
 
 ## Release / Redistribution Audit
 
@@ -252,7 +248,7 @@ flowchart LR
     F --> V
 ```
 
-実装しただけでは完了ではありません。失敗時は**DIAGNOSE → FIX → VERIFY**へ戻します。
+初回Releaseではraw artifact handoffの欠陥が見つかりました。Graph Loopに従って**DIAGNOSE → FIX → VERIFY**へ戻り、PR #20、PR CI、`main` CI、実Release workflowをすべて再実行してからM9を完了扱いにしています。
 
 ## Project Documentation
 
@@ -262,9 +258,9 @@ flowchart LR
 - [`knowledge/current/architecture.md`](knowledge/current/architecture.md) — architecture
 - [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md) — quality strategy
 - [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md) — performance strategy
-- [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md) — M8 evidence正本
-- [`knowledge/current/release-readiness.md`](knowledge/current/release-readiness.md) — M9/release contract
+- [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md) — M8 evidence
+- [`knowledge/current/release-readiness.md`](knowledge/current/release-readiness.md) — M9 / release evidence
 - [`knowledge/current/roadmap.md`](knowledge/current/roadmap.md) — roadmap
 - [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) — Graph Loop
 
-`knowledge/current/`を正本とします。READMEではevidenceで確認できていないcompatibilityやperformanceを過大に主張しません。
+`knowledge/current/`を正本とし、READMEでは検証済み範囲を超えるcompatibilityやperformanceを主張しません。
