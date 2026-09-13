@@ -131,7 +131,7 @@ final class M8PerformanceBaselineContractTest {
 
         assertTrue(properties.contains("runtime_jar_source_pack_bytes=2366865"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=93068"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=88973"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=102400"));
 
         assertTrue(versionModule.contains("writeRuntimeJarSizeReport"));
