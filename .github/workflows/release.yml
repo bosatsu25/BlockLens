@@ -153,7 +153,8 @@ jobs:
             grep -Fq "\"minecraft\": \"=${minecraft}\"" "dist/fabric-${minecraft}.json"
             grep -Fq '"environment": "client"' "dist/fabric-${minecraft}.json"
             grep -Fq '"icon": "assets/blocklens/icon.png"' "dist/fabric-${minecraft}.json"
-            unzip -l "$target" | grep -Fq 'assets/blocklens/icon.png'
+            unzip -Z1 "$target" > "dist/entries-${minecraft}.txt"
+            grep -Fxq 'assets/blocklens/icon.png' "dist/entries-${minecraft}.txt"
 
             echo "- Minecraft $minecraft: ${bytes} B" >> "$GITHUB_STEP_SUMMARY"
           }
@@ -184,16 +185,16 @@ jobs:
           - verified default / shader-OFF OpenGL path
 
           ## Verification
-          This release is published only from a successful `main` CI run. The exact attached JARs passed JUnit, JaCoCo, PIT mutation testing, reproducibility checks, Client GameTest, M3/M5/M7 visual evidence, M8 performance/retention guards, privacy/residue checks, and runtime size budgets.
+          This release is published only from a successful main CI run. The exact attached JARs passed JUnit, JaCoCo, PIT mutation testing, reproducibility checks, Client GameTest, M3/M5/M7 visual evidence, M8 performance/retention guards, privacy/residue checks, and runtime size budgets.
 
           ## Compatibility scope
           Representative shader-ON configurations are not yet claimed as supported. Minecraft 26.2 Vulkan remains experimental. Broader third-party resource-pack compatibility is intentionally evidence-bounded.
 
           ## Integrity
-          SHA-256 hashes are attached in `SHA256SUMS.txt`.
+          SHA-256 hashes are attached in SHA256SUMS.txt.
 
-          Verified commit: `${HEAD_SHA}`
-          CI run: `${RUN_ID}`
+          Verified commit: ${HEAD_SHA}
+          CI run: ${RUN_ID}
           EOF
 
       - name: Publish GitHub Release
@@ -212,13 +213,30 @@ jobs:
             dist/BlockLens-26.2-v${version}.jar \
             dist/SHA256SUMS.txt
 
-      - name: Verify published release
+      - name: Verify published release and assets
         if: steps.existing.outputs.exists == 'false'
         shell: bash
         run: |
           set -euo pipefail
           tag='${{ steps.version.outputs.tag }}'
+          version='${{ steps.version.outputs.version }}'
+
+          mapfile -t assets < <(gh release view "$tag" --repo "$REPOSITORY" --json assets --jq '.assets[].name' | sort)
+          expected=(
+            "BlockLens-26.1.2-v${version}.jar"
+            "BlockLens-26.2-v${version}.jar"
+            "SHA256SUMS.txt"
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          if [[ "${assets[*]}" != "${expected_sorted[*]}" ]]; then
+            echo "Published release assets differ from the exact expected set" >&2
+            printf 'actual: %s\n' "${assets[@]}" >&2
+            printf 'expected: %s\n' "${expected_sorted[@]}" >&2
+            exit 1
+          fi
+
           gh release view "$tag" --repo "$REPOSITORY" \
             --json tagName,targetCommitish,isDraft,isPrerelease,url \
             --jq '. | "Published \(.tagName) -> \(.targetCommitish)\nURL: \(.url)\nDraft: \(.isDraft)\nPrerelease: \(.isPrerelease)"' \
             | tee -a "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "${assets[@]}" | sed 's/^/- asset: /' >> "$GITHUB_STEP_SUMMARY"
