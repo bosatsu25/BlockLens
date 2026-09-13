@@ -12,7 +12,8 @@ import java.util.Objects;
  *
  * <p>Each enum value owns one immutable quad instruction. Resource-highlight rendering can therefore
  * reuse the same instruction for every emitted quad instead of constructing an equivalent record
- * at the render boundary.</p>
+ * at the render boundary. The instruction is also the single source of truth for the accent color,
+ * avoiding duplicate retained enum state.</p>
  */
 public enum ResourceHighlightCue {
     OBSIDIAN(0xFFB96CFF),
@@ -26,16 +27,14 @@ public enum ResourceHighlightCue {
     LAPIS(0xFF6A7CFF),
     REDSTONE(0xFFFF5555);
 
-    private final int accentArgb;
     private final DecorationQuadInstruction instruction;
 
     ResourceHighlightCue(int accentArgb) {
-        this.accentArgb = accentArgb;
         this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);
     }
 
     public int accentArgb() {
-        return accentArgb;
+        return instruction.multiplyArgb();
     }
 
     public boolean emissive() {
