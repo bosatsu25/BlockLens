@@ -1,14 +1,47 @@
-# M8 Performance Observations and Allocation Hardening
+# M8 Performance, Allocation, and Artifact-Size Hardening
 
-Status: **authoritative current M8 measurement evidence**. This document records repeatable observations and structural hardening; it does not claim a statistically proven speedup.
+Status: **authoritative current M8 evidence**. This document records repeatable observations and structural hardening; it does not claim a statistically proven speedup where the measurements do not support one.
 
 ## Goal
 
-Establish dual-version performance evidence before making renderer optimizations, then keep any optimization claim narrower than the measurements support.
+Keep the verified **37-capability** product behavior intact while reducing avoidable runtime work and keeping BlockLens dramatically smaller than the pinned AMATERAS source pack on Minecraft 26.1.2 and 26.2.
 
-The current M8 oracle runs inside the real Fabric Client GameTest on Minecraft 26.1.2 and 26.2. It uses a deterministic 72-block Resource Highlight scene, one resource-reload warmup, three measured reloads, and alternating all-OFF / all-18-Resource-Highlight-ON terrain rebuild observations.
+M8 uses two different kinds of evidence and does not conflate them:
 
-## Measurement boundary
+1. **real-client observation** for reload/rebuild/allocation behavior, where runner noise must be reported honestly;
+2. **deterministic structural evidence** for bounded allocation-site removal and runtime-JAR size, where exact contracts can be enforced.
+
+## Product size contract
+
+Pinned source resource pack:
+
+```text
+source pack:                  2,366,865 B
+absolute <50% maximum:        1,183,432 B
+BlockLens release budget:       102,400 B (100 KiB)
+frozen verified M8 baseline:     93,068 B
+baseline/source ratio:              3.93%
+source-size reduction:             96.1%
+```
+
+The source-pack half-size rule remains an absolute product requirement, but it is no longer useful as the day-to-day engineering threshold because BlockLens is already much smaller. M8 therefore adds a tighter **100 KiB release budget** and freezes **93,068 B** as the no-growth review baseline.
+
+Growth above 93,068 B is treated as a regression unless the baseline is deliberately revised with reviewed justification. A deliberate baseline revision still cannot exceed the 100 KiB release budget or the source-pack half-size absolute requirement.
+
+Per-version Gradle verification now writes `build/reports/blocklens/runtime-jar-size.txt`, including:
+
+- exact runtime JAR bytes
+- frozen baseline and release/source limits
+- source-pack percentage
+- runtime entry count
+- compressed bytes by category
+- the 20 largest compressed entries
+
+This report is deterministic artifact evidence. It is separate from noisy runtime timing observations.
+
+## Real-client measurement boundary
+
+The M8 oracle runs inside the real Fabric Client GameTest on Minecraft 26.1.2 and 26.2. It uses a deterministic 72-block Resource Highlight scene, one resource-reload warmup, three measured reloads, and alternating all-OFF / all-18-Resource-Highlight-ON terrain rebuild observations.
 
 Resource reload is timed end-to-end around Minecraft's resource-pack reload future.
 
@@ -39,9 +72,9 @@ GitHub Actions `34735108314` measured the implementation before Resource Highlig
 
 The sign already differed between total and render-relevant allocation and between Minecraft versions. This prevented a defensible claim that the broad scenario had isolated Resource Highlight's record construction cost.
 
-## Structural allocation hardening
+## Structural allocation hardening — M5 Resource Highlight
 
-Static inspection nevertheless identified a definite avoidable construction site in both version adapters. Resource Highlight quad emission called:
+Static inspection identified a definite avoidable construction site in both version adapters. Resource Highlight quad emission previously called:
 
 ```java
 DecorationQuadInstruction.emissiveTint(resource.accentArgb())
@@ -49,7 +82,7 @@ DecorationQuadInstruction.emissiveTint(resource.accentArgb())
 
 `DecorationQuadInstruction` is immutable. The resulting value depends only on one of ten `ResourceHighlightCue` enum values, so constructing an equivalent record for every highlighted quad has no semantic benefit.
 
-The implementation now creates exactly one immutable instruction per `ResourceHighlightCue` enum constant and reuses it through:
+The implementation creates exactly one immutable instruction per `ResourceHighlightCue` enum constant and reuses it through:
 
 ```java
 resource.instruction()
@@ -67,7 +100,23 @@ This is intentionally narrow:
 
 The first mutation-test run after this change correctly exposed that the new test was not in the explicit PIT test target list. The fix added `ResourceHighlightCueInstructionTest` to PIT; quality thresholds were not lowered.
 
-## Post-hardening verified observation
+## Structural allocation hardening — M4 Visibility
+
+The same bounded pattern applies to M4. `VisibilityQuadCuePolicy` previously created an equivalent emissive `DecorationQuadInstruction` for every emitted quad from one of only seven `VisibilityVisualCue` enum values.
+
+M8 now stores one immutable instruction inside each `VisibilityVisualCue` and returns:
+
+```java
+return descriptor.cue().instruction();
+```
+
+The existing `accentArgb()` contract remains unchanged by reading the color from that immutable instruction. This keeps all M4 visual semantics stable while removing the repeated construction site.
+
+The regression test verifies both value semantics and **object identity reuse**. The retained set is bounded to exactly the enum values; there is no dynamic map or cache growth.
+
+As with the M5 change, this is a structural allocation improvement, not a claim that broad CI rebuild timing moved by a measurable percentage.
+
+## Post-M5-hardening verified observation
 
 GitHub Actions `34736173848` (run #190), commit `27b7eb5e2872b08a73940fecf9541661af1dab0a`, passed common JUnit + JaCoCo + PIT and both real-client version jobs. Existing M3, M5 dark-area, M5 active-resource-pack, and M7 evidence remained green. The M8 manifest is archived per Minecraft line.
 
@@ -92,36 +141,39 @@ One 26.1.2 Resource-ON allocation sample was **196,859,224 B** total / **177,953
 
 ### Interpretation
 
-The pre/post numbers do **not** establish a measurable speedup. In fact, several post-hardening medians move in the unfavorable direction. Treating only favorable samples as evidence would be invalid.
+The pre/post timing numbers do **not** establish a measurable speedup. Several post-hardening medians move in the unfavorable direction; selecting only favorable samples would be invalid.
 
 What is verified is narrower and stronger:
 
-1. the source-level per-resource-quad `DecorationQuadInstruction` construction site has been removed;
-2. the replacement reuses ten bounded immutable enum-owned objects;
-3. dual-version visual/product behavior remains green;
-4. JUnit, JaCoCo, and PIT remain green without lowering thresholds;
-5. the broad real-client observation is now archived on every CI version job so future regressions can be studied from raw evidence.
+1. repeated M5 per-resource-quad instruction construction is removed;
+2. repeated M4 per-visibility-quad instruction construction is removed in the current hardening slice;
+3. replacements use tiny bounded immutable enum-owned sets;
+4. dual-version visual/product behavior remains the regression authority;
+5. JUnit, JaCoCo, and PIT stay mandatory without threshold reduction;
+6. broad real-client observations remain archived so future regressions can be investigated from raw evidence;
+7. runtime-JAR size is enforced independently with deterministic byte-level evidence.
 
-## CI artifacts and size
+## Final PR #17 baseline
 
-Run `34736173848` archives:
+GitHub Actions `34736446316` passed the latest PR #17 head on all three jobs:
 
-- `blocklens-m8-performance-26.1.2`
-- `blocklens-m8-performance-26.2`
+- common JUnit + JaCoCo + PIT — PASS
+- Minecraft 26.1.2 build / reproducibility / Client GameTest / evidence — PASS
+- Minecraft 26.2 build / reproducibility / Client GameTest / evidence — PASS
 
-Each contains `m8-performance-baseline.txt` with the raw samples and summary fields.
-
-Runtime JAR artifacts in the same run are **93,068 bytes** for both Minecraft lines, still far below the 700 KiB stretch goal and the 1,183,433-byte hard maximum.
+Both runtime artifacts were exactly **93,068 B**. This is the frozen M8 no-growth baseline used by the current size gate.
 
 ## Remaining M8 work
 
-This is the first M8 evidence/hardening slice, not M8 completion. Remaining work includes:
+M8 is not complete. Remaining work includes:
 
-- repeat observations before freezing a numeric no-regression tolerance
-- runtime JAR top-entry/no-growth baseline
+- verify the current M4 allocation-hardening slice on both Minecraft lines
+- verify that the stricter 93,068 B no-growth gate and 100 KiB release budget pass on both artifacts
+- inspect generated runtime-JAR category/top-entry reports for further safe reduction candidates
+- repeat observations before freezing a numeric runtime-performance tolerance
 - representative frame-time median/P95/P99 measurement if a reproducible harness is available
 - cache/retained-geometry size evidence
-- lazy-initialization verification
+- lazy-initialization and reload-work verification
 - further optimization only where measured evidence or an unambiguous bounded structural improvement justifies it
 
-The rule remains: do not turn a noisy observation into a performance claim.
+The rule remains: **do not trade capability parity for size, and do not turn a noisy observation into a performance claim.**
