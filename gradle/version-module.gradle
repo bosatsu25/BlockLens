@@ -109,7 +109,6 @@ tasks.register('versionSmokeContract') {
                     'dev/blocklens/core/state/SemanticState.class',
                     'dev/blocklens/core/state/DecorationStateKind.class',
                     'dev/blocklens/core/render/DecorationRenderDescriptor.class',
-                    'dev/blocklens/core/render/DecorationRenderPolicy.class',
                     'dev/blocklens/core/render/DecorationTargetCatalog.class',
                     'dev/blocklens/core/render/DecorationQuadCuePolicy.class',
                     'assets/blocklens/lang/en_us.json',
@@ -118,6 +117,15 @@ tasks.register('versionSmokeContract') {
                     'assets/blocklens/models/block/nether/upper_band.json']) {
                 if (archive.getEntry(required) == null) {
                     throw new GradleException("Runtime JAR missing required entry: ${required}")
+                }
+            }
+            for (String retired : [
+                    'dev/blocklens/core/render/DecorationRenderPolicy.class',
+                    'dev/blocklens/core/render/DecorationRenderPolicy$1.class',
+                    'dev/blocklens/core/render/ResourceHighlightPolicy.class',
+                    'dev/blocklens/core/render/VisibilityQuadCuePolicy.class']) {
+                if (archive.getEntry(retired) != null) {
+                    throw new GradleException("Runtime JAR contains retired policy bytecode: ${retired}")
                 }
             }
             if (archive.getEntry('assets/blocklens/models/block/nether/side_fill.json') != null) {
