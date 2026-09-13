@@ -1,6 +1,9 @@
 {
   "ambientocclusion": false,
-  "textures": {"all": "minecraft:block/white_concrete"},
+  "textures": {
+    "all": "minecraft:block/white_concrete",
+    "particle": "minecraft:block/white_concrete"
+  },
   "elements": [
     {"from": [1,12,-0.03], "to": [15,15,-0.01], "faces": {"north": {"texture": "#all"}}},
     {"from": [1,12,16.01], "to": [15,15,16.03], "faces": {"south": {"texture": "#all"}}},
