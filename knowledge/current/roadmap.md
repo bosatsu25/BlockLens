@@ -152,7 +152,7 @@ Acceptance:
 
 Issue #4 is complete.
 
-### Track B — Resource highlighting (former M5) 🔧 core implementation complete; compatibility verification remains
+### Track B — Resource highlighting (former M5) 🔧 core/rendered parity complete; compatibility verification remains
 
 Targets:
 
@@ -172,14 +172,16 @@ Acceptance:
 - [x] 18/18 exact target bindings and independent toggles
 - [x] active baked base model/texture preserved by wrapper architecture
 - [x] shared highlight policy; no per-version product-policy duplication
-- [ ] dedicated dark-area/high-visibility framebuffer evidence
+- [x] dedicated dark-area/high-visibility framebuffer evidence on both versions
 - [x] shader-OFF/default OpenGL CI path PASS on both versions
 - [x] 26.2 OpenGL CI framebuffer path PASS
 - [ ] representative supported shader path verified before shader support is claimed
 - [ ] representative third-party active resource-pack matrix
 - [x] Vulkan remains a separate experimental track and is not implied by OpenGL success
 
-Issue #5 remains open for the unchecked compatibility/evidence items.
+Dark-area evidence: GitHub Actions **`34731643950` (run #168)**. The dedicated resource-only scene produced 5,041 / 5,051 changed pixels and 4,758 / 4,769 materially brighter pixels on 26.1.2 / 26.2 respectively. OFF average luminance was 1 on both versions; ON average luminance was 5. Both archived ON/OFF pairs were manually reviewed.
+
+Issue #5 remains open for shader/resource-pack compatibility and performance evidence.
 
 ### Track C — Nether Tweaks (former M6) ✅ core parity
 
@@ -210,6 +212,7 @@ Verified scenarios per supported Minecraft line:
 - [x] resource reload
 - [x] world join/leave smoke lifecycle
 - [x] dimension changes: Overworld → Nether → Overworld
+- [x] dedicated M5 resource-only dark-area framebuffer regression
 - [ ] representative third-party active resource pack
 - [x] shader OFF/default CI renderer path
 - [ ] supported representative shader path(s) with shader ON
@@ -218,38 +221,37 @@ Verified scenarios per supported Minecraft line:
 - [x] target lookup remains bounded / zero-world-scan
 - [x] OFF fast path remains intact
 - [x] M7 five-screenshot artifact + manifest + SHA-256 list per Minecraft line
+- [x] M5 two-screenshot dark-area artifact + manifest + SHA-256 list per Minecraft line
 
 Additional 26.2 tracks:
 
 - [x] OpenGL CI framebuffer path
 - [ ] Vulkan experimental verification where available
 
-Latest verified implementation run: **GitHub Actions `34730806632` (run #160)**.
+Latest verified implementation run: **GitHub Actions `34731643950` (run #168)**.
 
 M7 evidence:
 
 | Evidence | 26.1.2 | 26.2 |
 | --- | ---: | ---: |
-| all-37 ON vs OFF | 3,917 px | 3,903 px |
-| after resource reload vs OFF | 3,911 px | 3,903 px |
-| Nether Tweaks only vs OFF | 764 px | 764 px |
-| reference preset vs OFF | 1,072 px | 1,063 px |
+| all-37 ON vs OFF | **3,908 px** | **3,914 px** |
+| after resource reload vs OFF | **3,934 px** | **3,909 px** |
+| Nether Tweaks only vs OFF | **834 px** | **765 px** |
+| reference preset vs OFF | **1,090 px** | **1,072 px** |
 | dimension round-trip | PASS | PASS |
 | config codec round-trip | PASS | PASS |
 | native config-file save/reload | PASS | PASS |
+| M5 dark-area evidence | PASS | PASS |
 
-Native config acceptance explicitly produced `BLOCKLENS_CONFIG_FILE_RELOAD ... result=PASS` on both Minecraft lines after changing all 37 booleans, publishing the reloaded runtime mask, and restoring the pre-test file/runtime state.
-
-Runtime JAR size in this run: **92,988 bytes** on each version.
+Runtime JAR size in this run: **92,988 bytes** on each version. The M5 oracle/CI evidence adds no production runtime assets.
 
 Full-train exit criteria still pending:
 
-- dedicated dark-area resource-highlight evidence
 - representative third-party resource-pack preservation matrix
 - representative supported shader-ON path
 - accurate OpenGL/Vulkan compatibility matrix
 
-Implementation rule: do **not** treat the green automated core gate as proof of the still-unverified compatibility items above.
+Implementation rule: do **not** treat the green automated core gate or M5 dark-area evidence as proof of the still-unverified compatibility items above.
 
 ## M8 — Performance, load, and size hardening
 

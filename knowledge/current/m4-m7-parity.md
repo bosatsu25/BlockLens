@@ -52,7 +52,35 @@ BlockLens retains the active baked base model and applies BlockLens-owned full-b
 
 This avoids copying the source pack's animated resource textures while preserving high-visibility intent.
 
-Core implementation and all-on interaction are verified on Minecraft 26.1.2 and 26.2. Dedicated dark-area evidence, representative shader-ON verification, and third-party resource-pack compatibility remain separate verification work and are **not claimed here**.
+### Dedicated dark-area rendered evidence
+
+M5 has a dedicated real-client framebuffer oracle separate from the all-37 M7 scene. The scene contains only the 18 resource-highlight targets inside a sealed, unlit black-concrete room at midnight. All non-resource BlockLens capabilities are OFF for the ON capture; all 37 capabilities are OFF for the control capture.
+
+The gate verifies:
+
+- exactly 18 resource capabilities are enabled
+- the OFF control is genuinely dark
+- ON and OFF differ materially inside a fixed target ROI
+- a material number of pixels become brighter with M5 enabled
+- total target-region luminance increases
+- the model pipeline is ready and bounded
+- the original runtime config is restored after capture
+
+GitHub Actions `34731643950` (run #168) produced:
+
+| Dark-area evidence | Minecraft 26.1.2 | Minecraft 26.2 |
+| --- | ---: | ---: |
+| resource capabilities enabled | 18 | 18 |
+| ON vs OFF different pixels | **5,041 px** | **5,051 px** |
+| pixels materially brighter | **4,758 px** | **4,769 px** |
+| OFF average luminance | **1** | **1** |
+| ON average luminance | **5** | **5** |
+| total ROI luminance gain | **361,663** | **362,456** |
+| manual screenshot review | PASS | PASS |
+
+The archived ON/OFF screenshots were manually reviewed. In both Minecraft lines the OFF scene leaves the same 18-block arrangement nearly submerged in darkness, while the ON scene makes the resource accents clearly visible without changing camera, layout, or enabling another BlockLens visual family.
+
+This completes the dedicated dark-area/high-visibility framebuffer acceptance item. Representative shader-ON verification and third-party resource-pack compatibility remain separate verification work and are **not claimed here**.
 
 ## M6 — Nether Tweaks
 
@@ -94,8 +122,9 @@ The automated scenario verifies:
 7. Nether Tweaks enabled **alone**
 8. frozen five-feature reference preset
 9. all 37 disabled and active base rendering restored
-10. target-model index remains bounded and zero-world-scan
-11. runtime model resources resolve without BlockLens missing-model / missing-texture warnings
+10. dedicated M5 resource-only dark-area framebuffer evidence
+11. target-model index remains bounded and zero-world-scan
+12. runtime model resources resolve without BlockLens missing-model / missing-texture warnings
 
 ### Native config-file reload acceptance
 
@@ -110,49 +139,37 @@ The config acceptance does not stop at codec serialization. `ConfigFileReloadOra
 - verify Minecraft version identity and startup timing are unchanged
 - restore the exact original config text and runtime config before visual tests continue
 
-Run `34730806632` produced the explicit markers:
-
-```text
-BLOCKLENS_CONFIG_FILE_RELOAD minecraft=26.1.2 capabilities=37 mask=36507222015 result=PASS
-BLOCKLENS_CONFIG_FILE_RELOAD minecraft=26.2 capabilities=37 mask=36507222015 result=PASS
-```
-
-`reloadConfig(...)` is an explicit configuration boundary. It performs filesystem I/O and is **not** a render-hot-path operation.
+The current integration run still produces `BLOCKLENS_CONFIG_FILE_RELOAD ... result=PASS` on both Minecraft lines. `reloadConfig(...)` is an explicit configuration boundary. It performs filesystem I/O and is **not** a render-hot-path operation.
 
 ### Latest verified run
 
-GitHub Actions run: **`34730806632` (run #160)**.
+GitHub Actions run: **`34731643950` (run #168)**.
 
-| Evidence | Minecraft 26.1.2 | Minecraft 26.2 |
+| M7 evidence | Minecraft 26.1.2 | Minecraft 26.2 |
 | --- | ---: | ---: |
-| all-37 ON vs OFF ROI difference | 3,917 px | 3,903 px |
-| reload-after-all-37 ON vs OFF | 3,911 px | 3,903 px |
-| Nether Tweaks only vs OFF | 764 px | 764 px |
-| five-feature preset vs OFF | 1,072 px | 1,063 px |
+| all-37 ON vs OFF ROI difference | **3,908 px** | **3,914 px** |
+| reload-after-all-37 ON vs OFF | **3,934 px** | **3,909 px** |
+| Nether Tweaks only vs OFF | **834 px** | **765 px** |
+| five-feature preset vs OFF | **1,090 px** | **1,072 px** |
 | dimension round-trip | PASS | PASS |
 | config codec round-trip | PASS | PASS |
 | native config-file save/reload | PASS | PASS |
+| M5 dark-area evidence | PASS | PASS |
 | Client GameTest | PASS | PASS |
 | BlockLens model resolution | PASS | PASS |
 
-Each version archives five deterministic M7 screenshots plus a manifest and SHA-256 screenshot list:
-
-- `m7-all37-on.png`
-- `m7-all37-reloaded.png`
-- `m7-nether-only.png`
-- `m7-reference-preset.png`
-- `m7-all37-off-active-pack.png`
+Each version archives five deterministic M7 screenshots plus a manifest and SHA-256 screenshot list, and two dedicated M5 dark-area screenshots plus their own manifest and SHA-256 list.
 
 ## Runtime artifact size
 
-Run `34730806632` produced **92,988-byte** runtime JARs for both Minecraft lines, far below the 700 KiB stretch target and 1,183,432-byte hard maximum.
+Run `34731643950` produced **92,988-byte** runtime JARs for both Minecraft lines, far below the 700 KiB stretch target and 1,183,432-byte hard maximum.
 
-Verified SHA-256:
+Verified SHA-256 remains:
 
 - 26.1.2: `bf07d2f19f4edeb3a4ec630e62449e01ab83dd0010e2105932cabf84a98a2857`
 - 26.2: `13af1b1d7ba9ee17f693202862226c43d687540b6f2b94c5cd0e41c1c297f272`
 
-These sizes are implementation evidence for this revision, not a guarantee that later M8/M9 builds remain byte-identical.
+The M5 dark-area test adds no runtime asset or production byte growth; it is test/CI evidence. These sizes are implementation evidence for this revision, not a guarantee that later M8/M9 builds remain byte-identical.
 
 ## Architecture invariants retained
 
@@ -171,9 +188,8 @@ These sizes are implementation evidence for this revision, not a guarantee that 
 
 ## What is still not claimed
 
-The automated M7 core gate being green does **not** complete every compatibility and release-readiness item. The following remain explicit future verification/hardening work:
+The automated core gates being green do **not** complete every compatibility and release-readiness item. The following remain explicit future verification/hardening work:
 
-- dedicated dark-area resource-highlight framebuffer evidence
 - representative third-party resource-pack matrix
 - supported shader path with shader **ON**
 - explicit Minecraft 26.2 Vulkan experimental backend validation
