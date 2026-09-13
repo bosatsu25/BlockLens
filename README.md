@@ -6,7 +6,7 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The product contract contains **37 independently configurable capabilities**. Minecraft-version differences stay behind thin adapters while configuration, state interpretation, target policy, and render semantics are shared across Minecraft **26.1.2** and **26.2**.
 
-> **Current state:** M0-M7 core behavior is implemented and continuously verified. M8 performance/load/size hardening is now active. The verified runtime JAR baseline is **93,068 bytes on both supported Minecraft versions** while keeping the full 37-capability contract.
+> **Current state:** M0-M8 are complete. The full 37-capability product remains verified on both supported Minecraft versions. The final M8 runtime JAR is **88,973 bytes** on both lines, with strict no-growth, 100 KiB release-budget, real-client performance, frame-percentile, reload-retention, and visual-regression gates.
 
 ## Supported environment
 
@@ -22,31 +22,6 @@ The product contract contains **37 independently configurable capabilities**. Mi
 | Verified renderer path | Default / shader-OFF OpenGL CI path |
 | Vulkan | Experimental track |
 
-## Why BlockLens is much smaller than the source pack
-
-The pinned source resource pack is **2,366,865 bytes** and contains **4,535 ZIP entries**. Its behavior is mostly represented through thousands of small JSON/PNG/RPO files, and roughly **45.9%** of the ZIP is container overhead.
-
-BlockLens moves that behavior into shared semantic code and a very small set of owned resources.
-
-| Artifact | Size | Relative to source pack |
-| --- | ---: | ---: |
-| Pinned AMATERAS resource pack | **2,366,865 B** | 100% |
-| 50% absolute requirement | **< 1,183,433 B** | < 50% |
-| BlockLens release budget | **<= 102,400 B (100 KiB)** | <= 4.33% |
-| Verified M8 baseline | **93,068 B** | **3.93%** |
-
-That is roughly a **96.1% size reduction** versus the pinned source ZIP while retaining the same 37-capability product scope.
-
-### M8 size rules
-
-1. The runtime JAR must remain below **1,183,433 B**.
-2. The normal BlockLens release budget is **100 KiB**.
-3. **93,068 B** is the current verified no-growth baseline.
-4. Growth above the frozen baseline is treated as a regression unless the baseline is deliberately revised with review evidence.
-5. CI generates a deterministic runtime-JAR size report with compressed category totals and the largest entries.
-
-The goal is not code golf. A smaller artifact is only accepted when maintainability, testability, and runtime behavior remain intact.
-
 ## 37-capability map
 
 ```mermaid
@@ -60,13 +35,8 @@ flowchart TB
     D --> D1[Anvil · Beehive · Campfire · Glazed Terracotta]
     D --> D2[Grindstone · Fence Gate · Froglight · Slabs]
     D --> D3[Stained Glass · Stairs · Trapdoor · Wood · Log]
-
-    R --> R1[Obsidian · Ancient Debris]
-    R --> R2[Diamond · Gold · Emerald · Coal]
-    R --> R3[Iron · Copper · Lapis · Redstone]
-    R2 --> R4[normal + deepslate variants]
-    R3 --> R5[normal + deepslate variants]
-
+    R --> R1[Obsidian · Ancient Debris · 8 ore families]
+    R --> R2[normal + deepslate variants]
     O --> O1[Blue Ice · Dead Coral · Powder Snow · Sculk Catalyst · String Tweaks]
 ```
 
@@ -88,34 +58,34 @@ flowchart TD
     CUE --> OUT[Base model + BlockLens visual information]
 ```
 
-Current runtime principles:
+Runtime principles:
 
-- **323 capability-to-target bindings**
-- **320 unique Minecraft block targets**
+- **323 capability-to-target bindings** / **320 unique Minecraft block targets**
 - no whole-world target scan
 - no per-frame registry scan
 - semantic interpretation at model bake
 - primitive enabled-capability mask on the render hot path
 - direct active-base emission when no represented capability is enabled
-- bounded immutable cue/instruction reuse where repeated allocation is unnecessary
+- bounded immutable cue/instruction reuse
+- bounded retained-capability structure verified across repeated resource reloads
 
-## Implemented visual families
+## Visual families
 
 ### M3 — Decoration / Orientation · 13 ✅
 
-Procedural state-aware cues cover axis, stairs, slabs, trapdoors, gates, beehives, campfires, grindstones, stained glass, wood/log orientation, and related targets.
+State-aware procedural cues cover axis, stairs, slabs, trapdoors, gates, beehives, campfires, grindstones, stained glass, wood/log orientation, and related targets.
 
 ### M4 — Outline / Fine Visibility · 5 ✅ core parity
 
 Blue Ice, Dead Coral, Powder Snow, Sculk Catalyst, and String Tweaks are implemented. Sculk bloom state is preserved and all **64 Tripwire semantic states** are regression-tested.
 
-M8 hardening reuses **one immutable emissive quad instruction per M4 visual cue** instead of constructing an equivalent record for each emitted quad.
+M8 stores one immutable emissive quad instruction per visibility cue and consumes it directly from both version adapters.
 
 ### M5 — Resource Highlighting · 18 ✅ core/rendered parity
 
 All 18 resource controls preserve the active baked base model and add a full-bright procedural accent. A dedicated dark-area real-client oracle verifies resource-only ON against all-OFF.
 
-M8 hardening also reuses one immutable instruction per resource cue. This is a deterministic allocation-site removal; it is **not presented as a measured FPS/rebuild-speed win** because whole-client CI timing remains noisy.
+M8 also stores one immutable instruction per resource cue and removed duplicate retained color state. This is a deterministic allocation-site simplification; BlockLens does **not** claim a measured FPS percentage from noisy whole-client CI timing.
 
 ### M6 — Nether Tweaks · 27 exact targets ✅ core parity
 
@@ -123,46 +93,66 @@ The source-derived visual grammar is recreated with procedural palette logic and
 
 ## M7 automated core integration gate
 
-The same Fabric Client GameTest runs on Minecraft **26.1.2** and **26.2** and verifies:
+The same Fabric Client GameTest runs on Minecraft **26.1.2** and **26.2** and verifies all 37 capabilities, native config save/reload, resource reload, deterministic framebuffer evidence, dimension round-trip, Nether-only behavior, the five-feature reference preset, M5 dark-area rendering, all-OFF restoration, bounded lookup, and owned model resolution.
 
-- all 37 capabilities ON simultaneously
-- config codec/mask round-trip
-- real `config/blocklens.properties` save → reload → exact restoration
-- resource reload with all 37 enabled
-- deterministic framebuffer evidence
-- Overworld → Nether → Overworld round-trip
-- Nether Tweaks alone
-- frozen five-feature reference preset
-- M5 resource-only dark-area evidence
-- all 37 OFF / active base restoration
-- bounded zero-world-scan target lookup
-- BlockLens-owned model resolution
+Representative shader-ON, broader third-party resource-pack coverage, and experimental Vulkan verification remain separate compatibility/release tracks and are not implied by the core gate.
 
-## M8 performance and size hardening
+## M8 performance / load / size hardening ✅
 
-M8 follows a strict order: **measure → remove structurally unnecessary work → re-run behavior gates → report the result**.
+M8 is complete. Final verification: **GitHub Actions `34738345474` (run #223)**.
 
-The first real-client baseline records:
+### Artifact size
 
-- resource reload warmup + raw samples
-- reload median and nearest-rank P95
-- OFF vs Resource Highlight ON rebuild timing
-- JVM thread-allocation deltas
-- BlockLens initialization timing
-- wrapped model count
+The pinned source resource pack is **2,366,865 B**.
 
-The whole-client rebuild/allocation window showed runner noise and large outliers. Therefore BlockLens currently makes **no measured speedup claim** from those samples.
+| Artifact / rule | Size | Relative to source pack |
+| --- | ---: | ---: |
+| Pinned AMATERAS resource pack | **2,366,865 B** | 100% |
+| Absolute requirement | **< 1,183,433 B** | < 50% |
+| BlockLens release budget | **<= 102,400 B (100 KiB)** | <= 4.33% |
+| PR #17 pre-optimization baseline | **93,068 B** | 3.93% |
+| **Final M8 runtime JAR** | **88,973 B** | **3.76%** |
 
-What is verified instead:
+The final artifact is **4,095 B (4.4%) smaller** than the PR #17 baseline and **96.24% smaller** than the pinned source ZIP while retaining all 37 capabilities. **88,973 B is now the frozen no-growth baseline** for each supported Minecraft line.
 
-- M5 repeated immutable instruction construction removed
-- M4 repeated immutable instruction construction removed in the current M8 hardening slice
-- retained instruction sets are tiny and bounded by enum values
-- no world scan or registry scan was introduced
-- M3/M5/M7 behavior remains the regression authority
-- JAR size is now treated as a first-class CI contract
+CI/Gradle also produces a deterministic JAR report with exact bytes, entry count, compressed category totals, and the 20 largest entries. Retired runtime-policy bytecode is explicitly rejected.
 
-Authoritative M8 evidence: [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md).
+### Real-client regression evidence
+
+Repeated runs established a coarse, median-based regression envelope. M8 freezes gross-regression guards rather than claiming a benchmark win:
+
+- resource reload median: **<= 6.0 s**
+- rebuild median: **<= 2.5 s**
+- total/render-relevant allocation median: **<= 32 MiB**
+
+Final run #223:
+
+| Metric | 26.1.2 | 26.2 |
+| --- | ---: | ---: |
+| reload median | **3.842 s** | **4.069 s** |
+| OFF / Resource-ON rebuild median | **1.493 / 1.510 s** | **1.532 / 1.512 s** |
+| OFF frame-main median | **5.026 ms** | **5.054 ms** |
+| Resource-ON frame-main median | **5.078 ms** | **5.092 ms** |
+| Resource-ON frame-main P95 | **7.969 ms** | **11.441 ms** |
+| Resource-ON frame-main P99 | **12.009 ms** | **12.538 ms** |
+
+The frame metric is **main render-pass duration**, not complete present-to-present frame time. Tail values remain observation evidence, not an FPS claim.
+
+### Reload retention / cache evidence
+
+For all three measured reloads on both versions:
+
+```text
+wrapped models:             7820, 7820, 7820
+retained capability slots:  7827, 7827, 7827
+max capabilities/model:        2,    2,    2
+Nether wrapped models:         33,   33,   33
+reloadRetentionStable=true
+```
+
+Nether overlay references remain lazy per-wrapper caches with one-attempt guards. No measurement counter was added to quad emission.
+
+Authoritative details: [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md).
 
 ## Development status
 
@@ -176,19 +166,8 @@ Authoritative M8 evidence: [`knowledge/current/m8-performance.md`](knowledge/cur
 | M5 | ✅ Core/rendered parity | 18 resource highlights + dedicated dark-area evidence |
 | M6 | ✅ Core parity | 27 exact Nether targets |
 | M7 | ✅ Automated core gate | all-37 / config / reload / dimension / preset / OFF restoration |
-| M8 | 🔧 In progress | performance, allocation, reload, retained-memory, and **100 KiB size** hardening |
+| M8 | ✅ Complete | performance/load/retention evidence + final **88,973 B** no-growth baseline |
 | M9 | Planned | release readiness / public artifact audit |
-
-## Current artifact evidence
-
-Final PR #17 verification: **GitHub Actions `34736446316`**.
-
-| Minecraft | Runtime JAR | Client GameTest / quality gates |
-| --- | ---: | --- |
-| 26.1.2 | **93,068 B** | PASS |
-| 26.2 | **93,068 B** | PASS |
-
-Both versions also produced M8 performance manifests, M3/M5/M7 visual evidence, and reproducible runtime JARs.
 
 ## Automated quality
 
@@ -222,7 +201,6 @@ flowchart LR
     PR --> CI[CI]
     CI --> U[ISSUE UPDATE]
     U --> DONE([DONE])
-
     V -- fail --> X[DIAGNOSE]
     R -- defect --> X
     CI -- fail --> X
@@ -231,18 +209,6 @@ flowchart LR
 ```
 
 Implementation alone is not completion. Failures return through **DIAGNOSE → FIX → VERIFY**.
-
-## Still pending
-
-A green core gate does not imply every compatibility path is complete. Remaining tracks include:
-
-- representative shader-ON verification
-- broader third-party resource-pack compatibility evidence
-- Minecraft 26.2 Vulkan experimental verification
-- repeated M8 runs sufficient to freeze useful performance tolerances
-- representative frame-time percentile evidence if reproducible
-- retained cache/geometry and lazy-initialization evidence
-- M9 licensing/attribution and public-release audit
 
 ## Build and verify
 
@@ -253,7 +219,7 @@ Java 25 is required.
 ./gradlew ciGate
 ```
 
-Per-version builds also enforce the runtime artifact budget and write `build/reports/blocklens/runtime-jar-size.txt` with category totals and largest compressed entries.
+Per-version builds enforce the runtime artifact budget and write `build/reports/blocklens/runtime-jar-size.txt`.
 
 ## Project documentation
 
@@ -263,7 +229,7 @@ Per-version builds also enforce the runtime artifact budget and write `build/rep
 - [`knowledge/current/architecture.md`](knowledge/current/architecture.md) — architecture
 - [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md) — quality strategy
 - [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md) — performance strategy
-- [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md) — M8 evidence and limitations
+- [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md) — authoritative M8 evidence
 - [`knowledge/current/roadmap.md`](knowledge/current/roadmap.md) — roadmap
 - [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) — Graph Loop
 
