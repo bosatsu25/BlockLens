@@ -26,19 +26,16 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
       - name: Set up Java 25
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '25'
-
       - name: Set up Gradle 9.5.1
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: '9.5.1'
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-
       - name: Run shared quality gate
         run: gradle --stacktrace :common:qualityGate
 
@@ -55,32 +52,27 @@ jobs:
             minecraft: '26.1.2'
           - module: mc26_2
             minecraft: '26.2'
-
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
       - name: Set up Java 25
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '25'
-
       - name: Set up Gradle 9.5.1
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: '9.5.1'
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-
       - name: Build and verify Minecraft ${{ matrix.minecraft }}
         run: >-
           gradle --stacktrace
           :versions:${{ matrix.module }}:build
           :versions:${{ matrix.module }}:versionSmokeContract
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
-
       - name: Verify reproducible runtime JAR Minecraft ${{ matrix.minecraft }}
         shell: bash
         run: |
@@ -93,9 +85,7 @@ jobs:
             exit 1
           fi
           first_sha="$(sha256sum "${first_candidates[0]}" | cut -d' ' -f1)"
-
           gradle --stacktrace :common:clean :versions:${{ matrix.module }}:clean :versions:${{ matrix.module }}:build
-
           mapfile -t second_candidates < <(find "$runtime_dir" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print)
           if [[ "${#second_candidates[@]}" -ne 1 ]]; then
             echo "Expected one second-build runtime JAR, found ${#second_candidates[@]}" >&2
@@ -103,18 +93,15 @@ jobs:
             exit 1
           fi
           second_sha="$(sha256sum "${second_candidates[0]}" | cut -d' ' -f1)"
-
           if [[ "$first_sha" != "$second_sha" ]]; then
             echo "Runtime JAR is not reproducible: first=$first_sha second=$second_sha" >&2
             exit 1
           fi
           echo "Reproducible runtime SHA-256: $second_sha" >> "$GITHUB_STEP_SUMMARY"
-
       - name: Run client GameTest Minecraft ${{ matrix.minecraft }}
         run: >-
           xvfb-run -a gradle --stacktrace
           :versions:${{ matrix.module }}:runClientGameTest
-
       - name: Verify BlockLens model resources resolved Minecraft ${{ matrix.minecraft }}
         shell: bash
         run: |
@@ -131,8 +118,12 @@ jobs:
               grep -F 'Missing block model: blocklens:block/nether/' "$log" >&2
               exit 1
             fi
+            if grep -Fq 'Missing texture references in model blocklens:block/nether/' "$log"; then
+              echo "BlockLens Nether Tweaks model has incomplete texture references in $log" >&2
+              grep -A2 -F 'Missing texture references in model blocklens:block/nether/' "$log" >&2
+              exit 1
+            fi
           done
-
       - name: Collect M3 rendered visual evidence
         id: visual
         shell: bash
@@ -142,10 +133,8 @@ jobs:
           target="build/ci/m3-visual-${{ matrix.minecraft }}"
           rm -rf "$target"
           mkdir -p "$target"
-
           mapfile -t screenshots < <(find "$source_root" -type f -path '*/m3-visual/*.png' -print | sort)
           mapfile -t manifests < <(find "$source_root" -type f -path '*/m3-visual/m3-visual-manifest.txt' -print | sort)
-
           if [[ "${#screenshots[@]}" -ne 3 ]]; then
             echo "Expected exactly three M3 visual screenshots, found ${#screenshots[@]}" >&2
             printf '%s\n' "${screenshots[@]}" >&2
@@ -156,7 +145,6 @@ jobs:
             printf '%s\n' "${manifests[@]}" >&2
             exit 1
           fi
-
           for screenshot in "${screenshots[@]}"; do cp "$screenshot" "$target/"; done
           cp "${manifests[0]}" "$target/"
           (cd "$target" && sha256sum *.png > SHA256SUMS.txt)
@@ -167,7 +155,6 @@ jobs:
             cat "$target/m3-visual-manifest.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Upload M3 rendered visual evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -175,7 +162,6 @@ jobs:
           path: ${{ steps.visual.outputs.path }}
           if-no-files-found: error
           retention-days: 14
-
       - name: Collect M7 full parity visual evidence
         id: m7visual
         shell: bash
@@ -185,7 +171,6 @@ jobs:
           target="build/ci/m7-visual-${{ matrix.minecraft }}"
           rm -rf "$target"
           mkdir -p "$target"
-
           mapfile -t screenshots < <(find "$source_root" -type f -path '*/m7-visual/*.png' -print | sort)
           mapfile -t manifests < <(find "$source_root" -type f -path '*/m7-visual/m7-visual-manifest.txt' -print | sort)
           if [[ "${#screenshots[@]}" -ne 5 ]]; then
@@ -198,7 +183,6 @@ jobs:
             printf '%s\n' "${manifests[@]}" >&2
             exit 1
           fi
-
           for screenshot in "${screenshots[@]}"; do cp "$screenshot" "$target/"; done
           cp "${manifests[0]}" "$target/"
           (cd "$target" && sha256sum *.png > SHA256SUMS.txt)
@@ -211,7 +195,6 @@ jobs:
             echo "- Screenshots: \`5\`"
             echo "- Screenshot SHA-256 manifest: \`SHA256SUMS.txt\`"
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Upload M7 full parity visual evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -219,7 +202,6 @@ jobs:
           path: ${{ steps.m7visual.outputs.path }}
           if-no-files-found: error
           retention-days: 14
-
       - name: Resolve runtime artifact
         id: runtime
         shell: bash
@@ -250,7 +232,6 @@ jobs:
             echo "- Reproducible artifact: \`PASS\`"
             echo "- Privacy/residue audit: \`PASS\`"
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Upload verified runtime JAR
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
