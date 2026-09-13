@@ -102,19 +102,21 @@ The first mutation-test run after this change correctly exposed that the new tes
 
 ## Structural allocation hardening — M4 Visibility
 
-The same bounded pattern applies to M4. `VisibilityQuadCuePolicy` previously created an equivalent emissive `DecorationQuadInstruction` for every emitted quad from one of only seven `VisibilityVisualCue` enum values.
+The same bounded pattern applies to M4. The former `VisibilityQuadCuePolicy` created an equivalent emissive `DecorationQuadInstruction` for every emitted quad from one of only seven `VisibilityVisualCue` enum values.
 
-M8 now stores one immutable instruction inside each `VisibilityVisualCue` and returns:
+M8 now stores one immutable instruction inside each `VisibilityVisualCue`, and both Minecraft adapters consume it directly:
 
 ```java
-return descriptor.cue().instruction();
+instruction = visibility.cue().instruction();
 ```
 
-The existing `accentArgb()` contract remains unchanged by reading the color from that immutable instruction. This keeps all M4 visual semantics stable while removing the repeated construction site.
+The thin `VisibilityQuadCuePolicy` runtime class is removed entirely. This removes both the repeated immutable-record construction site and an unnecessary hot-path method/class indirection.
 
-The regression test verifies both value semantics and **object identity reuse**. The retained set is bounded to exactly the enum values; there is no dynamic map or cache growth.
+The existing `accentArgb()` contract remains unchanged by reading the color from that immutable instruction. The regression tests verify value semantics, **object identity reuse**, direct adapter wiring on both supported versions, and the absence of the retired policy class. The retained set is bounded to exactly the seven enum values; there is no dynamic map or cache growth.
 
-As with the M5 change, this is a structural allocation improvement, not a claim that broad CI rebuild timing moved by a measurable percentage.
+The first strict-size CI run for this slice proved the no-growth gate was active: an intermediate implementation measured **93,141 B**, which was **73 B above** the frozen 93,068 B baseline, and both version builds failed immediately. The baseline was not relaxed. The implementation was instead simplified by removing the redundant policy class.
+
+As with the M5 change, this is a structural allocation/runtime simplification, not a claim that broad CI rebuild timing moved by a measurable percentage.
 
 ## Post-M5-hardening verified observation
 
