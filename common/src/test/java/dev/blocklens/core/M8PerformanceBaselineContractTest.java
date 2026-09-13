@@ -55,6 +55,7 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(cue.contains("private final DecorationQuadInstruction instruction;"));
         assertTrue(cue.contains("this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);"));
         assertTrue(cue.contains("public DecorationQuadInstruction instruction()"));
+        assertFalse(cue.contains("private final int accentArgb;"));
 
         assertTrue(model2612.contains("instruction = resource.instruction();"));
         assertTrue(model262.contains("instruction = resource.instruction();"));
@@ -80,6 +81,14 @@ final class M8PerformanceBaselineContractTest {
         assertFalse(model262.contains("VisibilityQuadCuePolicy.instruction(visibility)"));
         assertFalse(Files.exists(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/VisibilityQuadCuePolicy.java")));
+    }
+
+    @Test
+    void unreachableRuntimePolicyWrappersStayRemoved() {
+        assertFalse(Files.exists(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/ResourceHighlightPolicy.java")));
+        assertFalse(Files.exists(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/DecorationRenderPolicy.java")));
     }
 
     @Test
