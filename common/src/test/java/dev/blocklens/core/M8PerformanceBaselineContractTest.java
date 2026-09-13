@@ -14,33 +14,65 @@ final class M8PerformanceBaselineContractTest {
     }
 
     @Test
-    void baselineRemainsRealClientMeasuredAndThresholdFree() throws IOException {
+    void baselineUsesRepeatedEvidenceForCoarseRegressionGuardsAndFramePercentiles() throws IOException {
         String smoke = Files.readString(root().resolve(
                 "gametest/java/dev/blocklens/gametest/BlockLensSmokeClientGameTest.java"));
         String oracle = Files.readString(root().resolve(
                 "gametest/java/dev/blocklens/gametest/M8PerformanceBaselineOracle.java"));
+        String frameProbe = Files.readString(root().resolve(
+                "gametest/java/dev/blocklens/gametest/M8FrameTimeProbe.java"));
         String strategy = Files.readString(root().resolve(
                 "knowledge/current/performance-strategy.md"));
 
         assertTrue(smoke.contains("M8PerformanceBaselineOracle.verify(context, singleplayer)"));
         assertTrue(oracle.contains("RELOAD_WARMUPS = 1"));
         assertTrue(oracle.contains("MEASURED_SAMPLES = 3"));
+        assertTrue(oracle.contains("MAX_RELOAD_MEDIAN_NANOS = 6_000_000_000L"));
+        assertTrue(oracle.contains("MAX_REBUILD_MEDIAN_NANOS = 2_500_000_000L"));
+        assertTrue(oracle.contains("MAX_ALLOCATED_MEDIAN_BYTES = 32L * 1024L * 1024L"));
         assertTrue(oracle.contains("client.reloadResourcePacks()"));
         assertTrue(oracle.contains("com.sun.management.ThreadMXBean"));
         assertTrue(oracle.contains("MinecraftTerrainInvalidator::invalidateAll"));
         assertTrue(oracle.contains("CapabilityId.Category.RESOURCE"));
         assertTrue(oracle.contains("BLOCKLENS_M8_BASELINE"));
         assertTrue(oracle.contains("m8-performance-baseline.txt"));
-        assertTrue(oracle.contains("m8-observation-no-absolute-threshold"));
+        assertTrue(oracle.contains("m8-coarse-regression-guard"));
+        assertTrue(oracle.contains("offFrameMainPassP95Nanos"));
+        assertTrue(oracle.contains("offFrameMainPassP99Nanos"));
+        assertTrue(oracle.contains("reloadRetentionStable=true"));
+        assertTrue(oracle.contains("retainedCapabilitySlotsAfterReload"));
         assertTrue(oracle.contains("onMinusOffAllocatedMedianBytes"));
         assertTrue(oracle.contains("onMinusOffRebuildMedianNanos"));
 
-        // The first M8 evidence runs establish observations. A tolerance can only be frozen after
-        // repeated runs show how noisy the CI runner and client harness actually are.
-        assertFalse(oracle.contains("MAX_RELOAD_NANOS"));
-        assertFalse(oracle.contains("MAX_ALLOCATED_BYTES"));
+        assertTrue(frameProbe.contains("LevelRenderEvents.START_MAIN.register"));
+        assertTrue(frameProbe.contains("LevelRenderEvents.END_MAIN.register"));
+        assertTrue(frameProbe.contains("System.nanoTime()"));
         assertTrue(strategy.contains(
                 "Absolute performance thresholds should be frozen only after a reproducible baseline exists."));
+    }
+
+    @Test
+    void modelRetentionIsMeasuredAtBakeTimeAndLazyOverlayLookupStaysOffTheHotPath() throws IOException {
+        for (String module : new String[] {"mc26_1_2", "mc26_2"}) {
+            Path sourceRoot = root().resolve("versions").resolve(module).resolve("src/main/java/dev/blocklens/fabric");
+            String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
+            String model = Files.readString(sourceRoot.resolve("MinecraftDecorationModel.java"));
+
+            assertTrue(plugin.contains("RETAINED_CAPABILITY_SLOTS.addAndGet(count)"));
+            assertTrue(plugin.contains("MAX_CAPABILITIES_PER_MODEL.accumulateAndGet(count, Math::max)"));
+            assertTrue(plugin.contains("public static int retainedCapabilitySlotCount()"));
+            assertTrue(plugin.contains("public static int maxCapabilitiesPerWrappedModel()"));
+            assertTrue(plugin.contains("public static int netherWrappedModelCount()"));
+
+            assertTrue(model.contains("private volatile @Nullable BlockStateModel netherInteriorOverlay;"));
+            assertTrue(model.contains("private volatile @Nullable BlockStateModel netherBandOverlay;"));
+            assertTrue(model.contains("if (cached != null || interiorLookupAttempted)"));
+            assertTrue(model.contains("if (cached != null || bandLookupAttempted)"));
+            assertTrue(model.contains("cached = lookup(NetherTweaksOverlayModels.INTERIOR);"));
+            assertTrue(model.contains("cached = lookup(NetherTweaksOverlayModels.UPPER_BAND);"));
+            assertFalse(plugin.contains("netherInteriorLookupCount"));
+            assertFalse(plugin.contains("netherBandLookupCount"));
+        }
     }
 
     @Test
@@ -95,6 +127,7 @@ final class M8PerformanceBaselineContractTest {
     void runtimeJarBudgetsFreezeTheVerifiedBaselineAndEmitSizeEvidence() throws IOException {
         String properties = Files.readString(root().resolve("gradle.properties"));
         String versionModule = Files.readString(root().resolve("gradle/version-module.gradle"));
+        String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
         assertTrue(properties.contains("runtime_jar_source_pack_bytes=2366865"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
@@ -108,5 +141,11 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(versionModule.contains("runtimeBaselineBytes"));
         assertTrue(versionModule.contains("runtimeReleaseBudgetBytes"));
         assertTrue(versionModule.contains("deliberately rebaseline with reviewed justification"));
+        assertFalse(versionModule.contains("'dev/blocklens/core/render/DecorationRenderPolicy.class',"));
+        assertTrue(versionModule.contains("Runtime JAR contains retired policy bytecode"));
+
+        assertTrue(ci.contains("Collect M8 runtime size evidence"));
+        assertTrue(ci.contains("blocklens-m8-size-${{ matrix.minecraft }}"));
+        assertTrue(ci.contains("runtime-jar-size.txt"));
     }
 }
