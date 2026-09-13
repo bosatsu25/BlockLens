@@ -141,11 +141,12 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(versionModule.contains("runtimeBaselineBytes"));
         assertTrue(versionModule.contains("runtimeReleaseBudgetBytes"));
         assertTrue(versionModule.contains("deliberately rebaseline with reviewed justification"));
+        assertTrue(versionModule.contains("dependsOn tasks.named('writeRuntimeJarSizeReport')"));
         assertFalse(versionModule.contains("'dev/blocklens/core/render/DecorationRenderPolicy.class',"));
         assertTrue(versionModule.contains("Runtime JAR contains retired policy bytecode"));
 
-        assertTrue(ci.contains("Collect M8 runtime size evidence"));
-        assertTrue(ci.contains("blocklens-m8-size-${{ matrix.minecraft }}"));
-        assertTrue(ci.contains("runtime-jar-size.txt"));
+        // Every version CI job runs `build`; `check` therefore generates the deterministic size report.
+        assertTrue(ci.contains(":versions:${{ matrix.module }}:build"));
+        assertTrue(ci.contains("Build and verify Minecraft ${{ matrix.minecraft }}"));
     }
 }
