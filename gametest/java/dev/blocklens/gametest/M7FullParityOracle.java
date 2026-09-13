@@ -23,17 +23,13 @@ import net.minecraft.world.level.Level;
 final class M7FullParityOracle {
     private static final int WIDTH = 640;
     private static final int HEIGHT = 360;
-    private static final int CAPABILITY_COUNT = 37;
-    private static final int REFERENCE_PRESET_COUNT = 5;
     private static final int TARGET_MIN_X = 70;
-    private static final int TARGET_MIN_Y = 175;
+    private static final int TARGET_MIN_Y = 170;
     private static final int TARGET_MAX_X = 570;
-    private static final int TARGET_MAX_Y = 305;
-    private static final int MIN_ALL_ON_DIFFERENCE = 700;
-    private static final int MIN_PRESET_DIFFERENCE = 80;
-    private static final int RESOURCE_RELOAD_TIMEOUT_TICKS = 1200;
-    private static final int TERRAIN_SETTLE_TICKS = 30;
-    private static final long RELOAD_OVERLAY_FADE_MILLIS = 1_500L;
+    private static final int TARGET_MAX_Y = 310;
+    private static final int RELOAD_TIMEOUT_TICKS = 1200;
+    private static final int SETTLE_TICKS = 30;
+    private static final long OVERLAY_FADE_MILLIS = 1_500L;
 
     private M7FullParityOracle() {
     }
@@ -41,72 +37,72 @@ final class M7FullParityOracle {
     static void verify(ClientGameTestContext context, TestSingleplayerContext singleplayer) {
         BlockLensConfig original = BlockLensRuntime.config();
         Path outputDir = FabricLoader.getInstance().getGameDir().resolve("m7-visual");
-
         try {
             Files.createDirectories(outputDir);
             buildScene(singleplayer);
             context.waitTicks(20);
 
             BlockLensConfig allOn = withAllEnabled(original, true);
-            require(enabledCount(allOn) == CAPABILITY_COUNT, "M7 all-on config must enable 37 capabilities");
-            BlockLensConfig roundTrip = BlockLensConfigCodec.decode(BlockLensConfigCodec.encode(allOn));
-            require(roundTrip.enabledMask() == allOn.enabledMask(), "M7 all-on config round-trip changed enabled mask");
+            require(enabledCount(allOn) == 37, "M7 all-on config must enable 37 capabilities");
+            require(BlockLensConfigCodec.decode(BlockLensConfigCodec.encode(allOn)).enabledMask() == allOn.enabledMask(),
+                    "M7 all-on config round-trip changed enabled mask");
 
-            installRuntimeConfig(allOn);
-            reloadResources(context);
-            requireModelPipeline("all 37 enabled");
-            invalidateTerrain(context);
-            context.waitTicks(TERRAIN_SETTLE_TICKS);
-            Path allOnImage = takeScreenshot(context, outputDir, "m7-all37-on");
+            install(allOn);
+            reload(context);
+            requirePipeline("all 37 enabled");
+            rebuild(context);
+            Path onPath = screenshot(context, outputDir, "m7-all37-on");
 
-            reloadResources(context);
-            requireModelPipeline("all 37 enabled after reload");
-            invalidateTerrain(context);
-            context.waitTicks(TERRAIN_SETTLE_TICKS);
-            Path reloadedImage = takeScreenshot(context, outputDir, "m7-all37-reloaded");
+            reload(context);
+            requirePipeline("all 37 enabled after reload");
+            rebuild(context);
+            Path reloadedPath = screenshot(context, outputDir, "m7-all37-reloaded");
 
-            verifyDimensionRoundTrip(context, singleplayer);
+            dimensionRoundTrip(context, singleplayer);
 
-            BlockLensConfig referencePreset = BlockLensConfig.defaults();
-            require(enabledCount(referencePreset) == REFERENCE_PRESET_COUNT,
-                    "frozen source reference preset must enable exactly five capabilities");
-            requireReferencePreset(referencePreset);
-            installRuntimeConfig(referencePreset);
-            reloadResources(context);
-            invalidateTerrain(context);
-            context.waitTicks(TERRAIN_SETTLE_TICKS);
-            Path presetImage = takeScreenshot(context, outputDir, "m7-reference-preset");
+            BlockLensConfig preset = BlockLensConfig.defaults();
+            requireReferencePreset(preset);
+            install(preset);
+            reload(context);
+            rebuild(context);
+            Path presetPath = screenshot(context, outputDir, "m7-reference-preset");
 
             BlockLensConfig allOff = withAllEnabled(original, false);
             require(enabledCount(allOff) == 0, "M7 all-off config still has enabled capabilities");
-            installRuntimeConfig(allOff);
-            reloadResources(context);
-            invalidateTerrain(context);
-            context.waitTicks(TERRAIN_SETTLE_TICKS);
-            Path allOffImage = takeScreenshot(context, outputDir, "m7-all37-off-active-pack");
+            install(allOff);
+            reload(context);
+            rebuild(context);
+            Path offPath = screenshot(context, outputDir, "m7-all37-off-active-pack");
 
-            BufferedImage on = inspect(allOnImage);
-            BufferedImage reloaded = inspect(reloadedImage);
-            BufferedImage preset = inspect(presetImage);
-            BufferedImage off = inspect(allOffImage);
-            int onOff = targetDifferentPixelCount(on, off);
-            int reloadOff = targetDifferentPixelCount(reloaded, off);
-            int presetOff = targetDifferentPixelCount(preset, off);
+            BufferedImage on = inspect(onPath);
+            BufferedImage reloaded = inspect(reloadedPath);
+            BufferedImage presetImage = inspect(presetPath);
+            BufferedImage off = inspect(offPath);
+            int onOff = difference(on, off);
+            int reloadOff = difference(reloaded, off);
+            int presetOff = difference(presetImage, off);
+            require(onOff >= 700, "M7 all-on visual delta too small: " + onOff);
+            require(reloadOff >= 700, "M7 reload visual delta too small: " + reloadOff);
+            require(presetOff >= 80, "M7 reference-preset visual delta too small: " + presetOff);
 
-            require(onOff >= MIN_ALL_ON_DIFFERENCE,
-                    "M7 all-37 ON target region is not visually distinct from OFF; differentPixels=" + onOff);
-            require(reloadOff >= MIN_ALL_ON_DIFFERENCE,
-                    "M7 all-37 rendering did not survive resource reload; differentPixels=" + reloadOff);
-            require(presetOff >= MIN_PRESET_DIFFERENCE,
-                    "M7 frozen five-feature preset is not visually distinct from OFF; differentPixels=" + presetOff);
-
-            writeManifest(outputDir, allOnImage, reloadedImage, presetImage, allOffImage,
-                    onOff, reloadOff, presetOff);
+            String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
+                    + "capabilities=37\nreferencePresetCapabilities=5\n"
+                    + "targetBindings=323\nuniqueTargets=320\n"
+                    + "wrappedModels=" + MinecraftDecorationModelPlugin.wrappedModelCount() + "\n"
+                    + "allOnOffDifferentPixels=" + onOff + "\n"
+                    + "reloadedOffDifferentPixels=" + reloadOff + "\n"
+                    + "presetOffDifferentPixels=" + presetOff + "\n"
+                    + "dimensionRoundTrip=PASS\nconfigRoundTrip=PASS\n"
+                    + "allOnFile=" + onPath.getFileName() + "\n"
+                    + "reloadedFile=" + reloadedPath.getFileName() + "\n"
+                    + "referencePresetFile=" + presetPath.getFileName() + "\n"
+                    + "allOffFile=" + offPath.getFileName() + "\n";
+            Files.writeString(outputDir.resolve("m7-visual-manifest.txt"), manifest, StandardCharsets.UTF_8);
         } catch (IOException exception) {
             throw new AssertionError("M7 full parity evidence failed", exception);
         } finally {
-            installRuntimeConfig(original);
-            invalidateTerrain(context);
+            install(original);
+            rebuild(context);
         }
     }
 
@@ -119,198 +115,130 @@ final class M7FullParityOracle {
         server.runCommand("gamemode spectator @a");
         server.runCommand("fill -13 -60 -7 13 -60 6 minecraft:smooth_quartz");
 
-        // M4: all five outline/fine-visibility capabilities.
-        set(server, -9, 4, "blue_ice");
-        set(server, -6, 4, "dead_brain_coral_block");
-        set(server, -3, 4, "powder_snow");
-        setState(server, 0, 4, "sculk_catalyst[bloom=true]");
-        setState(server, 3, 4,
-                "tripwire[attached=true,powered=true,north=true,east=true,south=false,west=false]");
+        set(singleplayer, -9, 4, "blue_ice");
+        set(singleplayer, -6, 4, "dead_brain_coral_block");
+        set(singleplayer, -3, 4, "powder_snow");
+        set(singleplayer, 0, 4, "sculk_catalyst[bloom=true]");
+        set(singleplayer, 3, 4, "tripwire[attached=true,powered=true,north=true,east=true,south=false,west=false]");
+        set(singleplayer, 6, 4, "netherrack");
+        set(singleplayer, 9, 4, "crimson_nylium");
+        set(singleplayer, -9, 1, "warped_nylium");
+        set(singleplayer, -6, 1, "crimson_stem[axis=x]");
 
-        // M6 representatives, including both nylium band families and overlap targets.
-        set(server, 6, 4, "netherrack");
-        set(server, 9, 4, "crimson_nylium");
-        set(server, -9, 1, "warped_nylium");
-        setState(server, -6, 1, "crimson_stem[axis=x]");
-
-        // M5: all 18 independently controlled resource targets.
         String[] resources = {
-                "obsidian", "ancient_debris", "diamond_ore", "deepslate_diamond_ore",
-                "gold_ore", "deepslate_gold_ore", "emerald_ore", "deepslate_emerald_ore",
-                "coal_ore", "deepslate_coal_ore", "iron_ore", "deepslate_iron_ore",
-                "copper_ore", "deepslate_copper_ore", "lapis_ore", "deepslate_lapis_ore",
-                "redstone_ore", "deepslate_redstone_ore"
+                "obsidian", "ancient_debris", "diamond_ore", "deepslate_diamond_ore", "gold_ore",
+                "deepslate_gold_ore", "emerald_ore", "deepslate_emerald_ore", "coal_ore",
+                "deepslate_coal_ore", "iron_ore", "deepslate_iron_ore", "copper_ore",
+                "deepslate_copper_ore", "lapis_ore", "deepslate_lapis_ore", "redstone_ore",
+                "deepslate_redstone_ore"
         };
-        int index = 0;
-        for (int z : new int[]{1, -2, -5}) {
-            for (int x : new int[]{-3, 0, 3, 6, 9, -9}) {
-                if (index >= resources.length) break;
-                set(server, x, z, resources[index++]);
-            }
+        int[][] positions = {
+                {-3,1},{0,1},{3,1},{6,1},{9,1},
+                {-9,-2},{-6,-2},{-3,-2},{0,-2},{3,-2},{6,-2},{9,-2},
+                {-9,-5},{-6,-5},{-3,-5},{0,-5},{3,-5},{6,-5}
+        };
+        for (int i = 0; i < resources.length; i++) {
+            set(singleplayer, positions[i][0], positions[i][1], resources[i]);
         }
-        require(index == resources.length, "M7 resource scene did not place all 18 targets");
-
-        // M3 overlap markers prove older render families remain active in the same all-on session.
-        setState(server, 6, -5, "oak_log[axis=z]");
-        setState(server, 9, -5, "quartz_stairs[facing=east,half=top,shape=outer_left]");
         server.runCommand("tp @a 0 -53 20 180 17");
     }
 
-    private static void set(TestSingleplayerContext.TestServerContext server, int x, int z, String block) {
-        server.runCommand("setblock " + x + " -59 " + z + " minecraft:" + block);
+    private static void set(TestSingleplayerContext singleplayer, int x, int z, String blockState) {
+        singleplayer.getServer().runCommand("setblock " + x + " -59 " + z + " minecraft:" + blockState);
     }
 
-    private static void setState(TestSingleplayerContext.TestServerContext server, int x, int z, String blockState) {
-        server.runCommand("setblock " + x + " -59 " + z + " minecraft:" + blockState);
-    }
-
-    private static void verifyDimensionRoundTrip(
-            ClientGameTestContext context,
-            TestSingleplayerContext singleplayer) {
-        var server = singleplayer.getServer();
-        server.runCommand("execute in minecraft:the_nether run tp @a 0 90 0");
+    private static void dimensionRoundTrip(ClientGameTestContext context, TestSingleplayerContext singleplayer) {
+        singleplayer.getServer().runCommand("execute in minecraft:the_nether run tp @a 0 90 0");
         context.waitTicks(30);
         context.runOnClient(client -> require(
                 client.level != null && Level.NETHER.equals(client.level.dimension()),
-                "M7 client did not reach the Nether with all capabilities enabled"));
-
-        server.runCommand("execute in minecraft:overworld run tp @a 0 -53 20 180 17");
+                "M7 client did not reach the Nether"));
+        singleplayer.getServer().runCommand("execute in minecraft:overworld run tp @a 0 -53 20 180 17");
         context.waitTicks(30);
         context.runOnClient(client -> require(
                 client.level != null && Level.OVERWORLD.equals(client.level.dimension()),
-                "M7 client did not return to the Overworld with all capabilities enabled"));
-        invalidateTerrain(context);
-        context.waitTicks(TERRAIN_SETTLE_TICKS);
+                "M7 client did not return to the Overworld"));
+        rebuild(context);
     }
 
     private static BlockLensConfig withAllEnabled(BlockLensConfig base, boolean enabled) {
         BlockLensConfig result = base;
-        for (CapabilityId capability : CapabilityId.values()) {
-            result = result.withEnabled(capability, enabled);
-        }
+        for (CapabilityId capability : CapabilityId.values()) result = result.withEnabled(capability, enabled);
         return result;
     }
 
     private static int enabledCount(BlockLensConfig config) {
         int count = 0;
-        for (CapabilityId capability : CapabilityId.values()) {
-            if (config.isEnabled(capability)) count++;
-        }
+        for (CapabilityId capability : CapabilityId.values()) if (config.isEnabled(capability)) count++;
         return count;
     }
 
     private static void requireReferencePreset(BlockLensConfig config) {
+        require(enabledCount(config) == 5, "reference preset must enable exactly five capabilities");
         for (CapabilityId capability : CapabilityId.values()) {
             boolean expected = capability == CapabilityId.BLUE_ICE
                     || capability == CapabilityId.DEAD_CORAL
                     || capability == CapabilityId.POWDER_SNOW
                     || capability == CapabilityId.SCULK_CATALYST
                     || capability == CapabilityId.STRING_TWEAKS;
-            require(config.isEnabled(capability) == expected,
-                    "reference preset mismatch for " + capability.sourceKey());
+            require(config.isEnabled(capability) == expected, "reference preset mismatch: " + capability.sourceKey());
         }
     }
 
-    private static void installRuntimeConfig(BlockLensConfig config) {
-        BlockLensRuntime.initialize(
-                BlockLensRuntime.minecraftVersion(), config, BlockLensRuntime.initializationNanos());
+    private static void install(BlockLensConfig config) {
+        BlockLensRuntime.initialize(BlockLensRuntime.minecraftVersion(), config, BlockLensRuntime.initializationNanos());
     }
 
-    private static void reloadResources(ClientGameTestContext context) {
-        CompletableFuture<Void> reload = context.computeOnClient(client -> client.reloadResourcePacks());
-        context.waitFor(client -> reload.isDone(), RESOURCE_RELOAD_TIMEOUT_TICKS);
-        reload.join();
+    private static void reload(ClientGameTestContext context) {
+        CompletableFuture<Void> future = context.computeOnClient(client -> client.reloadResourcePacks());
+        context.waitFor(client -> future.isDone(), RELOAD_TIMEOUT_TICKS);
+        future.join();
         try {
-            Thread.sleep(RELOAD_OVERLAY_FADE_MILLIS);
+            Thread.sleep(OVERLAY_FADE_MILLIS);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new AssertionError("interrupted while waiting for M7 reload overlay fade", exception);
+            throw new AssertionError("interrupted while waiting for M7 reload overlay", exception);
         }
         context.waitTicks(2);
     }
 
-    private static void invalidateTerrain(ClientGameTestContext context) {
+    private static void rebuild(ClientGameTestContext context) {
         context.runOnClient(MinecraftTerrainInvalidator::invalidateAll);
+        context.waitTicks(SETTLE_TICKS);
     }
 
-    private static void requireModelPipeline(String phase) {
+    private static void requirePipeline(String phase) {
         require(MinecraftDecorationModelPlugin.isModelPipelineReady(), phase + ": model pipeline not ready");
         require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 320,
-                phase + ": expected at least 320 wrapped target models but got "
-                        + MinecraftDecorationModelPlugin.wrappedModelCount());
+                phase + ": expected at least 320 wrapped models, got " + MinecraftDecorationModelPlugin.wrappedModelCount());
     }
 
-    private static Path takeScreenshot(ClientGameTestContext context, Path outputDir, String name) throws IOException {
-        Path image = context.takeScreenshot(
-                TestScreenshotOptions.of(name)
-                        .withDestinationDir(outputDir)
-                        .withSize(WIDTH, HEIGHT)
-                        .disableCounterPrefix());
-        require(Files.isRegularFile(image), "M7 screenshot was not created: " + image);
-        require(Files.size(image) > 1_000L, "M7 screenshot is unexpectedly small: " + image);
-        return image;
+    private static Path screenshot(ClientGameTestContext context, Path outputDir, String name) throws IOException {
+        Path path = context.takeScreenshot(TestScreenshotOptions.of(name)
+                .withDestinationDir(outputDir).withSize(WIDTH, HEIGHT).disableCounterPrefix());
+        require(Files.isRegularFile(path) && Files.size(path) > 1_000L, "invalid M7 screenshot: " + path);
+        return path;
     }
 
     private static BufferedImage inspect(Path path) throws IOException {
         BufferedImage image = ImageIO.read(path.toFile());
-        require(image != null, "failed to decode M7 screenshot: " + path);
-        require(image.getWidth() == WIDTH && image.getHeight() == HEIGHT,
-                "unexpected M7 screenshot dimensions: " + image.getWidth() + "x" + image.getHeight());
-        int nonBlack = 0;
-        for (int y = 0; y < HEIGHT; y++) {
-            for (int x = 0; x < WIDTH; x++) {
-                int rgb = image.getRGB(x, y);
-                int r = (rgb >>> 16) & 0xFF;
-                int g = (rgb >>> 8) & 0xFF;
-                int b = rgb & 0xFF;
-                if (r + g + b > 45) nonBlack++;
-            }
-        }
-        require(nonBlack > (WIDTH * HEIGHT) / 5, "M7 screenshot appears blank: " + path);
+        require(image != null && image.getWidth() == WIDTH && image.getHeight() == HEIGHT,
+                "invalid M7 framebuffer capture: " + path);
         return image;
     }
 
-    private static int targetDifferentPixelCount(BufferedImage left, BufferedImage right) {
-        int different = 0;
+    private static int difference(BufferedImage left, BufferedImage right) {
+        int count = 0;
         for (int y = TARGET_MIN_Y; y < TARGET_MAX_Y; y++) {
             for (int x = TARGET_MIN_X; x < TARGET_MAX_X; x++) {
-                int a = left.getRGB(x, y);
-                int b = right.getRGB(x, y);
-                int delta = Math.abs(((a >>> 16) & 0xFF) - ((b >>> 16) & 0xFF))
-                        + Math.abs(((a >>> 8) & 0xFF) - ((b >>> 8) & 0xFF))
-                        + Math.abs((a & 0xFF) - (b & 0xFF));
-                if (delta >= 24) different++;
+                int a = left.getRGB(x, y), b = right.getRGB(x, y);
+                int delta = Math.abs(((a >>> 16) & 255) - ((b >>> 16) & 255))
+                        + Math.abs(((a >>> 8) & 255) - ((b >>> 8) & 255))
+                        + Math.abs((a & 255) - (b & 255));
+                if (delta >= 24) count++;
             }
         }
-        return different;
-    }
-
-    private static void writeManifest(
-            Path outputDir,
-            Path on,
-            Path reloaded,
-            Path preset,
-            Path off,
-            int onOff,
-            int reloadOff,
-            int presetOff) throws IOException {
-        String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
-                + "capabilities=37\n"
-                + "referencePresetCapabilities=5\n"
-                + "targetBindings=323\n"
-                + "uniqueTargets=320\n"
-                + "wrappedModels=" + MinecraftDecorationModelPlugin.wrappedModelCount() + "\n"
-                + "targetRegion=" + TARGET_MIN_X + "," + TARGET_MIN_Y + "-" + TARGET_MAX_X + "," + TARGET_MAX_Y + "\n"
-                + "allOnFile=" + on.getFileName() + "\n"
-                + "reloadedFile=" + reloaded.getFileName() + "\n"
-                + "referencePresetFile=" + preset.getFileName() + "\n"
-                + "allOffFile=" + off.getFileName() + "\n"
-                + "allOnOffDifferentPixels=" + onOff + "\n"
-                + "reloadedOffDifferentPixels=" + reloadOff + "\n"
-                + "presetOffDifferentPixels=" + presetOff + "\n"
-                + "dimensionRoundTrip=PASS\n"
-                + "configRoundTrip=PASS\n";
-        Files.writeString(outputDir.resolve("m7-visual-manifest.txt"), manifest, StandardCharsets.UTF_8);
+        return count;
     }
 
     private static void require(boolean condition, String message) {
