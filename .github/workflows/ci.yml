@@ -282,6 +282,36 @@ jobs:
           path: ${{ steps.m7visual.outputs.path }}
           if-no-files-found: error
           retention-days: 14
+      - name: Collect M8 performance observation
+        id: m8perf
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="versions/${{ matrix.module }}"
+          target="build/ci/m8-performance-${{ matrix.minecraft }}"
+          rm -rf "$target"
+          mkdir -p "$target"
+          mapfile -t manifests < <(find "$source_root" -type f -path '*/m8-performance/m8-performance-baseline.txt' -print | sort)
+          if [[ "${#manifests[@]}" -ne 1 ]]; then
+            echo "Expected exactly one M8 performance manifest, found ${#manifests[@]}" >&2
+            printf '%s\n' "${manifests[@]}" >&2
+            exit 1
+          fi
+          cp "${manifests[0]}" "$target/"
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+          {
+            echo "### M8 performance observation ${{ matrix.minecraft }}"
+            echo '```text'
+            cat "$target/m8-performance-baseline.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload M8 performance observation
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-m8-performance-${{ matrix.minecraft }}
+          path: ${{ steps.m8perf.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
       - name: Resolve runtime artifact
         id: runtime
         shell: bash
@@ -311,6 +341,7 @@ jobs:
             echo "- M5 dark-area visual evidence: \`PASS\`"
             echo "- M5 active resource-pack evidence: \`PASS\`"
             echo "- M7 all-37 full parity evidence: \`PASS\`"
+            echo "- M8 performance observation: \`PASS\`"
             echo "- Reproducible artifact: \`PASS\`"
             echo "- Privacy/residue audit: \`PASS\`"
           } >> "$GITHUB_STEP_SUMMARY"
