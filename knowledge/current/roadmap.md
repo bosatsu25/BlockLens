@@ -28,19 +28,13 @@ Tasks:
 - [x] Document ambiguous capabilities, especially `nethertweaks`
 - [x] Classify retained third-party assets and licensing risk
 
-Exit criteria:
-
-- every source capability has evidence-backed behavior
-- no capability is defined only by guesswork
-- baseline measurements are reproducible
-
 Evidence: Issue #1 completed; `source-baseline.md`, `capability-map.md`, and `capability-contract.tsv` are authoritative.
 
 ## M1 — Dual-version Fabric/Java 25 scaffold + quality foundation ✅
 
-Goal: establish a minimal buildable client-only mod for **26.1.2 and 26.2** with the full quality contract in place before feature implementation expands.
+Goal: establish a minimal buildable client-only mod for **26.1.2 and 26.2** with the quality contract in place before feature implementation expands.
 
-Tasks:
+Completed:
 
 - [x] Gradle multi-project layout: `common`, `versions/mc26_1_2`, `versions/mc26_2`
 - [x] Fabric metadata/runtime artifact per version
@@ -48,32 +42,20 @@ Tasks:
 - [x] 37-capability common catalog
 - [x] native shared configuration schema
 - [x] English/Japanese translation skeleton
-- [x] JUnit 5
-- [x] JaCoCo selected-policy coverage gate
-- [x] PIT selected-policy mutation gate
+- [x] JUnit 5 + selected JaCoCo/PIT gates
 - [x] `qualityGate` and `ciGate`
-- [x] GitHub Actions version matrix / isolated per-version jobs
-- [x] client GameTest/smoke path for both versions
-- [x] functional-parity/version-parity contracts
+- [x] dual-version GitHub Actions + Client GameTest
+- [x] functional/version parity contracts
 - [x] reproducible artifact audit
-- [x] per-version JAR byte report/budget
-- [x] startup/resource-load performance evidence path and recorded BlockLens initialization baseline
+- [x] JAR byte budget
+- [x] startup/load baseline
 - [x] runtime artifact privacy/residue audit
 
-Exit criteria:
-
-- both version artifacts build cleanly on Java 25
-- 37/37 common capability contract PASS
-- config round trip PASS
-- no server dependency
-- automated quality entry points PASS
-- first per-version load/size baselines recorded
-
-Verified baseline: [`m1-baseline.md`](m1-baseline.md). GitHub Actions run `34683630501` passed common quality plus both version build/reproducibility/Client GameTest jobs.
+Verified baseline: [`m1-baseline.md`](m1-baseline.md). GitHub Actions `34683630501` passed common quality plus both version jobs.
 
 ## M2 — Shared state engine and version adapters ✅
 
-Goal: represent block orientation/state once and keep mapped Minecraft API differences at thin adapter boundaries.
+Goal: represent orientation/state once and keep mapped Minecraft API differences at thin adapter boundaries.
 
 Semantic set:
 
@@ -87,24 +69,16 @@ Semantic set:
 - mount face
 - powered/attached when required
 
-Tasks:
+Completed:
 
 - [x] pure Java semantic model in `common`
-- [x] 26.1.2 state adapter
-- [x] 26.2 state adapter
-- [x] cross-version oracle tests proving equivalent semantic output
-- [x] bounded composable target-to-capability lookup design
-- [x] real-client mapped-state oracle after Minecraft registry bootstrap
-- [x] simultaneous target overlap support through capability bitsets
+- [x] 26.1.2 and 26.2 state adapters
+- [x] cross-version semantic oracle
+- [x] bounded composable target-to-capability lookup
+- [x] real-client mapped-state oracle
+- [x] target overlap through capability bitsets
 
-Exit criteria:
-
-- pure Java state tests cover relevant combinations
-- no duplicated product policy across version projects
-- both adapters produce equivalent semantics for shared Minecraft states
-- no reflection/classpath feature discovery
-
-Evidence: PR #9 merged as `67ac8f18347a6c6343d0aea6bd51a418dac0d632`; GitHub Actions run `34685138049` passed common JUnit/JaCoCo/PIT plus both 26.1.2 and 26.2 build/reproducibility/Client GameTest/artifact jobs.
+Evidence: PR #9 merged as `67ac8f18347a6c6343d0aea6bd51a418dac0d632`; Actions `34685138049` green.
 
 ## M3 — Decoration/orientation parity ✅
 
@@ -126,31 +100,27 @@ Targets:
 - Wood
 - Log
 
-Implemented and verified:
+Completed:
 
-- [x] Minecraft-independent render descriptor and visual-cue policy
-- [x] exact M0 target catalog: 254 bindings, machine-checked against `capability-contract.tsv`
-- [x] 26.1.2 raw registry target index
-- [x] 26.2 raw registry target index
-- [x] shared procedural quad grammar derived from source visual intent
-- [x] Stained Glass modeled as opaque/solid-layer behavior rather than a generic orientation marker
-- [x] independent toggle policy for all 13 capabilities
-- [x] all 13 enabled simultaneously at pure common-policy level
-- [x] model-bake semantic interpretation; no per-frame BlockState reinterpretation
-- [x] `WrapperBlockStateModel` integration for 26.1.2
-- [x] `WrapperBlockStateModel` integration for 26.2
-- [x] model pipeline is zero-world-scan and bounded by exact raw-ID target lookup
-- [x] OFF fast path emits the original baked active-resource-pack model directly
-- [x] primitive 64-bit enabled mask for render hot-path checks
-- [x] Client GameTest target oracle verifies exact target scope and model-pipeline execution
-- [x] representative rendered visual parity evidence
-- [x] all 13 simultaneously verified in rendered in-game scenarios on 26.1.2
-- [x] all 13 simultaneously verified in rendered in-game scenarios on 26.2
-- [x] resource reload / active resource-pack visual regression evidence
+- [x] Minecraft-independent render descriptor / cue policy
+- [x] exact 254-binding M0 target catalog
+- [x] both raw registry target indices
+- [x] shared procedural quad grammar
+- [x] Stained Glass opaque/solid-layer behavior
+- [x] independent toggles and all-13 simultaneous policy
+- [x] model-bake semantic interpretation
+- [x] dual-version `WrapperBlockStateModel`
+- [x] zero-world-scan bounded target lookup
+- [x] direct active-base OFF path
+- [x] primitive enabled mask
+- [x] real-client target/model pipeline oracle
+- [x] representative rendered parity
+- [x] all 13 simultaneously rendered on both versions
+- [x] resource reload / active-base restoration evidence
 
-Current visual/runtime contract: [`m3-visual-semantics.md`](m3-visual-semantics.md).
+Current contract: [`m3-visual-semantics.md`](m3-visual-semantics.md).
 
-Evidence: PR #11 merged as `03bc5213125b96456682f9f58ab02b84bcd95cdb`; dual-version deterministic framebuffer evidence verifies all-13 ON, resource reload, fixed target-ROI differences, active resource-pack preservation, and OFF restoration.
+Evidence: PR #11 merged as `03bc5213125b96456682f9f58ab02b84bcd95cdb`.
 
 ## M4–M7 — Full parity implementation train 🔧
 
@@ -172,14 +142,15 @@ Acceptance:
 
 - [x] source-backed target/state/cue contract frozen in common code
 - [x] 24 exact target bindings
-- [x] Sculk `bloom` semantic retained
-- [x] all 64 tripwire source states represented
-- [x] selected JaCoCo/PIT policy gate includes M4 common code
-- [x] 5/5 runtime rendering on 26.1.2
-- [x] 5/5 runtime rendering on 26.2
-- [x] OFF restores normal rendering
+- [x] Sculk `bloom` retained
+- [x] all 64 tripwire semantic states represented
+- [x] selected JaCoCo/PIT gate includes M4 policy
+- [x] 5/5 runtime rendering on 26.1.2 and 26.2
+- [x] OFF restoration
 - [x] combined M3+M4 rendered evidence
 - [x] resource reload and dimension-transition regression evidence
+
+Issue #4 is complete.
 
 ### Track B — Resource highlighting (former M5) 🔧 core implementation complete; compatibility verification remains
 
@@ -199,7 +170,7 @@ Targets:
 Acceptance:
 
 - [x] 18/18 exact target bindings and independent toggles
-- [x] active baked base model/texture preserved by the wrapper architecture
+- [x] active baked base model/texture preserved by wrapper architecture
 - [x] shared highlight policy; no per-version product-policy duplication
 - [ ] dedicated dark-area/high-visibility framebuffer evidence
 - [x] shader-OFF/default OpenGL CI path PASS on both versions
@@ -207,6 +178,8 @@ Acceptance:
 - [ ] representative supported shader path verified before shader support is claimed
 - [ ] representative third-party active resource-pack matrix
 - [x] Vulkan remains a separate experimental track and is not implied by OpenGL success
+
+Issue #5 remains open for the unchecked compatibility/evidence items.
 
 ### Track C — Nether Tweaks (former M6) ✅ core parity
 
@@ -218,10 +191,12 @@ Acceptance:
 - [x] no guessed behavior: source-derived 14×14 interior + 1px frame grammar and per-target palette
 - [x] independent toggle
 - [x] 26.1.2 and 26.2 adapters/rendering
-- [x] interaction with orientation and resource highlighting preserved on overlapping targets
+- [x] overlap interaction preserved
 - [x] Nether-Tweaks-only framebuffer regression on both versions
-- [x] BlockLens-owned extra models packaged and resolved in Fabric resource loading
-- [x] CI rejects missing BlockLens Nether models and incomplete BlockLens Nether texture references
+- [x] BlockLens-owned extra models packaged and resolved
+- [x] CI rejects missing models and incomplete texture references
+
+Issue #6 is complete.
 
 ### Track D — Full-product hardening (former M7) 🔧 automated core gate green; compatibility matrix incomplete
 
@@ -229,8 +204,8 @@ Verified scenarios per supported Minecraft line:
 
 - [x] all 37 capabilities represented by the unified pipeline
 - [x] all 37 capabilities ON simultaneously
-- [x] supplied five-feature reference preset reproduced at config-policy level and framebuffer-captured
-- [ ] real config-file save/reload acceptance beyond codec/persistence smoke coverage
+- [x] supplied five-feature reference preset reproduced and framebuffer-captured
+- [x] **real native config-file save/reload acceptance through Fabric config directory**
 - [x] config codec/mask round-trip
 - [x] resource reload
 - [x] world join/leave smoke lifecycle
@@ -249,26 +224,29 @@ Additional 26.2 tracks:
 - [x] OpenGL CI framebuffer path
 - [ ] Vulkan experimental verification where available
 
-Latest verified implementation run before documentation-only changes: GitHub Actions `34729441969`.
+Latest verified implementation run: **GitHub Actions `34730806632` (run #160)**.
 
-M7 evidence from that run:
+M7 evidence:
 
 | Evidence | 26.1.2 | 26.2 |
 | --- | ---: | ---: |
-| all-37 ON vs OFF | 3,917 px | 3,932 px |
-| after resource reload vs OFF | 3,911 px | 3,904 px |
-| Nether Tweaks only vs OFF | 834 px | 765 px |
-| reference preset vs OFF | 1,067 px | 1,063 px |
+| all-37 ON vs OFF | 3,917 px | 3,903 px |
+| after resource reload vs OFF | 3,911 px | 3,903 px |
+| Nether Tweaks only vs OFF | 764 px | 764 px |
+| reference preset vs OFF | 1,072 px | 1,063 px |
 | dimension round-trip | PASS | PASS |
 | config codec round-trip | PASS | PASS |
+| native config-file save/reload | PASS | PASS |
 
-Runtime JAR size in the same verified run: **92,790 bytes** on each version.
+Native config acceptance explicitly produced `BLOCKLENS_CONFIG_FILE_RELOAD ... result=PASS` on both Minecraft lines after changing all 37 booleans, publishing the reloaded runtime mask, and restoring the pre-test file/runtime state.
+
+Runtime JAR size in this run: **92,988 bytes** on each version.
 
 Full-train exit criteria still pending:
 
+- dedicated dark-area resource-highlight evidence
 - representative third-party resource-pack preservation matrix
 - representative supported shader-ON path
-- real config-file save/reload acceptance
 - accurate OpenGL/Vulkan compatibility matrix
 
 Implementation rule: do **not** treat the green automated core gate as proof of the still-unverified compatibility items above.
