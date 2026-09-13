@@ -1,6 +1,7 @@
 package dev.blocklens.core;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -40,6 +41,7 @@ final class M9ReleaseReadinessContractTest {
     @Test
     void releaseWorkflowPublishesOnlyTheExactSuccessfulMainCiArtifacts() throws IOException {
         String release = Files.readString(root().resolve(".github/workflows/release.yml"));
+        String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
         assertTrue(release.contains("workflow_run:"));
         assertTrue(release.contains("- CI"));
@@ -50,7 +52,13 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(release.contains("contents: write"));
         assertTrue(release.contains("ref: ${{ github.event.workflow_run.head_sha }}"));
         assertTrue(release.contains("RUN_ID: ${{ github.event.workflow_run.id }}"));
-        assertTrue(release.contains("gh run download"));
+        assertTrue(ci.contains("archive: false"));
+        assertTrue(release.contains("Download the exact raw JAR artifacts produced by successful CI"));
+        assertTrue(release.contains("/actions/artifacts/${id}/zip"));
+        assertTrue(release.contains("curl --fail --location --silent --show-error"));
+        assertTrue(release.contains("dist/raw-26.1.2.jar"));
+        assertTrue(release.contains("dist/raw-26.2.jar"));
+        assertFalse(release.contains("gh run download"));
         assertTrue(release.contains("gh release view"));
         assertTrue(release.contains("gh release create"));
         assertTrue(release.contains("runtime_jar_baseline_bytes"));
