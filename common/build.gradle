@@ -30,7 +30,6 @@ def coverageGateClasses = [
         'dev/blocklens/core/state/TargetCapabilityIndex*.class',
         'dev/blocklens/core/render/DecorationVisualCue*.class',
         'dev/blocklens/core/render/DecorationRenderDescriptor*.class',
-        'dev/blocklens/core/render/DecorationRenderPolicy*.class',
         'dev/blocklens/core/render/DecorationTargetCatalog*.class',
         'dev/blocklens/core/render/DecorationQuadFace*.class',
         'dev/blocklens/core/render/DecorationQuadInstruction*.class',
@@ -38,11 +37,9 @@ def coverageGateClasses = [
         'dev/blocklens/core/render/VisibilityVisualCue*.class',
         'dev/blocklens/core/render/VisibilityRenderDescriptor*.class',
         'dev/blocklens/core/render/VisibilityRenderPolicy*.class',
-        'dev/blocklens/core/render/VisibilityQuadCuePolicy*.class',
         'dev/blocklens/core/render/VisibilityTargetCatalog*.class',
         'dev/blocklens/core/render/ResourceTargetCatalog*.class',
         'dev/blocklens/core/render/ResourceHighlightCue*.class',
-        'dev/blocklens/core/render/ResourceHighlightPolicy*.class',
         'dev/blocklens/core/render/NetherTweaksTargetCatalog*.class',
         'dev/blocklens/core/render/NetherTweaksVisualCue*.class',
         'dev/blocklens/core/render/BlockLensTargetCatalog*.class'
@@ -90,15 +87,12 @@ pitest {
             'dev.blocklens.core.state.TargetCapabilityIndex',
             'dev.blocklens.core.render.DecorationVisualCue',
             'dev.blocklens.core.render.DecorationRenderDescriptor',
-            'dev.blocklens.core.render.DecorationRenderPolicy',
             'dev.blocklens.core.render.DecorationQuadInstruction',
             'dev.blocklens.core.render.DecorationQuadCuePolicy',
             'dev.blocklens.core.render.VisibilityVisualCue',
             'dev.blocklens.core.render.VisibilityRenderDescriptor',
             'dev.blocklens.core.render.VisibilityRenderPolicy',
-            'dev.blocklens.core.render.VisibilityQuadCuePolicy',
-            'dev.blocklens.core.render.ResourceHighlightCue',
-            'dev.blocklens.core.render.ResourceHighlightPolicy'
+            'dev.blocklens.core.render.ResourceHighlightCue'
     ]
     // Mutation tests intentionally exclude repository/filesystem contract tests and large frozen
     // M0 target/palette data tables; deterministic product-policy logic remains mutation-gated.
@@ -109,10 +103,10 @@ pitest {
             'dev.blocklens.core.state.DecorationStateKindTest',
             'dev.blocklens.core.state.VisibilityStateKindTest',
             'dev.blocklens.core.state.TargetCapabilityIndexTest',
-            'dev.blocklens.core.render.DecorationRenderPolicyTest',
+            'dev.blocklens.core.render.DecorationRenderContractTest',
             'dev.blocklens.core.render.DecorationQuadCuePolicyTest',
             'dev.blocklens.core.render.VisibilityRenderPolicyTest',
-            'dev.blocklens.core.render.VisibilityQuadCuePolicyTest',
+            'dev.blocklens.core.render.VisibilityVisualCueInstructionTest',
             'dev.blocklens.core.render.ResourceHighlightCueInstructionTest',
             'dev.blocklens.core.render.ResourceHighlightPolicyTest'
     ]

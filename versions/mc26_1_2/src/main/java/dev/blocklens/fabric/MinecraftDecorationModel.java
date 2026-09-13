@@ -8,7 +8,6 @@ import dev.blocklens.core.render.DecorationQuadInstruction;
 import dev.blocklens.core.render.DecorationRenderDescriptor;
 import dev.blocklens.core.render.NetherTweaksVisualCue;
 import dev.blocklens.core.render.ResourceHighlightCue;
-import dev.blocklens.core.render.VisibilityQuadCuePolicy;
 import dev.blocklens.core.render.VisibilityRenderDescriptor;
 import dev.blocklens.core.render.VisibilityRenderPolicy;
 import dev.blocklens.core.state.DecorationStateKind;
@@ -210,7 +209,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             } else {
                 VisibilityRenderDescriptor visibility = visibilityDescriptors[i];
                 if (visibility != null) {
-                    instruction = VisibilityQuadCuePolicy.instruction(visibility);
+                    instruction = visibility.cue().instruction();
                 } else {
                     ResourceHighlightCue resource = resourceCues[i];
                     instruction = resource.instruction();

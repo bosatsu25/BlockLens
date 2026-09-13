@@ -16,11 +16,10 @@ import dev.blocklens.core.state.SemanticState.MountFace;
 import dev.blocklens.core.state.SemanticState.SlabType;
 import dev.blocklens.core.state.SemanticState.StairShape;
 import java.util.EnumSet;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-final class DecorationRenderPolicyTest {
+final class DecorationRenderContractTest {
     @Test
     void exactlyThirteenCapabilitiesHaveVisualCues() {
         Set<CapabilityId> mapped = EnumSet.noneOf(CapabilityId.class);
@@ -38,39 +37,32 @@ final class DecorationRenderPolicyTest {
     }
 
     @Test
-    void disabledDecorationAndNonDecorationProduceNoDescriptor() {
+    void allThirteenCapabilitiesRemainIndependentAndBuildRuntimeDescriptors() {
         BlockLensConfig defaults = BlockLensConfig.defaults();
-        assertFalse(DecorationRenderPolicy.describe(
-                CapabilityId.STAIRS,
-                SemanticState.stairs(Facing.NORTH, Half.BOTTOM, StairShape.STRAIGHT),
-                defaults).isPresent());
-        assertFalse(DecorationRenderPolicy.describe(
-                CapabilityId.OBSIDIAN,
-                SemanticState.empty(),
-                defaults).isPresent());
-    }
-
-    @Test
-    void allThirteenCapabilitiesCanBeEnabledSimultaneously() {
-        BlockLensConfig config = BlockLensConfig.defaults();
-        for (CapabilityId capability : CapabilityId.values()) {
-            if (DecorationStateKind.isDecorationCapability(capability)) {
-                config = config.withEnabled(capability, true);
-            }
-        }
-
         int descriptors = 0;
+
         for (CapabilityId capability : CapabilityId.values()) {
             if (!DecorationStateKind.isDecorationCapability(capability)) {
                 continue;
             }
-            Optional<DecorationRenderDescriptor> descriptor = DecorationRenderPolicy.describe(
+
+            assertFalse(defaults.isEnabled(capability));
+            BlockLensConfig enabled = defaults.withEnabled(capability, true);
+            assertTrue(enabled.isEnabled(capability));
+
+            for (CapabilityId other : CapabilityId.values()) {
+                if (DecorationStateKind.isDecorationCapability(other) && other != capability) {
+                    assertFalse(enabled.isEnabled(other),
+                            () -> capability + " must not implicitly enable " + other);
+                }
+            }
+
+            DecorationRenderDescriptor descriptor = DecorationRenderDescriptor.of(
                     capability,
-                    validState(capability),
-                    config);
-            assertTrue(descriptor.isPresent(), capability::sourceKey);
-            assertEquals(capability, descriptor.orElseThrow().capability());
-            assertEquals(expectedCue(capability), descriptor.orElseThrow().cue());
+                    validState(capability));
+            assertEquals(capability, descriptor.capability());
+            assertEquals(expectedCue(capability), descriptor.cue());
+            assertEquals(validState(capability), descriptor.state());
             descriptors++;
         }
         assertEquals(13, descriptors);
@@ -78,27 +70,14 @@ final class DecorationRenderPolicyTest {
 
     @Test
     void stainedGlassOpaqueCueAllowsFullBlockWithNoPaneConnections() {
-        BlockLensConfig enabled = BlockLensConfig.defaults().withEnabled(CapabilityId.STAINED_GLASS, true);
-        DecorationRenderDescriptor descriptor = DecorationRenderPolicy.describe(
+        DecorationRenderDescriptor descriptor = DecorationRenderDescriptor.of(
                 CapabilityId.STAINED_GLASS,
-                SemanticState.connections(false, false, false, false),
-                enabled).orElseThrow();
+                SemanticState.connections(false, false, false, false));
         assertEquals(DecorationVisualCue.OPAQUE_STAINED_GLASS, descriptor.cue());
         assertEquals(0, descriptor.state().connectionMask());
-    }
-
-    @Test
-    void enabledCapabilitiesRejectSemanticallyIncompleteState() {
-        for (CapabilityId capability : CapabilityId.values()) {
-            if (!DecorationStateKind.isDecorationCapability(capability)
-                    || capability == CapabilityId.STAINED_GLASS) {
-                continue;
-            }
-            BlockLensConfig enabled = BlockLensConfig.defaults().withEnabled(capability, true);
-            assertThrows(IllegalArgumentException.class,
-                    () -> DecorationRenderPolicy.describe(capability, SemanticState.empty(), enabled),
-                    capability::sourceKey);
-        }
+        assertTrue(DecorationQuadCuePolicy
+                .instruction(descriptor, DecorationQuadFace.NORTH)
+                .forceSolid());
     }
 
     @Test
@@ -110,13 +89,9 @@ final class DecorationRenderPolicyTest {
                         DecorationVisualCue.AXIS_MARKER,
                         state));
         assertThrows(NullPointerException.class,
-                () -> DecorationRenderPolicy.describe(null, state, BlockLensConfig.defaults()));
+                () -> DecorationRenderDescriptor.of(null, state));
         assertThrows(NullPointerException.class,
-                () -> DecorationRenderPolicy.describe(CapabilityId.ANVIL, state, null));
-
-        BlockLensConfig enabled = BlockLensConfig.defaults().withEnabled(CapabilityId.ANVIL, true);
-        assertThrows(NullPointerException.class,
-                () -> DecorationRenderPolicy.describe(CapabilityId.ANVIL, null, enabled));
+                () -> DecorationRenderDescriptor.of(CapabilityId.ANVIL, null));
     }
 
     private static DecorationVisualCue expectedCue(CapabilityId capability) {

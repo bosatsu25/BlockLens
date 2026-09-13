@@ -13,8 +13,10 @@ base {
 def blockLensArtifactVersion = project.version.toString()
 def blockLensMinecraftVersionValue = blockLensMinecraftVersion.toString()
 def blockLensLoaderVersionValue = rootProject.loader_version.toString()
+def runtimeSourcePackBytes = Long.parseLong(rootProject.runtime_jar_source_pack_bytes.toString())
 def runtimeHardMaxBytes = Long.parseLong(rootProject.runtime_jar_hard_max_bytes.toString())
-def runtimeStretchBytes = Long.parseLong(rootProject.runtime_jar_stretch_bytes.toString())
+def runtimeBaselineBytes = Long.parseLong(rootProject.runtime_jar_baseline_bytes.toString())
+def runtimeReleaseBudgetBytes = Long.parseLong(rootProject.runtime_jar_release_budget_bytes.toString())
 
 dependencies {
     minecraft "com.mojang:minecraft:${blockLensMinecraftVersionValue}"
@@ -107,7 +109,6 @@ tasks.register('versionSmokeContract') {
                     'dev/blocklens/core/state/SemanticState.class',
                     'dev/blocklens/core/state/DecorationStateKind.class',
                     'dev/blocklens/core/render/DecorationRenderDescriptor.class',
-                    'dev/blocklens/core/render/DecorationRenderPolicy.class',
                     'dev/blocklens/core/render/DecorationTargetCatalog.class',
                     'dev/blocklens/core/render/DecorationQuadCuePolicy.class',
                     'assets/blocklens/lang/en_us.json',
@@ -116,6 +117,15 @@ tasks.register('versionSmokeContract') {
                     'assets/blocklens/models/block/nether/upper_band.json']) {
                 if (archive.getEntry(required) == null) {
                     throw new GradleException("Runtime JAR missing required entry: ${required}")
+                }
+            }
+            for (String retired : [
+                    'dev/blocklens/core/render/DecorationRenderPolicy.class',
+                    'dev/blocklens/core/render/DecorationRenderPolicy$1.class',
+                    'dev/blocklens/core/render/ResourceHighlightPolicy.class',
+                    'dev/blocklens/core/render/VisibilityQuadCuePolicy.class']) {
+                if (archive.getEntry(retired) != null) {
+                    throw new GradleException("Runtime JAR contains retired policy bytecode: ${retired}")
                 }
             }
             if (archive.getEntry('assets/blocklens/models/block/nether/side_fill.json') != null) {
@@ -177,42 +187,124 @@ tasks.register('versionSmokeContract') {
     }
 }
 
+tasks.register('writeRuntimeJarSizeReport') {
+    group = 'verification'
+    description = "Writes deterministic M8 runtime-JAR size/category evidence for ${blockLensMinecraftVersionValue}."
+    dependsOn runtimeJarTask
+
+    def output = layout.buildDirectory.file('reports/blocklens/runtime-jar-size.txt')
+    outputs.file(output)
+
+    doLast {
+        File runtimeJar = runtimeJarTask.get().archiveFile.get().asFile
+        File reportFile = output.get().asFile
+        reportFile.parentFile.mkdirs()
+
+        Map<String, Long> categories = new LinkedHashMap<>()
+        for (String category : [
+                'core-rendering',
+                'minecraft-adapter',
+                'core-state',
+                'core-other',
+                'assets-lang',
+                'assets-models',
+                'metadata-other']) {
+            categories.put(category, 0L)
+        }
+
+        def categoryFor = { String entryName ->
+            if (entryName.startsWith('dev/blocklens/core/render/')) {
+                return 'core-rendering'
+            }
+            if (entryName.startsWith('dev/blocklens/fabric/')) {
+                return 'minecraft-adapter'
+            }
+            if (entryName.startsWith('dev/blocklens/core/state/')) {
+                return 'core-state'
+            }
+            if (entryName.startsWith('dev/blocklens/core/')) {
+                return 'core-other'
+            }
+            if (entryName.startsWith('assets/blocklens/lang/')) {
+                return 'assets-lang'
+            }
+            if (entryName.startsWith('assets/blocklens/models/')) {
+                return 'assets-models'
+            }
+            return 'metadata-other'
+        }
+
+        List entries
+        new java.util.zip.ZipFile(runtimeJar).withCloseable { archive ->
+            entries = archive.entries().toList().findAll { !it.directory }
+            for (def entry : entries) {
+                String category = categoryFor(entry.name)
+                long compressed = Math.max(0L, entry.compressedSize)
+                categories.put(category, categories.get(category) + compressed)
+            }
+        }
+
+        long bytes = runtimeJar.length()
+        double sourcePercent = bytes * 100.0d / runtimeSourcePackBytes
+        List<String> lines = []
+        lines << "minecraft=${blockLensMinecraftVersionValue}"
+        lines << "runtimeJarBytes=${bytes}"
+        lines << "frozenBaselineBytes=${runtimeBaselineBytes}"
+        lines << "releaseBudgetBytes=${runtimeReleaseBudgetBytes}"
+        lines << "sourcePackBytes=${runtimeSourcePackBytes}"
+        lines << "sourcePackHalfMaxBytes=${runtimeHardMaxBytes}"
+        lines << String.format(java.util.Locale.ROOT, 'sourcePackPercent=%.3f', sourcePercent)
+        lines << "entryCount=${entries.size()}"
+        lines << ''
+        lines << '[compressed-category-bytes]'
+        categories.each { category, compressed ->
+            lines << "${category}=${compressed}"
+        }
+        lines << ''
+        lines << '[top-compressed-entries]'
+        entries.sort { left, right ->
+            int bySize = Long.compare(right.compressedSize, left.compressedSize)
+            bySize != 0 ? bySize : left.name <=> right.name
+        }.take(20).each { entry ->
+            lines << "${Math.max(0L, entry.compressedSize)}\t${Math.max(0L, entry.size)}\t${entry.name}"
+        }
+        reportFile.setText(lines.join(System.lineSeparator()) + System.lineSeparator(), 'UTF-8')
+    }
+}
+
 tasks.register('verifyRuntimeJarBudget') {
     group = 'verification'
-    description = "Checks BlockLens ${blockLensMinecraftVersionValue} runtime JAR against the source-pack size budget."
+    description = "Checks BlockLens ${blockLensMinecraftVersionValue} against the M8 source-pack, release, and no-growth budgets."
     dependsOn runtimeJarTask
 
     doLast {
         File runtimeJar = runtimeJarTask.get().archiveFile.get().asFile
         long bytes = runtimeJar.length()
         logger.lifecycle(
-                'BlockLens {} runtime JAR: {} bytes (hard < {}, stretch <= {})',
+                'BlockLens {} runtime JAR: {} bytes (baseline <= {}, release <= {}, source-pack half <= {})',
                 blockLensMinecraftVersionValue,
                 bytes,
-                runtimeHardMaxBytes + 1L,
-                runtimeStretchBytes)
-
-        if (bytes > runtimeStretchBytes) {
-            logger.lifecycle('Largest compressed runtime entries:')
-            new java.util.zip.ZipFile(runtimeJar).withCloseable { archive ->
-                archive.entries().toList()
-                        .findAll { !it.directory }
-                        .sort { left, right -> Long.compare(right.compressedSize, left.compressedSize) }
-                        .take(12)
-                        .each { entry ->
-                            logger.lifecycle('  {} bytes compressed / {} raw  {}', entry.compressedSize, entry.size, entry.name)
-                        }
-            }
-        }
+                runtimeBaselineBytes,
+                runtimeReleaseBudgetBytes,
+                runtimeHardMaxBytes)
 
         if (bytes > runtimeHardMaxBytes) {
             throw new GradleException(
-                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; hard maximum is ${runtimeHardMaxBytes} bytes.")
+                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; source-pack half maximum is ${runtimeHardMaxBytes} bytes.")
+        }
+        if (bytes > runtimeReleaseBudgetBytes) {
+            throw new GradleException(
+                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; 100 KiB release budget is ${runtimeReleaseBudgetBytes} bytes.")
+        }
+        if (bytes > runtimeBaselineBytes) {
+            throw new GradleException(
+                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR grew from the frozen M8 baseline ${runtimeBaselineBytes} to ${bytes} bytes. Reduce the artifact or deliberately rebaseline with reviewed justification; do not silently accept growth.")
         }
     }
 }
 
 tasks.named('check') {
     dependsOn tasks.named('versionSmokeContract')
+    dependsOn tasks.named('writeRuntimeJarSizeReport')
     dependsOn tasks.named('verifyRuntimeJarBudget')
 }
