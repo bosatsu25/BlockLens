@@ -1,47 +1,80 @@
 # BlockLens M9 Release Readiness
 
-Status: **release pipeline implemented / authoritative M9 release contract**
+Status: **DONE / authoritative M9 release evidence**
 
-## Purpose
+## Terminal result
 
-M9 turns the verified M0-M8 product into a reproducible public release process. The release path must preserve the same 37-capability contract, the same dual-version behavior, the existing quality thresholds, and the strict runtime-artifact budget.
+BlockLens **v0.1.0** was published successfully after the complete M0-M9 verification chain.
 
-A release is not rebuilt independently. GitHub Releases receive the **exact runtime JARs that passed the successful `main` CI run**.
-
-## Release identity
-
-- release version source: `mod_version` in `gradle.properties`
-- current release line: **0.1.0**
-- Git tag: **v0.1.0**
+- release tag: **v0.1.0**
+- release target: `a4b63087004d687c3c8223d0d95c6c95fb2c5156`
+- final main CI: **run #245 / `34768792311` — GREEN**
+- final Release workflow: **run #3 / `34769093202` — GREEN**
+- release state: published, not draft, not prerelease
 - supported Minecraft: **26.1.2 / 26.2**
 - Java: **25+**
 - side: **client only**
 
-A version is idempotent: if `v<mod_version>` already exists, the release workflow succeeds without publishing a duplicate.
+## Published artifacts
+
+| Minecraft | Release asset | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.1.0.jar` | **95,332 B** | `191f579fe7d574c94614b611c01420fa6887684e2fabc597966515490f59d24b` |
+| 26.2 | `BlockLens-26.2-v0.1.0.jar` | **95,333 B** | `3848de8a07836d829d12ab5ed09ee650d5e1bebd4e0249b254436dda9c5a54be` |
+
+`SHA256SUMS.txt` is the third and only additional release asset.
+
+The GitHub Release asset digests exactly match the raw runtime artifacts from main CI #245. The release workflow therefore published the **same bytes that passed CI**, not a separate rebuild.
+
+## Release incident and corrective action
+
+The first live publication attempt, Release run `34767887940`, failed after main CI itself had already passed. The failing message was:
+
+```text
+Expected exactly one downloaded JAR for 26.1.2; found 0
+```
+
+### Root cause
+
+CI intentionally uploads runtime JARs through `actions/upload-artifact` with `archive: false`. The initial Release implementation used `gh run download`, which treated the raw JAR payload as an archive and expanded its internal entries (`META-INF/`, `fabric.mod.json`, `dev/...`) instead of leaving a `.jar` file for the next validation step.
+
+### Fix
+
+PR #20 changed only the release handoff and its repository contract test:
+
+- raw CI artifact ids are resolved from the successful workflow run;
+- the exact raw payload is downloaded directly through the GitHub Actions artifact endpoint;
+- the payload is validated as a JAR/ZIP before normalization;
+- `gh run download` is explicitly forbidden for this raw runtime-artifact path by JUnit contract coverage;
+- build, rendering, runtime size and product logic remain unchanged.
+
+PR #20 then passed the full dual-version CI gate, was squash-merged, and main CI #245 reran the full suite before Release #3 published v0.1.0 successfully.
+
+This is the concrete M9 Graph Loop example: **failure → diagnosis → fix → regression protection → full re-verification → live publish verification**.
 
 ## Technology foundation
 
-| Layer | Technology | Release/quality role |
+| Layer | Technology | Release / QA role |
 | --- | --- | --- |
-| Language | Java 25 | shared runtime, version adapters, tests |
-| Build | Gradle 9.5.1 | multi-project build, deterministic archives, verification tasks |
-| Minecraft build tooling | Fabric Loom 1.17.19 | development/runtime/build integration |
-| Loader | Fabric Loader 0.19.3 | client-only loading contract |
-| Runtime integration | Fabric API | Minecraft/Fabric hooks and Client GameTest |
-| Unit/contract testing | JUnit Jupiter 5.14.4 | semantic/config/render/repository contracts |
-| Test runtime | JUnit Platform | JUnit 5 execution from Gradle |
-| Coverage | JaCoCo 0.8.15 | line coverage gate |
-| Mutation testing | PIT 1.19.0 | mutation coverage, mutation score, test strength |
-| PIT/JUnit bridge | pitest-junit5-plugin 1.2.3 | JUnit 5 mutation execution |
-| Real-client integration | Fabric Client GameTest | real Minecraft client validation |
-| Headless render runner | Xvfb / Ubuntu 24.04 | framebuffer and client integration in CI |
-| CI/CD | GitHub Actions | quality, dual-version verification, artifact handoff, release |
-| Release client | GitHub CLI (`gh`) | exact-artifact download and GitHub Release publication |
-| Integrity | SHA-256 | reproducibility and published checksums |
+| Language | **Java 25** | runtime, common semantic engine, version adapters, tests |
+| Build | **Gradle 9.5.1** | multi-project build, deterministic archives, verification tasks |
+| Minecraft tooling | **Fabric Loom 1.17.19** | Minecraft development/runtime/build integration |
+| Loader | **Fabric Loader 0.19.3** | client-only loading contract |
+| Runtime integration | **Fabric API** | Minecraft/Fabric hooks and Client GameTest |
+| Unit / contract tests | **JUnit Jupiter 5.14.4** | semantic/config/render/repository/release contracts |
+| Test platform | **JUnit Platform** | JUnit 5 execution from Gradle |
+| Coverage | **JaCoCo 0.8.15** | line-coverage hard gate |
+| Mutation testing | **PIT 1.19.0** | mutation coverage, score and test strength |
+| PIT/JUnit bridge | **pitest-junit5-plugin 1.2.3** | JUnit 5 mutation execution |
+| Real-client integration | **Fabric Client GameTest** | actual Minecraft client validation |
+| Headless graphics | **Xvfb / Ubuntu 24.04** | framebuffer and real-client CI execution |
+| CI/CD | **GitHub Actions** | quality, dual-version evidence, raw-artifact handoff, release |
+| Integrity | **SHA-256** | reproducibility and CI/release byte identity |
+| Publishing | **GitHub CLI + GitHub REST API** | release control and exact raw-artifact transfer |
 
 ## Quality gates
 
-The common Java policy layer retains the M8 thresholds:
+The common Java policy layer keeps the same hard thresholds:
 
 ```text
 JaCoCo line coverage:      >= 96%
@@ -51,131 +84,130 @@ PIT test strength:         >= 96%
 Java warnings:             -Xlint:deprecation -Xlint:unchecked -Werror
 ```
 
-Per supported Minecraft line, CI also requires:
+For each Minecraft line, CI additionally requires:
 
-- build + `versionSmokeContract`
+- production build + `versionSmokeContract`
 - deterministic/reproducible runtime JAR SHA-256
 - real Fabric Client GameTest
-- owned-model resource-resolution checks
+- model-resource resolution
 - M3 rendered visual evidence
-- M5 dark-area visual evidence
+- M5 dark-area evidence
 - M5 deterministic active-resource-pack preservation evidence
 - M7 all-37 integration evidence
-- M8 performance/retention observation
+- M8 performance/load/retention observations
 - privacy/residue audit
-- runtime size budget
+- runtime artifact size budget
 
-## Automated release chain
+## Artifact-size contract
+
+M8 completed at **88,973 B** before the release icon. M9 deliberately added the repository-owned icon, measured the official Gradle artifacts with the old baseline still enforced, then re-froze only the observed product-asset growth.
+
+```text
+pinned source pack:               2,366,865 B
+absolute source-pack-half max:    1,183,432 B
+release budget:                     102,400 B (100 KiB)
+M8 pre-icon baseline:                88,973 B
+26.1.2 v0.1.0 JAR:                  95,332 B
+26.2 v0.1.0 JAR:                    95,333 B
+shared no-growth baseline:           95,333 B
+```
+
+The **100 KiB release budget was not relaxed**.
+
+## Release chain
 
 ```mermaid
 flowchart TD
-    M[Merge/push to main] --> CI[CI workflow]
+    M[main push] --> CI[CI]
     CI --> Q{all jobs GREEN?}
-    Q -- no --> STOP[No release]
+    Q -- no --> STOP[no release]
     Q -- yes --> RW[Release workflow_run]
-    RW --> E{main push + success?}
+    RW --> E{successful main push?}
     E -- no --> STOP
-    E -- yes --> V[Read mod_version]
-    V --> X{v<version> exists?}
-    X -- yes --> N[Successful no-op]
-    X -- no --> D[Download exact CI runtime JARs]
-    D --> C[Revalidate version / side / icon / size]
-    C --> H[Generate SHA256SUMS.txt]
-    H --> R[Create GitHub Release]
-    R --> A[Attach both JARs + SHA256SUMS]
+    E -- yes --> V[read mod_version]
+    V --> X{tag exists?}
+    X -- yes --> N[successful no-op]
+    X -- no --> ID[resolve raw artifact ids]
+    ID --> RAW[download exact CI JAR payloads]
+    RAW --> C[validate JAR / version / client / icon / size]
+    C --> H[generate SHA256SUMS]
+    H --> R[publish GitHub Release]
+    R --> A[verify exact asset set]
 ```
 
-### Important invariant
+### Release invariants
 
-`release.yml` does **not** call Gradle to rebuild the MOD. This avoids the classic CI/CD gap where a tested binary and a published binary are different files. Publication uses the artifacts from `github.event.workflow_run.id` and targets `github.event.workflow_run.head_sha`.
-
-## Release icon and explicit rebaseline
-
-M8 completed with a no-growth runtime baseline of **88,973 B** on both Minecraft lines. M9 intentionally added the repository-owned BlockLens icon and the Fabric metadata reference to that icon.
-
-The old baseline was deliberately left unchanged for the first M9 measurement run so CI would reject unexplained growth. GitHub Actions **run `34766720469` (#232)** produced:
-
-| Minecraft | Icon-inclusive runtime JAR |
-| --- | ---: |
-| 26.1.2 | **95,332 B** |
-| 26.2 | **95,333 B** |
-
-The shared no-growth baseline is therefore frozen at the larger verified value:
-
-```text
-runtime_jar_baseline_bytes=95333
-runtime_jar_release_budget_bytes=102400
-runtime_jar_hard_max_bytes=1183432
-```
-
-This is a reviewed product-asset rebaseline, not a relaxed budget. The **100 KiB release budget remains unchanged**.
-
-Relative to the pinned 2,366,865 B source resource pack, the icon-inclusive maximum runtime artifact is about **4.03%** of the source and remains about **95.97% smaller**.
+- no Gradle rebuild occurs in the Release job;
+- only a successful `main` push CI may publish;
+- the exact CI commit is checked out;
+- exact raw runtime artifacts from that CI run are used;
+- downloaded payloads must be valid JARs;
+- mod/Minecraft/client/icon metadata is checked before upload;
+- no-growth, 100 KiB, and hard maximum budgets are rechecked;
+- publication is idempotent by `mod_version` / tag;
+- SHA-256 checksums are generated;
+- the final release asset set is verified after publication.
 
 ## Artifact / privacy / security audit
 
-The version smoke contract and release validation reject or protect against:
+The runtime and release gates reject or protect against:
 
-- nested dependency JARs in the runtime artifact
-- source `.java` files
-- `.git` residue
+- nested dependency JARs
+- source `.java` files in runtime artifacts
+- `.git` and editor residue
 - logs, crash reports, saves, screenshots and local run directories
-- absolute/local developer paths
+- absolute developer-machine paths
 - credential/private-key markers
-- source RPO/package residue that should not ship
-- retired runtime policy classes
+- source RPO/package residue
+- retired runtime-policy bytecode
 - wrong Minecraft version metadata
-- wrong/non-client environment metadata
-- missing packaged BlockLens icon
+- non-client environment metadata
+- missing BlockLens icon
 - unexplained JAR growth
 
-Release publication additionally verifies the exact CI artifact against baseline, release-budget and hard-maximum limits before upload.
-
-## Redistribution / licensing audit
-
-- AMATERAS PNG assets are **not** redistributed in the BlockLens runtime JAR.
-- BlockLens ships its own code, localization, small owned models, and repository-owned icon.
-- The runtime artifact does not bundle third-party dependency JARs.
-- No open-source license is implied unless a repository `LICENSE` explicitly grants one. GitHub Release publication by the owner does not automatically grant third-party redistribution rights.
+AMATERAS PNG assets are not redistributed in the runtime JAR.
 
 ## Compatibility support boundary
 
-Officially verified:
+Verified for v0.1.0:
 
-- Minecraft 26.1.2 / 26.2
-- Fabric client-only path
-- default / shader-OFF OpenGL rendering path
-- representative deterministic non-vanilla active-resource-pack preservation fixture
+- Minecraft **26.1.2 / 26.2**
+- Fabric client-only runtime
+- default / shader-OFF OpenGL path
+- deterministic representative non-vanilla active-resource-pack preservation fixture
 
 Not currently claimed:
 
-- representative shader-ON configurations
+- representative shader-ON support
 - universal third-party resource-pack compatibility
 - Minecraft 26.2 Vulkan as stable support
 
-Minecraft 26.2 Vulkan remains experimental. Issue #5 remains the compatibility authority for representative shader-ON work and any evidence-required shader-state adaptation. These unchecked external combinations are not blockers for the core 37-capability release because they are explicitly excluded from the supported scope.
+Minecraft 26.2 Vulkan remains experimental. Issue #5 remains the authority for the external shader/resource-pack compatibility track. It is outside the advertised v0.1.0 support boundary and is not an unresolved core-release defect.
 
 ## M9 exit checklist
 
 - [x] repository-owned MOD icon committed
-- [x] Fabric metadata references the packaged icon on both versions
-- [x] icon-inclusive size measured with the old baseline still enforced first
-- [x] no-growth baseline explicitly re-frozen at 95,333 B
-- [x] 100 KiB release budget unchanged
-- [x] Java/JUnit/JaCoCo/PIT/Fabric/Gradle technical foundation documented
-- [x] English README updated
-- [x] Japanese README updated
-- [x] licensing/redistribution posture audited and documented
-- [x] compatibility/version support boundary documented without overclaiming
-- [x] release workflow consumes exact successful-main-CI artifacts
-- [x] duplicate release prevention by `mod_version` / tag
-- [x] SHA-256 generation automated
-- [x] release notes generation automated
-- [x] release-time metadata/icon/size revalidation
-- [x] M9 repository contracts protected by JUnit
-- [ ] final PR-head CI GREEN
-- [ ] merge to `main`
-- [ ] post-merge `main` CI GREEN
-- [ ] first `v0.1.0` GitHub Release published and verified
+- [x] both Fabric metadata files reference the packaged icon
+- [x] icon-inclusive size measured under the old baseline before rebaseline
+- [x] no-growth baseline frozen at **95,333 B**
+- [x] **100 KiB** release budget unchanged
+- [x] English README updated with Java/JUnit/Fabric/Gradle/QA/release foundation
+- [x] Japanese README updated with the same technical foundation
+- [x] licensing / redistribution posture documented
+- [x] compatibility support boundary documented without overclaiming
+- [x] release consumes exact successful-main-CI artifacts without rebuilding
+- [x] raw `archive:false` artifact handoff corrected and regression-tested
+- [x] duplicate release prevention implemented
+- [x] SHA-256 generation implemented
+- [x] release-time metadata/icon/size validation implemented
+- [x] PR #19 implementation CI GREEN and merged
+- [x] first post-M9 main CI GREEN
+- [x] failed initial release diagnosed instead of bypassed
+- [x] PR #20 hotfix full CI GREEN and merged
+- [x] final main CI **#245 / `34768792311` GREEN**
+- [x] Release **#3 / `34769093202` GREEN**
+- [x] **v0.1.0 published**
+- [x] exact three release assets verified
+- [x] published JAR sizes and SHA-256 match CI artifacts
 
-The final four operational items are completed only with live GitHub Actions evidence; they are not pre-declared successful.
+**M9 terminal state: DONE.**
