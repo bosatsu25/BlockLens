@@ -46,7 +46,7 @@ jobs:
     name: ${{ matrix.minecraft }} / build + client smoke + budget
     needs: common-quality
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -139,20 +139,15 @@ jobs:
             exit 1
           fi
 
-          for screenshot in "${screenshots[@]}"; do
-            cp "$screenshot" "$target/"
-          done
+          for screenshot in "${screenshots[@]}"; do cp "$screenshot" "$target/"; done
           cp "${manifests[0]}" "$target/"
           (cd "$target" && sha256sum *.png > SHA256SUMS.txt)
-
           echo "path=$target" >> "$GITHUB_OUTPUT"
           {
             echo "### M3 rendered visual evidence ${{ matrix.minecraft }}"
             echo '```text'
             cat "$target/m3-visual-manifest.txt"
             echo '```'
-            echo "- Screenshots: \`3\`"
-            echo "- Screenshot SHA-256 manifest: \`SHA256SUMS.txt\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload M3 rendered visual evidence
@@ -160,6 +155,50 @@ jobs:
         with:
           name: blocklens-m3-visual-${{ matrix.minecraft }}
           path: ${{ steps.visual.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Collect M7 full parity visual evidence
+        id: m7visual
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="versions/${{ matrix.module }}"
+          target="build/ci/m7-visual-${{ matrix.minecraft }}"
+          rm -rf "$target"
+          mkdir -p "$target"
+
+          mapfile -t screenshots < <(find "$source_root" -type f -path '*/m7-visual/*.png' -print | sort)
+          mapfile -t manifests < <(find "$source_root" -type f -path '*/m7-visual/m7-visual-manifest.txt' -print | sort)
+          if [[ "${#screenshots[@]}" -ne 4 ]]; then
+            echo "Expected exactly four M7 visual screenshots, found ${#screenshots[@]}" >&2
+            printf '%s\n' "${screenshots[@]}" >&2
+            exit 1
+          fi
+          if [[ "${#manifests[@]}" -ne 1 ]]; then
+            echo "Expected exactly one M7 visual manifest, found ${#manifests[@]}" >&2
+            printf '%s\n' "${manifests[@]}" >&2
+            exit 1
+          fi
+
+          for screenshot in "${screenshots[@]}"; do cp "$screenshot" "$target/"; done
+          cp "${manifests[0]}" "$target/"
+          (cd "$target" && sha256sum *.png > SHA256SUMS.txt)
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+          {
+            echo "### M7 full parity evidence ${{ matrix.minecraft }}"
+            echo '```text'
+            cat "$target/m7-visual-manifest.txt"
+            echo '```'
+            echo "- Screenshots: \`4\`"
+            echo "- Screenshot SHA-256 manifest: \`SHA256SUMS.txt\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload M7 full parity visual evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-m7-visual-${{ matrix.minecraft }}
+          path: ${{ steps.m7visual.outputs.path }}
           if-no-files-found: error
           retention-days: 14
 
@@ -188,6 +227,7 @@ jobs:
             echo "- SHA-256: \`$sha256\`"
             echo "- Client GameTest: \`PASS\`"
             echo "- M3 rendered visual evidence: \`PASS\`"
+            echo "- M7 all-37 full parity evidence: \`PASS\`"
             echo "- Reproducible artifact: \`PASS\`"
             echo "- Privacy/residue audit: \`PASS\`"
           } >> "$GITHUB_STEP_SUMMARY"
