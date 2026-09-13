@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -26,14 +27,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
-/**
- * Minecraft 26.2 baked-model wrapper shared by the M3-M7 rendering families.
- *
- * <p>Semantic interpretation and descriptor selection happen once during model bake. The render hot
- * path keeps the verified primitive config-mask fast path, then composes orientation, resource, and
- * visibility cues on the active baked model. Nether Tweaks remains fail-closed until its exact
- * source visual contract is captured.</p>
- */
+/** Minecraft 26.2 baked-model wrapper shared by the M3-M7 rendering families. */
 final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private final DecorationRenderDescriptor[] decorationDescriptors;
     private final VisibilityRenderDescriptor[] visibilityDescriptors;
@@ -71,7 +65,6 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             } else if (capability.category() == CapabilityId.Category.RESOURCE) {
                 resourceCues[i] = ResourceHighlightCue.forCapability(capability);
             } else {
-                // NETHER_TWEAKS: target scope is known, visual rule is intentionally fail-closed.
                 continue;
             }
             descriptorBits[i] = bit;
@@ -124,6 +117,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
                 }
                 if (instruction.emissive()) {
                     quad.emissive(true);
+                    quad.diffuseShade(false);
+                    quad.ambientOcclusion(TriState.FALSE);
                 }
             }
             return true;
