@@ -90,7 +90,7 @@ pitest {
             'dev.blocklens.core.render.DecorationQuadInstruction',
             'dev.blocklens.core.render.DecorationQuadCuePolicy',
             'dev.blocklens.core.render.VisibilityVisualCue',
-            'dev/blocklens/core/render/VisibilityRenderDescriptor'.replace('/', '.'),
+            'dev.blocklens.core.render.VisibilityRenderDescriptor',
             'dev.blocklens.core.render.VisibilityRenderPolicy',
             'dev.blocklens.core.render.ResourceHighlightCue'
     ]
