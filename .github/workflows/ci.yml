@@ -115,6 +115,24 @@ jobs:
           xvfb-run -a gradle --stacktrace
           :versions:${{ matrix.module }}:runClientGameTest
 
+      - name: Verify BlockLens model resources resolved Minecraft ${{ matrix.minecraft }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="versions/${{ matrix.module }}"
+          mapfile -t logs < <(find "$source_root" -type f -path '*/logs/latest.log' -print | sort)
+          if [[ "${#logs[@]}" -lt 1 ]]; then
+            echo "Client GameTest latest.log was not found" >&2
+            exit 1
+          fi
+          for log in "${logs[@]}"; do
+            if grep -Fq 'Missing block model: blocklens:block/nether/' "$log"; then
+              echo "BlockLens Nether Tweaks model failed to resolve in $log" >&2
+              grep -F 'Missing block model: blocklens:block/nether/' "$log" >&2
+              exit 1
+            fi
+          done
+
       - name: Collect M3 rendered visual evidence
         id: visual
         shell: bash
@@ -170,8 +188,8 @@ jobs:
 
           mapfile -t screenshots < <(find "$source_root" -type f -path '*/m7-visual/*.png' -print | sort)
           mapfile -t manifests < <(find "$source_root" -type f -path '*/m7-visual/m7-visual-manifest.txt' -print | sort)
-          if [[ "${#screenshots[@]}" -ne 4 ]]; then
-            echo "Expected exactly four M7 visual screenshots, found ${#screenshots[@]}" >&2
+          if [[ "${#screenshots[@]}" -ne 5 ]]; then
+            echo "Expected exactly five M7 visual screenshots, found ${#screenshots[@]}" >&2
             printf '%s\n' "${screenshots[@]}" >&2
             exit 1
           fi
@@ -190,7 +208,7 @@ jobs:
             echo '```text'
             cat "$target/m7-visual-manifest.txt"
             echo '```'
-            echo "- Screenshots: \`4\`"
+            echo "- Screenshots: \`5\`"
             echo "- Screenshot SHA-256 manifest: \`SHA256SUMS.txt\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -226,6 +244,7 @@ jobs:
             echo "- Runtime JAR: \`$bytes bytes\`"
             echo "- SHA-256: \`$sha256\`"
             echo "- Client GameTest: \`PASS\`"
+            echo "- BlockLens model resolution: \`PASS\`"
             echo "- M3 rendered visual evidence: \`PASS\`"
             echo "- M7 all-37 full parity evidence: \`PASS\`"
             echo "- Reproducible artifact: \`PASS\`"
