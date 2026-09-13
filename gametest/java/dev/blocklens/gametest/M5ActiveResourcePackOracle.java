@@ -20,9 +20,15 @@ import net.fabricmc.loader.api.FabricLoader;
 /**
  * Representative active-resource-pack preservation oracle for M5.
  *
- * <p>The GameTest resource pack deliberately replaces three Minecraft resource-target models with
- * unmistakable non-vanilla geometry and vanilla marker textures. The test proves that BlockLens
- * wraps that already-active baked model instead of substituting its own base geometry.</p>
+ * <p>A dedicated always-enabled GameTest resource pack deliberately replaces three Minecraft
+ * resource-target models with unmistakable non-vanilla geometry and vanilla marker textures. The
+ * test proves that BlockLens wraps that already-active baked model instead of substituting its own
+ * base geometry.</p>
+ *
+ * <p>BlockLens is allowed to add highlight pixels around the active model. Therefore preservation
+ * is measured as containment of the OFF/base foreground by the ON foreground, rather than symmetric
+ * IoU. IoU is retained only as a diagnostic because it intentionally drops when valid decoration
+ * expands the rendered silhouette.</p>
  */
 final class M5ActiveResourcePackOracle {
     private static final int WIDTH = 640;
@@ -35,7 +41,7 @@ final class M5ActiveResourcePackOracle {
     private static final int MIN_MARKER_PIXELS = 20;
     private static final int MIN_ON_OFF_DIFFERENT_PIXELS = 80;
     private static final int MIN_FOREGROUND_PIXELS = 120;
-    private static final int MIN_GEOMETRY_IOU_PERMILLE = 650;
+    private static final int MIN_BASE_RETENTION_PERMILLE = 950;
     private static final int FOREGROUND_DELTA = 24;
     private static final int RELOAD_TIMEOUT_TICKS = 1200;
     private static final int SETTLE_TICKS = 35;
@@ -70,7 +76,7 @@ final class M5ActiveResourcePackOracle {
             Path onPath = screenshot(context, outputDir, "m5-pack-on");
 
             // Remove only the three resource targets while preserving camera, floor, lighting and
-            // resource-pack state. This gives an image-space background oracle for geometry masks.
+            // active resource-pack state. This gives an image-space background oracle for masks.
             install(offConfig);
             removeTargets(singleplayer);
             rebuild(context);
@@ -85,6 +91,7 @@ final class M5ActiveResourcePackOracle {
             MaskMetrics geometry = geometryMetrics(off, on, air);
 
             System.out.println("BLOCKLENS_M5_ACTIVE_PACK minecraft=" + BlockLensRuntime.minecraftVersion()
+                    + " pack=" + M5ActiveResourcePackFixture.PACK_ID
                     + " enabledCapabilities=" + EXPECTED_ENABLED_CAPABILITIES
                     + " magentaMarkerPixels=" + markers.magenta()
                     + " limeMarkerPixels=" + markers.lime()
@@ -92,6 +99,8 @@ final class M5ActiveResourcePackOracle {
                     + " onOffDifferentPixels=" + onOffDifferentPixels
                     + " offForegroundPixels=" + geometry.offForeground()
                     + " onForegroundPixels=" + geometry.onForeground()
+                    + " geometryIntersectionPixels=" + geometry.intersection()
+                    + " baseRetentionPermille=" + geometry.baseRetentionPermille()
                     + " geometryIouPermille=" + geometry.iouPermille());
 
             writeManifest(
@@ -116,9 +125,11 @@ final class M5ActiveResourcePackOracle {
                     "active-pack OFF geometry mask is unexpectedly small: " + geometry.offForeground());
             require(geometry.onForeground() >= MIN_FOREGROUND_PIXELS,
                     "active-pack ON geometry mask is unexpectedly small: " + geometry.onForeground());
-            require(geometry.iouPermille() >= MIN_GEOMETRY_IOU_PERMILLE,
-                    "M5 did not preserve representative active-pack geometry; IoU permille="
-                            + geometry.iouPermille());
+            require(geometry.baseRetentionPermille() >= MIN_BASE_RETENTION_PERMILLE,
+                    "M5 did not preserve representative active-pack base geometry; retention permille="
+                            + geometry.baseRetentionPermille()
+                            + ", intersection=" + geometry.intersection()
+                            + ", offForeground=" + geometry.offForeground());
         } catch (IOException exception) {
             throw new AssertionError("M5 active resource-pack evidence failed", exception);
         } finally {
@@ -282,8 +293,15 @@ final class M5ActiveResourcePackOracle {
                 if (offMask || onMask) union++;
             }
         }
+        int baseRetentionPermille = offForeground == 0 ? 0 : (intersection * 1000) / offForeground;
         int iouPermille = union == 0 ? 0 : (intersection * 1000) / union;
-        return new MaskMetrics(offForeground, onForeground, intersection, union, iouPermille);
+        return new MaskMetrics(
+                offForeground,
+                onForeground,
+                intersection,
+                union,
+                baseRetentionPermille,
+                iouPermille);
     }
 
     private static int colorDelta(int a, int b) {
@@ -313,6 +331,7 @@ final class M5ActiveResourcePackOracle {
             int onOffDifferentPixels,
             MaskMetrics geometry) throws IOException {
         String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
+                + "activePack=" + M5ActiveResourcePackFixture.PACK_ID + "\n"
                 + "fixtureModels=3\n"
                 + "enabledCapabilities=" + EXPECTED_ENABLED_CAPABILITIES + "\n"
                 + "fixtures=diamond_ore:half-height-magenta,deepslate_redstone_ore:narrow-lime,obsidian:inset-yellow\n"
@@ -328,6 +347,7 @@ final class M5ActiveResourcePackOracle {
                 + "onForegroundPixels=" + geometry.onForeground() + "\n"
                 + "geometryIntersectionPixels=" + geometry.intersection() + "\n"
                 + "geometryUnionPixels=" + geometry.union() + "\n"
+                + "baseRetentionPermille=" + geometry.baseRetentionPermille() + "\n"
                 + "geometryIouPermille=" + geometry.iouPermille() + "\n";
         Files.writeString(
                 outputDir.resolve("m5-pack-visual-manifest.txt"),
@@ -349,6 +369,7 @@ final class M5ActiveResourcePackOracle {
             int onForeground,
             int intersection,
             int union,
+            int baseRetentionPermille,
             int iouPermille) {
     }
 }
