@@ -6,7 +6,7 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The product contract contains **37 independently configurable capabilities**. BlockLens keeps Minecraft-version differences at thin adapter boundaries and shares state interpretation, configuration, target policy, and render semantics across Minecraft **26.1.2** and **26.2**.
 
-> **Current state:** M0–M3 are complete. M4 Outline/Fine Visibility and M6 Nether Tweaks have reached core parity. All 18 M5 Resource Highlight controls are implemented. The M7 automated core gate is green for all 37 capabilities, including all-on, real native config-file save/reload, resource reload, dimension round-trip, Nether-Tweaks-only evidence, the frozen five-feature preset, and all-off restoration. Representative third-party resource packs, shader-ON paths, Vulkan, dedicated dark-area highlight evidence, M8 performance work, and M9 release readiness remain open.
+> **Current state:** M0–M3 are complete. M4 Outline/Fine Visibility and M6 Nether Tweaks have reached core parity. All 18 M5 Resource Highlight controls are implemented and now have dedicated dark-area rendered evidence on both supported Minecraft lines. The M7 automated core gate is green for all 37 capabilities, including all-on, real native config-file save/reload, resource reload, dimension round-trip, Nether-Tweaks-only evidence, the frozen five-feature preset, M5 resource-only dark-area evidence, and all-off restoration. Representative third-party resource packs, shader-ON paths, Vulkan, M8 performance work, and M9 release readiness remain open.
 
 ## Supported environment
 
@@ -87,11 +87,24 @@ Authoritative contract: [`knowledge/current/m3-visual-semantics.md`](knowledge/c
 
 Implemented: Blue Ice, Dead Coral, Powder Snow, Sculk Catalyst, and String Tweaks. Sculk `bloom` is retained, and all **64 Tripwire semantic states** for N/E/S/W + `powered` + `attached` are covered by regression tests.
 
-### M5 — Resource Highlighting · 18 🔧 core implementation complete
+### M5 — Resource Highlighting · 18 ✅ core/rendered parity
 
 All 18 frozen resource-highlight controls are integrated into the same wrapper. The active baked base model is preserved while BlockLens adds a full-bright procedural accent using emissive rendering, diffuse shading disabled, and ambient occlusion disabled.
 
-The shader-OFF/default OpenGL path passes on both versions. Dedicated dark-area evidence, representative shader-ON verification, and representative third-party resource-pack compatibility remain open before broader support is claimed.
+A dedicated real-client dark-area oracle now verifies M5 independently from the all-37 scene. It renders the 18 resource targets inside a sealed, unlit black-concrete room with every non-resource capability disabled, then compares resource-only ON against all-OFF in a fixed framebuffer region.
+
+GitHub Actions **`34731643950` (run #168)** produced:
+
+| Dark-area evidence | Minecraft 26.1.2 | Minecraft 26.2 |
+| --- | ---: | ---: |
+| ON vs OFF different pixels | **5,041 px** | **5,051 px** |
+| materially brighter pixels | **4,758 px** | **4,769 px** |
+| OFF average luminance | **1** | **1** |
+| ON average luminance | **5** | **5** |
+| total ROI luminance gain | **361,663** | **362,456** |
+| manual screenshot review | PASS | PASS |
+
+The ON/OFF screenshot pairs were manually reviewed for both versions: the same 18-block arrangement is nearly submerged in darkness when OFF and clearly visible through BlockLens resource accents when ON. Representative shader-ON and third-party resource-pack compatibility are still separate verification tracks and are not claimed by this result.
 
 ### M6 — Nether Tweaks · 27 exact targets ✅ core parity
 
@@ -111,26 +124,28 @@ The same real Fabric Client GameTest runs on Minecraft **26.1.2** and **26.2**. 
 - Overworld → Nether → Overworld round-trip
 - Nether Tweaks enabled alone
 - frozen five-feature reference preset
+- dedicated M5 resource-only dark-area framebuffer evidence
 - all 37 OFF / active base restoration
 - bounded zero-world-scan target lookup
 - BlockLens-owned model resolution
 
 The native config acceptance uses the real Fabric config directory, flips all 37 booleans, persists through the production `BlockLensConfigFiles.save(...)` path, reloads through `BlockLensRuntime.reloadConfig(...)`, checks the runtime bitmask, and restores the original config before visual tests continue. Filesystem reload is explicit configuration work and is **not** performed on the render hot path.
 
-Latest implementation verification: **GitHub Actions `34730806632` (run #160)**.
+Latest implementation verification: **GitHub Actions `34731643950` (run #168)**.
 
 | Evidence | Minecraft 26.1.2 | Minecraft 26.2 |
 | --- | ---: | ---: |
-| all-37 ON vs OFF ROI delta | **3,917 px** | **3,903 px** |
-| after resource reload vs OFF | **3,911 px** | **3,903 px** |
-| Nether Tweaks only vs OFF | **764 px** | **764 px** |
-| five-feature preset vs OFF | **1,072 px** | **1,063 px** |
+| all-37 ON vs OFF ROI delta | **3,908 px** | **3,914 px** |
+| after resource reload vs OFF | **3,934 px** | **3,909 px** |
+| Nether Tweaks only vs OFF | **834 px** | **765 px** |
+| five-feature preset vs OFF | **1,090 px** | **1,072 px** |
+| M5 dark-area evidence | **PASS** | **PASS** |
 | dimension round-trip | PASS | PASS |
 | config codec round-trip | PASS | PASS |
 | native config-file save/reload | **PASS** | **PASS** |
 | BlockLens model resolution | PASS | PASS |
 
-Each version archives five deterministic M7 screenshots, a manifest, and screenshot SHA-256 list.
+Each version archives five deterministic M7 screenshots plus a manifest/SHA-256 list, and two dedicated M5 dark-area screenshots plus their own manifest/SHA-256 list.
 
 Authoritative M4–M7 evidence: [`knowledge/current/m4-m7-parity.md`](knowledge/current/m4-m7-parity.md).
 
@@ -143,9 +158,9 @@ Authoritative M4–M7 evidence: [`knowledge/current/m4-m7-parity.md`](knowledge/
 | M2 | ✅ Complete | shared semantic state + thin version adapters |
 | M3 | ✅ Complete | 13 decoration/orientation capabilities with rendered parity |
 | M4 | ✅ Core parity | five outline/fine-visibility capabilities |
-| M5 | 🔧 Core implementation complete | 18 resource highlights; compatibility evidence remains |
+| M5 | ✅ Core/rendered parity | 18 resource highlights + dedicated dark-area framebuffer evidence; broader compatibility remains |
 | M6 | ✅ Core parity | 27 exact Nether targets and isolated framebuffer evidence |
-| M7 | 🔧 Automated core gate green | all-37, native config reload, resource reload, dimension, preset, OFF restoration |
+| M7 | 🔧 Automated core gate green | all-37, native config reload, resource reload, dimension, M5 dark-area, preset, OFF restoration |
 | M8 | Planned | performance/load/size hardening |
 | M9 | Planned | release readiness and public artifact audit |
 
@@ -153,12 +168,14 @@ Authoritative roadmap: [`knowledge/current/roadmap.md`](knowledge/current/roadma
 
 ## Current artifact evidence
 
-Run `34730806632` produced:
+Run `34731643950` produced:
 
 | Minecraft | Runtime JAR | SHA-256 | Client GameTest |
 | --- | ---: | --- | --- |
 | 26.1.2 | **92,988 B** | `bf07d2f19f4edeb3a4ec630e62449e01ab83dd0010e2105932cabf84a98a2857` | PASS |
 | 26.2 | **92,988 B** | `13af1b1d7ba9ee17f693202862226c43d687540b6f2b94c5cd0e41c1c297f272` | PASS |
+
+The M5 evidence is test/CI-only and added no production runtime assets or JAR growth.
 
 Current size budgets per runtime artifact:
 
@@ -176,15 +193,15 @@ flowchart TD
     Q --> B2[26.2 build + reproducibility]
     B1 --> G1[26.1.2 Client GameTest]
     B2 --> G2[26.2 Client GameTest]
-    G1 --> V1[M3 + M7 framebuffer evidence]
-    G2 --> V2[M3 + M7 framebuffer evidence]
+    G1 --> V1[M3 + M5 + M7 framebuffer evidence]
+    G2 --> V2[M3 + M5 + M7 framebuffer evidence]
     V1 --> A1[Model warnings + JAR audit + size]
     V2 --> A2[Model warnings + JAR audit + size]
     A1 --> GREEN([GREEN])
     A2 --> GREEN
 ```
 
-Current gates include exact capability/state contracts, JaCoCo, PIT, real Client GameTest on both versions, native config persistence/reload acceptance, M3/M7 framebuffer artifacts, model-resource warning checks, reproducible JAR rebuilds, privacy/residue checks, and byte budgets.
+Current gates include exact capability/state contracts, JaCoCo, PIT, real Client GameTest on both versions, native config persistence/reload acceptance, M3/M5/M7 framebuffer artifacts, model-resource warning checks, reproducible JAR rebuilds, privacy/residue checks, and byte budgets.
 
 ## Engineering Graph Loop
 
@@ -215,7 +232,6 @@ A failure returns through **DIAGNOSE → FIX → VERIFY**; it does not skip dire
 
 A green M7 core gate is **not** a claim that every compatibility path is finished. Still open:
 
-- dedicated dark-area Resource Highlight framebuffer evidence
 - representative third-party active resource-pack matrix
 - representative shader path with shader **ON**
 - Minecraft 26.2 Vulkan experimental verification
