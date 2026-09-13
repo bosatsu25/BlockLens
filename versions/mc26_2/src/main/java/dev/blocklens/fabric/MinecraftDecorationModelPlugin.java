@@ -17,6 +17,9 @@ public final class MinecraftDecorationModelPlugin {
     private static final CapabilityId[] CAPABILITIES = CapabilityId.values();
     private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.ordinal();
     private static final AtomicInteger WRAPPED_MODELS = new AtomicInteger();
+    private static final AtomicInteger RETAINED_CAPABILITY_SLOTS = new AtomicInteger();
+    private static final AtomicInteger MAX_CAPABILITIES_PER_MODEL = new AtomicInteger();
+    private static final AtomicInteger NETHER_WRAPPED_MODELS = new AtomicInteger();
     private static volatile boolean modelPipelineReady;
 
     private MinecraftDecorationModelPlugin() {
@@ -27,6 +30,10 @@ public final class MinecraftDecorationModelPlugin {
             TargetCapabilityIndex targetIndex = MinecraftDecorationTargetIndex.build();
             NetherTweaksOverlayModels.register(pluginContext);
             WRAPPED_MODELS.set(0);
+            RETAINED_CAPABILITY_SLOTS.set(0);
+            MAX_CAPABILITIES_PER_MODEL.set(0);
+            NETHER_WRAPPED_MODELS.set(0);
+            MinecraftDecorationModel.resetObservationCounters();
             pluginContext.modifyBlockModelAfterBake().register(
                     ModelModifier.WRAP_PHASE,
                     (model, context) -> wrap(model, context.state(), targetIndex));
@@ -40,6 +47,26 @@ public final class MinecraftDecorationModelPlugin {
 
     public static int wrappedModelCount() {
         return WRAPPED_MODELS.get();
+    }
+
+    public static int retainedCapabilitySlotCount() {
+        return RETAINED_CAPABILITY_SLOTS.get();
+    }
+
+    public static int maxCapabilitiesPerWrappedModel() {
+        return MAX_CAPABILITIES_PER_MODEL.get();
+    }
+
+    public static int netherWrappedModelCount() {
+        return NETHER_WRAPPED_MODELS.get();
+    }
+
+    public static int netherInteriorLookupCount() {
+        return MinecraftDecorationModel.interiorLookupCount();
+    }
+
+    public static int netherBandLookupCount() {
+        return MinecraftDecorationModel.bandLookupCount();
     }
 
     private static BlockStateModel wrap(
@@ -85,6 +112,11 @@ public final class MinecraftDecorationModelPlugin {
         }
 
         WRAPPED_MODELS.incrementAndGet();
+        RETAINED_CAPABILITY_SLOTS.addAndGet(count);
+        MAX_CAPABILITIES_PER_MODEL.accumulateAndGet(count, Math::max);
+        if (netherCue != null) {
+            NETHER_WRAPPED_MODELS.incrementAndGet();
+        }
         return new MinecraftDecorationModel(model, capabilities, semanticStates, netherCue);
     }
 }
