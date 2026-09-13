@@ -36,6 +36,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             M7FullParityOracle.verify(context, singleplayer);
             M5DarkAreaVisualOracle.verify(context, singleplayer);
             M5ActiveResourcePackOracle.verify(context, singleplayer);
+            M8PerformanceBaselineOracle.verify(context, singleplayer);
         }
 
         context.runOnClient(client -> verifyRuntime("singleplayer world closed", false));
