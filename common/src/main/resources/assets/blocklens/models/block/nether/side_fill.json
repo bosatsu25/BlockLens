@@ -1,0 +1,16 @@
+{
+  "ambientocclusion": false,
+  "textures": {"all": "minecraft:block/white_concrete"},
+  "elements": [
+    {
+      "from": [-0.01, -0.01, -0.01],
+      "to": [16.01, 16.01, 16.01],
+      "faces": {
+        "north": {"texture": "#all"},
+        "south": {"texture": "#all"},
+        "west": {"texture": "#all"},
+        "east": {"texture": "#all"}
+      }
+    }
+  ]
+}
