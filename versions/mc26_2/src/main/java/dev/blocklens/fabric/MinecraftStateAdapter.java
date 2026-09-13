@@ -31,8 +31,7 @@ public final class MinecraftStateAdapter {
             return switch (visibilityKind) {
                 case NONE -> throw new IllegalStateException("unreachable NONE visibility kind");
                 case STATIC_OUTLINE -> SemanticState.empty();
-                case SCULK_BLOOM -> SemanticState.sculkCatalyst(
-                        require(state, BlockStateProperties.BLOOM));
+                case SCULK_BLOOM -> SemanticState.sculkCatalyst(require(state, BlockStateProperties.BLOOM));
                 case TRIPWIRE -> SemanticState.tripwire(
                         require(state, BlockStateProperties.NORTH),
                         require(state, BlockStateProperties.EAST),
@@ -43,9 +42,14 @@ public final class MinecraftStateAdapter {
             };
         }
 
+        if (capability == CapabilityId.NETHER_TWEAKS) {
+            return state.hasProperty(BlockStateProperties.AXIS)
+                    ? SemanticState.axis(axis(state.getValue(BlockStateProperties.AXIS)))
+                    : SemanticState.empty();
+        }
+
         DecorationStateKind decorationKind = DecorationStateKind.forCapability(capability);
         if (decorationKind == DecorationStateKind.NONE) {
-            // Resource highlights and Nether Tweaks do not require BlockState semantics.
             return SemanticState.empty();
         }
         return switch (decorationKind) {
