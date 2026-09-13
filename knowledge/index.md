@@ -21,6 +21,7 @@ Read these before implementation or review:
 15. [`current/m4-m7-parity.md`](current/m4-m7-parity.md) — implemented M4–M6 core rendering, unified 37-capability pipeline, dual-version M7 automated integration evidence, and explicit remaining compatibility boundaries
 16. [`current/m5-active-resource-pack.md`](current/m5-active-resource-pack.md) — deterministic non-vanilla active resource-pack preservation evidence, dual-version metrics, manual screenshot review, and explicit compatibility boundaries
 17. [`current/m8-performance.md`](current/m8-performance.md) — dual-version resource-reload/allocation observations, Resource Highlight instruction-reuse hardening, raw CI evidence, and measurement limitations
+18. [`current/release-readiness.md`](current/release-readiness.md) — M9 release contract, technology foundation, icon-inclusive artifact baseline, licensing/security audit, exact-CI-artifact publishing, checksums, and compatibility support boundary
 
 ## Rule
 
