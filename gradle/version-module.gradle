@@ -37,6 +37,12 @@ fabricApi {
 }
 
 sourceSets {
+    // Common assets must be part of the actual BlockLens Fabric resource pack during dev/GameTest.
+    // The common project is a Java library, not a standalone Fabric mod, so merely putting its JAR
+    // on the classpath does not make assets/blocklens visible to Minecraft's ResourceManager.
+    main {
+        resources.srcDir project(':common').file('src/main/resources')
+    }
     gametest {
         java.srcDir rootProject.file('gametest/java')
         resources.srcDir rootProject.file('gametest/resources')
@@ -57,7 +63,9 @@ processResources {
 
 tasks.named('jar') {
     dependsOn project(':common').tasks.named('classes')
-    from(project(':common').sourceSets.main.output)
+    // Common resources are already copied by this module's processResources so Fabric sees them as
+    // BlockLens resources in both development and packaged runtimes. Add only common bytecode here.
+    from(project(':common').sourceSets.main.output.classesDirs)
     duplicatesStrategy = DuplicatesStrategy.FAIL
     preserveFileTimestamps = false
     reproducibleFileOrder = true
@@ -102,10 +110,15 @@ tasks.register('versionSmokeContract') {
                     'dev/blocklens/core/render/DecorationTargetCatalog.class',
                     'dev/blocklens/core/render/DecorationQuadCuePolicy.class',
                     'assets/blocklens/lang/en_us.json',
-                    'assets/blocklens/lang/ja_jp.json']) {
+                    'assets/blocklens/lang/ja_jp.json',
+                    'assets/blocklens/models/block/nether/interior_fill.json',
+                    'assets/blocklens/models/block/nether/upper_band.json']) {
                 if (archive.getEntry(required) == null) {
                     throw new GradleException("Runtime JAR missing required entry: ${required}")
                 }
+            }
+            if (archive.getEntry('assets/blocklens/models/block/nether/side_fill.json') != null) {
+                throw new GradleException('Runtime JAR contains retired Nether Tweaks side_fill model')
             }
 
             String metadata = archive.getInputStream(archive.getEntry('fabric.mod.json')).getText('UTF-8')
