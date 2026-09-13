@@ -186,6 +186,31 @@ flowchart TD
 
 Current gates include exact capability/state contracts, JaCoCo, PIT, real Client GameTest on both versions, native config persistence/reload acceptance, M3/M7 framebuffer artifacts, model-resource warning checks, reproducible JAR rebuilds, privacy/residue checks, and byte budgets.
 
+## Engineering Graph Loop
+
+Implementation alone is not completion. BlockLens follows the same graph for every feature, bug fix, compatibility change, and performance change.
+
+```mermaid
+flowchart LR
+    D[DISCOVER] --> P[PLAN]
+    P --> I[IMPLEMENT]
+    I --> V[VERIFY]
+    V --> R[SELF REVIEW]
+    R --> K[DOCUMENT]
+    K --> PR[PR]
+    PR --> CI[CI]
+    CI --> U[ISSUE UPDATE]
+    U --> DONE([DONE])
+
+    V -- fail --> X[DIAGNOSE]
+    R -- defect --> X
+    CI -- fail --> X
+    X --> F[FIX]
+    F --> V
+```
+
+A failure returns through **DIAGNOSE → FIX → VERIFY**; it does not skip directly to completion. The authoritative terminal-state rules are in [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md).
+
 ## Still pending
 
 A green M7 core gate is **not** a claim that every compatibility path is finished. Still open:
