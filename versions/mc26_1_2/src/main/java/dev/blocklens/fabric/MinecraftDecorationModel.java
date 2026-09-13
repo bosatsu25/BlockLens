@@ -213,7 +213,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
                     instruction = VisibilityQuadCuePolicy.instruction(visibility);
                 } else {
                     ResourceHighlightCue resource = resourceCues[i];
-                    instruction = DecorationQuadInstruction.emissiveTint(resource.accentArgb());
+                    instruction = resource.instruction();
                 }
             }
             applyInstruction(quad, instruction);

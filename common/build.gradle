@@ -113,6 +113,7 @@ pitest {
             'dev.blocklens.core.render.DecorationQuadCuePolicyTest',
             'dev.blocklens.core.render.VisibilityRenderPolicyTest',
             'dev.blocklens.core.render.VisibilityQuadCuePolicyTest',
+            'dev.blocklens.core.render.ResourceHighlightCueInstructionTest',
             'dev.blocklens.core.render.ResourceHighlightPolicyTest'
     ]
     junit5PluginVersion = '1.2.3'

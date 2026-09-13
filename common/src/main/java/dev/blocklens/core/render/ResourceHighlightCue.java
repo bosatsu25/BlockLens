@@ -9,6 +9,10 @@ import java.util.Objects;
  * <p>The pinned source proves that each resource capability redirects to dedicated animated
  * highlight assets. BlockLens preserves that user value without redistributing those binaries by
  * retaining the active baked base model and applying a stable full-bright accent.</p>
+ *
+ * <p>Each enum value owns one immutable quad instruction. Resource-highlight rendering can therefore
+ * reuse the same instruction for every emitted quad instead of constructing an equivalent record
+ * at the render boundary.</p>
  */
 public enum ResourceHighlightCue {
     OBSIDIAN(0xFFB96CFF),
@@ -23,9 +27,11 @@ public enum ResourceHighlightCue {
     REDSTONE(0xFFFF5555);
 
     private final int accentArgb;
+    private final DecorationQuadInstruction instruction;
 
     ResourceHighlightCue(int accentArgb) {
         this.accentArgb = accentArgb;
+        this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);
     }
 
     public int accentArgb() {
@@ -34,6 +40,10 @@ public enum ResourceHighlightCue {
 
     public boolean emissive() {
         return true;
+    }
+
+    public DecorationQuadInstruction instruction() {
+        return instruction;
     }
 
     public static ResourceHighlightCue forCapability(CapabilityId capability) {
