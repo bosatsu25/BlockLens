@@ -10,8 +10,8 @@ public final class VisibilityQuadCuePolicy {
     public static DecorationQuadInstruction instruction(VisibilityRenderDescriptor descriptor) {
         Objects.requireNonNull(descriptor, "descriptor");
         // Preserve the active baked model/texture and only add BlockLens-owned visibility data.
-        // Tripwire already supplies its thin geometry; outline-family source value is represented
-        // as a stable full-bright accent without bundling the source pack's replacement textures.
-        return DecorationQuadInstruction.emissiveTint(descriptor.cue().accentArgb());
+        // Every M4 cue owns one immutable full-bright instruction, so the render hot path reuses a
+        // bounded object instead of constructing an equivalent record for each emitted quad.
+        return descriptor.cue().instruction();
     }
 }
