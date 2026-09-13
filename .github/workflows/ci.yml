@@ -162,6 +162,46 @@ jobs:
           path: ${{ steps.visual.outputs.path }}
           if-no-files-found: error
           retention-days: 14
+      - name: Collect M5 dark-area visual evidence
+        id: m5visual
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="versions/${{ matrix.module }}"
+          target="build/ci/m5-dark-visual-${{ matrix.minecraft }}"
+          rm -rf "$target"
+          mkdir -p "$target"
+          mapfile -t screenshots < <(find "$source_root" -type f -path '*/m5-dark-visual/*.png' -print | sort)
+          mapfile -t manifests < <(find "$source_root" -type f -path '*/m5-dark-visual/m5-dark-visual-manifest.txt' -print | sort)
+          if [[ "${#screenshots[@]}" -ne 2 ]]; then
+            echo "Expected exactly two M5 dark-area screenshots, found ${#screenshots[@]}" >&2
+            printf '%s\n' "${screenshots[@]}" >&2
+            exit 1
+          fi
+          if [[ "${#manifests[@]}" -ne 1 ]]; then
+            echo "Expected exactly one M5 dark-area visual manifest, found ${#manifests[@]}" >&2
+            printf '%s\n' "${manifests[@]}" >&2
+            exit 1
+          fi
+          for screenshot in "${screenshots[@]}"; do cp "$screenshot" "$target/"; done
+          cp "${manifests[0]}" "$target/"
+          (cd "$target" && sha256sum *.png > SHA256SUMS.txt)
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+          {
+            echo "### M5 dark-area visual evidence ${{ matrix.minecraft }}"
+            echo '```text'
+            cat "$target/m5-dark-visual-manifest.txt"
+            echo '```'
+            echo "- Screenshots: \`2\`"
+            echo "- Screenshot SHA-256 manifest: \`SHA256SUMS.txt\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload M5 dark-area visual evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-m5-dark-visual-${{ matrix.minecraft }}
+          path: ${{ steps.m5visual.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
       - name: Collect M7 full parity visual evidence
         id: m7visual
         shell: bash
@@ -228,6 +268,7 @@ jobs:
             echo "- Client GameTest: \`PASS\`"
             echo "- BlockLens model resolution: \`PASS\`"
             echo "- M3 rendered visual evidence: \`PASS\`"
+            echo "- M5 dark-area visual evidence: \`PASS\`"
             echo "- M7 all-37 full parity evidence: \`PASS\`"
             echo "- Reproducible artifact: \`PASS\`"
             echo "- Privacy/residue audit: \`PASS\`"
