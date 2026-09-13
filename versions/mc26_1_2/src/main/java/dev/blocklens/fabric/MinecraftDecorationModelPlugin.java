@@ -1,6 +1,7 @@
 package dev.blocklens.fabric;
 
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.render.NetherTweaksVisualCue;
 import dev.blocklens.core.state.SemanticState;
 import dev.blocklens.core.state.TargetCapabilityIndex;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,11 +9,13 @@ import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Zero-scan model-bake integration for the 26.1.2 M3 decoration pipeline. */
+/** Zero-scan model-bake integration for the 26.1.2 all-capability BlockLens pipeline. */
 public final class MinecraftDecorationModelPlugin {
     private static final CapabilityId[] CAPABILITIES = CapabilityId.values();
+    private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.ordinal();
     private static final AtomicInteger WRAPPED_MODELS = new AtomicInteger();
     private static volatile boolean modelPipelineReady;
 
@@ -22,6 +25,7 @@ public final class MinecraftDecorationModelPlugin {
     public static void register() {
         ModelLoadingPlugin.register(pluginContext -> {
             TargetCapabilityIndex targetIndex = MinecraftDecorationTargetIndex.build();
+            NetherTweaksOverlayModels.register(pluginContext);
             WRAPPED_MODELS.set(0);
             pluginContext.modifyBlockModelAfterBake().register(
                     ModelModifier.WRAP_PHASE,
@@ -65,9 +69,22 @@ public final class MinecraftDecorationModelPlugin {
             cursor++;
         }
         if (cursor != count) {
-            throw new IllegalStateException("M3 target mask could not be fully decoded");
+            throw new IllegalStateException("BlockLens target mask could not be fully decoded");
         }
+
+        NetherTweaksVisualCue netherCue = null;
+        if ((targetMask & NETHER_TWEAKS_BIT) != 0L) {
+            Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+            if (id == null) {
+                throw new IllegalStateException("Nether Tweaks target has no registry id: " + state.getBlock());
+            }
+            netherCue = NetherTweaksVisualCue.forTarget(id.getPath());
+            if (netherCue == null) {
+                throw new IllegalStateException("Missing Nether Tweaks visual cue for " + id);
+            }
+        }
+
         WRAPPED_MODELS.incrementAndGet();
-        return new MinecraftDecorationModel(model, capabilities, semanticStates);
+        return new MinecraftDecorationModel(model, capabilities, semanticStates, netherCue);
     }
 }

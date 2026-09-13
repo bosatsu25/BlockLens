@@ -150,31 +150,38 @@ Implemented and verified:
 
 Current visual/runtime contract: [`m3-visual-semantics.md`](m3-visual-semantics.md).
 
-Exit criteria:
+Evidence: PR #11 merged as `03bc5213125b96456682f9f58ab02b84bcd95cdb`; dual-version deterministic framebuffer evidence verifies all-13 ON, resource reload, fixed target-ROI differences, active resource-pack preservation, and OFF restoration.
 
-- 13/13 on 26.1.2 and 26.2
-- independent toggles
-- representative visual parity PASS
-- all 13 simultaneously PASS
-- startup/reload/runtime no-regression evidence retained
+## M4–M7 — Full parity implementation train 🔧
 
-Evidence: PR #11 validation run `34712828259` passed common JUnit/JaCoCo/PIT plus both 26.1.2 and 26.2 build/reproducibility/Client GameTest/artifact jobs on the finalized visual oracle before documentation-only completion commits. Deterministic framebuffer evidence verifies all-13 ON, resource reload, fixed target-ROI differences, active resource-pack preservation, and OFF restoration. The current namespaced time/weather gamerules are verified by both client logs. CI evidence is OpenGL/llvmpipe; 26.2 Vulkan remains a separate later track.
+Goal: finish the remaining 24 capabilities and harden the complete 37-capability product. M4, M5, M6, and M7 are acceptance subtracks rather than separate implementation stops.
 
-## M4 — Outline and fine visibility parity
+Current implementation/evidence contract: [`m4-m7-parity.md`](m4-m7-parity.md).
 
-Goal: implement Blue Ice, Dead Coral, Powder Snow, Sculk Catalyst, and String Tweaks through shared runtime rendering.
+### Track A — Outline / fine visibility (former M4) ✅ core parity
 
-Exit criteria:
+Targets:
 
-- 5/5 on both versions
-- state/connection-sensitive behavior correct
-- OFF restores normal rendering
-- combined M3+M4 PASS
-- no render-state leakage through reload/world transitions
+- Blue Ice
+- Dead Coral
+- Powder Snow
+- Sculk Catalyst
+- String Tweaks
 
-## M5 — Resource highlighting parity
+Acceptance:
 
-Goal: implement all 18 resource/highlight capabilities.
+- [x] source-backed target/state/cue contract frozen in common code
+- [x] 24 exact target bindings
+- [x] Sculk `bloom` semantic retained
+- [x] all 64 tripwire source states represented
+- [x] selected JaCoCo/PIT policy gate includes M4 common code
+- [x] 5/5 runtime rendering on 26.1.2
+- [x] 5/5 runtime rendering on 26.2
+- [x] OFF restores normal rendering
+- [x] combined M3+M4 rendered evidence
+- [x] resource reload and dimension-transition regression evidence
+
+### Track B — Resource highlighting (former M5) 🔧 core implementation complete; compatibility verification remains
 
 Targets:
 
@@ -189,57 +196,86 @@ Targets:
 - Lapis / Deepslate Lapis
 - Redstone / Deepslate Redstone
 
-Exit criteria:
+Acceptance:
 
-- 18/18 independently controllable on both versions
-- active resource-pack texture preserved where intended
-- shader OFF PASS
-- supported shader ON paths PASS
-- 26.2 OpenGL PASS
-- 26.2 Vulkan tracked separately and only claimed if verified
+- [x] 18/18 exact target bindings and independent toggles
+- [x] active baked base model/texture preserved by the wrapper architecture
+- [x] shared highlight policy; no per-version product-policy duplication
+- [ ] dedicated dark-area/high-visibility framebuffer evidence
+- [x] shader-OFF/default OpenGL CI path PASS on both versions
+- [x] 26.2 OpenGL CI framebuffer path PASS
+- [ ] representative supported shader path verified before shader support is claimed
+- [ ] representative third-party active resource-pack matrix
+- [x] Vulkan remains a separate experimental track and is not implied by OpenGL success
 
-## M6 — Nether Tweaks parity
+### Track C — Nether Tweaks (former M6) ✅ core parity
 
-Goal: implement `nethertweaks` only after exact source behavior is captured.
+Target scope is the M0 exact 27-block Nether-oriented set.
 
-Exit criteria:
+Acceptance:
 
-- affected targets/states documented
-- no guessed behavior
-- source parity evidence exists
-- independent toggle/regression tests on both versions
+- [x] exact source behavior documented from pinned evidence
+- [x] no guessed behavior: source-derived 14×14 interior + 1px frame grammar and per-target palette
+- [x] independent toggle
+- [x] 26.1.2 and 26.2 adapters/rendering
+- [x] interaction with orientation and resource highlighting preserved on overlapping targets
+- [x] Nether-Tweaks-only framebuffer regression on both versions
+- [x] BlockLens-owned extra models packaged and resolved in Fabric resource loading
+- [x] CI rejects missing BlockLens Nether models and incomplete BlockLens Nether texture references
 
-## M7 — Full parity and interaction hardening
+### Track D — Full-product hardening (former M7) 🔧 automated core gate green; compatibility matrix incomplete
 
-Required scenarios per supported Minecraft line:
+Verified scenarios per supported Minecraft line:
 
-- [ ] all 37 capabilities supported
-- [ ] all capabilities ON simultaneously
-- [ ] supplied reference preset reproduced
-- [ ] config save/reload
-- [ ] resource reload
-- [ ] world join/leave
-- [ ] dimension changes
-- [ ] active third-party resource pack
-- [ ] representative shader packs
-- [ ] no server-side BlockLens
-- [ ] no custom gameplay/network requirement
+- [x] all 37 capabilities represented by the unified pipeline
+- [x] all 37 capabilities ON simultaneously
+- [x] supplied five-feature reference preset reproduced at config-policy level and framebuffer-captured
+- [ ] real config-file save/reload acceptance beyond codec/persistence smoke coverage
+- [x] config codec/mask round-trip
+- [x] resource reload
+- [x] world join/leave smoke lifecycle
+- [x] dimension changes: Overworld → Nether → Overworld
+- [ ] representative third-party active resource pack
+- [x] shader OFF/default CI renderer path
+- [ ] supported representative shader path(s) with shader ON
+- [x] no server-side BlockLens entrypoint/component
+- [x] no custom gameplay/network requirement
+- [x] target lookup remains bounded / zero-world-scan
+- [x] OFF fast path remains intact
+- [x] M7 five-screenshot artifact + manifest + SHA-256 list per Minecraft line
 
 Additional 26.2 tracks:
 
-- [ ] OpenGL
+- [x] OpenGL CI framebuffer path
 - [ ] Vulkan experimental verification where available
 
-Exit criteria:
+Latest verified implementation run before documentation-only changes: GitHub Actions `34729441969`.
 
-- Functional Parity Gate PASS
-- Version Parity Gate PASS
-- visual regression PASS
-- compatibility matrix documented
+M7 evidence from that run:
+
+| Evidence | 26.1.2 | 26.2 |
+| --- | ---: | ---: |
+| all-37 ON vs OFF | 3,917 px | 3,932 px |
+| after resource reload vs OFF | 3,911 px | 3,904 px |
+| Nether Tweaks only vs OFF | 834 px | 765 px |
+| reference preset vs OFF | 1,067 px | 1,063 px |
+| dimension round-trip | PASS | PASS |
+| config codec round-trip | PASS | PASS |
+
+Runtime JAR size in the same verified run: **92,790 bytes** on each version.
+
+Full-train exit criteria still pending:
+
+- representative third-party resource-pack preservation matrix
+- representative supported shader-ON path
+- real config-file save/reload acceptance
+- accurate OpenGL/Vulkan compatibility matrix
+
+Implementation rule: do **not** treat the green automated core gate as proof of the still-unverified compatibility items above.
 
 ## M8 — Performance, load, and size hardening
 
-Goal: optimize only after full behavior is stable, while continuous budgets have been protecting earlier milestones.
+Goal: optimize only after full behavior is stable, while continuous budgets protect earlier milestones.
 
 Measurements per version:
 
@@ -263,8 +299,8 @@ Tasks:
 - [ ] freeze no-growth baseline per version
 - [ ] remove remaining repeated assets/state expansion
 - [ ] verify lazy initialization
-- [ ] verify bounded lookup/caches
-- [ ] losslessly optimize retained assets
+- [ ] verify bounded lookup/caches under representative load
+- [ ] losslessly optimize retained assets/code where evidence supports it
 - [ ] verify reproducible compact JAR packaging
 
 Exit criteria:
@@ -281,7 +317,7 @@ Tasks:
 - [ ] clean Java 25 release build
 - [ ] all automated quality gates
 - [ ] per-version artifact privacy/security audit
-- [ ] README user guide
+- [ ] README user guide finalized
 - [ ] compatibility/version notes
 - [ ] SHA-256 for both artifacts
 - [ ] release notes

@@ -36,6 +36,7 @@ final class SemanticStateTest {
         assertFalse(empty.inWall());
         assertFalse(empty.powered());
         assertFalse(empty.attached());
+        assertFalse(empty.bloom());
         assertFalse(empty.connected(Facing.NONE));
     }
 
@@ -185,6 +186,40 @@ final class SemanticStateTest {
     }
 
     @Test
+    void sculkCatalystBloomIsIndependentAndPacked() {
+        SemanticState idle = SemanticState.sculkCatalyst(false);
+        SemanticState bloom = SemanticState.sculkCatalyst(true);
+        assertFalse(idle.bloom());
+        assertTrue(bloom.bloom());
+        assertNotEquals(idle, bloom);
+        assertSame(SemanticState.empty(), idle);
+    }
+
+    @Test
+    void tripwireCoversAllSixtyFourSourceCombinations() {
+        Set<Integer> packed = new HashSet<>();
+        for (int connections = 0; connections <= SemanticState.CONNECTION_MASK; connections++) {
+            for (boolean powered : new boolean[]{false, true}) {
+                for (boolean attached : new boolean[]{false, true}) {
+                    SemanticState state = SemanticState.tripwire(
+                            (connections & SemanticState.CONNECT_NORTH) != 0,
+                            (connections & SemanticState.CONNECT_EAST) != 0,
+                            (connections & SemanticState.CONNECT_SOUTH) != 0,
+                            (connections & SemanticState.CONNECT_WEST) != 0,
+                            powered,
+                            attached);
+                    assertEquals(connections, state.connectionMask());
+                    assertEquals(powered, state.powered());
+                    assertEquals(attached, state.attached());
+                    assertFalse(state.bloom());
+                    assertTrue(packed.add(state.packed()));
+                }
+            }
+        }
+        assertEquals(64, packed.size());
+    }
+
+    @Test
     void equalityHashAndStringArePackedValueBased() {
         SemanticState first = SemanticState.stairs(Facing.WEST, Half.TOP, StairShape.OUTER_LEFT);
         SemanticState same = SemanticState.stairs(Facing.WEST, Half.TOP, StairShape.OUTER_LEFT);
@@ -211,7 +246,7 @@ final class SemanticStateTest {
         assertThrows(IllegalArgumentException.class, () -> SemanticState.beehive(Facing.NORTH, 6));
         assertThrows(IllegalArgumentException.class, () -> SemanticState.create(
                 Facing.NONE, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                1 << 5, -1, false, false, false, false, false));
+                1 << 5, -1, false, false, false, false, false, false));
     }
 
     private static Facing[] cardinalFacings() {

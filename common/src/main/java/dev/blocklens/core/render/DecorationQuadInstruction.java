@@ -1,12 +1,22 @@
 package dev.blocklens.core.render;
 
-/** Pure render instruction applied by the Minecraft-version quad adapter. */
-public record DecorationQuadInstruction(int multiplyArgb, boolean forceSolid) {
+/**
+ * Pure quad instruction applied by the Minecraft-version render adapter.
+ *
+ * <p>The historical class name is retained to avoid churn in the verified M3 pipeline, but the
+ * instruction is now shared by M3-M7 renderer families.</p>
+ */
+public record DecorationQuadInstruction(int multiplyArgb, boolean forceSolid, boolean emissive) {
     public static final int IDENTITY_COLOR = 0xFFFFFFFF;
     public static final DecorationQuadInstruction IDENTITY =
-            new DecorationQuadInstruction(IDENTITY_COLOR, false);
+            new DecorationQuadInstruction(IDENTITY_COLOR, false, false);
     public static final DecorationQuadInstruction OPAQUE =
-            new DecorationQuadInstruction(IDENTITY_COLOR, true);
+            new DecorationQuadInstruction(IDENTITY_COLOR, true, false);
+
+    /** Backward-compatible M3 constructor: pre-M4 instructions are non-emissive. */
+    public DecorationQuadInstruction(int multiplyArgb, boolean forceSolid) {
+        this(multiplyArgb, forceSolid, false);
+    }
 
     public DecorationQuadInstruction {
         if ((multiplyArgb >>> 24) != 0xFF) {
@@ -20,6 +30,10 @@ public record DecorationQuadInstruction(int multiplyArgb, boolean forceSolid) {
     }
 
     public static DecorationQuadInstruction tint(int multiplyArgb) {
-        return new DecorationQuadInstruction(multiplyArgb, false);
+        return new DecorationQuadInstruction(multiplyArgb, false, false);
+    }
+
+    public static DecorationQuadInstruction emissiveTint(int multiplyArgb) {
+        return new DecorationQuadInstruction(multiplyArgb, false, true);
     }
 }

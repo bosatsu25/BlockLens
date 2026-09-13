@@ -4,11 +4,11 @@
 
 BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。
 
-AMATERASリソースパックで得られていた視認性・状態把握の価値を、何千個ものstate別JSON/PNGをそのまま抱える方式ではなく、**共通の状態解釈 + 共有レンダリング + 最小限の固有アセット**として再構築します。
+AMATERASリソースパックで得られていた視認性・状態把握の価値を、何千個ものstate別JSON/PNGをそのまま抱える方式ではなく、**共通の状態解釈 + 統合レンダリング + 最小限のBlockLens所有アセット**として再構築します。
 
 目的は「リソースパックをJARに詰めること」ではありません。**37機能のユーザー価値を維持しながら、保守性・設定・Minecraftバージョン差分・テスト可能性・性能評価・配布物サイズを改善すること**が目的です。
 
-> **現在の状態:** M0・M1・M2は完了済みです。M3は共通Render Descriptor、M0準拠の254 target、procedural visual grammar、Minecraft 26.1.2 / 26.2両方のzero-scan baked-model pipelineまで実装しています。ただし、代表的な実描画のvisual parityと13機能同時ONのゲーム内検証が完了するまでは**M3完了とは扱いません**。現時点では37機能すべての表示パリティ完成を主張しません。
+> **現在の状態:** M0〜M3は完了済みです。M4〜M6のcore renderingはMinecraft **26.1.2 / 26.2**両方で実装・自動検証済みです。M7のautomated core integration gateも、37機能同時ON、resource reload、dimension往復、Nether Tweaks単独、固定5機能preset、全OFF復元までGREENです。一方、代表的なthird-party resource pack、shader ON、Vulkan、実config file再読込、M8/M9の性能・release readinessはまだ未完了です。
 
 ## BlockLensが解決したいこと
 
@@ -18,7 +18,7 @@ AMATERASリソースパックで得られていた視認性・状態把握の価
 flowchart LR
     A[AMATERAS baseline\n4,535 ZIP entries] --> B[振る舞いを固定\n37 capability contract]
     B --> C[Semantic State Engine\nfacing / axis / half / shape / connections]
-    C --> D[共有Visual Semantics\noverlay / outline / marker]
+    C --> D[統合Render Policy\n37 independent capabilities]
     D --> E[薄いMinecraft Adapter\n26.1.2 + 26.2]
     E --> F[BlockLens\nsmall client-only runtime]
 ```
@@ -26,7 +26,7 @@ flowchart LR
 ```text
 大量のstate別 JSON / PNG
           ↓
-共通状態解釈 + 共通描画 + 最小限の固有アセット
+共通状態解釈 + 共通描画 + 最小限のBlockLens所有geometry
 ```
 
 ## 対応環境
@@ -40,6 +40,8 @@ flowchart LR
 | Server側MOD | 不要 |
 | 製品仕様 | 両Minecraft版で共通 |
 | version固有コード | Minecraft/Fabric adapterの薄い層だけ |
+| 必須renderer track | OpenGL / default CI path |
+| Vulkan | experimental track。OpenGL成功だけでは対応扱いにしない |
 
 現在仕様に明示的な例外がない限り、片方のMinecraft版でしか動かない機能は完了扱いにしません。
 
@@ -69,9 +71,9 @@ flowchart TB
     X --> X1[Nether Tweaks · String Tweaks]
 ```
 
-提供されたRPO presetではBlue Ice / Dead Coral / Powder Snow / Sculk Catalyst / String Tweaksの5個だけがONですが、これはあくまでpresetです。残り32機能もBlockLensの機能契約から外しません。
+提供されたRPO presetではBlue Ice / Dead Coral / Powder Snow / Sculk Catalyst / String Tweaksの5個だけがONですが、これはあくまでpresetです。残り32機能もBlockLensの製品契約から外しません。
 
-## Runtime Architecture
+## 統合Runtime Architecture
 
 Minecraftのmapped API差分は端に閉じ込め、製品ロジックはcommonへ集約します。
 
@@ -79,120 +81,204 @@ Minecraftのmapped API差分は端に閉じ込め、製品ロジックはcommon�
 flowchart TD
     MC[Minecraft BlockState\n26.1.2 / 26.2] --> VA[Version State Adapter]
     VA --> SS[Common SemanticState]
-    SS --> FP[Feature Policy / Config]
-    SS --> RD[Render Descriptor]
-    FP --> RD
-    RD --> VR[Version Render Adapter]
-    VR --> SR[Shared Renderer Families]
-    SR --> BASE[Vanilla / active resource-pack texture]
-    SR --> EXTRA[BlockLens visual information]
+    SS --> IDX[Exact raw-ID capability index]
+    IDX --> BM[Model-bake classification]
+    SS --> BM
+    BM --> WRAP[Unified WrapperBlockStateModel]
+    WRAP --> Q{担当capabilityがON?}
+    Q -- no --> BASE[active baked base modelを直接emit]
+    Q -- yes --> CUES[Decoration / Visibility / Resource / Nether cueを合成]
+    CUES --> OUT[base model + BlockLens visual information]
 ```
 
-### M2 Semantic State
+現在の統合target scope:
 
-M2では、BlockLensが必要とする情報だけをMinecraft非依存の形へ圧縮しています。
+- **323 capability-to-target bindings**
+- **320 unique Minecraft block targets**
+- capability bitmaskで意図的なtarget overlapを合成
+- whole-world target scanなし
+- 毎frame registry scanなし
+- semantic解釈はmodel bake時
+- render hot pathはprimitive enabled-capability mask
 
-- horizontal facing
-- axis
-- top / bottom half
-- stair shape
-- mount face
-- slab type
-- north / east / south / west connections
-- honey level
-- open / lit / in-wall / powered / attached
+代表的なoverlapとして、Obsidianは`gaming.obsidian + others.nethertweaks`、Crimson/Warped Stemは`deco.log + others.nethertweaks`を同時に持ちます。
 
-Mapped `BlockState`はMinecraft version境界でこの共通表現へ変換し、製品仕様をversion別に複製しません。
+## 実装済みVisual Family
 
-## M3 Procedural Decoration Pipeline
+### M3 — Decoration / Orientation · 13機能 ✅
 
-M3ではAMATERASのtextureをBlockLensへコピーしません。固定したsource packはbehavior / visual evidenceとして扱い、Minecraft本体またはユーザーのactive resource packがbakeしたmodelに、BlockLens独自のprocedural cueを適用します。
+13個のDecoration/Orientation機能は、active baked modelの上へBlockLens独自のprocedural cueを適用します。
 
-```mermaid
-flowchart LR
-    A[M0 exact target catalog\n254 bindings] --> B[Raw-ID target index\nmodel-load時]
-    B --> C[BlockState semantic adapter\nmodel-bake時]
-    C --> D[Common Render Descriptor]
-    D --> E[WrapperBlockStateModel]
-    E --> F{対象機能がON?}
-    F -- no --> G[元baked modelをそのままemit]
-    F -- yes --> H[共通quad cueを適用]
-    H --> I[base model + BlockLens追加情報]
+主な性質:
+
+- source baselineに固定したexact targetだけを対象にする
+- 13 toggleはすべて独立
+- X/Y/Z軸の共通visual grammar
+- stairs / slab / trapdoor / fence gate / beehive / campfire / grindstone等のstateを反映
+- Stained Glassはopaque / solid-layer behavior
+- 26.1.2 / 26.2両方でall-13 framebuffer evidence
+- resource reloadとOFF復元を自動回帰
+
+現在仕様: [`knowledge/current/m3-visual-semantics.md`](knowledge/current/m3-visual-semantics.md)
+
+### M4 — Outline / Fine Visibility · 5機能 ✅ core parity
+
+実装済み:
+
+- Blue Ice
+- Dead Coral
+- Powder Snow
+- Sculk Catalyst
+- String Tweaks
+
+共通state engineでSculkの`bloom`、TripwireのN/E/S/W + `powered` + `attached`を保持します。Tripwireは**64 semantic stateすべて**をcommon regression testで検証しています。
+
+### M5 — Resource Highlighting · 18機能 🔧 core implementation complete
+
+凍結した18個のResource Highlightをすべて同一wrapperへ統合しています。BlockLensはactive baked base modelを保持したまま、次のfull-bright procedural accentを追加します。
+
+- emissive rendering
+- diffuse shading無効
+- ambient occlusion無効
+
+shader-OFF / default OpenGL CI pathは両versionでPASSしています。ただし代表的なshader ONとthird-party resource packの互換性は、実測するまで対応を主張しません。
+
+### M6 — Nether Tweaks · exact 27 targets ✅ core parity
+
+固定したsource ZIPを直接調査し、推測実装はしていません。sourceの主要grammarは次です。
+
+```text
+16×16 surface
+├─ 14×14 flat interior = 196 pixels
+└─ 1px frame          =  60 pixels
 ```
 
-重要な設計:
+Nyliumには上部color bandがあります。
 
-- M0で凍結した254 targetだけをexactに扱い、suffixで勝手に対象を増やさない
-- 13機能のtoggleはすべて独立
-- X / Y / Z軸はsource intentに基づく赤 / 緑 / 青の共通visual grammar
-- Stained Glassはsourceの意味どおり**opaque / solid-layer behavior**として扱う
-- semantic state解釈はmodel bake時に行い、毎frameは行わない
-- whole-world scanなし、毎frame registry scanなし
-- render hot pathのON/OFF判定はprimitive capability bitmask
-- wrapperが担当するM3機能がすべてOFFなら元baked modelを直接emit
-- resource reload時は新しくbakeされたactive-resource-pack modelを再度wrapし、AMATERASのbase textureを所有しない
+BlockLensではAMATERAS PNGをコピーせず、source-derived paletteと次の2個の小さなBlockLens所有modelだけで再構成します。
 
-M3の現在仕様: [`knowledge/current/m3-visual-semantics.md`](knowledge/current/m3-visual-semantics.md)
+- `interior_fill`
+- `upper_band`
+
+CIではBlockLens所有Nether modelが解決できない場合だけでなく、texture referenceが不足している場合もREDになります。
+
+## M7 Automated Core Integration Gate
+
+同じClient GameTestをMinecraft **26.1.2 / 26.2**へ実行します。
+
+現在自動検証しているもの:
+
+- 37機能すべて同時ON
+- config encode/decode mask round-trip
+- 37機能ONのままresource reload
+- reload後のdeterministic framebuffer capture
+- Overworld → Nether → Overworldのdimension往復
+- **Nether TweaksだけON**
+- 固定5機能reference preset
+- 37機能すべてOFF / base rendering復元
+- bounded / zero-world-scan target lookup
+- BlockLens所有modelのresource resolution
+
+各Minecraft版で次の5枚とmanifest、screenshot SHA-256一覧をCI artifactとして保存します。
+
+1. `m7-all37-on.png`
+2. `m7-all37-reloaded.png`
+3. `m7-nether-only.png`
+4. `m7-reference-preset.png`
+5. `m7-all37-off-active-pack.png`
+
+README更新前に確認した最新implementation runは **GitHub Actions `34729441969`** です。
+
+| Evidence | Minecraft 26.1.2 | Minecraft 26.2 |
+| --- | ---: | ---: |
+| all-37 ON vs OFF ROI差分 | **3,917 px** | **3,932 px** |
+| resource reload後 vs OFF | **3,911 px** | **3,904 px** |
+| Nether Tweaksのみ vs OFF | **834 px** | **765 px** |
+| 5機能preset vs OFF | **1,067 px** | **1,063 px** |
+| dimension round-trip | PASS | PASS |
+| config codec round-trip | PASS | PASS |
+| BlockLens model resolution | PASS | PASS |
+
+詳細な正本: [`knowledge/current/m4-m7-parity.md`](knowledge/current/m4-m7-parity.md)
+
+## まだ未完了の項目
+
+M7 automated core gateがGREENでも、すべての互換性検証が終わった意味ではありません。
+
+未完了:
+
+- representative third-party active resource-pack matrix
+- shader **ON**の代表support path
+- codec/persistence smokeより踏み込んだ実config-file save/reload acceptance
+- Vulkan experimental validationとOpenGL supportとの明確な分離
+- Resource Highlight専用のdark-area framebuffer evidence
+- M8 startup / reload / frame / allocation performance hardening
+- M9 release readiness / licensing / attribution / compatibility notes / public artifact audit
 
 ## 開発状況
 
 | Milestone | 状態 | 内容 |
 | --- | --- | --- |
 | M0 — Source baseline freeze | ✅ 完了 | 37/37機能の根拠・machine-readable contract |
-| M1 — Dual-version quality scaffold | ✅ 完了 | Java 25 / config / CI / GameTest / artifact audit / size・load baseline |
-| M2 — Shared state engine | ✅ 完了 | semantic model / 両version adapter / real-client oracle / composable bounded lookup |
-| M3 — 13 Decoration / Orientation | 🔧 実装中 | exact target / render policy / procedural quad grammar / 両version model wrapperまで実装、実描画パリティ検証が残る |
-| M4–M7 | 予定 | outline / resource highlight / Nether Tweaks / 全機能相互作用 |
+| M1 — Dual-version quality scaffold | ✅ 完了 | Java 25 / config / CI / GameTest / reproducible artifact / baseline |
+| M2 — Shared state engine | ✅ 完了 | semantic model / 両version adapter / real-client oracle / bounded lookup |
+| M3 — 13 Decoration / Orientation | ✅ 完了 | 両version rendered parity / reload / OFF復元 |
+| M4 — Outline / Fine Visibility | ✅ Core parity | 5機能 / state semantics / dual-version integration |
+| M5 — 18 Resource Highlights | 🔧 Core実装完了 | unified full-bright rendering。互換性matrixは未完了 |
+| M6 — Nether Tweaks | ✅ Core parity | 27 exact targets / source-derived grammar / 単独framebuffer evidence |
+| M7 — Full-product hardening | 🔧 Automated core gate GREEN | all-37 / reload / dimension / preset / OFF。互換性matrixは未完了 |
 | M8 | 予定 | performance / load / size 最終hardening |
 | M9 | 予定 | release readiness / public artifact audit |
 
 正本の実装順序は [`knowledge/current/roadmap.md`](knowledge/current/roadmap.md) です。
 
-## M1実測baseline
+## Artifact Size
 
-M1は描画実装を増やす前の意図的に小さい基盤です。
+### 現在のM4–M7 implementation evidence
 
-| Minecraft | Runtime JAR | BlockLens init | Client GameTest | Reproducible artifact |
-| --- | ---: | ---: | --- | --- |
-| 26.1.2 | **14,481 B** | 約 **7.513 ms** | PASS | PASS |
-| 26.2 | **14,476 B** | 約 **2.684 ms** | PASS | PASS |
+GitHub Actions run `34729441969`:
 
-これは**M1時点のbaseline**であり、全機能実装後も14 KiBのままになるという意味ではありません。
+| Minecraft | Runtime JAR | Client GameTest | Model resolution | M7 visual evidence |
+| --- | ---: | --- | --- | --- |
+| 26.1.2 | **92,790 B** | PASS | PASS | PASS |
+| 26.2 | **92,790 B** | PASS | PASS | PASS |
 
-```text
-Source resource-pack ZIP   2,366,865 B  ████████████████████████████████████████
-M1 26.1.2 runtime JAR         14,481 B  ▏
-M1 26.2 runtime JAR           14,476 B  ▏
-Hard release maximum       1,183,432 B  ████████████████████
-Stretch target               716,800 B  ████████████
-```
-
-各release artifactの目標:
+現在のsize budgetを大きく下回っています。
 
 - 必須: **< 1,183,433 bytes**
 - stretch: **<= 716,800 bytes (700 KiB)**
 
-ただし、容量より**機能パリティ・correctness・診断性**を優先します。
+### Historical M1 baseline
+
+M1は描画実装前の意図的に小さい基盤です。
+
+| Minecraft | M1 Runtime JAR | BlockLens init | Client GameTest |
+| --- | ---: | ---: | --- |
+| 26.1.2 | 14,481 B | 約7.513 ms | PASS |
+| 26.2 | 14,476 B | 約2.684 ms | PASS |
+
+M1の14 KiBはhistorical baselineであり、現在のartifact sizeではありません。
 
 ## Quality Graph
 
-Minecraft連携変更は両versionの分岐を通過する必要があります。
-
 ```mermaid
 flowchart TD
-    C[Common JUnit / contracts] --> Q[JaCoCo + PIT selected policy gates]
-    Q --> B1[26.1.2 build]
-    Q --> B2[26.2 build]
+    C[Common JUnit / contracts] --> Q[JaCoCo + PIT selected-policy gates]
+    Q --> B1[26.1.2 build + reproducibility]
+    Q --> B2[26.2 build + reproducibility]
     B1 --> G1[26.1.2 Client GameTest]
     B2 --> G2[26.2 Client GameTest]
-    G1 --> A1[JAR audit + size + reproducibility]
-    G2 --> A2[JAR audit + size + reproducibility]
-    A1 --> P[Cross-version parity decision]
-    A2 --> P
-    P --> GREEN([CI GREEN])
+    G1 --> M1[Model-resource warning gate]
+    G2 --> M2[Model-resource warning gate]
+    M1 --> V1[M3 + M7 framebuffer artifacts]
+    M2 --> V2[M3 + M7 framebuffer artifacts]
+    V1 --> A1[JAR audit + size + privacy]
+    V2 --> A2[JAR audit + size + privacy]
+    A1 --> GREEN([Current head must be GREEN])
+    A2 --> GREEN
 ```
 
-現在はJUnit 5、37機能exact contract、cross-version semantic/config parity、JaCoCo、PIT、両Minecraft版Client GameTest、M3 exact-target/model-pipeline oracle、config persistence、runtime JAR privacy/residue audit、clean rebuild SHA-256 reproducibility、JAR byte budget、startup/load structural contractを自動化しています。
+現在の自動品質ゲートには、JUnit 5、37機能exact contract、cross-version state/config parity、JaCoCo、PIT、両version Client GameTest、config persistence smoke、all-target model-pipeline oracle、M3/M7 framebuffer artifact、BlockLens所有model resource warning gate、runtime JAR privacy/residue audit、reproducible build、JAR byte budgetが含まれます。
 
 ## Engineering Graph Loop
 
@@ -217,25 +303,23 @@ flowchart LR
     F --> V
 ```
 
-失敗時は必ず **DIAGNOSE → FIX → VERIFY** に戻します。「修正したはず」でCIを飛ばしてDONEにはしません。
-
-正式ルール・各nodeのexit condition・`DONE / BLOCKED / PARTIAL`は [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) を正本とします。
+失敗時は必ず **DIAGNOSE → FIX → VERIFY** に戻します。正式ルールと`DONE / BLOCKED / PARTIAL`は [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) を正本とします。
 
 ## Repository構成
 
 ```text
 BlockLens/
-├─ common/                  # 共通product/config/state/render policy + contracts
+├─ common/                  # 共通product/config/state/render policy + BlockLens assets
 ├─ versions/
 │  ├─ mc26_1_2/            # 26.1.2用の薄いMinecraft/Fabric adapter
 │  └─ mc26_2/              # 26.2用の薄いMinecraft/Fabric adapter
-├─ gametest/                # 両version共通の実Client integration oracle
-├─ gradle/                  # version module共通build rule
+├─ gametest/                # 両version共通の実Client visual/integration oracle
+├─ gradle/                  # multi-version build rule / artifact gate
 ├─ knowledge/
 │  ├─ index.md
-│  └─ current/              # 現在仕様の正本
-├─ AGENTS.md                # 開発規約
-└─ README.md                # English README
+│  └─ current/              # 現在仕様・証拠の正本
+├─ AGENTS.md
+└─ README.md
 ```
 
 ## Build / Verify
@@ -247,7 +331,7 @@ Java 25が必要です。
 ./gradlew ciGate
 ```
 
-Minecraft/Fabric連携を変更した場合は、GitHub Actions上で**現在head SHAの26.1.2 / 26.2両方がGREEN**になるまで完了扱いにしません。
+Minecraft/Fabric連携を変更した場合は、**現在head SHAの26.1.2 / 26.2両方がGREEN**になるまで完了扱いにしません。
 
 ## Performance Rule
 
@@ -257,49 +341,51 @@ startupやrender hot pathで不要な処理を行わないことを設計ルー�
 - startup update/network checkなし
 - telemetry初期化なし
 - 通常起動時のlegacy RPO parseなし
-- OFF機能のgeometry eager生成なし
 - 毎frameのwhole-world / unbounded chunk scanなし
-- M3 wrapperで毎frame registry scan / BlockState reinterpretationなし
+- 毎frame registry scan / BlockState reinterpretationなし
 - 変化していないgeometryの毎frame rebuildなし
-- target lookupはraw-IDベースでbounded
+- raw-IDベースのbounded target lookup
 - render enable判定はprimitive config mask
-- reload / world transitionではBlockLensが所有するstateを明確に管理する
+- resource reload / world transition時の明示invalidaton
+- OFF時は元wrapped modelを直接emitするfast path
 
-性能改善は推測で主張せず、startup/load・resource reload・runtime/frame・allocation/memory・JAR bytesを別々に測定します。
+M8ではstartup/load・resource reload・frame behavior・allocation/memory・artifact sizeを別々に測定します。
 
 ## Resource Pack / Shader Compatibility
 
-可能な限りMinecraft本体またはユーザーが有効化しているresource packのmodel/textureをbaseとして保ち、BlockLensが必要な追加情報だけを適用します。
+可能な限りMinecraft本体またはユーザーが有効化しているresource packのbaked model/textureをbaseとして保ち、BlockLensが必要な追加情報だけを適用します。
 
-Shader/backend互換性は「Vanillaで動いた」だけでは対応扱いにしません。26.2 OpenGLは必須検証track、Vulkanは別のexperimental trackとして管理します。
+テスト用resource overrideではbase-model preservationとOFF復元を確認済みですが、これは未実施のrepresentative third-party resource-pack matrixの代わりではありません。
+
+shader/backend互換性は推測で主張しません。shader-OFF / default OpenGL CI pathはPASSしています。shader-ONとVulkanは別verification trackです。
 
 ## Non-goals
 
 - 元リソースパックをそのままJARへ内包すること
 - 容量目標のために37機能を削ること
-- Minecraft versionごとに製品ロジックを丸ごと複製すること
-- visual機能のためにserver-side BlockLensを必須にすること
-- 無関係なgameplay automationを追加すること
-- 現在ONの5 RPO項目だけを製品全体として扱うこと
-- 未検証shader/backendを「対応」と表記すること
-- model wrapperがcompileできたことだけでM3 visual parity完了と主張すること
+- Minecraft versionごとに製品仕様を複製すること
+- visual機能のためにBlockLens server componentを必須にすること
+- 関係ないgameplay automationを追加すること
+- 現在ONの5 presetだけを製品全体として扱うこと
+- 証拠なしでshader/backend/resource-pack互換性を主張すること
 
-## Source / Licenseについて
+## Source / Licensing
 
-AMATERASリソースパックは**behavior / visual reference baseline**として扱います。内部構造やbinary assetをそのままBlockLensへコピーすることは目標ではありません。
+AMATERAS resource packは**behavioral / visual reference baseline**として使用しています。その内部構造をBlockLensのtarget architectureにはしません。
 
-baselineには他作者へのattributionが含まれており、redistribution permissionがあるとは仮定しません。公開前に、runtime JARへ残る第三者texture / model / textなどのライセンス・再配布可否を必ず確認します。M3では現状、source binaryをコピーせずオリジナルのprocedural描画処理を優先しています。
+baselineには他creatorへのattributionがあり、redistribution permissionは当然には仮定できません。そのためBlockLensではsource binary assetをコピーするより、original procedural codeとBlockLens所有の小さなgeometryを優先します。public release前にはM9で最終licensing / attribution auditが必要です。
 
-## ドキュメント
+## Project Documentation
 
-- Engineering rules: [`AGENTS.md`](AGENTS.md)
-- Knowledge index: [`knowledge/index.md`](knowledge/index.md)
-- Product contract: [`knowledge/current/product-spec.md`](knowledge/current/product-spec.md)
+- 開発規約: [`AGENTS.md`](AGENTS.md)
+- Knowledge Index: [`knowledge/index.md`](knowledge/index.md)
+- Product Contract: [`knowledge/current/product-spec.md`](knowledge/current/product-spec.md)
 - Architecture: [`knowledge/current/architecture.md`](knowledge/current/architecture.md)
-- Quality strategy: [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md)
-- Performance strategy: [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md)
+- Quality Strategy: [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md)
+- Performance Strategy: [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md)
 - Roadmap: [`knowledge/current/roadmap.md`](knowledge/current/roadmap.md)
-- M3 visual semantics: [`knowledge/current/m3-visual-semantics.md`](knowledge/current/m3-visual-semantics.md)
+- M3 Visual Semantics: [`knowledge/current/m3-visual-semantics.md`](knowledge/current/m3-visual-semantics.md)
+- M4–M7 Core Parity Evidence: [`knowledge/current/m4-m7-parity.md`](knowledge/current/m4-m7-parity.md)
 - Engineering Graph Loop: [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md)
 
-`knowledge/current/` が現在仕様の正本です。READMEはユーザー向けの要約であり、current specificationと食い違った場合はREADME側を修正します。
+`knowledge/current/`が現在仕様の正本です。READMEはユーザー向け要約として、完了した実装で意味が変わったら随時更新します。

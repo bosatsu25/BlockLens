@@ -35,6 +35,7 @@ public final class SemanticState {
     private static final int IN_WALL_BIT = 1 << 23;
     private static final int POWERED_BIT = 1 << 24;
     private static final int ATTACHED_BIT = 1 << 25;
+    private static final int BLOOM_BIT = 1 << 26;
 
     private static final int FACING_MASK = 0b111 << FACING_SHIFT;
     private static final int AXIS_MASK = 0b11 << AXIS_SHIFT;
@@ -58,12 +59,12 @@ public final class SemanticState {
 
     public static SemanticState facing(Facing facing) {
         return create(facing, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                0, -1, false, false, false, false, false);
+                0, -1, false, false, false, false, false, false);
     }
 
     public static SemanticState axis(Axis axis) {
         return create(Facing.NONE, axis, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                0, -1, false, false, false, false, false);
+                0, -1, false, false, false, false, false, false);
     }
 
     public static SemanticState beehive(Facing facing, int honeyLevel) {
@@ -71,51 +72,74 @@ public final class SemanticState {
             throw new IllegalArgumentException("honeyLevel must be 0..5: " + honeyLevel);
         }
         return create(facing, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                0, honeyLevel, false, false, false, false, false);
+                0, honeyLevel, false, false, false, false, false, false);
     }
 
     public static SemanticState campfire(Facing facing, boolean lit) {
         return create(facing, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                0, -1, false, lit, false, false, false);
+                0, -1, false, lit, false, false, false, false);
     }
 
     public static SemanticState grindstone(MountFace mountFace, Facing facing) {
         return create(facing, Axis.NONE, Half.NONE, StairShape.NONE, mountFace, SlabType.NONE,
-                0, -1, false, false, false, false, false);
+                0, -1, false, false, false, false, false, false);
     }
 
     public static SemanticState fenceGate(Facing facing, boolean open, boolean inWall) {
         return create(facing, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                0, -1, open, false, inWall, false, false);
+                0, -1, open, false, inWall, false, false, false);
     }
 
     public static SemanticState slab(SlabType slabType) {
         return create(Facing.NONE, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, slabType,
-                0, -1, false, false, false, false, false);
+                0, -1, false, false, false, false, false, false);
     }
 
     public static SemanticState connections(boolean north, boolean east, boolean south, boolean west) {
-        int mask = (north ? CONNECT_NORTH : 0)
-                | (east ? CONNECT_EAST : 0)
-                | (south ? CONNECT_SOUTH : 0)
-                | (west ? CONNECT_WEST : 0);
+        int mask = connectionMask(north, east, south, west);
         return create(Facing.NONE, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                mask, -1, false, false, false, false, false);
+                mask, -1, false, false, false, false, false, false);
     }
 
     public static SemanticState stairs(Facing facing, Half half, StairShape shape) {
         return create(facing, Axis.NONE, half, shape, MountFace.NONE, SlabType.NONE,
-                0, -1, false, false, false, false, false);
+                0, -1, false, false, false, false, false, false);
     }
 
     public static SemanticState trapdoor(Facing facing, Half half, boolean open) {
         return create(facing, Axis.NONE, half, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                0, -1, open, false, false, false, false);
+                0, -1, open, false, false, false, false, false);
     }
 
     public static SemanticState poweredAttached(boolean powered, boolean attached) {
         return create(Facing.NONE, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
-                0, -1, false, false, false, powered, attached);
+                0, -1, false, false, false, powered, attached, false);
+    }
+
+    /** M4 semantic state for Sculk Catalyst's source `bloom=false,true` split. */
+    public static SemanticState sculkCatalyst(boolean bloom) {
+        return create(Facing.NONE, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
+                0, -1, false, false, false, false, false, bloom);
+    }
+
+    /** M4 composite tripwire state: all four connections plus powered/attached in one packed value. */
+    public static SemanticState tripwire(
+            boolean north,
+            boolean east,
+            boolean south,
+            boolean west,
+            boolean powered,
+            boolean attached) {
+        return create(Facing.NONE, Axis.NONE, Half.NONE, StairShape.NONE, MountFace.NONE, SlabType.NONE,
+                connectionMask(north, east, south, west), -1,
+                false, false, false, powered, attached, false);
+    }
+
+    private static int connectionMask(boolean north, boolean east, boolean south, boolean west) {
+        return (north ? CONNECT_NORTH : 0)
+                | (east ? CONNECT_EAST : 0)
+                | (south ? CONNECT_SOUTH : 0)
+                | (west ? CONNECT_WEST : 0);
     }
 
     static SemanticState create(
@@ -131,7 +155,8 @@ public final class SemanticState {
             boolean lit,
             boolean inWall,
             boolean powered,
-            boolean attached) {
+            boolean attached,
+            boolean bloom) {
         Objects.requireNonNull(facing, "facing");
         Objects.requireNonNull(axis, "axis");
         Objects.requireNonNull(half, "half");
@@ -158,6 +183,7 @@ public final class SemanticState {
         if (inWall) bits |= IN_WALL_BIT;
         if (powered) bits |= POWERED_BIT;
         if (attached) bits |= ATTACHED_BIT;
+        if (bloom) bits |= BLOOM_BIT;
         return bits == 0 ? EMPTY : new SemanticState(bits);
     }
 
@@ -221,6 +247,10 @@ public final class SemanticState {
 
     public boolean attached() {
         return (packed & ATTACHED_BIT) != 0;
+    }
+
+    public boolean bloom() {
+        return (packed & BLOOM_BIT) != 0;
     }
 
     public int packed() {

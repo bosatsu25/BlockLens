@@ -23,15 +23,15 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         context.runOnClient(client -> {
             verifyRuntime("initial client launch", true);
             MinecraftStateAdapterOracle.verify();
+            M4M6StateAdapterOracle.verify();
             MinecraftDecorationTargetOracle.verify();
         });
 
-        // Creating the world exercises join/leave lifecycle on both supported lines. M3 then uses
-        // the same deterministic world to capture actual framebuffer evidence for ON/reload/OFF.
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             context.waitTicks(20);
             context.runOnClient(client -> verifyRuntime("singleplayer world joined", false));
             M3VisualParityOracle.verify(context, singleplayer);
+            M7FullParityOracle.verify(context, singleplayer);
         }
 
         context.runOnClient(client -> verifyRuntime("singleplayer world closed", false));
@@ -56,8 +56,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         Path configPath = FabricLoader.getInstance()
                 .getConfigDir()
                 .resolve(BlockLensConfigFiles.FILE_NAME);
-        require(Files.isRegularFile(configPath),
-                phase + ": native config was not created at " + configPath);
+        require(Files.isRegularFile(configPath), phase + ": native config was not created at " + configPath);
 
         try {
             String encoded = Files.readString(configPath, StandardCharsets.UTF_8);
@@ -69,16 +68,13 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         }
 
         if (reportBaseline) {
-            System.out.println(
-                    "BLOCKLENS_M1_BASELINE minecraft=" + minecraftVersion
-                            + " initNanos=" + BlockLensRuntime.initializationNanos()
-                            + " capabilities=" + EXPECTED_CAPABILITY_COUNT);
+            System.out.println("BLOCKLENS_M1_BASELINE minecraft=" + minecraftVersion
+                    + " initNanos=" + BlockLensRuntime.initializationNanos()
+                    + " capabilities=" + EXPECTED_CAPABILITY_COUNT);
         }
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) {
-            throw new AssertionError(message);
-        }
+        if (!condition) throw new AssertionError(message);
     }
 }
