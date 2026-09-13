@@ -58,7 +58,7 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(release.contains("runtime_jar_hard_max_bytes"));
         assertTrue(release.contains("SHA256SUMS.txt"));
         assertTrue(release.contains("assets/blocklens/icon.png"));
-        assertTrue(release.contains("No duplicate release"));
+        assertTrue(release.contains("no duplicate release"));
     }
 
     @Test
