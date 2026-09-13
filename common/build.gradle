@@ -92,13 +92,13 @@ pitest {
             'dev.blocklens.core.render.DecorationRenderDescriptor',
             'dev.blocklens.core.render.DecorationRenderPolicy',
             'dev.blocklens.core.render.DecorationQuadInstruction',
-            'dev/blocklens/core/render/DecorationQuadCuePolicy',
+            'dev.blocklens.core.render.DecorationQuadCuePolicy',
             'dev.blocklens.core.render.VisibilityVisualCue',
             'dev.blocklens.core.render.VisibilityRenderDescriptor',
-            'dev/blocklens/core/render/VisibilityRenderPolicy',
+            'dev.blocklens.core.render.VisibilityRenderPolicy',
             'dev.blocklens.core.render.VisibilityQuadCuePolicy',
             'dev.blocklens.core.render.ResourceHighlightCue',
-            'dev/blocklens/core/render/ResourceHighlightPolicy'
+            'dev.blocklens.core.render.ResourceHighlightPolicy'
     ]
     // Mutation tests intentionally exclude repository/filesystem contract tests and large frozen
     // M0 target/palette data tables; deterministic product-policy logic remains mutation-gated.
@@ -112,8 +112,8 @@ pitest {
             'dev.blocklens.core.render.DecorationRenderPolicyTest',
             'dev.blocklens.core.render.DecorationQuadCuePolicyTest',
             'dev.blocklens.core.render.VisibilityRenderPolicyTest',
-            'dev/blocklens/core/render/VisibilityQuadCuePolicyTest',
-            'dev/blocklens/core/render/ResourceHighlightPolicyTest'
+            'dev.blocklens.core.render.VisibilityQuadCuePolicyTest',
+            'dev.blocklens.core.render.ResourceHighlightPolicyTest'
     ]
     junit5PluginVersion = '1.2.3'
     threads = 2
