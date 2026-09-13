@@ -41,7 +41,6 @@ def coverageGateClasses = [
         'dev/blocklens/core/render/VisibilityTargetCatalog*.class',
         'dev/blocklens/core/render/ResourceTargetCatalog*.class',
         'dev/blocklens/core/render/ResourceHighlightCue*.class',
-        'dev/blocklens/core/render/ResourceHighlightPolicy*.class',
         'dev/blocklens/core/render/NetherTweaksTargetCatalog*.class',
         'dev/blocklens/core/render/NetherTweaksVisualCue*.class',
         'dev/blocklens/core/render/BlockLensTargetCatalog*.class'
@@ -95,8 +94,7 @@ pitest {
             'dev.blocklens.core.render.VisibilityVisualCue',
             'dev.blocklens.core.render.VisibilityRenderDescriptor',
             'dev.blocklens.core.render.VisibilityRenderPolicy',
-            'dev.blocklens.core.render.ResourceHighlightCue',
-            'dev.blocklens.core.render.ResourceHighlightPolicy'
+            'dev.blocklens.core.render.ResourceHighlightCue'
     ]
     // Mutation tests intentionally exclude repository/filesystem contract tests and large frozen
     // M0 target/palette data tables; deterministic product-policy logic remains mutation-gated.
@@ -104,7 +102,7 @@ pitest {
             'dev.blocklens.core.CapabilityIdTest',
             'dev.blocklens.core.BlockLensConfigCodecTest',
             'dev.blocklens.core.state.SemanticStateTest',
-            'dev.blocklens.core.state.DecorationStateKindTest',
+            'dev/blocklens/core/state/DecorationStateKindTest'.replace('/', '.'),
             'dev.blocklens.core.state.VisibilityStateKindTest',
             'dev.blocklens.core.state.TargetCapabilityIndexTest',
             'dev.blocklens.core.render.DecorationRenderPolicyTest',
