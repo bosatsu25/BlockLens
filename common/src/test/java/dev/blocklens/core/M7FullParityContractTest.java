@@ -53,8 +53,10 @@ final class M7FullParityContractTest {
         assertTrue(cue.contains("crimson_nylium"));
         assertTrue(cue.contains("warped_nylium"));
         assertTrue(interior.contains("minecraft:block/white_concrete"));
+        assertTrue(interior.contains("\"particle\": \"minecraft:block/white_concrete\""));
         assertTrue(interior.contains("[1,1,-0.02]"));
         assertTrue(interior.contains("[15,15,16.02]"));
+        assertTrue(band.contains("\"particle\": \"minecraft:block/white_concrete\""));
         assertTrue(band.contains("[1,12,-0.03]"));
         assertTrue(band.contains("[16.01,12,1]"));
     }
@@ -89,6 +91,7 @@ final class M7FullParityContractTest {
         assertTrue(convention.contains("retired Nether Tweaks side_fill model"));
         assertTrue(ci.contains("Verify BlockLens model resources resolved"));
         assertTrue(ci.contains("Missing block model: blocklens:block/nether/"));
+        assertTrue(ci.contains("Missing texture references in model blocklens:block/nether/"));
         assertTrue(ci.contains("Expected exactly five M7 visual screenshots"));
     }
 }
