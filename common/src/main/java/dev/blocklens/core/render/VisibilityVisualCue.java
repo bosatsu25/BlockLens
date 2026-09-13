@@ -15,19 +15,30 @@ public enum VisibilityVisualCue {
         FINE_LINE
     }
 
-    private final int accentArgb;
+    private final DecorationQuadInstruction instruction;
     private final Mode mode;
 
     VisibilityVisualCue(int accentArgb, Mode mode) {
-        this.accentArgb = accentArgb;
+        this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);
         this.mode = mode;
     }
 
     public int accentArgb() {
-        return accentArgb;
+        return instruction.multiplyArgb();
     }
 
     public Mode mode() {
         return mode;
+    }
+
+    /**
+     * Returns the single immutable instruction owned by this cue.
+     *
+     * <p>M4 rendering is quad-heavy, so retaining one bounded instruction per enum value avoids
+     * constructing equivalent records for every emitted quad while keeping the palette and visual
+     * semantics unchanged.</p>
+     */
+    public DecorationQuadInstruction instruction() {
+        return instruction;
     }
 }
