@@ -1,5 +1,7 @@
 package dev.blocklens.core;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
 
 /** Small common runtime state shared by version-specific Fabric adapters. */
@@ -22,6 +24,17 @@ public final class BlockLensRuntime {
         minecraftVersion = Objects.requireNonNull(version, "version");
         config = Objects.requireNonNull(loadedConfig, "loadedConfig");
         initializationNanos = measuredInitializationNanos;
+    }
+
+    /**
+     * Reloads the native BlockLens configuration from its real filesystem boundary without
+     * disturbing version identity or the startup timing measurement.
+     */
+    public static BlockLensConfig reloadConfig(Path configDirectory) throws IOException {
+        BlockLensConfig reloaded = BlockLensConfigFiles.loadOrCreate(
+                Objects.requireNonNull(configDirectory, "configDirectory"));
+        config = reloaded;
+        return reloaded;
     }
 
     public static BlockLensConfig config() {
