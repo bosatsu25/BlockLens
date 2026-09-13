@@ -82,9 +82,13 @@ final class RepositoryContractTest {
     }
 
     @Test
-    void sharedRenderPoliciesAndExactTargetCatalogsStayPresent() throws IOException {
-        String policy = Files.readString(root().resolve(
-                "common/src/main/java/dev/blocklens/core/render/DecorationRenderPolicy.java"));
+    void sharedRenderContractsAndExactTargetCatalogsStayPresent() throws IOException {
+        Path decorationPolicy = root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/DecorationRenderPolicy.java");
+        Path resourcePolicy = root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/ResourceHighlightPolicy.java");
+        Path visibilityQuadPolicy = root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/VisibilityQuadCuePolicy.java");
         String descriptor = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/DecorationRenderDescriptor.java"));
         String cue = Files.readString(root().resolve(
@@ -106,8 +110,12 @@ final class RepositoryContractTest {
         String v262 = Files.readString(root().resolve(
                 "versions/mc26_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationTargetIndex.java"));
 
-        assertTrue(policy.contains("config.isEnabled(capability)"));
-        assertTrue(policy.contains("DecorationRenderDescriptor.of"));
+        assertFalse(Files.exists(decorationPolicy),
+                "test-only M3 policy wrapper must not return to the runtime JAR");
+        assertFalse(Files.exists(resourcePolicy),
+                "test-only M5 policy wrapper must not return to the runtime JAR");
+        assertFalse(Files.exists(visibilityQuadPolicy),
+                "M4 adapter must use the enum-owned immutable instruction directly");
         assertTrue(descriptor.contains("DecorationVisualCue.forCapability"));
         assertTrue(cue.contains("OPAQUE_STAINED_GLASS"));
         assertTrue(quadPolicy.contains("case OPAQUE_STAINED_GLASS -> DecorationQuadInstruction.OPAQUE"));
@@ -155,8 +163,9 @@ final class RepositoryContractTest {
             assertTrue(model.contains("quad.multiplyColor(instruction.multiplyArgb())"));
             assertTrue(model.contains("quad.emissive(true)"));
             assertTrue(model.contains("wrapped.createGeometryKey"));
-            assertTrue(model.contains("VisibilityQuadCuePolicy.instruction"));
+            assertTrue(model.contains("instruction = visibility.cue().instruction()"));
             assertTrue(model.contains("ResourceHighlightCue.forCapability"));
+            assertFalse(model.contains("VisibilityQuadCuePolicy"));
 
             assertFalse(plugin.contains("level.getBlockState("),
                     "model classification must not scan world state");
@@ -177,6 +186,9 @@ final class RepositoryContractTest {
         assertTrue(convention.contains("Runtime JAR contains forbidden residue entry"));
         assertTrue(convention.contains("MinecraftDecorationModelPlugin.class"));
         assertTrue(convention.contains("DecorationQuadCuePolicy.class"));
+        assertTrue(convention.contains("runtimeBaselineBytes"));
+        assertTrue(convention.contains("runtimeReleaseBudgetBytes"));
+        assertTrue(convention.contains("writeRuntimeJarSizeReport"));
         assertTrue(ci.contains("Verify reproducible runtime JAR"));
         assertTrue(ci.contains("first_sha"));
         assertTrue(ci.contains("second_sha"));
