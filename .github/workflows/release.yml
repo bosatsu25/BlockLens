@@ -1,0 +1,242 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: blocklens-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: publish verified GitHub Release
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout exactly the verified commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^mod_version=//p' gradle.properties)"
+          if [[ -z "$version" ]]; then
+            echo "mod_version is missing from gradle.properties" >&2
+            exit 1
+          fi
+          tag="v${version}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Release candidate: $tag from $HEAD_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Skip an already-published version
+        id: existing
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag='${{ steps.version.outputs.tag }}'
+          if gh release view "$tag" --repo "$REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "GitHub Release $tag already exists; no duplicate release will be created." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve verified artifact names
+        if: steps.existing.outputs.exists == 'false'
+        id: artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t names < <(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false) | .name')
+
+          resolve_name() {
+            local minecraft="$1"
+            local regex="^blocklens-${minecraft//./\\.}(\\.jar)?$"
+            local matches=()
+            local name
+            for name in "${names[@]}"; do
+              if [[ "$name" =~ $regex ]]; then
+                matches+=("$name")
+              fi
+            done
+            if [[ "${#matches[@]}" -ne 1 ]]; then
+              echo "Expected exactly one verified runtime artifact for Minecraft $minecraft; found ${#matches[@]}" >&2
+              printf '%s\n' "${names[@]}" >&2
+              exit 1
+            fi
+            printf '%s' "${matches[0]}"
+          }
+
+          artifact_2612="$(resolve_name '26.1.2')"
+          artifact_262="$(resolve_name '26.2')"
+          echo "artifact_2612=$artifact_2612" >> "$GITHUB_OUTPUT"
+          echo "artifact_262=$artifact_262" >> "$GITHUB_OUTPUT"
+
+      - name: Download the exact JARs produced by the successful CI run
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/raw-26.1.2 dist/raw-26.2
+          gh run download "$RUN_ID" --repo "$REPOSITORY" \
+            --name '${{ steps.artifacts.outputs.artifact_2612 }}' --dir dist/raw-26.1.2
+          gh run download "$RUN_ID" --repo "$REPOSITORY" \
+            --name '${{ steps.artifacts.outputs.artifact_262 }}' --dir dist/raw-26.2
+
+      - name: Validate, normalize and checksum release artifacts
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          version='${{ steps.version.outputs.version }}'
+          baseline="$(sed -n 's/^runtime_jar_baseline_bytes=//p' gradle.properties)"
+          release_budget="$(sed -n 's/^runtime_jar_release_budget_bytes=//p' gradle.properties)"
+          hard_max="$(sed -n 's/^runtime_jar_hard_max_bytes=//p' gradle.properties)"
+
+          prepare() {
+            local minecraft="$1"
+            local raw_dir="$2"
+            mapfile -t jars < <(find "$raw_dir" -type f -name '*.jar' -print)
+            if [[ "${#jars[@]}" -ne 1 ]]; then
+              echo "Expected exactly one downloaded JAR for $minecraft; found ${#jars[@]}" >&2
+              printf '%s\n' "${jars[@]}" >&2
+              exit 1
+            fi
+
+            local source="${jars[0]}"
+            local target="dist/BlockLens-${minecraft}-v${version}.jar"
+            cp "$source" "$target"
+
+            local bytes
+            bytes="$(stat -c%s "$target")"
+            if (( bytes > baseline )); then
+              echo "$target is $bytes bytes, above frozen baseline $baseline" >&2
+              exit 1
+            fi
+            if (( bytes > release_budget )); then
+              echo "$target is $bytes bytes, above release budget $release_budget" >&2
+              exit 1
+            fi
+            if (( bytes > hard_max )); then
+              echo "$target is $bytes bytes, above hard maximum $hard_max" >&2
+              exit 1
+            fi
+
+            unzip -p "$target" fabric.mod.json > "dist/fabric-${minecraft}.json"
+            grep -Fq "\"version\": \"${version}+mc${minecraft}\"" "dist/fabric-${minecraft}.json"
+            grep -Fq "\"minecraft\": \"=${minecraft}\"" "dist/fabric-${minecraft}.json"
+            grep -Fq '"environment": "client"' "dist/fabric-${minecraft}.json"
+            grep -Fq '"icon": "assets/blocklens/icon.png"' "dist/fabric-${minecraft}.json"
+            unzip -Z1 "$target" > "dist/entries-${minecraft}.txt"
+            grep -Fxq 'assets/blocklens/icon.png' "dist/entries-${minecraft}.txt"
+
+            echo "- Minecraft $minecraft: ${bytes} B" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          prepare '26.1.2' 'dist/raw-26.1.2'
+          prepare '26.2' 'dist/raw-26.2'
+
+          (
+            cd dist
+            sha256sum BlockLens-*.jar > SHA256SUMS.txt
+          )
+
+      - name: Generate evidence-bounded release notes
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          version='${{ steps.version.outputs.version }}'
+          cat > dist/RELEASE_NOTES.md <<EOF
+          # BlockLens v${version}
+
+          Client-side Fabric visual inspection for Minecraft Java Edition with **37 independently configurable capabilities**.
+
+          ## Supported
+          - Minecraft **26.1.2** and **26.2**
+          - Java **25+**
+          - Fabric Loader **0.19.3+**
+          - verified default / shader-OFF OpenGL path
+
+          ## Verification
+          This release is published only from a successful main CI run. The exact attached JARs passed JUnit, JaCoCo, PIT mutation testing, reproducibility checks, Client GameTest, M3/M5/M7 visual evidence, M8 performance/retention guards, privacy/residue checks, and runtime size budgets.
+
+          ## Compatibility scope
+          Representative shader-ON configurations are not yet claimed as supported. Minecraft 26.2 Vulkan remains experimental. Broader third-party resource-pack compatibility is intentionally evidence-bounded.
+
+          ## Integrity
+          SHA-256 hashes are attached in SHA256SUMS.txt.
+
+          Verified commit: ${HEAD_SHA}
+          CI run: ${RUN_ID}
+          EOF
+
+      - name: Publish GitHub Release
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag='${{ steps.version.outputs.tag }}'
+          version='${{ steps.version.outputs.version }}'
+          gh release create "$tag" \
+            --repo "$REPOSITORY" \
+            --target "$HEAD_SHA" \
+            --title "BlockLens v${version}" \
+            --notes-file dist/RELEASE_NOTES.md \
+            dist/BlockLens-26.1.2-v${version}.jar \
+            dist/BlockLens-26.2-v${version}.jar \
+            dist/SHA256SUMS.txt
+
+      - name: Verify published release and assets
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag='${{ steps.version.outputs.tag }}'
+          version='${{ steps.version.outputs.version }}'
+
+          mapfile -t assets < <(gh release view "$tag" --repo "$REPOSITORY" --json assets --jq '.assets[].name' | sort)
+          expected=(
+            "BlockLens-26.1.2-v${version}.jar"
+            "BlockLens-26.2-v${version}.jar"
+            "SHA256SUMS.txt"
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          if [[ "${assets[*]}" != "${expected_sorted[*]}" ]]; then
+            echo "Published release assets differ from the exact expected set" >&2
+            printf 'actual: %s\n' "${assets[@]}" >&2
+            printf 'expected: %s\n' "${expected_sorted[@]}" >&2
+            exit 1
+          fi
+
+          gh release view "$tag" --repo "$REPOSITORY" \
+            --json tagName,targetCommitish,isDraft,isPrerelease,url \
+            --jq '. | "Published \(.tagName) -> \(.targetCommitish)\nURL: \(.url)\nDraft: \(.isDraft)\nPrerelease: \(.isPrerelease)"' \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "${assets[@]}" | sed 's/^/- asset: /' >> "$GITHUB_STEP_SUMMARY"

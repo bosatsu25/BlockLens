@@ -4,6 +4,7 @@
   "version": "${version}",
   "name": "BlockLens",
   "description": "Client-side visual inspection for Minecraft blocks and resources.",
+  "icon": "assets/blocklens/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [

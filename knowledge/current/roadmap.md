@@ -71,7 +71,7 @@ Authoritative contract: [`m3-visual-semantics.md`](m3-visual-semantics.md).
 
 ## M4–M7 — Full behavior / compatibility train 🔧
 
-Core product behavior is green. Compatibility items that require external renderer/resource-pack combinations remain intentionally separate from M8.
+Core product behavior is green. Compatibility items that require external renderer/resource-pack combinations remain intentionally separate from release readiness.
 
 Authoritative contract: [`m4-m7-parity.md`](m4-m7-parity.md).
 
@@ -96,7 +96,7 @@ Authoritative contract: [`m4-m7-parity.md`](m4-m7-parity.md).
 - [ ] representative supported shader-ON path before shader support is claimed
 - [ ] broader representative third-party resource-pack matrix
 
-Issue #5 remains the compatibility authority for the unchecked items.
+Issue #5 remains the compatibility authority for the unchecked items. They are outside the advertised v0.1.0 support boundary and therefore are not release blockers.
 
 ### M6 — Nether Tweaks ✅ core parity
 
@@ -213,24 +213,51 @@ Authoritative evidence: [`m8-performance.md`](m8-performance.md).
 
 **M8 terminal state: DONE.**
 
-## M9 — Release readiness
+## M9 — Release readiness 🚀
 
-M9 remains the next milestone. Tasks:
+M9 turns the M0-M8 verified product into a repeatable release process. Authoritative contract: [`release-readiness.md`](release-readiness.md).
 
-- [ ] licensing / redistribution final audit
-- [ ] clean Java 25 release build
-- [ ] all automated quality gates
-- [ ] per-version artifact privacy/security audit
-- [ ] README user guide/release usage finalized
-- [ ] compatibility/version notes
-- [ ] SHA-256 for both release artifacts
-- [ ] release notes
-- [ ] clean Prism/Fabric smoke test for 26.1.2 and 26.2
-- [ ] accurately define shader/resource-pack/Vulkan supported scope from completed compatibility evidence
+### Icon-inclusive artifact contract
 
-Exit criteria:
+The old 88,973 B M8 baseline was deliberately kept for the first icon build. Run **`34766720469` (#232)** correctly failed the no-growth gate and measured the new product-asset cost:
 
-- exactly intended release artifacts
-- both supported lines green
-- supported graphics/shader/resource-pack scope accurately documented
-- no unresolved release-blocking licensing/privacy/security issue
+```text
+26.1.2 icon-inclusive JAR:          95,332 B
+26.2 icon-inclusive JAR:            95,333 B
+new shared no-growth baseline:      95,333 B
+release budget:                    102,400 B (unchanged)
+absolute <50% max:               1,183,432 B (unchanged)
+```
+
+### Completed implementation tasks
+
+- [x] repository-owned BlockLens icon added
+- [x] both Fabric metadata files reference the packaged icon
+- [x] intentional icon growth measured before rebaseline
+- [x] no-growth baseline explicitly updated to **95,333 B**
+- [x] 100 KiB release budget retained without relaxation
+- [x] automated release workflow triggered only by successful `main` push CI
+- [x] release consumes exact verified CI JARs instead of rebuilding
+- [x] release idempotency through `mod_version` / existing tag detection
+- [x] release-time Minecraft/mod/client/icon/size revalidation
+- [x] SHA-256 checksum generation
+- [x] evidence-bounded release notes generation
+- [x] licensing / redistribution posture documented
+- [x] per-version artifact privacy/security gates retained
+- [x] README English technology/release guide rewritten
+- [x] README Japanese technology/release guide rewritten
+- [x] Java 25 / Gradle / Fabric / JUnit / JaCoCo / PIT / GameTest / GitHub Actions stack documented
+- [x] supported shader/resource-pack/Vulkan scope explicitly bounded
+- [x] M9 repository/release contracts added to JUnit
+
+### Operational completion gates
+
+- [ ] latest PR-head JUnit/JaCoCo/PIT GREEN
+- [ ] latest PR-head 26.1.2 real-client/artifact gate GREEN
+- [ ] latest PR-head 26.2 real-client/artifact gate GREEN
+- [ ] squash merge PR #19
+- [ ] post-merge `main` CI GREEN
+- [ ] automatic `v0.1.0` GitHub Release publication GREEN
+- [ ] published release assets/checksums verified
+
+M9 is not marked terminal DONE until the live publish path is verified. The remaining Issue #5 shader-ON/resource-pack compatibility track is explicitly outside the v0.1.0 advertised support boundary.
