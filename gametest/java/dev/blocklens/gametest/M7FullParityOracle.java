@@ -60,6 +60,14 @@ final class M7FullParityOracle {
 
             dimensionRoundTrip(context, singleplayer);
 
+            BlockLensConfig netherOnly = onlyEnabled(original, CapabilityId.NETHER_TWEAKS);
+            require(enabledCount(netherOnly) == 1 && netherOnly.isEnabled(CapabilityId.NETHER_TWEAKS),
+                    "M7 Nether-only config must enable only Nether Tweaks");
+            install(netherOnly);
+            reload(context);
+            rebuild(context);
+            Path netherOnlyPath = screenshot(context, outputDir, "m7-nether-only");
+
             BlockLensConfig preset = BlockLensConfig.defaults();
             requireReferencePreset(preset);
             install(preset);
@@ -76,13 +84,16 @@ final class M7FullParityOracle {
 
             BufferedImage on = inspect(onPath);
             BufferedImage reloaded = inspect(reloadedPath);
+            BufferedImage netherOnlyImage = inspect(netherOnlyPath);
             BufferedImage presetImage = inspect(presetPath);
             BufferedImage off = inspect(offPath);
             int onOff = difference(on, off);
             int reloadOff = difference(reloaded, off);
+            int netherOff = difference(netherOnlyImage, off);
             int presetOff = difference(presetImage, off);
             require(onOff >= 700, "M7 all-on visual delta too small: " + onOff);
             require(reloadOff >= 700, "M7 reload visual delta too small: " + reloadOff);
+            require(netherOff >= 250, "M7 Nether-only visual delta too small: " + netherOff);
             require(presetOff >= 80, "M7 reference-preset visual delta too small: " + presetOff);
 
             String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
@@ -91,10 +102,12 @@ final class M7FullParityOracle {
                     + "wrappedModels=" + MinecraftDecorationModelPlugin.wrappedModelCount() + "\n"
                     + "allOnOffDifferentPixels=" + onOff + "\n"
                     + "reloadedOffDifferentPixels=" + reloadOff + "\n"
+                    + "netherOnlyOffDifferentPixels=" + netherOff + "\n"
                     + "presetOffDifferentPixels=" + presetOff + "\n"
                     + "dimensionRoundTrip=PASS\nconfigRoundTrip=PASS\n"
                     + "allOnFile=" + onPath.getFileName() + "\n"
                     + "reloadedFile=" + reloadedPath.getFileName() + "\n"
+                    + "netherOnlyFile=" + netherOnlyPath.getFileName() + "\n"
                     + "referencePresetFile=" + presetPath.getFileName() + "\n"
                     + "allOffFile=" + offPath.getFileName() + "\n";
             Files.writeString(outputDir.resolve("m7-visual-manifest.txt"), manifest, StandardCharsets.UTF_8);
@@ -165,6 +178,11 @@ final class M7FullParityOracle {
         BlockLensConfig result = base;
         for (CapabilityId capability : CapabilityId.values()) result = result.withEnabled(capability, enabled);
         return result;
+    }
+
+    private static BlockLensConfig onlyEnabled(BlockLensConfig base, CapabilityId enabledCapability) {
+        BlockLensConfig result = withAllEnabled(base, false);
+        return result.withEnabled(enabledCapability, true);
     }
 
     private static int enabledCount(BlockLensConfig config) {
