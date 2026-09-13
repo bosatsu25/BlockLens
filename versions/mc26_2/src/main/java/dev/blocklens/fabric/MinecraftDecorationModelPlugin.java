@@ -33,7 +33,6 @@ public final class MinecraftDecorationModelPlugin {
             RETAINED_CAPABILITY_SLOTS.set(0);
             MAX_CAPABILITIES_PER_MODEL.set(0);
             NETHER_WRAPPED_MODELS.set(0);
-            MinecraftDecorationModel.resetObservationCounters();
             pluginContext.modifyBlockModelAfterBake().register(
                     ModelModifier.WRAP_PHASE,
                     (model, context) -> wrap(model, context.state(), targetIndex));
@@ -59,14 +58,6 @@ public final class MinecraftDecorationModelPlugin {
 
     public static int netherWrappedModelCount() {
         return NETHER_WRAPPED_MODELS.get();
-    }
-
-    public static int netherInteriorLookupCount() {
-        return MinecraftDecorationModel.interiorLookupCount();
-    }
-
-    public static int netherBandLookupCount() {
-        return MinecraftDecorationModel.bandLookupCount();
     }
 
     private static BlockStateModel wrap(
