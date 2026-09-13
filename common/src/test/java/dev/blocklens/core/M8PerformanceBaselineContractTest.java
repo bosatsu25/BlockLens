@@ -63,17 +63,23 @@ final class M8PerformanceBaselineContractTest {
     }
 
     @Test
-    void visibilityRenderPathReusesOneBoundedInstructionPerCue() throws IOException {
+    void visibilityRenderPathReusesOneBoundedInstructionPerCueWithoutPolicyIndirection() throws IOException {
         String cue = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/VisibilityVisualCue.java"));
-        String policy = Files.readString(root().resolve(
-                "common/src/main/java/dev/blocklens/core/render/VisibilityQuadCuePolicy.java"));
+        String model2612 = Files.readString(root().resolve(
+                "versions/mc26_1_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
+        String model262 = Files.readString(root().resolve(
+                "versions/mc26_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
 
         assertTrue(cue.contains("private final DecorationQuadInstruction instruction;"));
         assertTrue(cue.contains("this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);"));
         assertTrue(cue.contains("public DecorationQuadInstruction instruction()"));
-        assertTrue(policy.contains("return descriptor.cue().instruction();"));
-        assertFalse(policy.contains("DecorationQuadInstruction.emissiveTint(descriptor.cue().accentArgb())"));
+        assertTrue(model2612.contains("instruction = visibility.cue().instruction();"));
+        assertTrue(model262.contains("instruction = visibility.cue().instruction();"));
+        assertFalse(model2612.contains("VisibilityQuadCuePolicy.instruction(visibility)"));
+        assertFalse(model262.contains("VisibilityQuadCuePolicy.instruction(visibility)"));
+        assertFalse(Files.exists(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/VisibilityQuadCuePolicy.java")));
     }
 
     @Test
