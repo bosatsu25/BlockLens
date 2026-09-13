@@ -39,6 +39,7 @@ final class M8PerformanceBaselineContractTest {
         // repeated observations show how noisy the CI runner and client harness actually are.
         assertFalse(oracle.contains("MAX_RELOAD_NANOS"));
         assertFalse(oracle.contains("MAX_ALLOCATED_BYTES"));
-        assertTrue(strategy.contains("Do not invent thresholds first"));
+        assertTrue(strategy.contains(
+                "Absolute performance thresholds should be frozen only after a reproducible baseline exists."));
     }
 }
