@@ -31,12 +31,12 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(oracle.contains("CapabilityId.Category.RESOURCE"));
         assertTrue(oracle.contains("BLOCKLENS_M8_BASELINE"));
         assertTrue(oracle.contains("m8-performance-baseline.txt"));
-        assertTrue(oracle.contains("pre-optimization-baseline-no-absolute-threshold"));
+        assertTrue(oracle.contains("m8-observation-no-absolute-threshold"));
         assertTrue(oracle.contains("onMinusOffAllocatedMedianBytes"));
         assertTrue(oracle.contains("onMinusOffRebuildMedianNanos"));
 
-        // The first M8 evidence run establishes a baseline. A tolerance can only be frozen after
-        // repeated observations show how noisy the CI runner and client harness actually are.
+        // The first M8 evidence runs establish observations. A tolerance can only be frozen after
+        // repeated runs show how noisy the CI runner and client harness actually are.
         assertFalse(oracle.contains("MAX_RELOAD_NANOS"));
         assertFalse(oracle.contains("MAX_ALLOCATED_BYTES"));
         assertTrue(strategy.contains(
