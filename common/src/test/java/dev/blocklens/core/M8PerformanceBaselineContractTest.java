@@ -61,4 +61,37 @@ final class M8PerformanceBaselineContractTest {
         assertFalse(model2612.contains("DecorationQuadInstruction.emissiveTint(resource.accentArgb())"));
         assertFalse(model262.contains("DecorationQuadInstruction.emissiveTint(resource.accentArgb())"));
     }
+
+    @Test
+    void visibilityRenderPathReusesOneBoundedInstructionPerCue() throws IOException {
+        String cue = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/VisibilityVisualCue.java"));
+        String policy = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/VisibilityQuadCuePolicy.java"));
+
+        assertTrue(cue.contains("private final DecorationQuadInstruction instruction;"));
+        assertTrue(cue.contains("this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);"));
+        assertTrue(cue.contains("public DecorationQuadInstruction instruction()"));
+        assertTrue(policy.contains("return descriptor.cue().instruction();"));
+        assertFalse(policy.contains("DecorationQuadInstruction.emissiveTint(descriptor.cue().accentArgb())"));
+    }
+
+    @Test
+    void runtimeJarBudgetsFreezeTheVerifiedBaselineAndEmitSizeEvidence() throws IOException {
+        String properties = Files.readString(root().resolve("gradle.properties"));
+        String versionModule = Files.readString(root().resolve("gradle/version-module.gradle"));
+
+        assertTrue(properties.contains("runtime_jar_source_pack_bytes=2366865"));
+        assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=93068"));
+        assertTrue(properties.contains("runtime_jar_release_budget_bytes=102400"));
+
+        assertTrue(versionModule.contains("writeRuntimeJarSizeReport"));
+        assertTrue(versionModule.contains("runtime-jar-size.txt"));
+        assertTrue(versionModule.contains("[compressed-category-bytes]"));
+        assertTrue(versionModule.contains("[top-compressed-entries]"));
+        assertTrue(versionModule.contains("runtimeBaselineBytes"));
+        assertTrue(versionModule.contains("runtimeReleaseBudgetBytes"));
+        assertTrue(versionModule.contains("deliberately rebaseline with reviewed justification"));
+    }
 }
