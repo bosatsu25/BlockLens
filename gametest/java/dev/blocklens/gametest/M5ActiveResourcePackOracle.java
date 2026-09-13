@@ -16,6 +16,8 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 /**
  * Representative active-resource-pack preservation oracle for M5.
@@ -62,6 +64,8 @@ final class M5ActiveResourcePackOracle {
             BlockLensConfig offConfig = allOff(original);
             install(offConfig);
             reloadResources(context);
+            ResolvedPackFixture resolvedPack = inspectActivePackResources(context);
+            logResolvedPack(resolvedPack);
             requirePipeline("active-pack OFF");
             rebuild(context);
             Path offPath = screenshot(context, outputDir, "m5-pack-off");
@@ -108,10 +112,17 @@ final class M5ActiveResourcePackOracle {
                     onPath,
                     offPath,
                     airPath,
+                    resolvedPack,
                     markers,
                     onOffDifferentPixels,
                     geometry);
 
+            String expectedSourcePack = M5ActiveResourcePackFixture.PACK_ID.toString();
+            require(resolvedPack.allFrom(expectedSourcePack),
+                    "M5 model resources did not resolve from the active fixture pack; expected="
+                            + expectedSourcePack + ", actual=" + resolvedPack.sources());
+            require(resolvedPack.allMarkersPresent(),
+                    "M5 active-pack model payloads were not resolved; " + resolvedPack.markerSummary());
             require(markers.magenta() >= MIN_MARKER_PIXELS,
                     "diamond-ore magenta active-pack marker missing; pixels=" + markers.magenta());
             require(markers.lime() >= MIN_MARKER_PIXELS,
@@ -136,6 +147,46 @@ final class M5ActiveResourcePackOracle {
             install(original);
             rebuild(context);
         }
+    }
+
+    private static ResolvedPackFixture inspectActivePackResources(ClientGameTestContext context)
+            throws IOException {
+        return context.computeOnClient(client -> {
+            ResourceManager resources = client.getResourceManager();
+            return new ResolvedPackFixture(
+                    inspectResolvedModel(resources, "diamond_ore", "magenta_concrete"),
+                    inspectResolvedModel(resources, "deepslate_redstone_ore", "lime_concrete"),
+                    inspectResolvedModel(resources, "obsidian", "yellow_concrete"));
+        });
+    }
+
+    private static ResolvedModel inspectResolvedModel(
+            ResourceManager resources,
+            String modelName,
+            String markerToken) throws IOException {
+        Identifier resourceId = Identifier.fromNamespaceAndPath(
+                "minecraft", "models/block/" + modelName + ".json");
+        var resource = resources.getResource(resourceId)
+                .orElseThrow(() -> new AssertionError("M5 model resource is missing: " + resourceId));
+        String content;
+        try (var stream = resource.open()) {
+            content = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        return new ResolvedModel(
+                resourceId.toString(),
+                resource.sourcePackId(),
+                content.contains(markerToken));
+    }
+
+    private static void logResolvedPack(ResolvedPackFixture resolvedPack) {
+        System.out.println("BLOCKLENS_M5_ACTIVE_PACK_RESOLUTION minecraft=" + BlockLensRuntime.minecraftVersion()
+                + " expectedSource=" + M5ActiveResourcePackFixture.PACK_ID
+                + " diamondSource=" + resolvedPack.diamond().sourcePackId()
+                + " diamondMarker=" + resolvedPack.diamond().markerPresent()
+                + " deepslateRedstoneSource=" + resolvedPack.deepslateRedstone().sourcePackId()
+                + " deepslateRedstoneMarker=" + resolvedPack.deepslateRedstone().markerPresent()
+                + " obsidianSource=" + resolvedPack.obsidian().sourcePackId()
+                + " obsidianMarker=" + resolvedPack.obsidian().markerPresent());
     }
 
     private static void buildScene(TestSingleplayerContext singleplayer) {
@@ -327,6 +378,7 @@ final class M5ActiveResourcePackOracle {
             Path onPath,
             Path offPath,
             Path airPath,
+            ResolvedPackFixture resolvedPack,
             MarkerCounts markers,
             int onOffDifferentPixels,
             MaskMetrics geometry) throws IOException {
@@ -335,6 +387,15 @@ final class M5ActiveResourcePackOracle {
                 + "fixtureModels=3\n"
                 + "enabledCapabilities=" + EXPECTED_ENABLED_CAPABILITIES + "\n"
                 + "fixtures=diamond_ore:half-height-magenta,deepslate_redstone_ore:narrow-lime,obsidian:inset-yellow\n"
+                + "diamondResource=" + resolvedPack.diamond().resourceId() + "\n"
+                + "diamondSourcePack=" + resolvedPack.diamond().sourcePackId() + "\n"
+                + "diamondMarkerResolved=" + resolvedPack.diamond().markerPresent() + "\n"
+                + "deepslateRedstoneResource=" + resolvedPack.deepslateRedstone().resourceId() + "\n"
+                + "deepslateRedstoneSourcePack=" + resolvedPack.deepslateRedstone().sourcePackId() + "\n"
+                + "deepslateRedstoneMarkerResolved=" + resolvedPack.deepslateRedstone().markerPresent() + "\n"
+                + "obsidianResource=" + resolvedPack.obsidian().resourceId() + "\n"
+                + "obsidianSourcePack=" + resolvedPack.obsidian().sourcePackId() + "\n"
+                + "obsidianMarkerResolved=" + resolvedPack.obsidian().markerPresent() + "\n"
                 + "wrappedModels=" + MinecraftDecorationModelPlugin.wrappedModelCount() + "\n"
                 + "onFile=" + onPath.getFileName() + "\n"
                 + "offFile=" + offPath.getFileName() + "\n"
@@ -358,6 +419,38 @@ final class M5ActiveResourcePackOracle {
     private static void require(boolean condition, String message) {
         if (!condition) {
             throw new AssertionError(message);
+        }
+    }
+
+    private record ResolvedModel(String resourceId, String sourcePackId, boolean markerPresent) {
+    }
+
+    private record ResolvedPackFixture(
+            ResolvedModel diamond,
+            ResolvedModel deepslateRedstone,
+            ResolvedModel obsidian) {
+        boolean allFrom(String expectedSourcePack) {
+            return diamond.sourcePackId().equals(expectedSourcePack)
+                    && deepslateRedstone.sourcePackId().equals(expectedSourcePack)
+                    && obsidian.sourcePackId().equals(expectedSourcePack);
+        }
+
+        boolean allMarkersPresent() {
+            return diamond.markerPresent()
+                    && deepslateRedstone.markerPresent()
+                    && obsidian.markerPresent();
+        }
+
+        String sources() {
+            return "diamond=" + diamond.sourcePackId()
+                    + ", deepslateRedstone=" + deepslateRedstone.sourcePackId()
+                    + ", obsidian=" + obsidian.sourcePackId();
+        }
+
+        String markerSummary() {
+            return "diamond=" + diamond.markerPresent()
+                    + ", deepslateRedstone=" + deepslateRedstone.markerPresent()
+                    + ", obsidian=" + obsidian.markerPresent();
         }
     }
 

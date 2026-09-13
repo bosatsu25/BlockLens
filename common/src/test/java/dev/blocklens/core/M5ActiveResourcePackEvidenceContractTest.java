@@ -44,6 +44,12 @@ final class M5ActiveResourcePackEvidenceContractTest {
         assertTrue(oracle.contains("m5-pack-on"));
         assertTrue(oracle.contains("m5-pack-off"));
         assertTrue(oracle.contains("m5-pack-air-control"));
+        assertTrue(oracle.contains("inspectActivePackResources(context)"));
+        assertTrue(oracle.contains("client.getResourceManager()"));
+        assertTrue(oracle.contains("sourcePackId()"));
+        assertTrue(oracle.contains("BLOCKLENS_M5_ACTIVE_PACK_RESOLUTION"));
+        assertTrue(oracle.contains("diamondSourcePack"));
+        assertTrue(oracle.contains("allMarkersPresent()"));
         assertTrue(oracle.contains("baseRetentionPermille"));
         assertTrue(oracle.contains("MIN_BASE_RETENTION_PERMILLE"));
         assertTrue(oracle.contains("geometryIouPermille"));
