@@ -22,11 +22,14 @@ final class M7FullParityContractTest {
         assertTrue(smoke.contains("M7FullParityOracle.verify(context, singleplayer)"));
         assertTrue(oracle.contains("enabledCount(allOn) == 37"));
         assertTrue(oracle.contains("BlockLensConfigCodec.decode(BlockLensConfigCodec.encode(allOn))"));
+        assertTrue(oracle.contains("onlyEnabled(original, CapabilityId.NETHER_TWEAKS)"));
         assertTrue(oracle.contains("requireReferencePreset(preset)"));
         assertTrue(oracle.contains("m7-all37-on"));
         assertTrue(oracle.contains("m7-all37-reloaded"));
+        assertTrue(oracle.contains("m7-nether-only"));
         assertTrue(oracle.contains("m7-reference-preset"));
         assertTrue(oracle.contains("m7-all37-off-active-pack"));
+        assertTrue(oracle.contains("netherOnlyOffDifferentPixels"));
         assertTrue(oracle.contains("execute in minecraft:the_nether"));
         assertTrue(oracle.contains("Level.NETHER.equals(client.level.dimension())"));
         assertTrue(oracle.contains("Level.OVERWORLD.equals(client.level.dimension())"));
@@ -73,5 +76,19 @@ final class M7FullParityContractTest {
             assertTrue(model.contains("applyNonNetherInstructions(quad, enabledCapabilities)"));
             assertTrue(overlays.contains("SimpleUnbakedExtraModel.blockStateModel"));
         }
+    }
+
+    @Test
+    void runtimeAndCiRequireResolvedNetherModels() throws IOException {
+        String convention = Files.readString(root().resolve("gradle/version-module.gradle"));
+        String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
+
+        assertTrue(convention.contains("resources.srcDir project(':common').file('src/main/resources')"));
+        assertTrue(convention.contains("assets/blocklens/models/block/nether/interior_fill.json"));
+        assertTrue(convention.contains("assets/blocklens/models/block/nether/upper_band.json"));
+        assertTrue(convention.contains("retired Nether Tweaks side_fill model"));
+        assertTrue(ci.contains("Verify BlockLens model resources resolved"));
+        assertTrue(ci.contains("Missing block model: blocklens:block/nether/"));
+        assertTrue(ci.contains("Expected exactly five M7 visual screenshots"));
     }
 }
