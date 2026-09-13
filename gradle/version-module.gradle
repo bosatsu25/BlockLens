@@ -73,7 +73,8 @@ tasks.named('jar') {
 }
 
 tasks.named('sourcesJar') {
-    from(project(':common').sourceSets.main.allSource)
+    // Main resources already include common resources; add only the shared Java sources explicitly.
+    from(project(':common').sourceSets.main.allJava)
     duplicatesStrategy = DuplicatesStrategy.FAIL
     preserveFileTimestamps = false
     reproducibleFileOrder = true
