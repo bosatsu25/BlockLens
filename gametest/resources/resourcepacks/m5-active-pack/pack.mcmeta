@@ -1,0 +1,9 @@
+{
+  "pack": {
+    "description": {
+      "text": "BlockLens M5 active resource-pack compatibility fixture"
+    },
+    "min_format": 71,
+    "max_format": 2048
+  }
+}
