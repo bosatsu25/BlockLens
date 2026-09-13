@@ -186,6 +186,31 @@ flowchart TD
 
 現在のgateには、exact capability/state contract、JaCoCo、PIT、両versionの実Client GameTest、native config persistence/reload acceptance、M3/M7 framebuffer artifact、model-resource warning check、reproducible JAR rebuild、privacy/residue audit、byte budgetが含まれます。
 
+## Engineering Graph Loop
+
+BlockLensでは、実装しただけでは完了扱いにしません。機能追加・不具合修正・互換性変更・性能変更のすべてで同じGraph Loopを使います。
+
+```mermaid
+flowchart LR
+    D[DISCOVER] --> P[PLAN]
+    P --> I[IMPLEMENT]
+    I --> V[VERIFY]
+    V --> R[SELF REVIEW]
+    R --> K[DOCUMENT]
+    K --> PR[PR]
+    PR --> CI[CI]
+    CI --> U[ISSUE UPDATE]
+    U --> DONE([DONE])
+
+    V -- fail --> X[DIAGNOSE]
+    R -- defect --> X
+    CI -- fail --> X
+    X --> F[FIX]
+    F --> V
+```
+
+失敗時は**DIAGNOSE → FIX → VERIFY**へ戻り、直接完了へ進みません。正式なterminal-state ruleは [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) を正本とします。
+
 ## まだ未完了の項目
 
 M7 core gateがGREENでも、全互換性を検証済みという意味ではありません。残件は次です。
