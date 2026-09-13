@@ -18,7 +18,7 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
- * M8 pre-optimization performance baseline.
+ * M8 repeatable performance observation oracle.
  *
  * <p>This oracle deliberately records measurements without defining an absolute regression
  * threshold. CI runner noise must be observed across repeated runs before a tolerance is frozen.
@@ -60,10 +60,9 @@ final class M8PerformanceBaselineOracle {
             for (int i = 0; i < MEASURED_SAMPLES; i++) {
                 reloadNanos[i] = measureReload(context);
             }
-            requirePipeline("M8 post-reload baseline");
+            requirePipeline("M8 post-reload observation");
 
             ensureAllocationProbeAvailable();
-            // Warm the terrain rebuild path once before recording either side of the comparison.
             install(allOff);
             rebuild(context);
 
@@ -74,7 +73,7 @@ final class M8PerformanceBaselineOracle {
             long[] onRelevantAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] onRebuildNanos = new long[MEASURED_SAMPLES];
 
-            // Alternate OFF/ON pairs to reduce monotonic warmup bias between the two scenarios.
+            // Alternate OFF/ON pairs to reduce monotonic warmup bias between scenarios.
             for (int i = 0; i < MEASURED_SAMPLES; i++) {
                 install(allOff);
                 RebuildMeasurement off = measureRebuild(context);
@@ -145,7 +144,7 @@ final class M8PerformanceBaselineOracle {
             require(offRebuild.min() > 0L && onRebuild.min() > 0L,
                     "M8 rebuild timing must be positive");
         } catch (IOException exception) {
-            throw new AssertionError("M8 performance baseline failed", exception);
+            throw new AssertionError("M8 performance observation failed", exception);
         } finally {
             install(original);
             rebuild(context);
@@ -175,8 +174,6 @@ final class M8PerformanceBaselineOracle {
         for (int z : zs) {
             for (int x : xs) {
                 String block = resources[index++];
-                // Four blocks per capability make BlockLens's incremental chunk-rebuild work
-                // measurable without creating a world-scale stress test.
                 for (int y = -59; y <= -56; y++) {
                     server.runCommand("setblock " + x + " " + y + " " + z + " minecraft:" + block);
                 }
@@ -303,7 +300,7 @@ final class M8PerformanceBaselineOracle {
             long relevantAllocationMedianDelta,
             long rebuildMedianDelta) throws IOException {
         String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
-                + "mode=pre-optimization-baseline-no-absolute-threshold\n"
+                + "mode=m8-observation-no-absolute-threshold\n"
                 + "resourceCapabilities=" + EXPECTED_RESOURCE_CAPABILITIES + "\n"
                 + "resourceBlocksInScene=" + (EXPECTED_RESOURCE_CAPABILITIES * 4) + "\n"
                 + "reloadWarmups=" + RELOAD_WARMUPS + "\n"
