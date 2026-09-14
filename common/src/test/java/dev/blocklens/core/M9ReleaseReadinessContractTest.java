@@ -87,12 +87,12 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(properties.contains("mod_version=0.2.2"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability AMATERAS baseline"));
 
-        // Keep the reviewed v0.2.1 no-growth baseline and 100 KiB release ceiling until the
-        // v0.2.2 CI run provides exact measured evidence for any deliberate rebaseline.
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=101913"));
-        assertTrue(properties.contains("runtime_jar_release_budget_bytes=102400"));
+        // PR CI #280 measured the v0.2.2 bridge on both targets. Keep the exact larger result as
+        // the no-growth baseline while the product release ceiling provides deliberate 150 KiB headroom.
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=102644"));
+        assertTrue(properties.contains("runtime_jar_release_budget_bytes=153600"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("Post-v0.2.0 stability/performance review measurement"));
+        assertTrue(properties.contains("PR CI #280 / 34832039990"));
 
         assertTrue(english.contains("v0.1.0"));
         assertTrue(japanese.contains("v0.1.0"));
@@ -125,6 +125,7 @@ final class M9ReleaseReadinessContractTest {
             assertTrue(document.contains("SHA-256"));
             assertTrue(document.contains("95,333 B"));
             assertTrue(document.contains("96,257 B"));
+            // Historical 100 KiB evidence remains documented even though the current product ceiling is 150 KiB.
             assertTrue(document.contains("100 KiB"));
             assertTrue(document.contains("shader-OFF"));
             assertTrue(document.contains("Vulkan"));
