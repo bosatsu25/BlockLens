@@ -26,7 +26,7 @@ import net.fabricmc.loader.api.FabricLoader;
  * regression guard. These limits detect large regressions; they are not evidence of a speedup.</p>
  */
 final class M8PerformanceBaselineOracle {
-    private static final int EXPECTED_RESOURCE_CAPABILITIES = 18;
+    private static final int EXPECTED_RESOURCE_CAPABILITIES = 21;
     private static final int RELOAD_WARMUPS = 1;
     private static final int MEASURED_SAMPLES = 3;
     private static final int RELOAD_TIMEOUT_TICKS = 1200;
@@ -55,7 +55,7 @@ final class M8PerformanceBaselineOracle {
             BlockLensConfig resourceOnly = resourceOnly(original);
             BlockLensConfig allOff = allOff(original);
             require(enabledCount(resourceOnly) == EXPECTED_RESOURCE_CAPABILITIES,
-                    "M8 resource-only config must enable exactly 18 capabilities");
+                    "M8 resource-only config must enable exactly 21 capabilities");
 
             install(resourceOnly);
             for (int i = 0; i < RELOAD_WARMUPS; i++) {
@@ -71,8 +71,8 @@ final class M8PerformanceBaselineOracle {
             for (int i = 0; i < MEASURED_SAMPLES; i++) {
                 reloadNanos[i] = measureReload(context);
                 ModelRetention retention = captureRetention();
-                require(retention.wrappedModels() >= 320,
-                        "M8 expected at least 320 wrapped models after reload, got " + retention.wrappedModels());
+                require(retention.wrappedModels() >= 322,
+                        "M8 expected at least 322 wrapped models after reload, got " + retention.wrappedModels());
                 require(retention.retainedCapabilitySlots() >= retention.wrappedModels(),
                         "M8 retained capability slots must cover every wrapped model");
                 require(retention.maxCapabilitiesPerModel() > 0,
@@ -230,17 +230,18 @@ final class M8PerformanceBaselineOracle {
         server.runCommand("time set noon");
         server.runCommand("weather clear");
         server.runCommand("gamemode spectator @a");
-        server.runCommand("fill -10 -61 -6 10 -50 10 minecraft:air");
-        server.runCommand("fill -10 -60 -6 10 -60 10 minecraft:smooth_quartz");
+        server.runCommand("fill -11 -61 -6 11 -50 10 minecraft:air");
+        server.runCommand("fill -11 -60 -6 11 -60 10 minecraft:smooth_quartz");
 
         String[] resources = {
                 "obsidian", "ancient_debris", "diamond_ore", "deepslate_diamond_ore",
                 "gold_ore", "deepslate_gold_ore", "emerald_ore", "deepslate_emerald_ore",
                 "coal_ore", "deepslate_coal_ore", "iron_ore", "deepslate_iron_ore",
                 "copper_ore", "deepslate_copper_ore", "lapis_ore", "deepslate_lapis_ore",
-                "redstone_ore", "deepslate_redstone_ore"
+                "redstone_ore", "deepslate_redstone_ore", "crying_obsidian",
+                "nether_gold_ore", "nether_quartz_ore"
         };
-        int[] xs = {-8, -5, -2, 1, 4, 7};
+        int[] xs = {-9, -6, -3, 0, 3, 6, 9};
         int[] zs = {-2, 1, 4};
         int index = 0;
         for (int z : zs) {
@@ -340,9 +341,7 @@ final class M8PerformanceBaselineOracle {
     private static int enabledCount(BlockLensConfig config) {
         int count = 0;
         for (CapabilityId capability : CapabilityId.values()) {
-            if (config.isEnabled(capability)) {
-                count++;
-            }
+            if (config.isEnabled(capability)) count++;
         }
         return count;
     }
@@ -356,8 +355,8 @@ final class M8PerformanceBaselineOracle {
 
     private static void requirePipeline(String phase) {
         require(MinecraftDecorationModelPlugin.isModelPipelineReady(), phase + ": model pipeline not ready");
-        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 320,
-                phase + ": expected at least 320 wrapped models, got "
+        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 322,
+                phase + ": expected at least 322 wrapped models, got "
                         + MinecraftDecorationModelPlugin.wrappedModelCount());
     }
 
@@ -483,9 +482,7 @@ final class M8PerformanceBaselineOracle {
     }
 
     private static void require(boolean condition, String message) {
-        if (!condition) {
-            throw new AssertionError(message);
-        }
+        if (!condition) throw new AssertionError(message);
     }
 
     private record ModelRetention(
@@ -514,14 +511,10 @@ final class M8PerformanceBaselineOracle {
             long total = 0L;
             for (int i = 0; i < after.ids.length; i++) {
                 long afterBytes = after.allocatedBytes[i];
-                if (afterBytes < 0L || (relevantOnly && !renderRelevantThread(after.names[i]))) {
-                    continue;
-                }
+                if (afterBytes < 0L || (relevantOnly && !renderRelevantThread(after.names[i]))) continue;
                 int beforeIndex = indexOf(ids, after.ids[i]);
                 long beforeBytes = beforeIndex < 0 ? 0L : allocatedBytes[beforeIndex];
-                if (beforeBytes >= 0L && afterBytes >= beforeBytes) {
-                    total += afterBytes - beforeBytes;
-                }
+                if (beforeBytes >= 0L && afterBytes >= beforeBytes) total += afterBytes - beforeBytes;
             }
             return total;
         }
@@ -536,9 +529,7 @@ final class M8PerformanceBaselineOracle {
 
     private record Stats(long min, long median, long p95NearestRank, long p99NearestRank, long max) {
         static Stats of(long[] samples) {
-            if (samples.length == 0) {
-                throw new IllegalArgumentException("performance samples must not be empty");
-            }
+            if (samples.length == 0) throw new IllegalArgumentException("performance samples must not be empty");
             long[] sorted = samples.clone();
             Arrays.sort(sorted);
             int medianIndex = sorted.length / 2;
