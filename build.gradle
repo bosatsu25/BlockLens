@@ -11,6 +11,10 @@ allprojects {
     repositories {
         mavenCentral()
         maven { url = 'https://maven.fabricmc.net/' }
+        maven {
+            name = 'Terraformers'
+            url = 'https://maven.terraformersmc.com/'
+        }
     }
 }
 

@@ -7,3 +7,7 @@ ext.blockLensMinecraftVersion = rootProject.minecraft_26_1_2
 ext.blockLensFabricApiVersion = rootProject.fabric_api_26_1_2
 
 apply from: rootProject.file('gradle/version-module.gradle')
+
+dependencies {
+    implementation "com.terraformersmc:modmenu:${rootProject.modmenu_26_1_2}"
+}
