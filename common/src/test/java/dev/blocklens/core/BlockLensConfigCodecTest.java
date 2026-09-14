@@ -28,6 +28,9 @@ final class BlockLensConfigCodecTest {
         assertTrue(config.isEnabled(CapabilityId.SCULK_CATALYST));
         assertTrue(config.isEnabled(CapabilityId.STRING_TWEAKS));
         assertFalse(config.isEnabled(CapabilityId.ANCIENT_DEBRIS));
+        assertFalse(config.isEnabled(CapabilityId.CRYING_OBSIDIAN));
+        assertFalse(config.isEnabled(CapabilityId.NETHER_GOLD_ORE));
+        assertFalse(config.isEnabled(CapabilityId.NETHER_QUARTZ_ORE));
     }
 
     @Test
@@ -42,7 +45,7 @@ final class BlockLensConfigCodecTest {
         assertEquals(expected.asMap(), actual.asMap());
         assertEquals(expected.enabledMask(), actual.enabledMask());
         assertTrue(encoded.startsWith("# BlockLens native config v1\n"));
-        assertEquals(38, encoded.lines().count());
+        assertEquals(CapabilityId.values().length + 1L, encoded.lines().count());
     }
 
     @Test
@@ -60,7 +63,6 @@ final class BlockLensConfigCodecTest {
         assertEquals((original | anvilBit) & ~blueIceBit, config.enabledMask());
         assertFalse(config.isEnabled(CapabilityId.BLUE_ICE));
 
-        // withEnabled remains immutable: earlier snapshots do not change.
         BlockLensConfig unchangedDefaults = BlockLensConfig.defaults();
         assertFalse(unchangedDefaults.isEnabled(CapabilityId.ANVIL));
         assertTrue(unchangedDefaults.isEnabled(CapabilityId.BLUE_ICE));
