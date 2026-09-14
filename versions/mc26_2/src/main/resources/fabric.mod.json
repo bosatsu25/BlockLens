@@ -9,6 +9,9 @@
   "entrypoints": {
     "client": [
       "dev.blocklens.fabric.BlockLensClient"
+    ],
+    "modmenu": [
+      "dev.blocklens.fabric.BlockLensModMenu"
     ]
   },
   "depends": {

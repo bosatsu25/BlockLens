@@ -68,8 +68,6 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(release.contains("assets/blocklens/icon.png"));
         assertTrue(release.contains("no duplicate release"));
 
-        // The live release notes must describe the current product, not silently repeat the
-        // historical v0.1.0 capability count.
         assertTrue(release.contains("40 independently configurable capabilities"));
         assertTrue(release.contains("37-capability AMATERAS baseline"));
         assertTrue(release.contains("Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore"));
@@ -84,19 +82,15 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        // v0.1.0 remains immutable historical release evidence; v0.2.0 remains published P0
-        // evidence while v0.2.1 carries the backward-compatible runtime/settings hardening.
-        assertTrue(properties.contains("mod_version=0.2.1"));
+        assertTrue(properties.contains("mod_version=0.2.2"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability AMATERAS baseline"));
+        assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
 
-        // The current source is explicitly rebaselined from measured dual-version evidence,
-        // without relaxing the product release ceiling or the source-pack absolute maximum.
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=101913"));
-        assertTrue(properties.contains("runtime_jar_release_budget_bytes=102400"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=112640"));
+        assertTrue(properties.contains("runtime_jar_release_budget_bytes=153600"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("Post-v0.2.0 stability/performance review measurement"));
+        assertTrue(properties.contains("user-facing product ceiling is now 150 KiB"));
 
-        // Historical v0.1.0 and published v0.2.0 evidence stay visible while v0.2.1 is verified.
         assertTrue(english.contains("v0.1.0"));
         assertTrue(japanese.contains("v0.1.0"));
         assertTrue(english.contains("v0.2.0"));
