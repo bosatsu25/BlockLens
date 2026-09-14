@@ -5,11 +5,12 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Single exact-target entry point for all 37 BlockLens capabilities.
+ * Single exact-target entry point for all compiled BlockLens capabilities.
  *
  * <p>Catalogs stay split by semantic family for maintainability, while version adapters consume
- * this one compiled/static view. No suffix matching, resource scanning, or runtime discovery is
- * performed.</p>
+ * this one compiled/static view. The original 37 AMATERAS-derived capabilities remain a frozen
+ * regression boundary; reviewed post-v0.1 capabilities are additive. No suffix matching, resource
+ * scanning, or runtime discovery is performed.</p>
  */
 public final class BlockLensTargetCatalog {
     private BlockLensTargetCatalog() {
