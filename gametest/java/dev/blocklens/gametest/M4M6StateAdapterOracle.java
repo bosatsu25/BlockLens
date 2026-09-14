@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
-/** Real-client semantic oracle for the M4 visibility and M6 Nether state families. */
+/** Real-client semantic oracle for visibility and Nether state families. */
 final class M4M6StateAdapterOracle {
     private M4M6StateAdapterOracle() {
     }
@@ -36,10 +36,27 @@ final class M4M6StateAdapterOracle {
         require(wire.connected(Facing.WEST), "tripwire west connection missing");
         require(wire.powered() && !wire.attached(), "tripwire powered/attached semantic mismatch");
 
+        BlockState hook = block("tripwire_hook").defaultBlockState()
+                .setValue(BlockStateProperties.POWERED, true)
+                .setValue(BlockStateProperties.ATTACHED, true);
+        SemanticState hookSemantic = MinecraftStateAdapter.interpret(CapabilityId.STRING_TWEAKS, hook);
+        require(!hookSemantic.connected(Facing.NORTH)
+                        && !hookSemantic.connected(Facing.EAST)
+                        && !hookSemantic.connected(Facing.SOUTH)
+                        && !hookSemantic.connected(Facing.WEST),
+                "tripwire hook must not invent directional wire connections");
+        require(hookSemantic.powered() && hookSemantic.attached(),
+                "tripwire hook powered/attached semantic mismatch");
+
         BlockState stem = block("crimson_stem").defaultBlockState()
                 .setValue(BlockStateProperties.AXIS, net.minecraft.core.Direction.Axis.X);
         require(MinecraftStateAdapter.interpret(CapabilityId.NETHER_TWEAKS, stem).axis() == Axis.X,
                 "Nether Tweaks stem axis semantic mismatch");
+
+        BlockState polishedBasalt = block("polished_basalt").defaultBlockState()
+                .setValue(BlockStateProperties.AXIS, net.minecraft.core.Direction.Axis.Z);
+        require(MinecraftStateAdapter.interpret(CapabilityId.NETHER_TWEAKS, polishedBasalt).axis() == Axis.Z,
+                "P0 polished basalt axis semantic mismatch");
 
         require(MinecraftStateAdapter.interpret(
                         CapabilityId.NETHER_TWEAKS,
