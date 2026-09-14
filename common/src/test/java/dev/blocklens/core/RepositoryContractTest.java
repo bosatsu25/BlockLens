@@ -49,7 +49,7 @@ final class RepositoryContractTest {
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
         assertTrue(source.contains("implements FabricClientGameTest"));
-        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 37"));
+        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 40"));
         assertTrue(source.contains("context.worldBuilder().create()"));
         assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
         assertTrue(source.contains("MinecraftStateAdapterOracle.verify()"));
@@ -60,12 +60,17 @@ final class RepositoryContractTest {
         assertTrue(adapterOracle.contains("white_glazed_terracotta"));
         assertTrue(adapterOracle.contains("white_stained_glass_pane"));
         assertTrue(targetOracle.contains("MinecraftDecorationTargetIndex.build()"));
-        assertTrue(targetOracle.contains("bindingCount() == 323"));
-        assertTrue(targetOracle.contains("mappedCount() == 320"));
+        assertTrue(targetOracle.contains("bindingCount() == 328"));
+        assertTrue(targetOracle.contains("mappedCount() == 322"));
         assertTrue(targetOracle.contains("BlockLensTargetCatalog.targets"));
         assertTrue(targetOracle.contains("CapabilityId.NETHER_TWEAKS"));
+        assertTrue(targetOracle.contains("CapabilityId.CRYING_OBSIDIAN"));
+        assertTrue(targetOracle.contains("CapabilityId.NETHER_GOLD_ORE"));
+        assertTrue(targetOracle.contains("CapabilityId.NETHER_QUARTZ_ORE"));
+        assertTrue(targetOracle.contains("tripwire_hook"));
+        assertTrue(targetOracle.contains("polished_basalt"));
         assertTrue(targetOracle.contains("MinecraftDecorationModelPlugin.isModelPipelineReady()"));
-        assertTrue(targetOracle.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 320"));
+        assertTrue(targetOracle.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 322"));
         assertFalse(Files.exists(retiredPlainJUnitOracle),
                 "mapped BlockState oracle must run after real client bootstrap, not in plain JUnit");
 
@@ -101,6 +106,8 @@ final class RepositoryContractTest {
                 "common/src/main/java/dev/blocklens/core/render/BlockLensTargetCatalog.java"));
         String resourceCatalog = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/ResourceTargetCatalog.java"));
+        String visibilityCatalog = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/VisibilityTargetCatalog.java"));
         String netherCatalog = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/NetherTweaksTargetCatalog.java"));
         String config = Files.readString(root().resolve(
@@ -127,7 +134,12 @@ final class RepositoryContractTest {
         assertTrue(catalog.contains("CapabilityId.TRAPDOOR"));
         assertTrue(resourceCatalog.contains("CapabilityId.ANCIENT_DEBRIS"));
         assertTrue(resourceCatalog.contains("CapabilityId.DEEPSLATE_DIAMOND_ORE"));
+        assertTrue(resourceCatalog.contains("CapabilityId.CRYING_OBSIDIAN"));
+        assertTrue(resourceCatalog.contains("CapabilityId.NETHER_GOLD_ORE"));
+        assertTrue(resourceCatalog.contains("CapabilityId.NETHER_QUARTZ_ORE"));
+        assertTrue(visibilityCatalog.contains("tripwire_hook"));
         assertTrue(netherCatalog.contains("CapabilityId.NETHER_TWEAKS"));
+        assertTrue(netherCatalog.contains("polished_basalt"));
         assertTrue(unifiedCatalog.contains("DecorationTargetCatalog.targets(capability)"));
         assertTrue(unifiedCatalog.contains("VisibilityTargetCatalog.targets(capability)"));
         assertTrue(unifiedCatalog.contains("ResourceTargetCatalog.targets(capability)"));
@@ -139,7 +151,7 @@ final class RepositoryContractTest {
         assertTrue(v2612.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
         assertTrue(v262.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
         assertFalse(catalog.contains("endsWith(\"_stairs\")"),
-                "exact M0 target scope must not silently broaden by suffix");
+                "exact target scope must not silently broaden by suffix");
     }
 
     @Test
@@ -195,10 +207,11 @@ final class RepositoryContractTest {
     }
 
     @Test
-    void engineeringGraphLoopAndBilingualReadmesRemainDocumented() throws IOException {
+    void engineeringGraphLoopBilingualReadmesAndMigrationDirectionRemainDocumented() throws IOException {
         String agents = Files.readString(root().resolve("AGENTS.md"));
         String index = Files.readString(root().resolve("knowledge/index.md"));
         String graphLoop = Files.readString(root().resolve("knowledge/current/engineering-loop.md"));
+        String migration = Files.readString(root().resolve("knowledge/current/chisetweaks-migration.md"));
         String englishReadme = Files.readString(root().resolve("README.md"));
         String japaneseReadme = Files.readString(root().resolve("README_ja.md"));
 
@@ -209,6 +222,10 @@ final class RepositoryContractTest {
         assertTrue(index.contains("current/engineering-loop.md"));
         assertTrue(index.contains("current/m3-visual-semantics.md"));
         assertTrue(index.contains("current/m4-visual-semantics.md"));
+        assertTrue(index.contains("current/chisetweaks-migration.md"));
+        assertTrue(migration.contains("BlockLens is the destination product"));
+        assertTrue(migration.contains("runtime capabilities: **40**"));
+        assertTrue(migration.contains("**100 KiB release budget remains unchanged**"));
         assertTrue(graphLoop.contains("DISCOVER"));
         assertTrue(graphLoop.contains("IMPLEMENT"));
         assertTrue(graphLoop.contains("SELF REVIEW"));

@@ -20,8 +20,11 @@ final class M5DarkAreaVisualEvidenceContractTest {
                 "gametest/java/dev/blocklens/gametest/M5DarkAreaVisualOracle.java"));
 
         assertTrue(smoke.contains("M5DarkAreaVisualOracle.verify(context, singleplayer)"));
-        assertTrue(oracle.contains("EXPECTED_RESOURCE_CAPABILITIES = 18"));
+        assertTrue(oracle.contains("EXPECTED_RESOURCE_CAPABILITIES = 21"));
         assertTrue(oracle.contains("capability.category() == CapabilityId.Category.RESOURCE"));
+        assertTrue(oracle.contains("crying_obsidian"));
+        assertTrue(oracle.contains("nether_gold_ore"));
+        assertTrue(oracle.contains("nether_quartz_ore"));
         assertTrue(oracle.contains("time set midnight"));
         assertTrue(oracle.contains("minecraft:black_concrete hollow"));
         assertTrue(oracle.contains("m5-resource-dark-on"));
@@ -32,7 +35,7 @@ final class M5DarkAreaVisualEvidenceContractTest {
         assertTrue(oracle.contains("brighterPixels"));
         assertTrue(oracle.contains("luminanceGain"));
         assertTrue(oracle.contains("MinecraftTerrainInvalidator::invalidateAll"));
-        assertTrue(oracle.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 320"));
+        assertTrue(oracle.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 322"));
         assertTrue(oracle.contains("install(original)"));
     }
 

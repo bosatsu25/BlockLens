@@ -1,20 +1,23 @@
 package dev.blocklens.core.render;
 
 import dev.blocklens.core.CapabilityId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * Exact M0 target scope for Nether Tweaks.
+ * Exact compiled target scope for Nether Tweaks.
  *
- * <p>This class deliberately contains no guessed render style. The pinned source contract only
- * allows runtime behavior to be enabled once the corresponding visual rule is evidence-backed.</p>
+ * <p>The original 27 AMATERAS targets remain frozen as the M0 baseline. P0 adds ChiseTweaks'
+ * `polished_basalt` target to the runtime union without dropping BlockLens' existing `obsidian`
+ * target. This makes the migration additive and keeps the original baseline auditable.</p>
  */
 public final class NetherTweaksTargetCatalog {
+    /** Hash of the pinned AMATERAS M0 direct-path set; intentionally remains baseline-only evidence. */
     public static final String DIRECT_PATH_SET_SHA256 =
             "e20ab1991f3b4da58f67b94585ec79f5bb73e6d872090480cac96c56f8b73e40";
 
-    private static final List<String> TARGETS = List.of(
+    private static final List<String> M0_TARGETS = List.of(
             "basalt",
             "blackstone",
             "chiseled_nether_bricks",
@@ -43,6 +46,8 @@ public final class NetherTweaksTargetCatalog {
             "warped_stem",
             "warped_wart_block");
 
+    private static final List<String> TARGETS = withP0Extensions();
+
     private NetherTweaksTargetCatalog() {
     }
 
@@ -51,11 +56,22 @@ public final class NetherTweaksTargetCatalog {
         return capability == CapabilityId.NETHER_TWEAKS ? TARGETS : List.of();
     }
 
+    /** Returns the exact 27-target AMATERAS M0 baseline used by the frozen parity contract. */
+    public static List<String> m0Targets() {
+        return M0_TARGETS;
+    }
+
     public static boolean contains(String minecraftPath) {
         return TARGETS.contains(Objects.requireNonNull(minecraftPath, "minecraftPath"));
     }
 
     public static int totalBindingCount() {
         return TARGETS.size();
+    }
+
+    private static List<String> withP0Extensions() {
+        ArrayList<String> targets = new ArrayList<>(M0_TARGETS);
+        targets.add("polished_basalt");
+        return List.copyOf(targets);
     }
 }

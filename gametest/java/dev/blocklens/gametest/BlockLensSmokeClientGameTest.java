@@ -16,7 +16,7 @@ import net.fabricmc.loader.api.FabricLoader;
 
 /** Shared client smoke and integration oracle executed against every supported Minecraft version. */
 public final class BlockLensSmokeClientGameTest implements FabricClientGameTest {
-    private static final int EXPECTED_CAPABILITY_COUNT = 37;
+    private static final int EXPECTED_CAPABILITY_COUNT = 40;
 
     @Override
     public void runTest(ClientGameTestContext context) {
@@ -44,7 +44,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
 
     private static void verifyRuntime(String phase, boolean reportBaseline) {
         require(CapabilityId.values().length == EXPECTED_CAPABILITY_COUNT,
-                phase + ": expected 37 capabilities");
+                phase + ": expected 40 capabilities");
 
         String minecraftVersion = FabricLoader.getInstance()
                 .getModContainer("minecraft")

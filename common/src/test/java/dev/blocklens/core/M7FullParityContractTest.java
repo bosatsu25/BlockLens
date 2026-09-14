@@ -13,31 +13,36 @@ final class M7FullParityContractTest {
     }
 
     @Test
-    void sharedClientGameTestRunsFullM7Oracle() throws IOException {
+    void sharedClientGameTestRunsCurrentFullParityOracle() throws IOException {
         String smoke = Files.readString(root().resolve(
                 "gametest/java/dev/blocklens/gametest/BlockLensSmokeClientGameTest.java"));
         String oracle = Files.readString(root().resolve(
                 "gametest/java/dev/blocklens/gametest/M7FullParityOracle.java"));
 
         assertTrue(smoke.contains("M7FullParityOracle.verify(context, singleplayer)"));
-        assertTrue(oracle.contains("enabledCount(allOn) == 37"));
+        assertTrue(oracle.contains("enabledCount(allOn) == 40"));
         assertTrue(oracle.contains("BlockLensConfigCodec.decode(BlockLensConfigCodec.encode(allOn))"));
         assertTrue(oracle.contains("onlyEnabled(original, CapabilityId.NETHER_TWEAKS)"));
         assertTrue(oracle.contains("requireReferencePreset(preset)"));
-        assertTrue(oracle.contains("m7-all37-on"));
-        assertTrue(oracle.contains("m7-all37-reloaded"));
+        assertTrue(oracle.contains("m7-all40-on"));
+        assertTrue(oracle.contains("m7-all40-reloaded"));
         assertTrue(oracle.contains("m7-nether-only"));
         assertTrue(oracle.contains("m7-reference-preset"));
-        assertTrue(oracle.contains("m7-all37-off-active-pack"));
+        assertTrue(oracle.contains("m7-all40-off-active-pack"));
         assertTrue(oracle.contains("netherOnlyOffDifferentPixels"));
         assertTrue(oracle.contains("execute in minecraft:the_nether"));
         assertTrue(oracle.contains("Level.NETHER.equals(client.level.dimension())"));
         assertTrue(oracle.contains("Level.OVERWORLD.equals(client.level.dimension())"));
         assertTrue(oracle.contains("reloadResourcePacks()"));
         assertTrue(oracle.contains("MinecraftTerrainInvalidator::invalidateAll"));
-        assertTrue(oracle.contains("wrappedModelCount() >= 320"));
-        assertTrue(oracle.contains("targetBindings=323"));
-        assertTrue(oracle.contains("uniqueTargets=320"));
+        assertTrue(oracle.contains("wrappedModelCount() >= 322"));
+        assertTrue(oracle.contains("targetBindings=328"));
+        assertTrue(oracle.contains("uniqueTargets=322"));
+        assertTrue(oracle.contains("crying_obsidian"));
+        assertTrue(oracle.contains("nether_gold_ore"));
+        assertTrue(oracle.contains("nether_quartz_ore"));
+        assertTrue(oracle.contains("tripwire_hook"));
+        assertTrue(oracle.contains("polished_basalt"));
     }
 
     @Test
@@ -52,6 +57,7 @@ final class M7FullParityContractTest {
         assertTrue(cue.contains("targetCount()"));
         assertTrue(cue.contains("crimson_nylium"));
         assertTrue(cue.contains("warped_nylium"));
+        assertTrue(cue.contains("polished_basalt"));
         assertTrue(interior.contains("minecraft:block/white_concrete"));
         assertTrue(interior.contains("\"particle\": \"minecraft:block/white_concrete\""));
         assertTrue(interior.contains("[1,1,-0.02]"));

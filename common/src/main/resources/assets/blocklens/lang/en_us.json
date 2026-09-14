@@ -40,5 +40,8 @@
   "blocklens.capability.powdersnow": "Powder Snow",
   "blocklens.capability.sculk_catalyst": "Sculk Catalyst",
   "blocklens.capability.nethertweaks": "Nether Tweaks",
-  "blocklens.capability.stringtweaks": "String Tweaks"
+  "blocklens.capability.stringtweaks": "String Tweaks",
+  "blocklens.capability.crying_obsidian": "Crying Obsidian",
+  "blocklens.capability.nether_gold_ore": "Nether Gold Ore",
+  "blocklens.capability.nether_quartz_ore": "Nether Quartz Ore"
 }

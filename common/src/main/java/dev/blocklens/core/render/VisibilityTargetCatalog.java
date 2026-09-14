@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/** Exact M0 target scope for the five M4 outline/fine-visibility capabilities. */
+/** Exact target scope for BlockLens outline/fine-visibility capabilities. */
 public final class VisibilityTargetCatalog {
     private static final Map<CapabilityId, List<String>> TARGETS;
 
@@ -22,7 +22,8 @@ public final class VisibilityTargetCatalog {
                 "dead_tube_coral", "dead_tube_coral_block", "dead_tube_coral_fan", "dead_tube_coral_wall_fan"));
         targets.put(CapabilityId.POWDER_SNOW, List.of("powder_snow"));
         targets.put(CapabilityId.SCULK_CATALYST, List.of("sculk_catalyst"));
-        targets.put(CapabilityId.STRING_TWEAKS, List.of("tripwire"));
+        // Chise Fine Line includes both the wire and its hook; one BlockLens capability owns both.
+        targets.put(CapabilityId.STRING_TWEAKS, List.of("tripwire", "tripwire_hook"));
         TARGETS = Collections.unmodifiableMap(targets);
     }
 

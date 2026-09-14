@@ -13,13 +13,11 @@ import org.junit.jupiter.api.Test;
 
 final class ResourceHighlightPolicyTest {
     @Test
-    void allEighteenResourceCapabilitiesAreIndependentlyControllable() {
+    void allTwentyOneResourceCapabilitiesAreIndependentlyControllable() {
         BlockLensConfig defaults = BlockLensConfig.defaults();
         int count = 0;
         for (CapabilityId capability : CapabilityId.values()) {
-            if (capability.category() != CapabilityId.Category.RESOURCE) {
-                continue;
-            }
+            if (capability.category() != CapabilityId.Category.RESOURCE) continue;
             count++;
             assertFalse(defaults.isEnabled(capability));
 
@@ -35,7 +33,7 @@ final class ResourceHighlightPolicyTest {
                 }
             }
         }
-        assertEquals(18, count);
+        assertEquals(21, count);
     }
 
     @Test
@@ -50,12 +48,23 @@ final class ResourceHighlightPolicyTest {
     }
 
     @Test
+    void p0ChiseMaterialsHaveDedicatedCleanRoomCues() {
+        assertEquals(ResourceHighlightCue.CRYING_OBSIDIAN,
+                ResourceHighlightCue.forCapability(CapabilityId.CRYING_OBSIDIAN));
+        assertEquals(ResourceHighlightCue.NETHER_GOLD,
+                ResourceHighlightCue.forCapability(CapabilityId.NETHER_GOLD_ORE));
+        assertEquals(ResourceHighlightCue.NETHER_QUARTZ,
+                ResourceHighlightCue.forCapability(CapabilityId.NETHER_QUARTZ_ORE));
+        assertEquals(0xFFC42DFF, ResourceHighlightCue.CRYING_OBSIDIAN.accentArgb());
+        assertEquals(0xFFFFD220, ResourceHighlightCue.NETHER_GOLD.accentArgb());
+        assertEquals(0xFFF6EEE2, ResourceHighlightCue.NETHER_QUARTZ.accentArgb());
+    }
+
+    @Test
     void allResourceCuesAreOpaqueVisibleAccents() {
         Set<ResourceHighlightCue> seen = EnumSet.noneOf(ResourceHighlightCue.class);
         for (CapabilityId capability : CapabilityId.values()) {
-            if (capability.category() != CapabilityId.Category.RESOURCE) {
-                continue;
-            }
+            if (capability.category() != CapabilityId.Category.RESOURCE) continue;
             ResourceHighlightCue cue = ResourceHighlightCue.forCapability(capability);
             seen.add(cue);
             assertEquals(0xFF, cue.accentArgb() >>> 24);

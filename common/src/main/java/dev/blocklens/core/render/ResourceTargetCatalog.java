@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/** Exact M0 target scope for the 18 resource/highlight capabilities. */
+/** Exact compiled target scope for BlockLens resource/highlight capabilities. */
 public final class ResourceTargetCatalog {
+    public static final int AMATERAS_M0_BINDING_COUNT = 18;
+
     private static final Map<CapabilityId, List<String>> TARGETS;
 
     static {
@@ -31,6 +33,11 @@ public final class ResourceTargetCatalog {
         targets.put(CapabilityId.DEEPSLATE_LAPIS_ORE, List.of("deepslate_lapis_ore"));
         targets.put(CapabilityId.REDSTONE_ORE, List.of("redstone_ore"));
         targets.put(CapabilityId.DEEPSLATE_REDSTONE_ORE, List.of("deepslate_redstone_ore"));
+
+        // P0 ChiseTweaks material-highlight parity. These are additive BlockLens capabilities.
+        targets.put(CapabilityId.CRYING_OBSIDIAN, List.of("crying_obsidian"));
+        targets.put(CapabilityId.NETHER_GOLD_ORE, List.of("nether_gold_ore"));
+        targets.put(CapabilityId.NETHER_QUARTZ_ORE, List.of("nether_quartz_ore"));
         TARGETS = Collections.unmodifiableMap(targets);
     }
 

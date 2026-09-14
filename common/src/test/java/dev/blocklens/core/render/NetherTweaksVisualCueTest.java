@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test;
 
 final class NetherTweaksVisualCueTest {
     @Test
-    void everyFrozenNetherTargetHasAnEvidenceBackedCue() {
-        assertEquals(27, NetherTweaksTargetCatalog.totalBindingCount());
-        assertEquals(27, NetherTweaksVisualCue.targetCount());
+    void everyCurrentNetherTargetHasAProceduralCue() {
+        assertEquals(28, NetherTweaksTargetCatalog.totalBindingCount());
+        assertEquals(28, NetherTweaksVisualCue.targetCount());
         for (String path : NetherTweaksTargetCatalog.targets(CapabilityId.NETHER_TWEAKS)) {
             assertNotNull(NetherTweaksVisualCue.forTarget(path), path);
         }
     }
 
     @Test
-    void representativeFlatFillAndFramePalettesMatchSourceEvidence() {
+    void representativeFlatFillAndFramePalettesRemainStable() {
         assertCue("netherrack", 0xFF723232, 0xFF723232, 0xFF723232, 0xFF501B1B);
         assertCue("blackstone", 0xFF312C36, 0xFF312C36, 0xFF312C36, 0xFF160F10);
         assertCue("nether_bricks", 0xFF44242A, 0xFF44242A, 0xFF44242A, 0xFF30181C);
@@ -29,6 +29,7 @@ final class NetherTweaksVisualCueTest {
         assertCue("glowstone", 0xFFCC8654, 0xFFCC8654, 0xFFCC8654, 0xFF6F4522);
         assertCue("nether_quartz_ore", 0xFF723232, 0xFF723232, 0xFF723232, 0xFFEAE5DE);
         assertCue("shroomlight", 0xFFFEAC6D, 0xFFFEAC6D, 0xFFFEAC6D, 0xFFE47205);
+        assertCue("polished_basalt", 0xFF6A6A6A, 0xFF777777, 0xFF777777, 0xFF454653);
     }
 
     @Test

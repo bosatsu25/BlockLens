@@ -19,7 +19,7 @@ import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptio
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.level.Level;
 
-/** Full-product M7 integration oracle shared by both supported Minecraft lines. */
+/** Full-product integration oracle shared by both supported Minecraft lines. */
 final class M7FullParityOracle {
     private static final int WIDTH = 640;
     private static final int HEIGHT = 360;
@@ -43,26 +43,26 @@ final class M7FullParityOracle {
             context.waitTicks(20);
 
             BlockLensConfig allOn = withAllEnabled(original, true);
-            require(enabledCount(allOn) == 37, "M7 all-on config must enable 37 capabilities");
+            require(enabledCount(allOn) == 40, "full-parity all-on config must enable 40 capabilities");
             require(BlockLensConfigCodec.decode(BlockLensConfigCodec.encode(allOn)).enabledMask() == allOn.enabledMask(),
-                    "M7 all-on config round-trip changed enabled mask");
+                    "all-on config round-trip changed enabled mask");
 
             install(allOn);
             reload(context);
-            requirePipeline("all 37 enabled");
+            requirePipeline("all 40 enabled");
             rebuild(context);
-            Path onPath = screenshot(context, outputDir, "m7-all37-on");
+            Path onPath = screenshot(context, outputDir, "m7-all40-on");
 
             reload(context);
-            requirePipeline("all 37 enabled after reload");
+            requirePipeline("all 40 enabled after reload");
             rebuild(context);
-            Path reloadedPath = screenshot(context, outputDir, "m7-all37-reloaded");
+            Path reloadedPath = screenshot(context, outputDir, "m7-all40-reloaded");
 
             dimensionRoundTrip(context, singleplayer);
 
             BlockLensConfig netherOnly = onlyEnabled(original, CapabilityId.NETHER_TWEAKS);
             require(enabledCount(netherOnly) == 1 && netherOnly.isEnabled(CapabilityId.NETHER_TWEAKS),
-                    "M7 Nether-only config must enable only Nether Tweaks");
+                    "Nether-only config must enable only Nether Tweaks");
             install(netherOnly);
             reload(context);
             rebuild(context);
@@ -76,11 +76,11 @@ final class M7FullParityOracle {
             Path presetPath = screenshot(context, outputDir, "m7-reference-preset");
 
             BlockLensConfig allOff = withAllEnabled(original, false);
-            require(enabledCount(allOff) == 0, "M7 all-off config still has enabled capabilities");
+            require(enabledCount(allOff) == 0, "all-off config still has enabled capabilities");
             install(allOff);
             reload(context);
             rebuild(context);
-            Path offPath = screenshot(context, outputDir, "m7-all37-off-active-pack");
+            Path offPath = screenshot(context, outputDir, "m7-all40-off-active-pack");
 
             BufferedImage on = inspect(onPath);
             BufferedImage reloaded = inspect(reloadedPath);
@@ -91,14 +91,14 @@ final class M7FullParityOracle {
             int reloadOff = difference(reloaded, off);
             int netherOff = difference(netherOnlyImage, off);
             int presetOff = difference(presetImage, off);
-            require(onOff >= 700, "M7 all-on visual delta too small: " + onOff);
-            require(reloadOff >= 700, "M7 reload visual delta too small: " + reloadOff);
-            require(netherOff >= 250, "M7 Nether-only visual delta too small: " + netherOff);
-            require(presetOff >= 80, "M7 reference-preset visual delta too small: " + presetOff);
+            require(onOff >= 700, "all-on visual delta too small: " + onOff);
+            require(reloadOff >= 700, "reload visual delta too small: " + reloadOff);
+            require(netherOff >= 250, "Nether-only visual delta too small: " + netherOff);
+            require(presetOff >= 80, "reference-preset visual delta too small: " + presetOff);
 
             String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
-                    + "capabilities=37\nreferencePresetCapabilities=5\n"
-                    + "targetBindings=323\nuniqueTargets=320\n"
+                    + "capabilities=40\nreferencePresetCapabilities=5\n"
+                    + "targetBindings=328\nuniqueTargets=322\n"
                     + "wrappedModels=" + MinecraftDecorationModelPlugin.wrappedModelCount() + "\n"
                     + "allOnOffDifferentPixels=" + onOff + "\n"
                     + "reloadedOffDifferentPixels=" + reloadOff + "\n"
@@ -112,7 +112,7 @@ final class M7FullParityOracle {
                     + "allOffFile=" + offPath.getFileName() + "\n";
             Files.writeString(outputDir.resolve("m7-visual-manifest.txt"), manifest, StandardCharsets.UTF_8);
         } catch (IOException exception) {
-            throw new AssertionError("M7 full parity evidence failed", exception);
+            throw new AssertionError("full parity evidence failed", exception);
         } finally {
             install(original);
             rebuild(context);
@@ -126,7 +126,7 @@ final class M7FullParityOracle {
         server.runCommand("time set noon");
         server.runCommand("weather clear");
         server.runCommand("gamemode spectator @a");
-        server.runCommand("fill -13 -60 -7 13 -60 6 minecraft:smooth_quartz");
+        server.runCommand("fill -13 -60 -10 13 -60 7 minecraft:smooth_quartz");
 
         set(singleplayer, -9, 4, "blue_ice");
         set(singleplayer, -6, 4, "dead_brain_coral_block");
@@ -135,6 +135,8 @@ final class M7FullParityOracle {
         set(singleplayer, 3, 4, "tripwire[attached=true,powered=true,north=true,east=true,south=false,west=false]");
         set(singleplayer, 6, 4, "netherrack");
         set(singleplayer, 9, 4, "crimson_nylium");
+        set(singleplayer, -9, 7, "tripwire_hook[attached=true,powered=true,facing=north]");
+        set(singleplayer, -6, 7, "polished_basalt[axis=z]");
         set(singleplayer, -9, 1, "warped_nylium");
         set(singleplayer, -6, 1, "crimson_stem[axis=x]");
 
@@ -143,12 +145,12 @@ final class M7FullParityOracle {
                 "deepslate_gold_ore", "emerald_ore", "deepslate_emerald_ore", "coal_ore",
                 "deepslate_coal_ore", "iron_ore", "deepslate_iron_ore", "copper_ore",
                 "deepslate_copper_ore", "lapis_ore", "deepslate_lapis_ore", "redstone_ore",
-                "deepslate_redstone_ore"
+                "deepslate_redstone_ore", "crying_obsidian", "nether_gold_ore", "nether_quartz_ore"
         };
         int[][] positions = {
                 {-3,1},{0,1},{3,1},{6,1},{9,1},
                 {-9,-2},{-6,-2},{-3,-2},{0,-2},{3,-2},{6,-2},{9,-2},
-                {-9,-5},{-6,-5},{-3,-5},{0,-5},{3,-5},{6,-5}
+                {-9,-5},{-6,-5},{-3,-5},{0,-5},{3,-5},{6,-5},{9,-5},{-3,-8},{0,-8}
         };
         for (int i = 0; i < resources.length; i++) {
             set(singleplayer, positions[i][0], positions[i][1], resources[i]);
@@ -165,12 +167,12 @@ final class M7FullParityOracle {
         context.waitTicks(30);
         context.runOnClient(client -> require(
                 client.level != null && Level.NETHER.equals(client.level.dimension()),
-                "M7 client did not reach the Nether"));
+                "client did not reach the Nether"));
         singleplayer.getServer().runCommand("execute in minecraft:overworld run tp @a 0 -53 20 180 17");
         context.waitTicks(30);
         context.runOnClient(client -> require(
                 client.level != null && Level.OVERWORLD.equals(client.level.dimension()),
-                "M7 client did not return to the Overworld"));
+                "client did not return to the Overworld"));
         rebuild(context);
     }
 
@@ -215,7 +217,7 @@ final class M7FullParityOracle {
             Thread.sleep(OVERLAY_FADE_MILLIS);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new AssertionError("interrupted while waiting for M7 reload overlay", exception);
+            throw new AssertionError("interrupted while waiting for reload overlay", exception);
         }
         context.waitTicks(2);
     }
@@ -227,21 +229,21 @@ final class M7FullParityOracle {
 
     private static void requirePipeline(String phase) {
         require(MinecraftDecorationModelPlugin.isModelPipelineReady(), phase + ": model pipeline not ready");
-        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 320,
-                phase + ": expected at least 320 wrapped models, got " + MinecraftDecorationModelPlugin.wrappedModelCount());
+        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 322,
+                phase + ": expected at least 322 wrapped models, got " + MinecraftDecorationModelPlugin.wrappedModelCount());
     }
 
     private static Path screenshot(ClientGameTestContext context, Path outputDir, String name) throws IOException {
         Path path = context.takeScreenshot(TestScreenshotOptions.of(name)
                 .withDestinationDir(outputDir).withSize(WIDTH, HEIGHT).disableCounterPrefix());
-        require(Files.isRegularFile(path) && Files.size(path) > 1_000L, "invalid M7 screenshot: " + path);
+        require(Files.isRegularFile(path) && Files.size(path) > 1_000L, "invalid screenshot: " + path);
         return path;
     }
 
     private static BufferedImage inspect(Path path) throws IOException {
         BufferedImage image = ImageIO.read(path.toFile());
         require(image != null && image.getWidth() == WIDTH && image.getHeight() == HEIGHT,
-                "invalid M7 framebuffer capture: " + path);
+                "invalid framebuffer capture: " + path);
         return image;
     }
 

@@ -13,15 +13,26 @@ import org.junit.jupiter.api.Test;
 
 final class CapabilityIdTest {
     @Test
-    void catalogContainsExactCategoryCounts() {
+    void catalogContainsCurrentCategoryCounts() {
         EnumMap<CapabilityId.Category, Long> counts = new EnumMap<>(CapabilityId.Category.class);
         for (CapabilityId capability : CapabilityId.values()) {
             counts.merge(capability.category(), 1L, Long::sum);
         }
         assertEquals(13L, counts.get(CapabilityId.Category.DECORATION));
-        assertEquals(18L, counts.get(CapabilityId.Category.RESOURCE));
+        assertEquals(21L, counts.get(CapabilityId.Category.RESOURCE));
         assertEquals(4L, counts.get(CapabilityId.Category.OUTLINE));
         assertEquals(2L, counts.get(CapabilityId.Category.OTHER));
+        assertEquals(40, CapabilityId.values().length);
+    }
+
+    @Test
+    void originalM0OrdinalsRemainStableAndP0CapabilitiesAreAppended() {
+        assertEquals(0, CapabilityId.ANVIL.ordinal());
+        assertEquals(13, CapabilityId.OBSIDIAN.ordinal());
+        assertEquals(36, CapabilityId.STRING_TWEAKS.ordinal());
+        assertEquals(37, CapabilityId.CRYING_OBSIDIAN.ordinal());
+        assertEquals(38, CapabilityId.NETHER_GOLD_ORE.ordinal());
+        assertEquals(39, CapabilityId.NETHER_QUARTZ_ORE.ordinal());
     }
 
     @Test
@@ -38,6 +49,9 @@ final class CapabilityIdTest {
                 "others.stringtweaks"), enabled);
         assertFalse(CapabilityId.ANCIENT_DEBRIS.defaultEnabled());
         assertFalse(CapabilityId.NETHER_TWEAKS.defaultEnabled());
+        assertFalse(CapabilityId.CRYING_OBSIDIAN.defaultEnabled());
+        assertFalse(CapabilityId.NETHER_GOLD_ORE.defaultEnabled());
+        assertFalse(CapabilityId.NETHER_QUARTZ_ORE.defaultEnabled());
         assertTrue(CapabilityId.STRING_TWEAKS.defaultEnabled());
     }
 
@@ -60,5 +74,7 @@ final class CapabilityIdTest {
         assertEquals(CapabilityId.Category.OUTLINE, CapabilityId.POWDER_SNOW.category());
         assertEquals("others.nethertweaks", CapabilityId.NETHER_TWEAKS.sourceKey());
         assertEquals(CapabilityId.Category.OTHER, CapabilityId.NETHER_TWEAKS.category());
+        assertEquals("gaming.crying_obsidian", CapabilityId.CRYING_OBSIDIAN.sourceKey());
+        assertEquals(CapabilityId.Category.RESOURCE, CapabilityId.CRYING_OBSIDIAN.category());
     }
 }

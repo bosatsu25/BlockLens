@@ -6,26 +6,174 @@
 
 **English** | [日本語](README_ja.md)
 
-BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It recreates the useful visual behavior of the pinned AMATERAS resource-pack baseline as compact, testable code instead of redistributing thousands of state-specific JSON/PNG files.
+BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It converts the useful behavior encoded by the AMATERAS resource-pack/RPO source into compact, testable Java/Fabric runtime behavior instead of redistributing thousands of state-specific JSON/PNG files.
 
-The product contract contains **37 independently configurable capabilities**. Minecraft-version differences are isolated behind thin adapters while configuration, semantic state, target policy, rendering behavior, quality gates, and release automation are shared across Minecraft **26.1.2** and **26.2**.
+The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Current state:** **M0-M9 are complete and BlockLens v0.1.0 is published and verified.** The release was produced from successful `main` CI **#245 / `34768792311`** at commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`. The published JARs are exactly the CI-verified artifacts. The icon-inclusive no-growth baseline is **95,333 B**, with a strict **100 KiB** release budget.
+> **Stable release:** BlockLens **v0.1.0** contains the frozen **37-capability AMATERAS baseline** and is published for Minecraft **26.1.2** and **26.2**.
+>
+> **Current development / P0:** BlockLens is becoming the destination product for selected ChiseTweaks capabilities. P0 keeps all original 37 capability IDs/config keys stable and grows the runtime to **40 capabilities / 328 capability-to-target bindings / 322 unique block targets**. The latest measured P0 JAR maximum is **96,257 B**, while the strict **100 KiB** release budget remains unchanged.
+
+## Product direction
+
+BlockLens is the product base. ChiseTweaks is a source of selected capabilities and design ideas; it is **not** a runtime dependency.
+
+```mermaid
+flowchart TB
+    BL[BlockLens Next]
+    BL --> AM[AMATERAS baseline · 37 capabilities]
+    BL --> CH[ChiseTweaks migration · P0-P5]
+
+    AM --> D[Orientation / State · 13]
+    AM --> R[Resource Highlight · 18]
+    AM --> V[Visibility / Fine Geometry · 5]
+    AM --> N[Nether Palette · 1]
+
+    CH --> P0[P0 · visual overlap]
+    CH --> P1[P1 · additional visual features]
+    CH --> P2[P2 · comfort visuals]
+    CH --> P3[P3 · bounded analyzers / overlays]
+    CH --> P4[P4 · builder workflow]
+    CH --> P5[P5 · compatibility / extensions]
+```
+
+The migration plan is tracked in **Issue #22** and [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md).
+
+## AMATERAS raw-source parity
+
+The original intent is preserved: **all useful behavior represented by the effective AMATERAS raw source must be represented by BlockLens**. That does not mean copying every source file into the runtime JAR.
+
+The latest raw-source audit reproduced the established M0 evidence shape:
+
+- **37 distinct RPO condition keys**
+- **337 `.rpo` sidecars** in the supplied archive
+- **336 effective gated roots**
+- the 337th sidecar is an orphan duplicate `pale_oak_slab.rpo`, not a 38th capability
+- **4,196 non-RPO Minecraft assets**
+- **4,101 reachable assets** from effective RPO-gated roots
+- **95 unreachable/source-residue candidates**
+- BlockLens v0.1.0: **37 compiled capabilities / 323 capability-to-target bindings**
+
+The raw source is therefore compressed into logical behavior rather than embedded literally:
+
+```mermaid
+flowchart LR
+    RAW[AMATERAS raw source<br/>4,196 non-RPO assets] --> RPO[37 RPO capabilities]
+    RPO --> CONTRACT[logical target + state contracts]
+    CONTRACT --> IDX[compiled target catalogs]
+    IDX --> SEM[SemanticState]
+    SEM --> RENDER[bounded procedural rendering]
+    RENDER --> JAR[BlockLens runtime<br/>~95-96 KiB]
+```
+
+### Source-to-runtime grouping
+
+| Source group | RPO keys | Effective source shape | BlockLens v0.1.0 logical coverage |
+| --- | ---: | --- | --- |
+| Orientation / Decoration | 13 | blockstates + large model/texture dependency graph | **254 block targets** |
+| Resource Highlight | 18 | 18 independently gated resource roots | **18 block targets** |
+| Outline / Visibility | 4 | texture/blockstate gates | Blue Ice + **20 Dead Coral forms** + Powder Snow + Sculk Catalyst |
+| String Tweaks | 1 | Tripwire blockstate + dependent geometry | **Tripwire** |
+| Nether Tweaks | 1 | **33 textures + 1 model** | **27 Nether block targets** |
+
+Two cases are worth calling out:
+
+- **Dead Coral:** 15 gated textures represent 20 logical dead-coral block forms because wall-fan forms reuse fan textures. BlockLens targets all 20 logical forms.
+- **Nether Tweaks:** 33 gated textures plus one Magma Block model represent 27 logical block targets. BlockLens targets those 27 blocks rather than shipping the original texture set.
+
+The complete per-capability audit is in [`knowledge/current/amateras-raw-parity-audit.md`](knowledge/current/amateras-raw-parity-audit.md) and tracked by **Issue #24**.
+
+## Stable v0.1.0 capability map
+
+```mermaid
+flowchart TB
+    BL[BlockLens v0.1.0 · 37 capabilities]
+    BL --> D[Orientation / State · 13]
+    BL --> R[Resource Highlight · 18]
+    BL --> O[Visibility / Fine Geometry · 5]
+    BL --> N[Nether Tweaks · 1]
+
+    D --> D1[Anvil · Beehive · Campfire · Glazed Terracotta]
+    D --> D2[Grindstone · Fence Gate · Froglight · Slabs]
+    D --> D3[Stained Glass · Stairs · Trapdoor · Wood · Log]
+    R --> R1[Obsidian · Ancient Debris]
+    R --> R2[Diamond · Gold · Emerald · Coal · Iron · Copper · Lapis · Redstone]
+    R --> R3[normal + deepslate variants]
+    O --> O1[Blue Ice · Dead Coral · Powder Snow · Sculk Catalyst · String Tweaks]
+```
+
+The supplied RPO preset historically enables five capabilities by default: Blue Ice, Dead Coral, Powder Snow, Sculk Catalyst, and String Tweaks. That preset is not the complete product scope.
+
+## P0: ChiseTweaks visual-overlap absorption
+
+P0 extends the existing BlockLens engine rather than importing the ChiseTweaks feature framework.
+
+### Additive capabilities
+
+- Crying Obsidian
+- Nether Gold Ore
+- Nether Quartz Ore
+
+### Existing capabilities extended with ChiseTweaks parity
+
+- String Tweaks → adds **Tripwire Hook** coverage
+- Nether Tweaks → adds **Polished Basalt** coverage
+
+The first 37 enum entries, bit positions, source/config keys, and defaults remain frozen. P0 appends new capability IDs only.
+
+Current P0 contract:
+
+- **40 capabilities**
+- **328 capability-to-target bindings**
+- **322 unique block targets**
+- measured JAR: **96,256 B (26.1.2) / 96,257 B (26.2)**
+- current no-growth baseline: **96,257 B**
+- release ceiling: **102,400 B / 100 KiB**, unchanged
+
+P0 is under active verification in PR #23; these development numbers are not presented as a published v0.2.0 release until the full dual-version CI/real-client gate is green and merged.
+
+## Runtime architecture
+
+```mermaid
+flowchart TD
+    MC[Minecraft BlockState] --> VA[version-specific state adapter]
+    VA --> SS[common SemanticState]
+    SS --> IDX[exact raw-ID capability index]
+    IDX --> BAKE[model-bake classification]
+    SS --> BAKE
+    BAKE --> WRAP[unified wrapped BlockStateModel]
+    WRAP --> MASK{represented capability enabled?}
+    MASK -- no --> BASE[emit active baked base directly]
+    MASK -- yes --> CUE[apply BlockLens procedural cue]
+    CUE --> OUT[base model + visual information]
+```
+
+Runtime principles:
+
+- compiled catalogs; no reflection/classpath feature discovery
+- no whole-world target scan for ordinary visual features
+- no per-frame registry scan
+- semantic interpretation at model bake
+- primitive enabled-capability mask on the render hot path
+- direct active-base emission when represented capabilities are OFF
+- immutable/bounded cue and instruction reuse
+- bounded retained-capability structure across repeated resource reloads
+- client-only packaging with no nested runtime dependency JARs
 
 ## Release
 
-**v0.1.0** is the first verified release line.
+**v0.1.0** is the first verified stable release line and remains the historical 37-capability baseline.
 
 | Minecraft | Published JAR | Size | SHA-256 |
 | --- | --- | ---: | --- |
 | 26.1.2 | `BlockLens-26.1.2-v0.1.0.jar` | **95,332 B** | `191f579fe7d574c94614b611c01420fa6887684e2fabc597966515490f59d24b` |
 | 26.2 | `BlockLens-26.2-v0.1.0.jar` | **95,333 B** | `3848de8a07836d829d12ab5ed09ee650d5e1bebd4e0249b254436dda9c5a54be` |
 
-The release also publishes `SHA256SUMS.txt`. Release run **#3 / `34769093202`** completed successfully and verified the exact asset set after publication.
+The release was produced from successful `main` CI **#245 / `34768792311`** at commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`. Release run **#3 / `34769093202`** published the exact CI-verified JAR bytes plus `SHA256SUMS.txt`.
 
 ## Supported environment
 
-| Item | Current contract |
+| Item | Current verified contract |
 | --- | --- |
 | Minecraft | **26.1.2** and **26.2** |
 | Loader | Fabric Loader **0.19.3+** |
@@ -33,155 +181,86 @@ The release also publishes `SHA256SUMS.txt`. Release run **#3 / `34769093202`** 
 | Java | **25+** |
 | Side | **Client only** |
 | Server-side BlockLens | Not required |
-| Verified renderer path | Default / shader-OFF OpenGL |
-| Shader-ON | Not yet claimed as supported |
-| Minecraft 26.2 Vulkan | Experimental |
+| Verified renderer path | default / **shader-OFF OpenGL** |
+| Shader-ON | not yet claimed as supported |
+| Minecraft 26.2 Vulkan | experimental |
 
-## 37-capability product map
-
-```mermaid
-flowchart TB
-    BL[BlockLens · 37 capabilities]
-    BL --> D[Decoration / Orientation · 13]
-    BL --> R[Resource Highlighting · 18]
-    BL --> O[Outline / Fine Visibility · 5]
-    BL --> N[Nether Tweaks · 1]
-
-    D --> D1[Anvil · Beehive · Campfire · Glazed Terracotta]
-    D --> D2[Grindstone · Fence Gate · Froglight · Slabs]
-    D --> D3[Stained Glass · Stairs · Trapdoor · Wood · Log]
-    R --> R1[Obsidian · Ancient Debris · 8 ore families]
-    R --> R2[normal + deepslate variants]
-    O --> O1[Blue Ice · Dead Coral · Powder Snow · Sculk Catalyst · String Tweaks]
-```
-
-The supplied RPO enables five capabilities by default—Blue Ice, Dead Coral, Powder Snow, Sculk Catalyst, and String Tweaks. That preset is not the complete product scope.
-
-## Runtime architecture
-
-```mermaid
-flowchart TD
-    MC[Minecraft BlockState] --> VA[Version-specific state adapter]
-    VA --> SS[Common SemanticState]
-    SS --> IDX[Exact raw-ID capability index]
-    IDX --> BAKE[Model-bake classification]
-    SS --> BAKE
-    BAKE --> WRAP[Unified wrapped BlockStateModel]
-    WRAP --> MASK{represented capability enabled?}
-    MASK -- no --> BASE[emit active baked base directly]
-    MASK -- yes --> CUE[apply BlockLens procedural cue]
-    CUE --> OUT[base model + BlockLens visual information]
-```
-
-Runtime principles:
-
-- **323 capability-to-target bindings** / **320 unique Minecraft block targets**
-- no whole-world target scan
-- no per-frame registry scan
-- semantic interpretation at model bake
-- primitive enabled-capability mask on the render hot path
-- direct active-base emission when no represented capability is enabled
-- immutable/bounded cue and instruction reuse
-- bounded retained-capability structure verified across repeated resource reloads
-- client-only packaging with no nested runtime dependency JARs
+Issue #5 remains intentionally open for representative shader-ON / broader external compatibility evidence.
 
 ## Technology foundation
 
-BlockLens is intentionally small at runtime, but its engineering and QA foundation is deliberately strict.
+BlockLens is intentionally small at runtime, but its engineering and QA foundation is strict.
 
-| Layer | Technology | Role in BlockLens |
+| Layer | Technology | Role |
 | --- | --- | --- |
-| Language | **Java 25** | Production code, shared semantic engine, Fabric adapters, tests |
-| Build | **Gradle 9.5.1** | Multi-project build, deterministic artifacts, verification tasks |
-| Minecraft tooling | **Fabric Loom 1.17.19** | Minecraft mappings, development runtime, build integration |
-| Loader | **Fabric Loader 0.19.3** | Client-side mod loading |
-| Runtime API | **Fabric API** | Version-specific Minecraft/Fabric hooks and Client GameTest integration |
-| Unit / contract tests | **JUnit Jupiter 5.14.4** | Semantic, config, target-policy, repository, regression and release contracts |
-| Test platform | **JUnit Platform** | JUnit 5 execution through Gradle |
-| Coverage | **JaCoCo 0.8.15** | Line-coverage reporting and hard coverage gate |
-| Mutation testing | **PIT 1.19.0** | Mutation coverage, mutation score and test-strength verification |
-| PIT JUnit 5 adapter | **pitest-junit5-plugin 1.2.3** | JUnit 5 mutation-test execution |
-| Real-client integration | **Fabric Client GameTest** | Real Minecraft client startup, reload, dimension and rendering verification |
-| Headless graphics CI | **Xvfb / Ubuntu 24.04** | Real-client and framebuffer testing in GitHub Actions |
-| CI/CD | **GitHub Actions** | Shared quality gate, dual-version verification, evidence capture, release automation |
-| Artifact integrity | **SHA-256** | Reproducibility, CI/release byte identity and published checksums |
-| Release publishing | **GitHub CLI (`gh`) + GitHub REST API** | Release orchestration and exact raw CI-artifact handoff |
+| Language | **Java 25** | production code, semantic engine, adapters, tests |
+| Build | **Gradle 9.5.1** | multi-project build, deterministic artifacts, verification |
+| Minecraft tooling | **Fabric Loom 1.17.19** | mappings, development runtime, build integration |
+| Loader | **Fabric Loader 0.19.3** | client-side mod loading |
+| Runtime API | **Fabric API** | Minecraft/Fabric hooks and Client GameTest integration |
+| Unit / contract tests | **JUnit Jupiter 5.14.4** | semantic, config, target, repository and release contracts |
+| Coverage | **JaCoCo 0.8.15** | line-coverage gate |
+| Mutation testing | **PIT 1.19.0** | mutation coverage, score and test strength |
+| PIT JUnit adapter | **pitest-junit5-plugin 1.2.3** | JUnit 5 mutation execution |
+| Real-client integration | **Fabric Client GameTest** | real Minecraft startup/reload/render verification |
+| Headless graphics | **Xvfb / Ubuntu 24.04** | framebuffer tests in GitHub Actions |
+| CI/CD | **GitHub Actions** | dual-version quality/release pipeline |
+| Artifact integrity | **SHA-256** | reproducibility and CI/release byte identity |
 
-### Java and JUnit
+Java compilation uses `-Xlint:deprecation`, `-Xlint:unchecked`, and **`-Werror`**.
 
-Production and test code compile against **Java 25**. The common semantic/configuration layer is tested with **JUnit Jupiter 5.14.4** on the **JUnit Platform**. Repository-contract tests also protect build/release invariants—for example, the M9 contract prevents the release pipeline from accidentally extracting an `archive:false` raw JAR artifact instead of publishing the verified JAR bytes.
-
-Compilation uses `-Xlint:deprecation`, `-Xlint:unchecked`, and **`-Werror`**, so configured Java warnings are treated as build failures rather than release-time cleanup work.
-
-### JaCoCo and PIT
-
-The common product-policy surface uses both structural coverage and mutation testing:
+Quality gates remain:
 
 - JaCoCo line coverage: **>= 96%**
 - PIT mutation coverage: **>= 96%**
 - PIT mutation score: **>= 96%**
 - PIT test strength: **>= 96%**
 
-JaCoCo answers whether important code is executed. PIT goes further by deliberately mutating logic and checking whether the tests detect the change. BlockLens therefore does not treat a high line-coverage percentage alone as proof that the test suite is strong.
+## Real-client verification
 
-### Fabric Client GameTest
+Both supported Minecraft versions run **Fabric Client GameTest** under Xvfb. The gate covers configuration round-trips, resource reload, Overworld/Nether transitions, target/state mapping, full enable/OFF restoration, rendered visual evidence, resource-pack preservation fixtures, M8 performance/retention observations, model resolution, and reproducible artifact checks.
 
-Unit tests cannot prove that Minecraft actually starts, resources resolve, models bake, dimensions transition correctly, or framebuffer evidence is produced. Both supported versions therefore run **Fabric Client GameTest** under **Xvfb** in CI.
-
-The real-client gate covers configuration round-trips, resource reload, Overworld/Nether transitions, all-37 integration, all-OFF restoration, M3/M5/M7 visual evidence, M8 load/performance/retention observations, and BlockLens-owned model resolution.
+The original 37-capability AMATERAS baseline remains a historical regression contract even as the development runtime grows beyond it.
 
 ## Automated quality and release pipeline
 
 ```mermaid
 flowchart TD
-    PR[Pull Request] --> U[JUnit Jupiter]
+    PR[Pull Request] --> U[JUnit]
     U --> J[JaCoCo >= 96%]
     J --> P[PIT >= 96%]
     P --> B1[26.1.2 build + reproducibility]
     P --> B2[26.2 build + reproducibility]
     B1 --> G1[26.1.2 Client GameTest]
     B2 --> G2[26.2 Client GameTest]
-    G1 --> E1[M3 + M5 + M7 + M8 evidence]
-    G2 --> E2[M3 + M5 + M7 + M8 evidence]
-    E1 --> A1[privacy/residue + size gate]
-    E2 --> A2[privacy/residue + size gate]
+    G1 --> A1[visual / performance / size evidence]
+    G2 --> A2[visual / performance / size evidence]
     A1 --> GREEN[CI GREEN]
     A2 --> GREEN
     GREEN -->|main push only| REL[Release workflow]
-    REL --> VER{v<mod_version> exists?}
+    REL --> VER{tag exists?}
     VER -- yes --> STOP[successful no-op]
     VER -- no --> RAW[download exact raw CI JARs]
-    RAW --> RV[revalidate metadata/icon/size]
-    RV --> SHA[generate SHA256SUMS]
+    RAW --> SHA[revalidate + SHA256SUMS]
     SHA --> PUB[GitHub Release]
 ```
 
-### Release safety properties
+The Release job does not rebuild BlockLens. It promotes the exact verified raw CI JARs, rechecks metadata/icon/size, and publishes checksums.
 
-`.github/workflows/release.yml` deliberately separates verification from publication:
+## Artifact size history
 
-- release runs only after the named **CI** workflow succeeds;
-- only successful **pushes to `main`** are eligible;
-- the release job checks out the **exact verified commit SHA**;
-- the release job does **not rebuild BlockLens**;
-- CI runtime JARs are uploaded as raw `archive:false` artifacts and the release job downloads those exact payloads directly through the GitHub Actions artifact API;
-- the downloaded payload is validated as a JAR before publication;
-- Minecraft version, mod version, client-only metadata, icon presence and size budgets are rechecked;
-- `mod_version` is the release-version source of truth;
-- if `v<mod_version>` already exists, publication becomes a successful no-op;
-- SHA-256 checksums are generated and the final asset set is verified after publication.
+- M8 pre-icon baseline: **88,973 B**
+- v0.1.0 icon-inclusive stable baseline: **95,333 B**
+- P0 measured development maximum: **96,257 B**
+- P0 growth over v0.1.0 baseline: **924 B maximum**
+- release budget: **100 KiB / 102,400 B**, unchanged
+- source-pack `<50%` absolute hard maximum remains unchanged
 
-This raw-artifact handoff was exercised by the live **v0.1.0** publication, not only by static tests.
-
-## Milestone status
-
-- **M0-M7:** product contract, architecture, all 37 core capabilities and dual-version real-client gate complete.
-- **M8:** performance/load/retention/size hardening complete.
-- **M9:** release readiness and live v0.1.0 publication complete.
-
-The M8 pre-icon baseline was **88,973 B**. M9 intentionally added the repository-owned release icon and froze the measured icon-inclusive shared baseline at **95,333 B**. The **100 KiB** release ceiling and source-pack **<50%** hard maximum were not relaxed.
+Size reduction is never allowed to remove functional parity, tests, compatibility evidence, or safety gates.
 
 ## Installation
+
+For the stable release:
 
 1. Install Fabric Loader for the target Minecraft version.
 2. Install the matching Fabric API.
@@ -190,7 +269,7 @@ The M8 pre-icon baseline was **88,973 B**. M9 intentionally added the repository
 5. Put the JAR in the Minecraft `mods` directory.
 6. Launch the client.
 
-BlockLens is client-only; a server-side BlockLens installation is not required.
+BlockLens is client-only; server-side installation is not required.
 
 ## Build and verify
 
@@ -199,18 +278,16 @@ BlockLens is client-only; a server-side BlockLens installation is not required.
 ./gradlew ciGate
 ```
 
-Useful per-version gates:
+Per-version gates:
 
 ```bash
 ./gradlew :versions:mc26_1_2:build :versions:mc26_1_2:versionSmokeContract :versions:mc26_1_2:verifyRuntimeJarBudget
 ./gradlew :versions:mc26_2:build :versions:mc26_2:versionSmokeContract :versions:mc26_2:verifyRuntimeJarBudget
 ```
 
-Per-version builds also write deterministic runtime-size evidence to `build/reports/blocklens/runtime-jar-size.txt`.
-
 ## Compatibility scope
 
-Verified support is intentionally narrower than “anything Fabric can run”:
+Verified support is intentionally evidence-bounded:
 
 - default / shader-OFF OpenGL: **verified**
 - representative non-vanilla active resource-pack preservation: **verified fixture**
@@ -218,13 +295,9 @@ Verified support is intentionally narrower than “anything Fabric can run”:
 - representative shader-ON configurations: **not yet claimed**
 - Minecraft 26.2 Vulkan: **experimental**
 
-Issue #5 remains the authority for shader-ON and broader external compatibility work. Those unchecked combinations are outside the v0.1.0 advertised support boundary, not hidden release blockers.
-
 ## Release / redistribution audit
 
-The runtime JAR contains BlockLens code/resources and BlockLens-owned icon/models. CI rejects nested dependency JARs, local paths, logs, saves, crash dumps, secret/private-key markers, source RPO residue and retired runtime-policy bytecode. AMATERAS PNG assets are not redistributed.
-
-No explicit open-source license is granted by the repository unless a `LICENSE` file is added. GitHub Release publication by the repository owner does not imply third-party redistribution rights.
+The runtime JAR contains BlockLens code/resources and BlockLens-owned assets. CI rejects nested dependency JARs, local paths, logs, saves, crash dumps, secret/private-key markers, source RPO residue, and retired runtime-policy bytecode. AMATERAS source PNG/JSON assets are not redistributed.
 
 ## Engineering Graph Loop
 
@@ -246,14 +319,14 @@ flowchart LR
     F --> V
 ```
 
-The first release attempt exposed a raw-artifact handoff defect. Graph Loop returned through **DIAGNOSE → FIX → VERIFY** in PR #20, then reran PR CI, `main` CI, and the live Release workflow before M9 was considered done.
-
 ## Project documentation
 
 - [`AGENTS.md`](AGENTS.md) — engineering rules
 - [`knowledge/index.md`](knowledge/index.md) — knowledge index
 - [`knowledge/current/product-spec.md`](knowledge/current/product-spec.md) — product contract
 - [`knowledge/current/architecture.md`](knowledge/current/architecture.md) — architecture
+- [`knowledge/current/amateras-raw-parity-audit.md`](knowledge/current/amateras-raw-parity-audit.md) — raw-source/RPO parity audit
+- [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) — ChiseTweaks → BlockLens migration
 - [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md) — quality strategy
 - [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md) — performance strategy
 - [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md) — M8 evidence
@@ -261,4 +334,4 @@ The first release attempt exposed a raw-artifact handoff defect. Graph Loop retu
 - [`knowledge/current/roadmap.md`](knowledge/current/roadmap.md) — roadmap
 - [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) — Graph Loop
 
-`knowledge/current/` is the source of truth. README files do not claim compatibility or performance beyond verified evidence.
+`knowledge/current/` is the source of truth. README claims remain bounded by verified evidence.

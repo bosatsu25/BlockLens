@@ -17,16 +17,18 @@ import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptio
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
- * Dedicated M5 dark-area visual oracle.
+ * Dedicated M5/P0 dark-area visual oracle for the current Resource capability set.
  *
- * <p>This test enables only the 18 resource-highlight capabilities and renders them in a sealed,
- * unlit room. The framebuffer assertion therefore cannot pass because of M3/M4/M6/M7 cues. It
- * checks both visible pixel change and a material increase in target-region luminance.</p>
+ * <p>This test enables only the current 21 resource-highlight capabilities and renders them in a
+ * sealed, unlit room. The original M5 18-capability set remains historical baseline evidence; P0
+ * adds Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore. The framebuffer assertion therefore
+ * cannot pass because of M3/M4/M6/M7 cues. It checks both visible pixel change and a material
+ * increase in target-region luminance.</p>
  */
 final class M5DarkAreaVisualOracle {
     private static final int WIDTH = 640;
     private static final int HEIGHT = 360;
-    private static final int EXPECTED_RESOURCE_CAPABILITIES = 18;
+    private static final int EXPECTED_RESOURCE_CAPABILITIES = 21;
     private static final int TARGET_MIN_X = 70;
     private static final int TARGET_MIN_Y = 150;
     private static final int TARGET_MAX_X = 570;
@@ -51,7 +53,7 @@ final class M5DarkAreaVisualOracle {
 
             BlockLensConfig resourceOnly = resourceOnly(original);
             require(enabledCount(resourceOnly) == EXPECTED_RESOURCE_CAPABILITIES,
-                    "M5 resource-only config must enable exactly 18 capabilities");
+                    "M5/P0 resource-only config must enable exactly 21 capabilities");
             install(resourceOnly);
             requirePipeline("resource-only ON");
             rebuild(context);
@@ -130,9 +132,10 @@ final class M5DarkAreaVisualOracle {
                 "gold_ore", "deepslate_gold_ore", "emerald_ore", "deepslate_emerald_ore",
                 "coal_ore", "deepslate_coal_ore", "iron_ore", "deepslate_iron_ore",
                 "copper_ore", "deepslate_copper_ore", "lapis_ore", "deepslate_lapis_ore",
-                "redstone_ore", "deepslate_redstone_ore"
+                "redstone_ore", "deepslate_redstone_ore", "crying_obsidian",
+                "nether_gold_ore", "nether_quartz_ore"
         };
-        int[] xs = {-8, -5, -2, 1, 4, 7};
+        int[] xs = {-9, -6, -3, 0, 3, 6, 9};
         int[] zs = {4, 1, -2};
         int index = 0;
         for (int z : zs) {
@@ -189,8 +192,8 @@ final class M5DarkAreaVisualOracle {
     private static void requirePipeline(String phase) {
         require(MinecraftDecorationModelPlugin.isModelPipelineReady(),
                 phase + ": model pipeline not ready");
-        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 320,
-                phase + ": expected at least 320 wrapped models, got "
+        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 322,
+                phase + ": expected at least 322 wrapped models, got "
                         + MinecraftDecorationModelPlugin.wrappedModelCount());
     }
 

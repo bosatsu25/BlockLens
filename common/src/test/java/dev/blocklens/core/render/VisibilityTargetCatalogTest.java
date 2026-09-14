@@ -11,11 +11,12 @@ import org.junit.jupiter.api.Test;
 
 final class VisibilityTargetCatalogTest {
     @Test
-    void exactM4TargetScopeContainsTwentyFourBindings() {
+    void currentVisibilityScopeContainsTwentyFiveBindings() {
         assertEquals(List.of("blue_ice"), VisibilityTargetCatalog.targets(CapabilityId.BLUE_ICE));
         assertEquals(List.of("powder_snow"), VisibilityTargetCatalog.targets(CapabilityId.POWDER_SNOW));
         assertEquals(List.of("sculk_catalyst"), VisibilityTargetCatalog.targets(CapabilityId.SCULK_CATALYST));
-        assertEquals(List.of("tripwire"), VisibilityTargetCatalog.targets(CapabilityId.STRING_TWEAKS));
+        assertEquals(List.of("tripwire", "tripwire_hook"),
+                VisibilityTargetCatalog.targets(CapabilityId.STRING_TWEAKS));
 
         List<String> coral = VisibilityTargetCatalog.targets(CapabilityId.DEAD_CORAL);
         assertEquals(20, coral.size());
@@ -25,14 +26,14 @@ final class VisibilityTargetCatalogTest {
             assertTrue(coral.contains("dead_" + family + "_coral_fan"));
             assertTrue(coral.contains("dead_" + family + "_coral_wall_fan"));
         }
-        assertEquals(24, VisibilityTargetCatalog.totalBindingCount());
+        assertEquals(25, VisibilityTargetCatalog.totalBindingCount());
     }
 
     @Test
     void catalogDoesNotBroadenBySuffixOrCategory() {
         assertFalse(VisibilityTargetCatalog.contains(CapabilityId.BLUE_ICE, "packed_ice"));
         assertFalse(VisibilityTargetCatalog.contains(CapabilityId.DEAD_CORAL, "brain_coral"));
-        assertFalse(VisibilityTargetCatalog.contains(CapabilityId.STRING_TWEAKS, "tripwire_hook"));
+        assertTrue(VisibilityTargetCatalog.contains(CapabilityId.STRING_TWEAKS, "tripwire_hook"));
         assertTrue(VisibilityTargetCatalog.contains(CapabilityId.DEAD_CORAL, "dead_tube_coral_wall_fan"));
         assertTrue(VisibilityTargetCatalog.targets(CapabilityId.ANVIL).isEmpty());
     }

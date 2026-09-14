@@ -6,10 +6,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Stable BlockLens product catalog derived from the pinned M0 AMATERAS baseline.
+ * Stable BlockLens product catalog.
  *
- * <p>This enum is intentionally compiled code: normal startup must not scan the
- * classpath, resource pack, or legacy RPO files to discover capabilities.</p>
+ * <p>The first 37 entries preserve the pinned M0 AMATERAS contract and their historical ordinal
+ * positions. New product capabilities are appended only, so existing runtime bit positions stay
+ * stable while BlockLens absorbs selected ChiseTweaks behavior.</p>
+ *
+ * <p>This enum is intentionally compiled code: normal startup must not scan the classpath,
+ * resource packs, or legacy configuration files to discover capabilities.</p>
  */
 public enum CapabilityId {
     ANVIL("deco.anvil", Category.DECORATION, false),
@@ -51,7 +55,12 @@ public enum CapabilityId {
     SCULK_CATALYST("outline.sculk_catalyst", Category.OUTLINE, true),
 
     NETHER_TWEAKS("others.nethertweaks", Category.OTHER, false),
-    STRING_TWEAKS("others.stringtweaks", Category.OTHER, true);
+    STRING_TWEAKS("others.stringtweaks", Category.OTHER, true),
+
+    // P0 ChiseTweaks migration additions. Appended to preserve all original bit positions.
+    CRYING_OBSIDIAN("gaming.crying_obsidian", Category.RESOURCE, false),
+    NETHER_GOLD_ORE("gaming.nether_gold_ore", Category.RESOURCE, false),
+    NETHER_QUARTZ_ORE("gaming.nether_quartz_ore", Category.RESOURCE, false);
 
     public enum Category {
         DECORATION,

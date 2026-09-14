@@ -72,12 +72,29 @@ final class M9ReleaseReadinessContractTest {
     @Test
     void releaseVersionAndArtifactBudgetsAreExplicit() throws IOException {
         String properties = Files.readString(root().resolve("gradle.properties"));
+        String english = Files.readString(root().resolve("README.md"));
+        String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        assertTrue(properties.contains("mod_version=0.1.0"));
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=95333"));
+        // v0.1.0 remains immutable historical release evidence. P0 is an additive minor release.
+        assertTrue(properties.contains("mod_version=0.2.0"));
+        assertTrue(properties.contains("v0.1.0 is the published 37-capability AMATERAS baseline"));
+
+        // P0 is explicitly rebaselined from measured dual-version evidence, without relaxing
+        // the product release ceiling or the source-pack absolute maximum.
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=96257"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=102400"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("PR #19 measurement run 34766720469"));
+        assertTrue(properties.contains("P0 ChiseTweaks-overlap measurement run #252 / 34792850592"));
+
+        // Historical v0.1.0 evidence stays visible while the P0 release candidate is verified.
+        assertTrue(english.contains("v0.1.0"));
+        assertTrue(japanese.contains("v0.1.0"));
+        assertTrue(english.contains("v0.2.0"));
+        assertTrue(japanese.contains("v0.2.0"));
+        assertTrue(english.contains("95,333 B"));
+        assertTrue(japanese.contains("95,333 B"));
+        assertTrue(english.contains("96,257 B"));
+        assertTrue(japanese.contains("96,257 B"));
     }
 
     @Test
@@ -96,10 +113,13 @@ final class M9ReleaseReadinessContractTest {
             assertTrue(document.contains("GitHub Actions"));
             assertTrue(document.contains("SHA-256"));
             assertTrue(document.contains("95,333 B"));
+            assertTrue(document.contains("96,257 B"));
             assertTrue(document.contains("100 KiB"));
             assertTrue(document.contains("shader-OFF"));
             assertTrue(document.contains("Vulkan"));
             assertTrue(document.contains("release-readiness.md"));
+            assertTrue(document.contains("amateras-raw-parity-audit.md"));
+            assertTrue(document.contains("chisetweaks-migration.md"));
         }
     }
 }

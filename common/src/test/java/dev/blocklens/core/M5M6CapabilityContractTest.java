@@ -2,6 +2,7 @@ package dev.blocklens.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.blocklens.core.render.NetherTweaksTargetCatalog;
 import dev.blocklens.core.render.ResourceTargetCatalog;
@@ -24,7 +25,7 @@ final class M5M6CapabilityContractTest {
     }
 
     @Test
-    void M5ResourceCatalogMatchesAllEighteenFrozenM0Rows() throws IOException {
+    void M5ResourceCatalogKeepsAllEighteenFrozenM0RowsAndAddsP0Materials() throws IOException {
         Map<String, Row> rows = loadRows();
         Map<CapabilityId, String> hashes = new EnumMap<>(CapabilityId.class);
         hashes.put(CapabilityId.ANCIENT_DEBRIS, "744a1e0e907d46eca89d30a4b10111fabad5ed2e390ace98ba6481f84724507b");
@@ -46,7 +47,7 @@ final class M5M6CapabilityContractTest {
         hashes.put(CapabilityId.OBSIDIAN, "ca0efbbc1255dd487d22967eeb6c03cb68aefbcbf8ec83dc9af7b73cd8dbd393");
         hashes.put(CapabilityId.REDSTONE_ORE, "85880309d416ae679d3d905850cc0902dd7f9f4b49c0c557ae13e6428ae258f8");
 
-        assertEquals(18, hashes.size());
+        assertEquals(ResourceTargetCatalog.AMATERAS_M0_BINDING_COUNT, hashes.size());
         for (Map.Entry<CapabilityId, String> entry : hashes.entrySet()) {
             CapabilityId capability = entry.getKey();
             Row row = rows.get(capability.sourceKey());
@@ -57,19 +58,25 @@ final class M5M6CapabilityContractTest {
             assertEquals(1, row.directFileCount());
             assertEquals(entry.getValue(), row.directPathHash());
         }
-        assertEquals(18, ResourceTargetCatalog.totalBindingCount());
+
+        assertEquals(21, ResourceTargetCatalog.totalBindingCount());
+        assertTrue(ResourceTargetCatalog.contains(CapabilityId.CRYING_OBSIDIAN, "crying_obsidian"));
+        assertTrue(ResourceTargetCatalog.contains(CapabilityId.NETHER_GOLD_ORE, "nether_gold_ore"));
+        assertTrue(ResourceTargetCatalog.contains(CapabilityId.NETHER_QUARTZ_ORE, "nether_quartz_ore"));
     }
 
     @Test
-    void M6NetherTweaksTargetsAndHashMatchFrozenM0RowWithoutInventingState() throws IOException {
+    void M6NetherTweaksKeepsFrozenM0RowAndAddsOnlyP0RuntimeExtension() throws IOException {
         Row row = loadRows().get(CapabilityId.NETHER_TWEAKS.sourceKey());
         assertNotNull(row);
-        assertEquals(String.join("|", NetherTweaksTargetCatalog.targets(CapabilityId.NETHER_TWEAKS)), row.targets());
+        assertEquals(String.join("|", NetherTweaksTargetCatalog.m0Targets()), row.targets());
         assertEquals("", row.stateProperties());
         assertEquals(0, row.variantCount());
         assertEquals(34, row.directFileCount());
         assertEquals(NetherTweaksTargetCatalog.DIRECT_PATH_SET_SHA256, row.directPathHash());
-        assertEquals(27, NetherTweaksTargetCatalog.totalBindingCount());
+        assertEquals(27, NetherTweaksTargetCatalog.m0Targets().size());
+        assertEquals(28, NetherTweaksTargetCatalog.totalBindingCount());
+        assertTrue(NetherTweaksTargetCatalog.contains("polished_basalt"));
     }
 
     private static Map<String, Row> loadRows() throws IOException {

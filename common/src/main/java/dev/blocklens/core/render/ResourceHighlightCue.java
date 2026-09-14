@@ -4,22 +4,25 @@ import dev.blocklens.core.CapabilityId;
 import java.util.Objects;
 
 /**
- * BlockLens-owned procedural accents for M5 resource visibility.
+ * BlockLens-owned procedural accents for resource visibility.
  *
- * <p>The pinned source proves that each resource capability redirects to dedicated animated
- * highlight assets. BlockLens preserves that user value without redistributing those binaries by
- * retaining the active baked base model and applying a stable full-bright accent.</p>
+ * <p>The original AMATERAS-backed capabilities preserve their source-derived user value without
+ * redistributing source binaries. P0 extends the same compact cue engine with clean-room colors
+ * derived from ChiseTweaks' own material definitions for Crying Obsidian, Nether Gold Ore, and
+ * Nether Quartz Ore.</p>
  *
  * <p>Each enum value owns one immutable quad instruction. Resource-highlight rendering can therefore
  * reuse the same instruction for every emitted quad instead of constructing an equivalent record
- * at the render boundary. The instruction is also the single source of truth for the accent color,
- * avoiding duplicate retained enum state.</p>
+ * at the render boundary.</p>
  */
 public enum ResourceHighlightCue {
     OBSIDIAN(0xFFB96CFF),
+    CRYING_OBSIDIAN(0xFFC42DFF),
     ANCIENT_DEBRIS(0xFFFF8A5B),
     DIAMOND(0xFF55FFFF),
     GOLD(0xFFFFD34D),
+    NETHER_GOLD(0xFFFFD220),
+    NETHER_QUARTZ(0xFFF6EEE2),
     EMERALD(0xFF55FF80),
     COAL(0xFFE0E0E0),
     IRON(0xFFFFC49A),
@@ -48,9 +51,12 @@ public enum ResourceHighlightCue {
     public static ResourceHighlightCue forCapability(CapabilityId capability) {
         return switch (Objects.requireNonNull(capability, "capability")) {
             case OBSIDIAN -> OBSIDIAN;
+            case CRYING_OBSIDIAN -> CRYING_OBSIDIAN;
             case ANCIENT_DEBRIS -> ANCIENT_DEBRIS;
             case DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE -> DIAMOND;
             case GOLD_ORE, DEEPSLATE_GOLD_ORE -> GOLD;
+            case NETHER_GOLD_ORE -> NETHER_GOLD;
+            case NETHER_QUARTZ_ORE -> NETHER_QUARTZ;
             case EMERALD_ORE, DEEPSLATE_EMERALD_ORE -> EMERALD;
             case COAL_ORE, DEEPSLATE_COAL_ORE -> COAL;
             case IRON_ORE, DEEPSLATE_IRON_ORE -> IRON;
@@ -58,7 +64,7 @@ public enum ResourceHighlightCue {
             case LAPIS_ORE, DEEPSLATE_LAPIS_ORE -> LAPIS;
             case REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE -> REDSTONE;
             default -> throw new IllegalArgumentException(
-                    "Capability is not an M5 resource highlight: " + capability.sourceKey());
+                    "Capability is not a resource highlight: " + capability.sourceKey());
         };
     }
 }
