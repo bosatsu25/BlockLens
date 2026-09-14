@@ -8,3 +8,7 @@ ext.blockLensFabricApiVersion = rootProject.fabric_api_26_1_2
 ext.blockLensModMenuVersion = rootProject.modmenu_26_1_2
 
 apply from: rootProject.file('gradle/version-module.gradle')
+
+dependencies {
+    compileOnly "com.terraformersmc:modmenu:${blockLensModMenuVersion}"
+}
