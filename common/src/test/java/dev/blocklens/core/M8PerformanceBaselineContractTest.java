@@ -25,6 +25,7 @@ final class M8PerformanceBaselineContractTest {
                 "knowledge/current/performance-strategy.md"));
 
         assertTrue(smoke.contains("M8PerformanceBaselineOracle.verify(context, singleplayer)"));
+        assertTrue(oracle.contains("EXPECTED_RESOURCE_CAPABILITIES = 21"));
         assertTrue(oracle.contains("RELOAD_WARMUPS = 1"));
         assertTrue(oracle.contains("MEASURED_SAMPLES = 3"));
         assertTrue(oracle.contains("MAX_RELOAD_MEDIAN_NANOS = 6_000_000_000L"));
@@ -131,8 +132,9 @@ final class M8PerformanceBaselineContractTest {
 
         assertTrue(properties.contains("runtime_jar_source_pack_bytes=2366865"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=95333"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=96257"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=102400"));
+        assertTrue(properties.contains("P0 ChiseTweaks-overlap measurement run #252 / 34792850592"));
 
         assertTrue(versionModule.contains("writeRuntimeJarSizeReport"));
         assertTrue(versionModule.contains("runtime-jar-size.txt"));
@@ -147,7 +149,6 @@ final class M8PerformanceBaselineContractTest {
                 "retired DecorationRenderPolicy bytecode must appear only in the explicit rejection list");
         assertTrue(versionModule.contains("Runtime JAR contains retired policy bytecode"));
 
-        // Every version CI job runs `build`; `check` therefore generates the deterministic size report.
         assertTrue(ci.contains(":versions:${{ matrix.module }}:build"));
         assertTrue(ci.contains("Build and verify Minecraft ${{ matrix.minecraft }}"));
     }
@@ -157,9 +158,7 @@ final class M8PerformanceBaselineContractTest {
         int from = 0;
         while (true) {
             int index = text.indexOf(needle, from);
-            if (index < 0) {
-                return count;
-            }
+            if (index < 0) return count;
             count++;
             from = index + needle.length();
         }
