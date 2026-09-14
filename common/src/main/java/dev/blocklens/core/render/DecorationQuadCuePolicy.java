@@ -12,18 +12,17 @@ import java.util.Objects;
  * Minecraft directions and apply these instructions to baked quads.</p>
  */
 public final class DecorationQuadCuePolicy {
-    static final int AXIS_X = 0xFFFF9090;
-    static final int AXIS_Y = 0xFF90FF90;
-    static final int AXIS_Z = 0xFF9090FF;
-    static final int DIRECTION = 0xFFFFFF90;
-    static final int HONEY_FULL = 0xFFFFC060;
-    static final int LIT = 0xFFFFB060;
-    static final int UNLIT = 0xFFC8C8C8;
-    static final int OPEN = 0xFF90FF90;
-    static final int CLOSED = 0xFFFF9090;
-    static final int MOUNT = 0xFF90FFFF;
-    static final int SLAB_BOUNDARY = 0xFFFF9090;
-    static final int HALF_BOUNDARY = 0xFFFFFF90;
+    private static final DecorationQuadInstruction AXIS_X_TINT = tint(0xFFFF9090);
+    private static final DecorationQuadInstruction AXIS_Y_TINT = tint(0xFF90FF90);
+    private static final DecorationQuadInstruction AXIS_Z_TINT = tint(0xFF9090FF);
+    private static final DecorationQuadInstruction DIRECTION_TINT = tint(0xFFFFFF90);
+    private static final DecorationQuadInstruction HONEY_FULL_TINT = tint(0xFFFFC060);
+    private static final DecorationQuadInstruction LIT_TINT = tint(0xFFFFB060);
+    private static final DecorationQuadInstruction UNLIT_TINT = tint(0xFFC8C8C8);
+    private static final DecorationQuadInstruction MOUNT_TINT = tint(0xFF90FFFF);
+    private static final DecorationQuadInstruction STAIR_INNER_RIGHT_TINT = tint(0xFF90C0FF);
+    private static final DecorationQuadInstruction STAIR_OUTER_LEFT_TINT = tint(0xFFFFC090);
+    private static final DecorationQuadInstruction STAIR_OUTER_RIGHT_TINT = tint(0xFFFF90FF);
 
     private DecorationQuadCuePolicy() {
     }
@@ -37,17 +36,17 @@ public final class DecorationQuadCuePolicy {
 
         return switch (descriptor.cue()) {
             case OPAQUE_STAINED_GLASS -> DecorationQuadInstruction.OPAQUE;
-            case FACING_MARKER -> tintIf(matchesFacing(face, state.facing()), DIRECTION);
+            case FACING_MARKER -> tintIf(matchesFacing(face, state.facing()), DIRECTION_TINT);
             case FACING_LEVEL_MARKER -> tintIf(
                     matchesFacing(face, state.facing()),
-                    state.level() == 5 ? HONEY_FULL : DIRECTION);
+                    state.level() == 5 ? HONEY_FULL_TINT : DIRECTION_TINT);
             case FACING_LIT_MARKER -> tintIf(
                     matchesFacing(face, state.facing()),
-                    state.lit() ? LIT : UNLIT);
+                    state.lit() ? LIT_TINT : UNLIT_TINT);
             case MOUNT_FACE_MARKER -> mountInstruction(state, face);
             case FENCE_GATE_STATE_MARKER -> tintIf(
                     matchesFacing(face, state.facing()),
-                    state.open() ? OPEN : CLOSED);
+                    state.open() ? AXIS_Y_TINT : AXIS_X_TINT);
             case AXIS_MARKER -> axisInstruction(state.axis(), face);
             case SLAB_STATE_MARKER -> slabInstruction(state.slabType(), face);
             case STAIRS_STATE_MARKER -> stairsInstruction(state, face);
@@ -59,18 +58,18 @@ public final class DecorationQuadCuePolicy {
             SemanticState state,
             DecorationQuadFace face) {
         if (matchesMount(face, state.mountFace())) {
-            return DecorationQuadInstruction.tint(MOUNT);
+            return MOUNT_TINT;
         }
-        return tintIf(matchesFacing(face, state.facing()), DIRECTION);
+        return tintIf(matchesFacing(face, state.facing()), DIRECTION_TINT);
     }
 
     private static DecorationQuadInstruction axisInstruction(
             SemanticState.Axis axis,
             DecorationQuadFace face) {
         return switch (axis) {
-            case X -> tintIf(face == DecorationQuadFace.EAST || face == DecorationQuadFace.WEST, AXIS_X);
-            case Y -> tintIf(face == DecorationQuadFace.UP || face == DecorationQuadFace.DOWN, AXIS_Y);
-            case Z -> tintIf(face == DecorationQuadFace.NORTH || face == DecorationQuadFace.SOUTH, AXIS_Z);
+            case X -> tintIf(face == DecorationQuadFace.EAST || face == DecorationQuadFace.WEST, AXIS_X_TINT);
+            case Y -> tintIf(face == DecorationQuadFace.UP || face == DecorationQuadFace.DOWN, AXIS_Y_TINT);
+            case Z -> tintIf(face == DecorationQuadFace.NORTH || face == DecorationQuadFace.SOUTH, AXIS_Z_TINT);
             case NONE -> DecorationQuadInstruction.IDENTITY;
         };
     }
@@ -84,55 +83,55 @@ public final class DecorationQuadCuePolicy {
             case DOUBLE -> face == DecorationQuadFace.UP || face == DecorationQuadFace.DOWN;
             case NONE -> false;
         };
-        return tintIf(boundary, SLAB_BOUNDARY);
+        return tintIf(boundary, AXIS_X_TINT);
     }
 
     private static DecorationQuadInstruction stairsInstruction(
             SemanticState state,
             DecorationQuadFace face) {
         if (matchesFacing(face, state.facing())) {
-            return DecorationQuadInstruction.tint(stairShapeColor(state.stairShape()));
+            return stairShapeInstruction(state.stairShape());
         }
         boolean halfBoundary = switch (state.half()) {
             case BOTTOM -> face == DecorationQuadFace.UP;
             case TOP -> face == DecorationQuadFace.DOWN;
             case NONE -> false;
         };
-        return tintIf(halfBoundary, HALF_BOUNDARY);
+        return tintIf(halfBoundary, DIRECTION_TINT);
     }
 
     private static DecorationQuadInstruction trapdoorInstruction(
             SemanticState state,
             DecorationQuadFace face) {
         if (state.open()) {
-            return tintIf(matchesFacing(face, state.facing()), facingColor(state.facing()));
+            return tintIf(matchesFacing(face, state.facing()), facingInstruction(state.facing()));
         }
         boolean panelFace = switch (state.half()) {
             case BOTTOM -> face == DecorationQuadFace.UP;
             case TOP -> face == DecorationQuadFace.DOWN;
             case NONE -> false;
         };
-        return tintIf(panelFace, facingColor(state.facing()));
+        return tintIf(panelFace, facingInstruction(state.facing()));
     }
 
-    private static int stairShapeColor(SemanticState.StairShape shape) {
+    private static DecorationQuadInstruction stairShapeInstruction(SemanticState.StairShape shape) {
         return switch (shape) {
-            case STRAIGHT -> 0xFF90FF90;
-            case INNER_LEFT -> 0xFF90FFFF;
-            case INNER_RIGHT -> 0xFF90C0FF;
-            case OUTER_LEFT -> 0xFFFFC090;
-            case OUTER_RIGHT -> 0xFFFF90FF;
-            case NONE -> DIRECTION;
+            case STRAIGHT -> AXIS_Y_TINT;
+            case INNER_LEFT -> MOUNT_TINT;
+            case INNER_RIGHT -> STAIR_INNER_RIGHT_TINT;
+            case OUTER_LEFT -> STAIR_OUTER_LEFT_TINT;
+            case OUTER_RIGHT -> STAIR_OUTER_RIGHT_TINT;
+            case NONE -> DIRECTION_TINT;
         };
     }
 
-    private static int facingColor(SemanticState.Facing facing) {
+    private static DecorationQuadInstruction facingInstruction(SemanticState.Facing facing) {
         return switch (facing) {
-            case NORTH -> 0xFF9090FF;
-            case EAST -> 0xFFFF9090;
-            case SOUTH -> 0xFFFFFF90;
-            case WEST -> 0xFF90FF90;
-            case NONE -> DIRECTION;
+            case NORTH -> AXIS_Z_TINT;
+            case EAST -> AXIS_X_TINT;
+            case SOUTH -> DIRECTION_TINT;
+            case WEST -> AXIS_Y_TINT;
+            case NONE -> DIRECTION_TINT;
         };
     }
 
@@ -158,7 +157,13 @@ public final class DecorationQuadCuePolicy {
         };
     }
 
-    private static DecorationQuadInstruction tintIf(boolean condition, int color) {
-        return condition ? DecorationQuadInstruction.tint(color) : DecorationQuadInstruction.IDENTITY;
+    private static DecorationQuadInstruction tintIf(
+            boolean condition,
+            DecorationQuadInstruction instruction) {
+        return condition ? instruction : DecorationQuadInstruction.IDENTITY;
+    }
+
+    private static DecorationQuadInstruction tint(int color) {
+        return DecorationQuadInstruction.tint(color);
     }
 }

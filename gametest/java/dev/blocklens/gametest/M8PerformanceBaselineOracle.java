@@ -26,6 +26,7 @@ import net.fabricmc.loader.api.FabricLoader;
  * regression guard. These limits detect large regressions; they are not evidence of a speedup.</p>
  */
 final class M8PerformanceBaselineOracle {
+    private static final int EXPECTED_CAPABILITIES = 40;
     private static final int EXPECTED_RESOURCE_CAPABILITIES = 21;
     private static final int RELOAD_WARMUPS = 1;
     private static final int MEASURED_SAMPLES = 3;
@@ -52,12 +53,17 @@ final class M8PerformanceBaselineOracle {
             buildScene(singleplayer);
             context.waitTicks(20);
 
-            BlockLensConfig resourceOnly = resourceOnly(original);
+            BlockLensConfig defaultConfig = BlockLensConfig.defaults();
+            BlockLensConfig allOn = allOn(original);
             BlockLensConfig allOff = allOff(original);
-            require(enabledCount(resourceOnly) == EXPECTED_RESOURCE_CAPABILITIES,
-                    "M8 resource-only config must enable exactly 21 capabilities");
+            require(CapabilityId.values().length == EXPECTED_CAPABILITIES,
+                    "M8 capability count changed without updating its all-on scenario");
+            require(enabledResourceCount(allOn) == EXPECTED_RESOURCE_CAPABILITIES,
+                    "M8 all-on config must include exactly 21 resource capabilities");
+            require(enabledCount(allOn) == EXPECTED_CAPABILITIES,
+                    "M8 all-on config must enable every capability");
 
-            install(resourceOnly);
+            install(allOn);
             for (int i = 0; i < RELOAD_WARMUPS; i++) {
                 measureReload(context);
             }
@@ -100,11 +106,14 @@ final class M8PerformanceBaselineOracle {
             long[] offAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] offRelevantAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] offRebuildNanos = new long[MEASURED_SAMPLES];
+            long[] defaultAllocatedBytes = new long[MEASURED_SAMPLES];
+            long[] defaultRelevantAllocatedBytes = new long[MEASURED_SAMPLES];
+            long[] defaultRebuildNanos = new long[MEASURED_SAMPLES];
             long[] onAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] onRelevantAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] onRebuildNanos = new long[MEASURED_SAMPLES];
 
-            // Alternate OFF/ON pairs to reduce monotonic warmup bias between scenarios.
+            // Alternate OFF/default/all-on groups to reduce monotonic warmup bias.
             for (int i = 0; i < MEASURED_SAMPLES; i++) {
                 install(allOff);
                 RebuildMeasurement off = measureRebuild(context);
@@ -112,7 +121,13 @@ final class M8PerformanceBaselineOracle {
                 offRelevantAllocatedBytes[i] = off.renderRelevantAllocatedBytes();
                 offRebuildNanos[i] = off.elapsedNanos();
 
-                install(resourceOnly);
+                install(defaultConfig);
+                RebuildMeasurement defaults = measureRebuild(context);
+                defaultAllocatedBytes[i] = defaults.totalAllocatedBytes();
+                defaultRelevantAllocatedBytes[i] = defaults.renderRelevantAllocatedBytes();
+                defaultRebuildNanos[i] = defaults.elapsedNanos();
+
+                install(allOn);
                 RebuildMeasurement on = measureRebuild(context);
                 onAllocatedBytes[i] = on.totalAllocatedBytes();
                 onRelevantAllocatedBytes[i] = on.renderRelevantAllocatedBytes();
@@ -122,18 +137,25 @@ final class M8PerformanceBaselineOracle {
             install(allOff);
             rebuild(context);
             long[] offFrameMainPassNanos = measureFrameMainPass(context);
-            install(resourceOnly);
+            install(defaultConfig);
+            rebuild(context);
+            long[] defaultFrameMainPassNanos = measureFrameMainPass(context);
+            install(allOn);
             rebuild(context);
             long[] onFrameMainPassNanos = measureFrameMainPass(context);
 
             Stats reload = Stats.of(reloadNanos);
             Stats offAllocation = Stats.of(offAllocatedBytes);
+            Stats defaultAllocation = Stats.of(defaultAllocatedBytes);
             Stats onAllocation = Stats.of(onAllocatedBytes);
             Stats offRelevantAllocation = Stats.of(offRelevantAllocatedBytes);
+            Stats defaultRelevantAllocation = Stats.of(defaultRelevantAllocatedBytes);
             Stats onRelevantAllocation = Stats.of(onRelevantAllocatedBytes);
             Stats offRebuild = Stats.of(offRebuildNanos);
+            Stats defaultRebuild = Stats.of(defaultRebuildNanos);
             Stats onRebuild = Stats.of(onRebuildNanos);
             Stats offFrameMainPass = Stats.of(offFrameMainPassNanos);
+            Stats defaultFrameMainPass = Stats.of(defaultFrameMainPassNanos);
             Stats onFrameMainPass = Stats.of(onFrameMainPassNanos);
 
             long allocationMedianDelta = onAllocation.median() - offAllocation.median();
@@ -145,12 +167,16 @@ final class M8PerformanceBaselineOracle {
             require(reload.median() <= MAX_RELOAD_MEDIAN_NANOS,
                     "M8 reload median exceeded coarse regression guard: " + reload.median());
             require(offRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS
+                            && defaultRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS
                             && onRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS,
                     "M8 rebuild median exceeded coarse regression guard: off="
-                            + offRebuild.median() + " on=" + onRebuild.median());
+                            + offRebuild.median() + " default=" + defaultRebuild.median()
+                            + " allOn=" + onRebuild.median());
             require(offAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
+                            && defaultAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
                             && onAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
                             && offRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
+                            && defaultRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
                             && onRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES,
                     "M8 allocation median exceeded coarse regression guard");
 
@@ -159,15 +185,19 @@ final class M8PerformanceBaselineOracle {
                     + " reloadMedianNanos=" + reload.median()
                     + " reloadP95NearestRankNanos=" + reload.p95NearestRank()
                     + " offAllocatedMedianBytes=" + offAllocation.median()
+                    + " defaultAllocatedMedianBytes=" + defaultAllocation.median()
                     + " onAllocatedMedianBytes=" + onAllocation.median()
                     + " onMinusOffAllocatedMedianBytes=" + allocationMedianDelta
                     + " offRelevantAllocatedMedianBytes=" + offRelevantAllocation.median()
+                    + " defaultRelevantAllocatedMedianBytes=" + defaultRelevantAllocation.median()
                     + " onRelevantAllocatedMedianBytes=" + onRelevantAllocation.median()
                     + " onMinusOffRelevantAllocatedMedianBytes=" + relevantAllocationMedianDelta
                     + " offRebuildMedianNanos=" + offRebuild.median()
+                    + " defaultRebuildMedianNanos=" + defaultRebuild.median()
                     + " onRebuildMedianNanos=" + onRebuild.median()
                     + " onMinusOffRebuildMedianNanos=" + rebuildMedianDelta
                     + " offFrameMainPassP99Nanos=" + offFrameMainPass.p99NearestRank()
+                    + " defaultFrameMainPassP99Nanos=" + defaultFrameMainPass.p99NearestRank()
                     + " onFrameMainPassP99Nanos=" + onFrameMainPass.p99NearestRank()
                     + " wrappedModels=" + firstRetention.wrappedModels()
                     + " retainedCapabilitySlots=" + firstRetention.retainedCapabilitySlots()
@@ -182,20 +212,28 @@ final class M8PerformanceBaselineOracle {
                     maxCapabilitiesPerModelAfterReload,
                     netherWrappedModelsAfterReload,
                     offAllocatedBytes,
+                    defaultAllocatedBytes,
                     onAllocatedBytes,
                     offAllocation,
+                    defaultAllocation,
                     onAllocation,
                     offRelevantAllocatedBytes,
+                    defaultRelevantAllocatedBytes,
                     onRelevantAllocatedBytes,
                     offRelevantAllocation,
+                    defaultRelevantAllocation,
                     onRelevantAllocation,
                     offRebuildNanos,
+                    defaultRebuildNanos,
                     onRebuildNanos,
                     offRebuild,
+                    defaultRebuild,
                     onRebuild,
                     offFrameMainPassNanos,
+                    defaultFrameMainPassNanos,
                     onFrameMainPassNanos,
                     offFrameMainPass,
+                    defaultFrameMainPass,
                     onFrameMainPass,
                     allocationMedianDelta,
                     relevantAllocationMedianDelta,
@@ -206,14 +244,16 @@ final class M8PerformanceBaselineOracle {
             require(Files.isRegularFile(outputDir.resolve("m8-performance-baseline.txt")),
                     "M8 performance manifest was not written");
             require(reload.min() > 0L, "M8 resource reload timing must be positive");
-            require(offAllocation.min() >= 0L && onAllocation.min() >= 0L,
+            require(offAllocation.min() >= 0L && defaultAllocation.min() >= 0L && onAllocation.min() >= 0L,
                     "M8 allocation deltas must be non-negative");
-            require(offRebuild.min() > 0L && onRebuild.min() > 0L,
+            require(offRebuild.min() > 0L && defaultRebuild.min() > 0L && onRebuild.min() > 0L,
                     "M8 rebuild timing must be positive");
             require(offFrameMainPassNanos.length >= MIN_FRAME_SAMPLES
+                            && defaultFrameMainPassNanos.length >= MIN_FRAME_SAMPLES
                             && onFrameMainPassNanos.length >= MIN_FRAME_SAMPLES,
                     "M8 frame main-pass sample count too small: off="
-                            + offFrameMainPassNanos.length + " on=" + onFrameMainPassNanos.length);
+                            + offFrameMainPassNanos.length + " default="
+                            + defaultFrameMainPassNanos.length + " allOn=" + onFrameMainPassNanos.length);
         } catch (IOException exception) {
             throw new AssertionError("M8 performance observation failed", exception);
         } finally {
@@ -230,8 +270,8 @@ final class M8PerformanceBaselineOracle {
         server.runCommand("time set noon");
         server.runCommand("weather clear");
         server.runCommand("gamemode spectator @a");
-        server.runCommand("fill -11 -61 -6 11 -50 10 minecraft:air");
-        server.runCommand("fill -11 -60 -6 11 -60 10 minecraft:smooth_quartz");
+        server.runCommand("fill -11 -61 -6 11 -50 16 minecraft:air");
+        server.runCommand("fill -11 -60 -6 11 -60 16 minecraft:smooth_quartz");
 
         String[] resources = {
                 "obsidian", "ancient_debris", "diamond_ore", "deepslate_diamond_ore",
@@ -252,7 +292,24 @@ final class M8PerformanceBaselineOracle {
                 }
             }
         }
-        server.runCommand("tp @a 0 -51 16 180 18");
+
+        String[] nonResources = {
+                "anvil", "beehive", "campfire", "white_glazed_terracotta", "grindstone",
+                "oak_fence_gate", "ochre_froglight", "stone_slab", "white_stained_glass",
+                "stone_stairs", "oak_trapdoor", "oak_wood", "oak_log", "blue_ice",
+                "dead_brain_coral_block", "powder_snow", "sculk_catalyst", "blackstone", "tripwire"
+        };
+        index = 0;
+        for (int z : new int[] {7, 10, 13}) {
+            for (int x : xs) {
+                if (index >= nonResources.length) break;
+                String block = nonResources[index++];
+                for (int y = -59; y <= -56; y++) {
+                    server.runCommand("setblock " + x + " " + y + " " + z + " minecraft:" + block);
+                }
+            }
+        }
+        server.runCommand("tp @a 0 -51 22 180 18");
     }
 
     private static long measureReload(ClientGameTestContext context) {
@@ -320,14 +377,20 @@ final class M8PerformanceBaselineOracle {
         return new AllocationSnapshot(ids, allocatedBytes, names);
     }
 
-    private static BlockLensConfig resourceOnly(BlockLensConfig base) {
-        BlockLensConfig result = allOff(base);
+    private static BlockLensConfig allOn(BlockLensConfig base) {
+        BlockLensConfig result = base;
         for (CapabilityId capability : CapabilityId.values()) {
-            if (capability.category() == CapabilityId.Category.RESOURCE) {
-                result = result.withEnabled(capability, true);
-            }
+            result = result.withEnabled(capability, true);
         }
         return result;
+    }
+
+    private static int enabledResourceCount(BlockLensConfig config) {
+        int count = 0;
+        for (CapabilityId capability : CapabilityId.values()) {
+            if (capability.category() == CapabilityId.Category.RESOURCE && config.isEnabled(capability)) count++;
+        }
+        return count;
     }
 
     private static BlockLensConfig allOff(BlockLensConfig base) {
@@ -377,20 +440,28 @@ final class M8PerformanceBaselineOracle {
             int[] maxCapabilitiesPerModelAfterReload,
             int[] netherWrappedModelsAfterReload,
             long[] offAllocatedBytes,
+            long[] defaultAllocatedBytes,
             long[] onAllocatedBytes,
             Stats offAllocation,
+            Stats defaultAllocation,
             Stats onAllocation,
             long[] offRelevantAllocatedBytes,
+            long[] defaultRelevantAllocatedBytes,
             long[] onRelevantAllocatedBytes,
             Stats offRelevantAllocation,
+            Stats defaultRelevantAllocation,
             Stats onRelevantAllocation,
             long[] offRebuildNanos,
+            long[] defaultRebuildNanos,
             long[] onRebuildNanos,
             Stats offRebuild,
+            Stats defaultRebuild,
             Stats onRebuild,
             long[] offFrameMainPassNanos,
+            long[] defaultFrameMainPassNanos,
             long[] onFrameMainPassNanos,
             Stats offFrameMainPass,
+            Stats defaultFrameMainPass,
             Stats onFrameMainPass,
             long allocationMedianDelta,
             long relevantAllocationMedianDelta,
@@ -419,30 +490,41 @@ final class M8PerformanceBaselineOracle {
                 + "allocationProbe=com.sun.management.ThreadMXBean\n"
                 + "allocationScope=live-thread cumulative delta; terminated threads may be missed; scenario-level JVM evidence\n"
                 + "offAllocatedBytes=" + csv(offAllocatedBytes) + "\n"
+                + "defaultAllocatedBytes=" + csv(defaultAllocatedBytes) + "\n"
                 + "onAllocatedBytes=" + csv(onAllocatedBytes) + "\n"
                 + "offAllocatedMedianBytes=" + offAllocation.median() + "\n"
+                + "defaultAllocatedMedianBytes=" + defaultAllocation.median() + "\n"
                 + "onAllocatedMedianBytes=" + onAllocation.median() + "\n"
                 + "onMinusOffAllocatedMedianBytes=" + allocationMedianDelta + "\n"
                 + "offRenderRelevantAllocatedBytes=" + csv(offRelevantAllocatedBytes) + "\n"
+                + "defaultRenderRelevantAllocatedBytes=" + csv(defaultRelevantAllocatedBytes) + "\n"
                 + "onRenderRelevantAllocatedBytes=" + csv(onRelevantAllocatedBytes) + "\n"
                 + "offRenderRelevantAllocatedMedianBytes=" + offRelevantAllocation.median() + "\n"
+                + "defaultRenderRelevantAllocatedMedianBytes=" + defaultRelevantAllocation.median() + "\n"
                 + "onRenderRelevantAllocatedMedianBytes=" + onRelevantAllocation.median() + "\n"
                 + "onMinusOffRenderRelevantAllocatedMedianBytes=" + relevantAllocationMedianDelta + "\n"
                 + "offRebuildNanos=" + csv(offRebuildNanos) + "\n"
+                + "defaultRebuildNanos=" + csv(defaultRebuildNanos) + "\n"
                 + "onRebuildNanos=" + csv(onRebuildNanos) + "\n"
                 + "offRebuildMedianNanos=" + offRebuild.median() + "\n"
+                + "defaultRebuildMedianNanos=" + defaultRebuild.median() + "\n"
                 + "onRebuildMedianNanos=" + onRebuild.median() + "\n"
                 + "onMinusOffRebuildMedianNanos=" + rebuildMedianDelta + "\n"
                 + "frameCaptureTicks=" + FRAME_CAPTURE_TICKS + "\n"
                 + "offFrameMainPassSamples=" + offFrameMainPassNanos.length + "\n"
+                + "defaultFrameMainPassSamples=" + defaultFrameMainPassNanos.length + "\n"
                 + "onFrameMainPassSamples=" + onFrameMainPassNanos.length + "\n"
                 + "offFrameMainPassNanos=" + csv(offFrameMainPassNanos) + "\n"
+                + "defaultFrameMainPassNanos=" + csv(defaultFrameMainPassNanos) + "\n"
                 + "onFrameMainPassNanos=" + csv(onFrameMainPassNanos) + "\n"
                 + "offFrameMainPassMedianNanos=" + offFrameMainPass.median() + "\n"
+                + "defaultFrameMainPassMedianNanos=" + defaultFrameMainPass.median() + "\n"
                 + "onFrameMainPassMedianNanos=" + onFrameMainPass.median() + "\n"
                 + "offFrameMainPassP95Nanos=" + offFrameMainPass.p95NearestRank() + "\n"
+                + "defaultFrameMainPassP95Nanos=" + defaultFrameMainPass.p95NearestRank() + "\n"
                 + "onFrameMainPassP95Nanos=" + onFrameMainPass.p95NearestRank() + "\n"
                 + "offFrameMainPassP99Nanos=" + offFrameMainPass.p99NearestRank() + "\n"
+                + "defaultFrameMainPassP99Nanos=" + defaultFrameMainPass.p99NearestRank() + "\n"
                 + "onFrameMainPassP99Nanos=" + onFrameMainPass.p99NearestRank() + "\n"
                 + "onMinusOffFrameMainPassMedianNanos=" + frameMainPassMedianDelta + "\n"
                 + "wrappedModels=" + retention.wrappedModels() + "\n"

@@ -2,6 +2,7 @@ package dev.blocklens.core.render;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -170,6 +171,26 @@ final class DecorationQuadCuePolicyTest {
                 () -> DecorationQuadCuePolicy.instruction(
                         DecorationRenderDescriptor.of(CapabilityId.ANVIL, SemanticState.facing(Facing.NORTH)),
                         null));
+    }
+
+    @Test
+    void repeatedHotPathLookupsReusePrebuiltInstructions() {
+        DecorationRenderDescriptor stairs = DecorationRenderDescriptor.of(
+                CapabilityId.STAIRS,
+                SemanticState.stairs(Facing.NORTH, Half.TOP, StairShape.OUTER_RIGHT));
+        DecorationRenderDescriptor trapdoor = DecorationRenderDescriptor.of(
+                CapabilityId.TRAPDOOR,
+                SemanticState.trapdoor(Facing.WEST, Half.BOTTOM, true));
+
+        assertSame(
+                DecorationQuadCuePolicy.instruction(stairs, DecorationQuadFace.NORTH),
+                DecorationQuadCuePolicy.instruction(stairs, DecorationQuadFace.NORTH));
+        assertSame(
+                DecorationQuadCuePolicy.instruction(trapdoor, DecorationQuadFace.WEST),
+                DecorationQuadCuePolicy.instruction(trapdoor, DecorationQuadFace.WEST));
+        assertSame(
+                DecorationQuadInstruction.IDENTITY,
+                DecorationQuadCuePolicy.instruction(stairs, DecorationQuadFace.SOUTH));
     }
 
     private static DecorationQuadInstruction instruction(

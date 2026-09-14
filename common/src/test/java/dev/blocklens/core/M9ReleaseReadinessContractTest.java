@@ -88,12 +88,12 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(properties.contains("mod_version=0.2.0"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability AMATERAS baseline"));
 
-        // P0 is explicitly rebaselined from measured dual-version evidence, without relaxing
-        // the product release ceiling or the source-pack absolute maximum.
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=96257"));
+        // The current source is explicitly rebaselined from measured dual-version evidence,
+        // without relaxing the product release ceiling or the source-pack absolute maximum.
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=101913"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=102400"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("P0 ChiseTweaks-overlap measurement run #252 / 34792850592"));
+        assertTrue(properties.contains("Post-v0.2.0 stability/performance review measurement"));
 
         // Historical v0.1.0 evidence stays visible while the P0 release candidate is verified.
         assertTrue(english.contains("v0.1.0"));
@@ -104,6 +104,10 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(japanese.contains("95,333 B"));
         assertTrue(english.contains("96,257 B"));
         assertTrue(japanese.contains("96,257 B"));
+        assertTrue(english.contains("96,248 B"));
+        assertTrue(japanese.contains("96,248 B"));
+        assertTrue(english.contains("34802548055"));
+        assertTrue(japanese.contains("34802548055"));
     }
 
     @Test

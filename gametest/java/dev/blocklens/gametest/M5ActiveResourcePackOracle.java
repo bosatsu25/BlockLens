@@ -48,6 +48,7 @@ final class M5ActiveResourcePackOracle {
     private static final int MIN_FOREGROUND_PIXELS = 120;
     private static final int MIN_BASE_RETENTION_PERMILLE = 950;
     private static final int FOREGROUND_DELTA = 24;
+    private static final int MASK_TOLERANCE_RADIUS = 2;
     private static final int RELOAD_TIMEOUT_TICKS = 1200;
     private static final int SETTLE_TICKS = 35;
     private static final long RELOAD_OVERLAY_FADE_MILLIS = 1_500L;
@@ -109,7 +110,8 @@ final class M5ActiveResourcePackOracle {
                     + " onOffDifferentPixels=" + onOffDifferentPixels
                     + " offForegroundPixels=" + geometry.offForeground()
                     + " onForegroundPixels=" + geometry.onForeground()
-                    + " geometryIntersectionPixels=" + geometry.intersection()
+                    + " geometryIntersectionPixels=" + geometry.exactIntersection()
+                    + " geometryNearbyIntersectionPixels=" + geometry.intersection()
                     + " baseRetentionPermille=" + geometry.baseRetentionPermille()
                     + " geometryIouPermille=" + geometry.iouPermille());
 
@@ -331,6 +333,7 @@ final class M5ActiveResourcePackOracle {
             BufferedImage air) {
         int offForeground = 0;
         int onForeground = 0;
+        int exactIntersection = 0;
         int intersection = 0;
         int union = 0;
         for (int y = TARGET_MIN_Y; y < TARGET_MAX_Y; y++) {
@@ -340,19 +343,40 @@ final class M5ActiveResourcePackOracle {
                 boolean onMask = colorDelta(on.getRGB(x, y), airRgb) >= FOREGROUND_DELTA;
                 if (offMask) offForeground++;
                 if (onMask) onForeground++;
-                if (offMask && onMask) intersection++;
+                if (offMask && onMask) exactIntersection++;
+                if (offMask && hasNearbyForeground(on, air, x, y)) intersection++;
                 if (offMask || onMask) union++;
             }
         }
         int baseRetentionPermille = offForeground == 0 ? 0 : (intersection * 1000) / offForeground;
-        int iouPermille = union == 0 ? 0 : (intersection * 1000) / union;
+        int iouPermille = union == 0 ? 0 : (exactIntersection * 1000) / union;
         return new MaskMetrics(
                 offForeground,
                 onForeground,
+                exactIntersection,
                 intersection,
                 union,
                 baseRetentionPermille,
                 iouPermille);
+    }
+
+    private static boolean hasNearbyForeground(
+            BufferedImage image,
+            BufferedImage air,
+            int centerX,
+            int centerY) {
+        int minX = Math.max(TARGET_MIN_X, centerX - MASK_TOLERANCE_RADIUS);
+        int maxX = Math.min(TARGET_MAX_X - 1, centerX + MASK_TOLERANCE_RADIUS);
+        int minY = Math.max(TARGET_MIN_Y, centerY - MASK_TOLERANCE_RADIUS);
+        int maxY = Math.min(TARGET_MAX_Y - 1, centerY + MASK_TOLERANCE_RADIUS);
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                if (colorDelta(image.getRGB(x, y), air.getRGB(x, y)) >= FOREGROUND_DELTA) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static int colorDelta(int a, int b) {
@@ -407,7 +431,9 @@ final class M5ActiveResourcePackOracle {
                 + "onOffDifferentPixels=" + onOffDifferentPixels + "\n"
                 + "offForegroundPixels=" + geometry.offForeground() + "\n"
                 + "onForegroundPixels=" + geometry.onForeground() + "\n"
-                + "geometryIntersectionPixels=" + geometry.intersection() + "\n"
+                + "geometryIntersectionPixels=" + geometry.exactIntersection() + "\n"
+                + "geometryNearbyIntersectionPixels=" + geometry.intersection() + "\n"
+                + "geometryMaskToleranceRadius=" + MASK_TOLERANCE_RADIUS + "\n"
                 + "geometryUnionPixels=" + geometry.union() + "\n"
                 + "baseRetentionPermille=" + geometry.baseRetentionPermille() + "\n"
                 + "geometryIouPermille=" + geometry.iouPermille() + "\n";
@@ -461,6 +487,7 @@ final class M5ActiveResourcePackOracle {
     private record MaskMetrics(
             int offForeground,
             int onForeground,
+            int exactIntersection,
             int intersection,
             int union,
             int baseRetentionPermille,

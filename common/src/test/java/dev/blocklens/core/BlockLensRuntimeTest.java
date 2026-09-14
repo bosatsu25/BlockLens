@@ -51,6 +51,19 @@ final class BlockLensRuntimeTest {
     }
 
     @Test
+    void installConfigPublishesOneImmutableSnapshotWithoutResettingIdentity() {
+        BlockLensConfig original = BlockLensConfig.defaults();
+        BlockLensRuntime.initialize("26.2", original, 123L);
+        BlockLensConfig updated = original.withEnabled(CapabilityId.ANVIL, true);
+
+        assertSame(updated, BlockLensRuntime.installConfig(updated));
+        assertSame(updated, BlockLensRuntime.config());
+        assertEquals("26.2", BlockLensRuntime.minecraftVersion());
+        assertEquals(123L, BlockLensRuntime.initializationNanos());
+        assertThrows(NullPointerException.class, () -> BlockLensRuntime.installConfig(null));
+    }
+
+    @Test
     void initializeRejectsInvalidArguments() {
         assertThrows(NullPointerException.class,
                 () -> BlockLensRuntime.initialize(null, BlockLensConfig.defaults(), 0L));

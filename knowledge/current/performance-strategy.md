@@ -54,7 +54,7 @@ Measure reload duration before and after major renderer/asset changes.
 - retain static geometry where useful and invalidate it explicitly
 - keep render-hot-path allocations near zero
 - use O(1) or bounded lookup for `block/state -> applicable capabilities` where practical
-- precompute target/capability mappings rather than iterating over all 37 capabilities for every rendered block when evidence shows the lookup is hot
+- precompute target/capability mappings rather than iterating over every current capability for each rendered block when evidence shows the lookup is hot
 - bound every cache, queue, retained collection, and rebuild batch
 - world/disconnect/resource-reload transitions must clear version/render state cleanly
 

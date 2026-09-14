@@ -10,9 +10,9 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **安定版:** BlockLens **v0.1.0** は、固定したAMATERAS baselineの**37機能**を収録し、Minecraft **26.1.2** / **26.2**向けに公開済みです。
+> **現在の安定版:** BlockLens **v0.2.0** はMinecraft **26.1.2** / **26.2**向けに**独立設定可能な40機能**を提供し、元のAMATERAS 37機能のidentityとbehavior contractをすべて維持しています。
 >
-> **現在の開発 / P0:** BlockLensを母艦として、ChiseTweaksの有用な機能を段階的に吸収しています。元の37 capability ID / config keyは保持したまま、P0ではruntimeを **40 capabilities / 328 capability-to-target bindings / 322 unique block targets** へ拡張中です。P0の最新実測最大JARは **96,257 B**、release budget **100 KiB** は変更していません。
+> **歴史的release:** BlockLens **v0.1.0** は変更しないAMATERAS 37機能のrelease baselineです。P0はv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。厳格な**100 KiB** release budgetは変更していません。
 
 ## 製品方針
 
@@ -121,16 +121,16 @@ P0ではChiseTweaksのFeature frameworkを持ち込まず、既存BlockLens engi
 
 最初の37 enum entry、bit位置、source/config key、defaultは固定したまま、新しいcapabilityだけを末尾へ追加します。
 
-現在のP0 contract:
+公開済みv0.2.0 contract:
 
 - **40 capabilities**
 - **328 capability-to-target bindings**
 - **322 unique block targets**
-- 実測JAR: **96,256 B (26.1.2) / 96,257 B (26.2)**
-- current no-growth baseline: **96,257 B**
+- 公開JAR: 両Minecraft版とも **96,248 B**
+- release時のcross-platform no-growth baseline: **96,257 B**
 - release ceiling: **102,400 B / 100 KiB** のまま
 
-P0はPR #23で検証中です。dual-version CI / real-client gateが完全GREENになりmergeされるまでは、これらを公開済みv0.2.0としては扱いません。
+P0はPR #23から`b440d43904e2a93236549efc571b7cc127622352`へmerge済みです。main CI **#270 / `34801429999`** とRelease **#31 / `34802548055`** が成功した後、v0.2.0を公開しました。
 
 ## Runtime Architecture
 
@@ -160,9 +160,24 @@ runtime原則:
 - repeated resource reloadでもretained-capability構造をboundedに維持
 - client-only packaging、nested runtime dependency JARなし
 
+### 現在のsource hardening
+
+現在のsource treeには、外部UI dependencyを追加しないnativeな**Bキー設定画面**があります。widget registryは41個で固定し、画面幅に応じて1列/2列を切り替え、狭い画面ではscrollします。両Minecraft実clientで **320×240 / 640×360 / 854×480 / 1920×1080** を検証します。
+
+同じ見直しで、config readの上限、同期temp-file書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum table/instructionのcache、wrapped modelごとのdescriptor arrayを4本から2本へ削減しました。OFF/default/all-40を実Client GameTestのperformance evidenceに含めています。見直し後のlocal artifactは **101,877 B (26.1.2) / 101,913 B (26.2)**、新しいdevelopment no-growth baselineは **101,913 B** で、**102,400 B**のhard release ceilingは変更していません。
+
 ## Release
 
-**v0.1.0** は最初の検証済み安定版で、37機能AMATERAS baselineの歴史的releaseです。
+**v0.2.0** が現在の検証済み安定版です。
+
+| Minecraft | 公開JAR | サイズ | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.2.0.jar` | **96,248 B** | `c678c4c5955596db0a1e3064bc1301ad44bb88b6141243e88ca1cefe9973e98a` |
+| 26.2 | `BlockLens-26.2-v0.2.0.jar` | **96,248 B** | `54b99d9b66a403195e28850dcfb165083007ee6cddb3521c36176d51af031105` |
+
+release targetは`b440d43904e2a93236549efc571b7cc127622352`です。成功したmain CI **#270 / `34801429999`** のartifactをRelease **#31 / `34802548055`** が`SHA256SUMS.txt`とともに同じbyteのまま公開しました。
+
+**v0.1.0** は37機能の歴史的baselineとして維持します。
 
 | Minecraft | 公開JAR | サイズ | SHA-256 |
 | --- | --- | ---: | --- |

@@ -33,8 +33,13 @@ public final class BlockLensRuntime {
     public static BlockLensConfig reloadConfig(Path configDirectory) throws IOException {
         BlockLensConfig reloaded = BlockLensConfigFiles.loadOrCreate(
                 Objects.requireNonNull(configDirectory, "configDirectory"));
-        config = reloaded;
-        return reloaded;
+        return installConfig(reloaded);
+    }
+
+    /** Publishes one immutable configuration snapshot without changing runtime identity. */
+    public static BlockLensConfig installConfig(BlockLensConfig updatedConfig) {
+        config = Objects.requireNonNull(updatedConfig, "updatedConfig");
+        return updatedConfig;
     }
 
     public static BlockLensConfig config() {

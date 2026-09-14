@@ -15,15 +15,16 @@ Read these before implementation or review:
 9. [`current/performance-strategy.md`](current/performance-strategy.md) — startup/load, resource reload, runtime, memory, and JAR-size budgets
 10. [`current/migration-plan.md`](current/migration-plan.md) — original resource-pack-to-mod migration strategy and phases
 11. [`current/chisetweaks-migration.md`](current/chisetweaks-migration.md) — post-v0.1.0 ChiseTweaks→BlockLens consolidation direction, P0 mapping, additive capability/target contract, and architecture invariants
-12. [`current/quality-strategy.md`](current/quality-strategy.md) — automated tests, functional parity, rendering, compatibility, performance, and artifact gates
-13. [`current/roadmap.md`](current/roadmap.md) — implementation order and acceptance criteria
-14. [`current/engineering-loop.md`](current/engineering-loop.md) — authoritative Graph Loop for discovery, implementation, verification, diagnosis/fix cycles, PR/CI, and completion states
-15. [`current/m3-visual-semantics.md`](current/m3-visual-semantics.md) — completed M3 source-derived visual intent, procedural cue policy, zero-scan model pipeline, resource-pack restoration rules, and verified dual-version framebuffer evidence
-16. [`current/m4-visual-semantics.md`](current/m4-visual-semantics.md) — source-derived outline/fine-line semantics, original five-capability scope, and tripwire state contract
-17. [`current/m4-m7-parity.md`](current/m4-m7-parity.md) — implemented M4–M6 core rendering, original unified 37-capability pipeline, dual-version M7 automated integration evidence, and explicit compatibility boundaries
-18. [`current/m5-active-resource-pack.md`](current/m5-active-resource-pack.md) — deterministic non-vanilla active resource-pack preservation evidence, dual-version metrics, manual screenshot review, and explicit compatibility boundaries
-19. [`current/m8-performance.md`](current/m8-performance.md) — dual-version resource-reload/allocation observations, Resource Highlight instruction-reuse hardening, raw CI evidence, and measurement limitations
-20. [`current/release-readiness.md`](current/release-readiness.md) — M9/v0.1.0 release contract, technology foundation, icon-inclusive artifact baseline, licensing/security audit, exact-CI-artifact publishing, checksums, and compatibility support boundary
+12. [`current/stability-performance-review.md`](current/stability-performance-review.md) — post-v0.2.0 crash-safety, hot-path allocation, retained-memory, responsive-settings, real-client, and artifact-size evidence
+13. [`current/quality-strategy.md`](current/quality-strategy.md) — automated tests, functional parity, rendering, compatibility, performance, and artifact gates
+14. [`current/roadmap.md`](current/roadmap.md) — implementation order and acceptance criteria
+15. [`current/engineering-loop.md`](current/engineering-loop.md) — authoritative Graph Loop for discovery, implementation, verification, diagnosis/fix cycles, PR/CI, and completion states
+16. [`current/m3-visual-semantics.md`](current/m3-visual-semantics.md) — completed M3 source-derived visual intent, procedural cue policy, zero-scan model pipeline, resource-pack restoration rules, and verified dual-version framebuffer evidence
+17. [`current/m4-visual-semantics.md`](current/m4-visual-semantics.md) — source-derived outline/fine-line semantics, original five-capability scope, and tripwire state contract
+18. [`current/m4-m7-parity.md`](current/m4-m7-parity.md) — implemented M4–M6 core rendering, original unified 37-capability pipeline, dual-version M7 automated integration evidence, and explicit compatibility boundaries
+19. [`current/m5-active-resource-pack.md`](current/m5-active-resource-pack.md) — deterministic non-vanilla active resource-pack preservation evidence, dual-version metrics, manual screenshot review, and explicit compatibility boundaries
+20. [`current/m8-performance.md`](current/m8-performance.md) — dual-version resource-reload/allocation observations, Resource Highlight instruction-reuse hardening, raw CI evidence, and measurement limitations
+21. [`current/release-readiness.md`](current/release-readiness.md) — M9/v0.1.0 and v0.2.0 release contracts, technology foundation, artifact baselines, licensing/security audit, exact-CI-artifact publishing, checksums, and compatibility support boundary
 
 ## Historical-baseline rule
 

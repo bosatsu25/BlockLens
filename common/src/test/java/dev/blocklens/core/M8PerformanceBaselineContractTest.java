@@ -25,6 +25,7 @@ final class M8PerformanceBaselineContractTest {
                 "knowledge/current/performance-strategy.md"));
 
         assertTrue(smoke.contains("M8PerformanceBaselineOracle.verify(context, singleplayer)"));
+        assertTrue(oracle.contains("EXPECTED_CAPABILITIES = 40"));
         assertTrue(oracle.contains("EXPECTED_RESOURCE_CAPABILITIES = 21"));
         assertTrue(oracle.contains("RELOAD_WARMUPS = 1"));
         assertTrue(oracle.contains("MEASURED_SAMPLES = 3"));
@@ -35,6 +36,10 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(oracle.contains("com.sun.management.ThreadMXBean"));
         assertTrue(oracle.contains("MinecraftTerrainInvalidator::invalidateAll"));
         assertTrue(oracle.contains("CapabilityId.Category.RESOURCE"));
+        assertTrue(oracle.contains("BlockLensConfig defaultConfig = BlockLensConfig.defaults()"));
+        assertTrue(oracle.contains("BlockLensConfig allOn = allOn(original)"));
+        assertTrue(oracle.contains("defaultAllocatedMedianBytes"));
+        assertTrue(oracle.contains("defaultFrameMainPassP99Nanos"));
         assertTrue(oracle.contains("BLOCKLENS_M8_BASELINE"));
         assertTrue(oracle.contains("m8-performance-baseline.txt"));
         assertTrue(oracle.contains("m8-coarse-regression-guard"));
@@ -71,6 +76,14 @@ final class M8PerformanceBaselineContractTest {
             assertTrue(model.contains("if (cached != null || bandLookupAttempted)"));
             assertTrue(model.contains("cached = lookup(NetherTweaksOverlayModels.INTERIOR);"));
             assertTrue(model.contains("cached = lookup(NetherTweaksOverlayModels.UPPER_BAND);"));
+            assertTrue(model.indexOf("netherInteriorOverlay = cached;")
+                    < model.indexOf("interiorLookupAttempted = true;"));
+            assertTrue(model.indexOf("netherBandOverlay = cached;")
+                    < model.indexOf("bandLookupAttempted = true;"));
+            assertTrue(model.contains("private final Object[] descriptors;"));
+            assertFalse(model.contains("private final DecorationRenderDescriptor[]"));
+            assertFalse(model.contains("private final VisibilityRenderDescriptor[]"));
+            assertFalse(model.contains("private final ResourceHighlightCue[]"));
             assertFalse(plugin.contains("netherInteriorLookupCount"));
             assertFalse(plugin.contains("netherBandLookupCount"));
         }
@@ -90,10 +103,27 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(cue.contains("public DecorationQuadInstruction instruction()"));
         assertFalse(cue.contains("private final int accentArgb;"));
 
-        assertTrue(model2612.contains("instruction = resource.instruction();"));
-        assertTrue(model262.contains("instruction = resource.instruction();"));
+        assertTrue(model2612.contains("instruction = ((ResourceHighlightCue) descriptor).instruction();"));
+        assertTrue(model262.contains("instruction = ((ResourceHighlightCue) descriptor).instruction();"));
         assertFalse(model2612.contains("DecorationQuadInstruction.emissiveTint(resource.accentArgb())"));
         assertFalse(model262.contains("DecorationQuadInstruction.emissiveTint(resource.accentArgb())"));
+    }
+
+    @Test
+    void decorationStateAndInstructionsAvoidRepeatHotPathAllocation() throws IOException {
+        String state = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/state/SemanticState.java"));
+        String policy = Files.readString(root().resolve(
+                "common/src/main/java/dev/blocklens/core/render/DecorationQuadCuePolicy.java"));
+
+        assertTrue(state.contains("private static final Facing[] FACINGS = Facing.values();"));
+        assertTrue(state.contains("return FACINGS[(packed & FACING_MASK) >>> FACING_SHIFT];"));
+        assertFalse(state.contains("return Facing.values()["));
+        assertFalse(state.contains("return Axis.values()["));
+        assertFalse(state.contains("return Half.values()["));
+        assertTrue(policy.contains("private static final DecorationQuadInstruction AXIS_X_TINT"));
+        assertTrue(policy.contains("private static DecorationQuadInstruction tintIf("));
+        assertFalse(policy.contains("return condition ? DecorationQuadInstruction.tint(color)"));
     }
 
     @Test
@@ -132,9 +162,9 @@ final class M8PerformanceBaselineContractTest {
 
         assertTrue(properties.contains("runtime_jar_source_pack_bytes=2366865"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=96257"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=101913"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=102400"));
-        assertTrue(properties.contains("P0 ChiseTweaks-overlap measurement run #252 / 34792850592"));
+        assertTrue(properties.contains("Post-v0.2.0 stability/performance review measurement"));
 
         assertTrue(versionModule.contains("writeRuntimeJarSizeReport"));
         assertTrue(versionModule.contains("runtime-jar-size.txt"));

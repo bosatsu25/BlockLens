@@ -43,5 +43,7 @@
   "blocklens.capability.stringtweaks": "糸表示調整",
   "blocklens.capability.crying_obsidian": "泣く黒曜石",
   "blocklens.capability.nether_gold_ore": "ネザー金鉱石",
-  "blocklens.capability.nether_quartz_ore": "ネザークォーツ鉱石"
+  "blocklens.capability.nether_quartz_ore": "ネザークォーツ鉱石",
+  "key.blocklens.settings": "BlockLens設定を開く",
+  "blocklens.save_failed": "保存失敗"
 }
