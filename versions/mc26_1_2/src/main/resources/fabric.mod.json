@@ -11,7 +11,7 @@
       "dev.blocklens.fabric.BlockLensClient"
     ],
     "modmenu": [
-      "dev.blocklens.fabric.BlockLensModMenu"
+      "dev.blocklens.fabric.ModMenu"
     ]
   },
   "depends": {

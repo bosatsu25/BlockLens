@@ -6,7 +6,6 @@ import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import java.io.IOException;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -32,14 +31,6 @@ public final class BlockLensConfigScreen extends Screen {
     public BlockLensConfigScreen(Screen parent) {
         super(Component.translatable("blocklens.title"));
         this.parent = parent;
-    }
-
-    public static Screen current(Minecraft client) {
-        return client.screen;
-    }
-
-    public static void show(Minecraft client, Screen screen) {
-        client.setScreen(screen);
     }
 
     @Override
@@ -134,6 +125,6 @@ public final class BlockLensConfigScreen extends Screen {
                 return;
             }
         }
-        show(minecraft, parent);
+        minecraft.setScreen(parent);
     }
 }

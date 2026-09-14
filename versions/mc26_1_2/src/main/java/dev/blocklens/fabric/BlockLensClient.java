@@ -34,8 +34,8 @@ public final class BlockLensClient implements ClientModInitializer {
         KeyMappingHelper.registerKeyMapping(OPEN_SETTINGS);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OPEN_SETTINGS.consumeClick()) {
-                if (BlockLensConfigScreen.current(client) == null) {
-                    BlockLensConfigScreen.show(client, new BlockLensConfigScreen(null));
+                if (client.screen == null) {
+                    client.setScreen(new BlockLensConfigScreen(null));
                 }
             }
         });

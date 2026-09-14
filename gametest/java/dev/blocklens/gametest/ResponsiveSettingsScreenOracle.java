@@ -17,10 +17,10 @@ final class ResponsiveSettingsScreenOracle {
 
     static void verify(ClientGameTestContext context) {
         context.runOnClient(client -> {
-            Screen previous = BlockLensConfigScreen.current(client);
+            Screen previous = VersionScreenAccess.current(client);
             BlockLensConfigScreen screen = new BlockLensConfigScreen(previous);
             try {
-                BlockLensConfigScreen.show(client, screen);
+                VersionScreenAccess.show(client, screen);
                 int expectedChildren = CapabilityId.values().length + FOOTER_BUTTONS;
                 verifySize(screen, 320, 240, expectedChildren, true);
                 verifySize(screen, 640, 360, expectedChildren, true);
@@ -29,7 +29,7 @@ final class ResponsiveSettingsScreenOracle {
                 System.out.println("BLOCKLENS_RESPONSIVE_SETTINGS sizes=320x240,640x360,854x480,1920x1080"
                         + " widgets=" + expectedChildren + " bounded=true");
             } finally {
-                BlockLensConfigScreen.show(client, previous);
+                VersionScreenAccess.show(client, previous);
             }
         });
     }

@@ -15,13 +15,13 @@ class ModMenuIntegrationContractTest {
             Path version = root.resolve("versions").resolve(module);
             String metadata = Files.readString(version.resolve("src/main/resources/fabric.mod.json"));
             assertTrue(metadata.contains("\"modmenu\""));
-            assertTrue(metadata.contains("dev.blocklens.fabric.BlockLensModMenu"));
+            assertTrue(metadata.contains("dev.blocklens.fabric.ModMenu"));
             int depends = metadata.indexOf("\"depends\"");
             assertTrue(depends >= 0);
             assertFalse(metadata.substring(depends).contains("\"modmenu\""));
 
             String bridge = Files.readString(version.resolve(
-                    "src/main/java/dev/blocklens/fabric/BlockLensModMenu.java"));
+                    "src/main/java/dev/blocklens/fabric/ModMenu.java"));
             assertTrue(bridge.contains("implements ModMenuApi"));
             assertTrue(bridge.contains("return BlockLensConfigScreen::new;"));
         }
