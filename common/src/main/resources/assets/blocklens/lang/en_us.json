@@ -31,8 +31,8 @@
   "blocklens.capability.deepslate_iron_ore": "Deepslate Iron Ore",
   "blocklens.capability.copper_ore": "Copper Ore",
   "blocklens.capability.deepslate_copper_ore": "Deepslate Copper Ore",
-  "blocklens.capability.lapis_ore": "Lapis Ore",
-  "blocklens.capability.deepslate_lapis_ore": "Deepslate Lapis Ore",
+  "blocklens.capability.lapis_ore": "Lapis Lazuli Ore",
+  "blocklens.capability.deepslate_lapis_ore": "Deepslate Lapis Lazuli Ore",
   "blocklens.capability.redstone_ore": "Redstone Ore",
   "blocklens.capability.deepslate_redstone_ore": "Deepslate Redstone Ore",
   "blocklens.capability.blueice": "Blue Ice",
@@ -40,5 +40,8 @@
   "blocklens.capability.powdersnow": "Powder Snow",
   "blocklens.capability.sculk_catalyst": "Sculk Catalyst",
   "blocklens.capability.nethertweaks": "Nether Tweaks",
-  "blocklens.capability.stringtweaks": "String Tweaks"
+  "blocklens.capability.stringtweaks": "String Tweaks",
+  "blocklens.capability.crying_obsidian": "Crying Obsidian",
+  "blocklens.capability.nether_gold_ore": "Nether Gold Ore",
+  "blocklens.capability.nether_quartz_ore": "Nether Quartz Ore"
 }
