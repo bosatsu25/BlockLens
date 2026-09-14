@@ -1,8 +1,25 @@
 # BlockLens M9 Release Readiness
 
-Status: **DONE / authoritative M9 release evidence**
+Status: **DONE / authoritative v0.1.0 and v0.2.0 release evidence**
 
-## Terminal result
+## Current stable release: v0.2.0
+
+P0 was published as **v0.2.0** without changing the historical v0.1.0 release.
+
+- release target: `b440d43904e2a93236549efc571b7cc127622352`
+- final main CI: **run #270 / `34801429999` — GREEN**
+- final Release workflow: **run #31 / `34802548055` — GREEN**
+- release state: published, not draft, not prerelease
+- product contract: **40 capabilities / 328 bindings / 322 unique targets**
+
+| Minecraft | Release asset | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.2.0.jar` | **96,248 B** | `c678c4c5955596db0a1e3064bc1301ad44bb88b6141243e88ca1cefe9973e98a` |
+| 26.2 | `BlockLens-26.2-v0.2.0.jar` | **96,248 B** | `54b99d9b66a403195e28850dcfb165083007ee6cddb3521c36176d51af031105` |
+
+`SHA256SUMS.txt` is the third and only additional asset. The release target and attached digests were re-read from GitHub after publication. The exact artifacts came from successful main CI; the Release workflow did not rebuild them.
+
+## Historical terminal result: v0.1.0
 
 BlockLens **v0.1.0** was published successfully after the complete M0-M9 verification chain.
 

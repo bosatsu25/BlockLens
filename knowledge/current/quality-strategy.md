@@ -147,7 +147,7 @@ At minimum:
 - representative third-party resource pack
 - shader OFF
 - supported representative shader ON
-- all 37 capabilities ON simultaneously
+- all current capabilities ON simultaneously while preserving the frozen original 37-capability contract
 
 Do not advertise untested compatibility.
 

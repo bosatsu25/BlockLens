@@ -8,7 +8,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 
 /**
- * Resolves the exact all-37 M0 target catalog to session-local 26.2 raw block ids.
+ * Resolves the exact current target catalog to session-local 26.2 raw block ids.
  *
  * <p>The historical class name is retained while M4-M7 converges on the already-verified M3 model
  * pipeline. Each raw block id stores a composable capability bit-set, so overlaps are intentional.</p>

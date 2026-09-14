@@ -1,6 +1,6 @@
 # ChiseTweaks → BlockLens Migration
 
-Status: **Issue #22 / P0 implementation in progress**
+Status: **Issue #22 / P0 merged and published in v0.2.0 / P1-P5 planned**
 
 BlockLens is the destination product. ChiseTweaks is a source of proven capabilities and UX ideas; it is **not** a runtime dependency and its feature framework is not copied into BlockLens.
 
@@ -68,6 +68,16 @@ After the P0 target/capability expansion:
 - Nether bindings: **28**.
 
 These counts are executable contracts, not only documentation.
+
+## P0 release evidence
+
+PR #23 was squash-merged as `b440d43904e2a93236549efc571b7cc127622352`. Main CI **#270 / `34801429999`** completed its common quality gate and both real-client version jobs successfully. Release **#31 / `34802548055`** then published v0.2.0 from the exact CI artifacts:
+
+- Minecraft 26.1.2: **96,248 B**, SHA-256 `c678c4c5955596db0a1e3064bc1301ad44bb88b6141243e88ca1cefe9973e98a`;
+- Minecraft 26.2: **96,248 B**, SHA-256 `54b99d9b66a403195e28850dcfb165083007ee6cddb3521c36176d51af031105`;
+- `SHA256SUMS.txt` is the third release asset.
+
+The original 37-capability AMATERAS contract remains a permanent regression boundary. Issue #22 remains open only as the authority for P1-P5.
 
 ## Architecture invariants
 

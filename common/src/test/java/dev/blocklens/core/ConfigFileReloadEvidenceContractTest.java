@@ -37,7 +37,8 @@ final class ConfigFileReloadEvidenceContractTest {
 
         assertTrue(runtime.contains("public static BlockLensConfig reloadConfig(Path configDirectory)"));
         assertTrue(runtime.contains("BlockLensConfigFiles.loadOrCreate"));
-        assertTrue(runtime.contains("config = reloaded"));
+        assertTrue(runtime.contains("return installConfig(reloaded)"));
+        assertTrue(runtime.contains("public static BlockLensConfig installConfig"));
         assertTrue(runtime.contains("minecraftVersion"));
         assertTrue(runtime.contains("initializationNanos"));
     }

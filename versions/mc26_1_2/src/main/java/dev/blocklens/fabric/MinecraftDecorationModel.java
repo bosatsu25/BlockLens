@@ -34,9 +34,7 @@ import org.jspecify.annotations.Nullable;
 final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.ordinal();
 
-    private final DecorationRenderDescriptor[] decorationDescriptors;
-    private final VisibilityRenderDescriptor[] visibilityDescriptors;
-    private final ResourceHighlightCue[] resourceCues;
+    private final Object[] descriptors;
     private final long[] descriptorBits;
     private final long representedRenderableMask;
     private final @Nullable NetherTweaksVisualCue netherCue;
@@ -60,9 +58,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
 
         int count = capabilities.length;
-        this.decorationDescriptors = new DecorationRenderDescriptor[count];
-        this.visibilityDescriptors = new VisibilityRenderDescriptor[count];
-        this.resourceCues = new ResourceHighlightCue[count];
+        this.descriptors = new Object[count];
         this.descriptorBits = new long[count];
         long represented = 0L;
         boolean foundNether = false;
@@ -84,11 +80,11 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
                 continue;
             }
             if (DecorationStateKind.isDecorationCapability(capability)) {
-                decorationDescriptors[i] = DecorationRenderDescriptor.of(capability, state);
+                descriptors[i] = DecorationRenderDescriptor.of(capability, state);
             } else if (VisibilityStateKind.isVisibilityCapability(capability)) {
-                visibilityDescriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state);
+                descriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state);
             } else if (capability.category() == CapabilityId.Category.RESOURCE) {
-                resourceCues[i] = ResourceHighlightCue.forCapability(capability);
+                descriptors[i] = ResourceHighlightCue.forCapability(capability);
             } else {
                 continue;
             }
@@ -203,17 +199,13 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             }
 
             DecorationQuadInstruction instruction;
-            DecorationRenderDescriptor decoration = decorationDescriptors[i];
-            if (decoration != null) {
+            Object descriptor = descriptors[i];
+            if (descriptor instanceof DecorationRenderDescriptor decoration) {
                 instruction = DecorationQuadCuePolicy.instruction(decoration, face);
+            } else if (descriptor instanceof VisibilityRenderDescriptor visibility) {
+                instruction = visibility.cue().instruction();
             } else {
-                VisibilityRenderDescriptor visibility = visibilityDescriptors[i];
-                if (visibility != null) {
-                    instruction = visibility.cue().instruction();
-                } else {
-                    ResourceHighlightCue resource = resourceCues[i];
-                    instruction = resource.instruction();
-                }
+                instruction = ((ResourceHighlightCue) descriptor).instruction();
             }
             applyInstruction(quad, instruction);
         }
@@ -243,9 +235,9 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             if (cached != null || interiorLookupAttempted) {
                 return cached;
             }
-            interiorLookupAttempted = true;
             cached = lookup(NetherTweaksOverlayModels.INTERIOR);
             netherInteriorOverlay = cached;
+            interiorLookupAttempted = true;
             return cached;
         }
     }
@@ -260,9 +252,9 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             if (cached != null || bandLookupAttempted) {
                 return cached;
             }
-            bandLookupAttempted = true;
             cached = lookup(NetherTweaksOverlayModels.UPPER_BAND);
             netherBandOverlay = cached;
+            bandLookupAttempted = true;
             return cached;
         }
     }

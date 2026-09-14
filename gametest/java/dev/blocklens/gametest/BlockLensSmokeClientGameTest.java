@@ -28,6 +28,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             M4M6StateAdapterOracle.verify();
             MinecraftDecorationTargetOracle.verify();
         });
+        ResponsiveSettingsScreenOracle.verify(context);
 
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             context.waitTicks(20);

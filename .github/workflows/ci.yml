@@ -102,6 +102,26 @@ jobs:
         run: >-
           xvfb-run -a gradle --stacktrace
           :versions:${{ matrix.module }}:runClientGameTest
+      - name: Collect failed Client GameTest diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="build/ci/client-gametest-failure-${{ matrix.minecraft }}"
+          mkdir -p "$target"
+          find "versions/${{ matrix.module }}" -type f \
+            \( -path '*/logs/latest.log' -o -path '*/m3-visual/*' \
+            -o -path '*/m5-dark-visual/*' -o -path '*/m5-pack-visual/*' \
+            -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \) \
+            -exec cp --parents '{}' "$target" \;
+      - name: Upload failed Client GameTest diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-client-gametest-failure-${{ matrix.minecraft }}
+          path: build/ci/client-gametest-failure-${{ matrix.minecraft }}
+          if-no-files-found: warn
+          retention-days: 14
       - name: Verify BlockLens model resources resolved Minecraft ${{ matrix.minecraft }}
         shell: bash
         run: |
@@ -340,7 +360,7 @@ jobs:
             echo "- M3 rendered visual evidence: \`PASS\`"
             echo "- M5 dark-area visual evidence: \`PASS\`"
             echo "- M5 active resource-pack evidence: \`PASS\`"
-            echo "- M7 all-37 full parity evidence: \`PASS\`"
+            echo "- M7 all-40 full parity evidence: \`PASS\`"
             echo "- M8 performance observation: \`PASS\`"
             echo "- Reproducible artifact: \`PASS\`"
             echo "- Privacy/residue audit: \`PASS\`"

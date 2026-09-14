@@ -2,6 +2,7 @@ package dev.blocklens.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -42,5 +43,27 @@ final class BlockLensConfigFilesTest {
         assertTrue(config.isEnabled(CapabilityId.ANVIL));
         assertFalse(config.isEnabled(CapabilityId.DIAMOND_ORE));
         assertTrue(config.isEnabled(CapabilityId.STRING_TWEAKS));
+    }
+
+    @Test
+    void oversizedFileIsRejectedBeforeItCanCreateUnboundedDecodeWork() throws IOException {
+        Path file = tempDir.resolve(BlockLensConfigFiles.FILE_NAME);
+        Files.write(file, new byte[BlockLensConfigFiles.MAX_CONFIG_BYTES + 1]);
+
+        IOException failure = assertThrows(
+                IOException.class,
+                () -> BlockLensConfigFiles.loadOrCreate(tempDir));
+        assertTrue(failure.getMessage().contains("exceeds"));
+    }
+
+    @Test
+    void saveUsesAUniqueTemporaryFileAndLeavesNoResidue() throws IOException {
+        BlockLensConfig expected = BlockLensConfig.defaults().withEnabled(CapabilityId.ANVIL, true);
+        BlockLensConfigFiles.save(tempDir, expected);
+
+        assertEquals(expected.asMap(), BlockLensConfigFiles.loadOrCreate(tempDir).asMap());
+        try (var entries = Files.list(tempDir)) {
+            assertEquals(1L, entries.count());
+        }
     }
 }

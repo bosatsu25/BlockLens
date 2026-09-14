@@ -43,5 +43,7 @@
   "blocklens.capability.stringtweaks": "String Tweaks",
   "blocklens.capability.crying_obsidian": "Crying Obsidian",
   "blocklens.capability.nether_gold_ore": "Nether Gold Ore",
-  "blocklens.capability.nether_quartz_ore": "Nether Quartz Ore"
+  "blocklens.capability.nether_quartz_ore": "Nether Quartz Ore",
+  "key.blocklens.settings": "Open BlockLens settings",
+  "blocklens.save_failed": "Save failed"
 }

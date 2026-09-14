@@ -10,9 +10,9 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Stable release:** BlockLens **v0.1.0** contains the frozen **37-capability AMATERAS baseline** and is published for Minecraft **26.1.2** and **26.2**.
+> **Current stable release:** BlockLens **v0.2.0** provides **40 independently configurable capabilities** for Minecraft **26.1.2** and **26.2**, while preserving every identity and behavior contract in the original 37-capability AMATERAS baseline.
 >
-> **Current development / P0:** BlockLens is becoming the destination product for selected ChiseTweaks capabilities. P0 keeps all original 37 capability IDs/config keys stable and grows the runtime to **40 capabilities / 328 capability-to-target bindings / 322 unique block targets**. The latest measured P0 JAR maximum is **96,257 B**, while the strict **100 KiB** release budget remains unchanged.
+> **Historical release:** BlockLens **v0.1.0** remains the immutable 37-capability AMATERAS release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets**; the strict **100 KiB** release budget remains unchanged.
 
 ## Product direction
 
@@ -121,16 +121,16 @@ P0 extends the existing BlockLens engine rather than importing the ChiseTweaks f
 
 The first 37 enum entries, bit positions, source/config keys, and defaults remain frozen. P0 appends new capability IDs only.
 
-Current P0 contract:
+Published v0.2.0 contract:
 
 - **40 capabilities**
 - **328 capability-to-target bindings**
 - **322 unique block targets**
-- measured JAR: **96,256 B (26.1.2) / 96,257 B (26.2)**
-- current no-growth baseline: **96,257 B**
+- published JAR: **96,248 B** on both Minecraft lines
+- release-era cross-platform no-growth baseline: **96,257 B**
 - release ceiling: **102,400 B / 100 KiB**, unchanged
 
-P0 is under active verification in PR #23; these development numbers are not presented as a published v0.2.0 release until the full dual-version CI/real-client gate is green and merged.
+P0 was merged in PR #23 at `b440d43904e2a93236549efc571b7cc127622352`. Main CI **#270 / `34801429999`** and Release **#31 / `34802548055`** completed successfully before v0.2.0 was published.
 
 ## Runtime architecture
 
@@ -160,9 +160,24 @@ Runtime principles:
 - bounded retained-capability structure across repeated resource reloads
 - client-only packaging with no nested runtime dependency JARs
 
+### Current source hardening
+
+The current source tree adds a native **B-key settings screen** without an external UI dependency. It keeps a fixed 41-widget registry, switches between one and two columns, scrolls compact layouts, and is exercised at **320×240, 640×360, 854×480, and 1920×1080** on both real Minecraft clients.
+
+The same review also adds bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model instead of four. Current dual-version GameTest performance evidence covers OFF, default, and all-40 configurations. The reviewed local artifacts are **101,877 B (26.1.2) / 101,913 B (26.2)**; **101,913 B** is the new development no-growth baseline and the **102,400 B** hard release ceiling was not changed.
+
 ## Release
 
-**v0.1.0** is the first verified stable release line and remains the historical 37-capability baseline.
+**v0.2.0** is the current verified stable release.
+
+| Minecraft | Published JAR | Size | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.2.0.jar` | **96,248 B** | `c678c4c5955596db0a1e3064bc1301ad44bb88b6141243e88ca1cefe9973e98a` |
+| 26.2 | `BlockLens-26.2-v0.2.0.jar` | **96,248 B** | `54b99d9b66a403195e28850dcfb165083007ee6cddb3521c36176d51af031105` |
+
+The release targets `b440d43904e2a93236549efc571b7cc127622352`. Successful main CI **#270 / `34801429999`** supplied the exact artifacts published by Release **#31 / `34802548055`**, together with `SHA256SUMS.txt`.
+
+**v0.1.0** remains the historical 37-capability baseline.
 
 | Minecraft | Published JAR | Size | SHA-256 |
 | --- | --- | ---: | --- |

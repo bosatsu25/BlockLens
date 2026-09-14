@@ -52,6 +52,9 @@ final class M5ActiveResourcePackEvidenceContractTest {
         assertTrue(oracle.contains("allMarkersPresent()"));
         assertTrue(oracle.contains("baseRetentionPermille"));
         assertTrue(oracle.contains("MIN_BASE_RETENTION_PERMILLE"));
+        assertTrue(oracle.contains("MASK_TOLERANCE_RADIUS = 2"));
+        assertTrue(oracle.contains("hasNearbyForeground(on, air, x, y)"));
+        assertTrue(oracle.contains("geometryNearbyIntersectionPixels"));
         assertTrue(oracle.contains("geometryIouPermille"));
         assertTrue(oracle.contains("reloadResources(context)"));
         assertTrue(oracle.contains("MinecraftTerrainInvalidator::invalidateAll"));
@@ -88,5 +91,7 @@ final class M5ActiveResourcePackEvidenceContractTest {
         assertTrue(ci.contains("Expected exactly three M5 active-pack screenshots"));
         assertTrue(ci.contains("m5-pack-visual-manifest.txt"));
         assertTrue(ci.contains("blocklens-m5-pack-visual-${{ matrix.minecraft }}"));
+        assertTrue(ci.contains("Upload failed Client GameTest diagnostics"));
+        assertTrue(ci.contains("blocklens-client-gametest-failure-${{ matrix.minecraft }}"));
     }
 }

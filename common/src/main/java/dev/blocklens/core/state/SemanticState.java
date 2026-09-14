@@ -16,6 +16,15 @@ public final class SemanticState {
     public enum MountFace { NONE, FLOOR, WALL, CEILING }
     public enum SlabType { NONE, BOTTOM, TOP, DOUBLE }
 
+    // Enum.values() clones its backing array. These cached lookup tables keep state decoding
+    // allocation-free in the per-quad render path.
+    private static final Facing[] FACINGS = Facing.values();
+    private static final Axis[] AXES = Axis.values();
+    private static final Half[] HALVES = Half.values();
+    private static final StairShape[] STAIR_SHAPES = StairShape.values();
+    private static final MountFace[] MOUNT_FACES = MountFace.values();
+    private static final SlabType[] SLAB_TYPES = SlabType.values();
+
     public static final int CONNECT_NORTH = 1;
     public static final int CONNECT_EAST = 1 << 1;
     public static final int CONNECT_SOUTH = 1 << 2;
@@ -188,27 +197,27 @@ public final class SemanticState {
     }
 
     public Facing facing() {
-        return Facing.values()[(packed & FACING_MASK) >>> FACING_SHIFT];
+        return FACINGS[(packed & FACING_MASK) >>> FACING_SHIFT];
     }
 
     public Axis axis() {
-        return Axis.values()[(packed & AXIS_MASK) >>> AXIS_SHIFT];
+        return AXES[(packed & AXIS_MASK) >>> AXIS_SHIFT];
     }
 
     public Half half() {
-        return Half.values()[(packed & HALF_MASK) >>> HALF_SHIFT];
+        return HALVES[(packed & HALF_MASK) >>> HALF_SHIFT];
     }
 
     public StairShape stairShape() {
-        return StairShape.values()[(packed & SHAPE_MASK) >>> SHAPE_SHIFT];
+        return STAIR_SHAPES[(packed & SHAPE_MASK) >>> SHAPE_SHIFT];
     }
 
     public MountFace mountFace() {
-        return MountFace.values()[(packed & MOUNT_MASK) >>> MOUNT_SHIFT];
+        return MOUNT_FACES[(packed & MOUNT_MASK) >>> MOUNT_SHIFT];
     }
 
     public SlabType slabType() {
-        return SlabType.values()[(packed & SLAB_MASK) >>> SLAB_SHIFT];
+        return SLAB_TYPES[(packed & SLAB_MASK) >>> SLAB_SHIFT];
     }
 
     public int connectionMask() {

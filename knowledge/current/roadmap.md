@@ -1,6 +1,6 @@
 # BlockLens Current Roadmap
 
-Status: **M0-M9 complete / v0.1.0 published / ChiseTweaks consolidation P0 in verification**
+Status: **M0-M9 complete / v0.2.0 published / post-release stability hardening locally verified**
 
 ## Cross-cutting product rules
 
@@ -16,7 +16,8 @@ Every future change must preserve, unless deliberately revised with evidence:
 - privacy/residue checks
 - current JUnit / JaCoCo / PIT thresholds without silent relaxation
 - v0.1.0 historical icon-inclusive baseline: **95,333 B**
-- current measured P0 no-growth baseline: **96,257 B**
+- published v0.2.0 cross-platform baseline: **96,257 B**
+- current reviewed source no-growth baseline: **101,913 B**
 - **100 KiB** release budget
 - source-pack **<50%** absolute requirement
 
@@ -36,7 +37,7 @@ Performance and artifact size remain continuous gates rather than deferred clean
 | M7 | ✅ DONE | automated all-37 dual-version real-client integration gate |
 | M8 | ✅ DONE | performance/load/retention/size hardening |
 | M9 | ✅ DONE | verified automated release pipeline and live **v0.1.0** publication |
-| P0 | 🚧 VERIFY | absorb Chise material/hidden/fine-line/Nether overlap into the existing BlockLens engine |
+| P0 | ✅ DONE | Chise material/hidden/fine-line/Nether overlap shipped in v0.2.0 |
 | P1-P5 | ⏳ PLANNED | selected ChiseTweaks visual, comfort, analyzer, builder and compatibility capabilities |
 
 ## M0 — Baseline freeze ✅
@@ -154,7 +155,7 @@ The release workflow publishes exact successful-main-CI artifacts without rebuil
 
 Authority: [`release-readiness.md`](release-readiness.md).
 
-## P0 — ChiseTweaks visual-overlap convergence 🚧
+## P0 — ChiseTweaks visual-overlap convergence ✅
 
 Authority: Issue **#22**, PR **#23**, and [`chisetweaks-migration.md`](chisetweaks-migration.md).
 
@@ -179,7 +180,7 @@ P0 adds:
 - Tripwire Hook under String Tweaks
 - Polished Basalt under Nether Tweaks
 
-Current development contract:
+Published v0.2.0 contract:
 
 ```text
 capabilities:                    40
@@ -208,27 +209,35 @@ The first 37 capability IDs/config keys/defaults remain stable. The three new in
 - [x] only reviewed additive target drift is allowed on original capabilities (`tripwire_hook`, `polished_basalt`)
 - [x] P0 JAR growth measured and 100 KiB ceiling preserved
 - [x] README English/Japanese updated
-- [ ] latest common JUnit / JaCoCo / PIT GREEN
-- [ ] latest 26.1.2 real-client gate GREEN
-- [ ] latest 26.2 real-client gate GREEN
-- [ ] PR #23 final self-review / ready-for-review
-- [ ] merge after all required gates are GREEN
-- [ ] publish the additive release under a new version rather than mutating v0.1.0
+- [x] latest common JUnit / JaCoCo / PIT GREEN
+- [x] latest 26.1.2 real-client gate GREEN
+- [x] latest 26.2 real-client gate GREEN
+- [x] PR #23 final self-review / ready-for-review
+- [x] merge after all required gates are GREEN
+- [x] publish the additive release as v0.2.0 without mutating v0.1.0
 
 ### P0 size evidence
 
-Initial measured P0 artifacts:
+Published v0.2.0 artifacts:
 
-- 26.1.2: **96,256 B**
-- 26.2: **96,257 B**
-- maximum increase from v0.1.0 baseline: **924 B**
-- latest observed 26.1.2 build after test/doc changes: **96,249 B**
+- 26.1.2: **96,248 B**
+- 26.2: **96,248 B**
+- release-era cross-platform no-growth baseline: **96,257 B**
+- main CI: **#270 / `34801429999` — GREEN**
+- Release: **#31 / `34802548055` — GREEN**
+- release target: `b440d43904e2a93236549efc571b7cc127622352`
 
-The larger measured **96,257 B** remains the no-growth baseline. The 100 KiB release ceiling is unchanged.
+The release-era **96,257 B** baseline remains historical v0.2.0 evidence. The 100 KiB release ceiling is unchanged.
+
+## Post-v0.2.0 stability and performance hardening
+
+The current source adds the bounded responsive settings screen, crash-safe config persistence, safe lazy publication, hot-path instruction/enum reuse, compact retained descriptor arrays, all-40 M8 evidence, and durable failure artifacts. Local dual-version Client GameTest is GREEN.
+
+Measured local runtime artifacts are **101,877 B (26.1.2) / 101,913 B (26.2)**. The reviewed source no-growth baseline is **101,913 B** and the hard **102,400 B / 100 KiB** ceiling remains unchanged. Full evidence and measurement limitations are recorded in [`stability-performance-review.md`](stability-performance-review.md).
 
 ## P1-P5 — Next consolidation phases ⏳
 
-Planned in Issue #22 after P0 is fully merged and verified:
+Planned in Issue #22 after the published P0 baseline:
 
 - **P1:** Glass Highlight, Kelp Highlight, Bright Concrete; evaluate Bright Chest separately
 - **P2:** Low Fire, Handheld Size
@@ -240,7 +249,7 @@ Automation remains outside product scope unless deliberately reconsidered later.
 
 ## Compatibility track
 
-The following remain non-release-blocking relative to the verified v0.1.0 support boundary and are tracked separately:
+The following remain non-release-blocking relative to the verified v0.2.0 support boundary and are tracked separately:
 
 - representative shader-ON verification
 - broader third-party resource-pack compatibility evidence

@@ -100,6 +100,7 @@ tasks.register('versionSmokeContract') {
             for (String required : [
                     'fabric.mod.json',
                     'dev/blocklens/fabric/BlockLensClient.class',
+                    'dev/blocklens/fabric/BlockLensConfigScreen.class',
                     'dev/blocklens/fabric/MinecraftStateAdapter.class',
                     'dev/blocklens/fabric/MinecraftDecorationTargetIndex.class',
                     'dev/blocklens/fabric/MinecraftDecorationModelPlugin.class',
