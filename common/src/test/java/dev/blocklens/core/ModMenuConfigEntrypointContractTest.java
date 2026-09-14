@@ -22,7 +22,8 @@ final class ModMenuConfigEntrypointContractTest {
 
             assertTrue(metadata.contains("\"modmenu\""), version);
             assertTrue(metadata.contains("dev.blocklens.fabric.BlockLensModMenu"), version);
-            assertFalse(metadata.contains("\"modmenu\":"), "Mod Menu must not become a required dependency");
+            String depends = metadata.substring(metadata.indexOf("\"depends\""));
+            assertFalse(depends.contains("\"modmenu\""), "Mod Menu must remain optional");
             assertTrue(adapter.contains("implements ModMenuApi"), version);
             assertTrue(adapter.contains("BlockLensConfigScreen::new"), version);
         }
