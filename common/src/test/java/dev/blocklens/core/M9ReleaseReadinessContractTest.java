@@ -67,6 +67,15 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(release.contains("SHA256SUMS.txt"));
         assertTrue(release.contains("assets/blocklens/icon.png"));
         assertTrue(release.contains("no duplicate release"));
+
+        // The live release notes must describe the current product, not silently repeat the
+        // historical v0.1.0 capability count.
+        assertTrue(release.contains("40 independently configurable capabilities"));
+        assertTrue(release.contains("37-capability AMATERAS baseline"));
+        assertTrue(release.contains("Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore"));
+        assertTrue(release.contains("Tripwire Hook coverage in String Tweaks"));
+        assertTrue(release.contains("Polished Basalt coverage in Nether Tweaks"));
+        assertFalse(release.contains("with **37 independently configurable capabilities**"));
     }
 
     @Test
