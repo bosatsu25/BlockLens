@@ -75,8 +75,9 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        // v0.1.0 remains the published release while P0 is under verification.
-        assertTrue(properties.contains("mod_version=0.1.0"));
+        // v0.1.0 remains immutable historical release evidence. P0 is an additive minor release.
+        assertTrue(properties.contains("mod_version=0.2.0"));
+        assertTrue(properties.contains("v0.1.0 is the published 37-capability AMATERAS baseline"));
 
         // P0 is explicitly rebaselined from measured dual-version evidence, without relaxing
         // the product release ceiling or the source-pack absolute maximum.
@@ -85,7 +86,11 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
         assertTrue(properties.contains("P0 ChiseTweaks-overlap measurement run #252 / 34792850592"));
 
-        // The historical v0.1.0 artifact baseline remains documented rather than rewritten.
+        // Historical v0.1.0 evidence stays visible while the P0 release candidate is verified.
+        assertTrue(english.contains("v0.1.0"));
+        assertTrue(japanese.contains("v0.1.0"));
+        assertTrue(english.contains("v0.2.0"));
+        assertTrue(japanese.contains("v0.2.0"));
         assertTrue(english.contains("95,333 B"));
         assertTrue(japanese.contains("95,333 B"));
         assertTrue(english.contains("96,257 B"));
