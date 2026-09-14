@@ -4,12 +4,11 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Source-derived M6 palette grammar without redistributing AMATERAS textures.
+ * Procedural Nether palette used by BlockLens without redistributing source textures.
  *
- * <p>The pinned source uses mostly 16x16 textures with a 14x14 flat interior and a one-pixel
- * contrasting frame (196 interior pixels + 60 frame pixels). Nylium side textures additionally use
- * a four-pixel top band. BlockLens stores those observed colors as data and reconstructs the visual
- * grammar procedurally.</p>
+ * <p>The pinned AMATERAS source uses mostly 16x16 textures with a 14x14 flat interior and a
+ * one-pixel contrasting frame. P0 keeps those existing cues and extends the same grammar to the
+ * ChiseTweaks-only polished-basalt target.</p>
  */
 public record NetherTweaksVisualCue(
         int sideFillArgb,
@@ -25,6 +24,7 @@ public record NetherTweaksVisualCue(
 
     private static final Map<String, NetherTweaksVisualCue> BY_TARGET = Map.ofEntries(
             entry("basalt", cue(0x5C5C5C, 0x5C5C5C, 0x5C5C5C, 0x3A3B48)),
+            entry("polished_basalt", cue(0x6A6A6A, 0x777777, 0x777777, 0x454653)),
             entry("blackstone", cue(0x312C36, 0x312C36, 0x312C36, 0x160F10)),
             entry("chiseled_nether_bricks", cue(0x44242A, 0x44242A, 0x44242A, 0x30181C)),
             entry("chiseled_polished_blackstone", cue(0x312C36, 0x312C36, 0x312C36, 0x160F10)),
