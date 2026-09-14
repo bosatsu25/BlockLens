@@ -198,7 +198,13 @@ jobs:
           cat > dist/RELEASE_NOTES.md <<EOF
           # BlockLens v${version}
 
-          Client-side Fabric visual inspection for Minecraft Java Edition with **37 independently configurable capabilities**.
+          Client-side Fabric visual inspection for Minecraft Java Edition with **40 independently configurable capabilities**, preserving the frozen 37-capability AMATERAS baseline and adding the verified ChiseTweaks-overlap P0 capabilities.
+
+          ## P0 additions
+          - Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore as independent Resource capabilities
+          - Tripwire Hook coverage in String Tweaks
+          - Polished Basalt coverage in Nether Tweaks
+          - executable raw-source parity regression protection for the original AMATERAS contract
 
           ## Supported
           - Minecraft **26.1.2** and **26.2**
