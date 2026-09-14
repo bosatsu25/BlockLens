@@ -1,6 +1,6 @@
 # AMATERAS raw-source parity audit
 
-Status: **initial comparison complete; executable regression contract follow-up tracked in Issue #24**
+Status: **comparison complete; executable regression contract added in P0**
 
 ## Purpose
 
@@ -17,13 +17,13 @@ BlockLens does **not** redistribute the source JSON/PNG files byte-for-byte. The
 
 ## Source graph findings
 
-- 37 distinct RPO condition keys.
-- 337 `.rpo` sidecars.
-- 336 sidecars gate an existing base file.
+- **37** distinct RPO condition keys.
+- **337** `.rpo` sidecars.
+- **336** sidecars gate an existing base file.
 - 1 orphan duplicate sidecar: `assets/minecraft/blockstates/pale_oak_slab.rpo`; the valid gate is `pale_oak_slab.json.rpo`. Both declare `deco.slabs`.
-- 4,196 non-RPO Minecraft assets.
-- 4,101 assets reachable from effective RPO-gated roots.
-- 95 unreachable/source-residue candidates.
+- **4,196** non-RPO Minecraft assets.
+- **4,101** assets reachable from effective RPO-gated roots.
+- **95** unreachable/source-residue candidates.
 
 These effective counts match the established M0 source-evidence shape. The extra 337th sidecar does not create a new capability or logical target.
 
@@ -48,10 +48,10 @@ These effective counts match the established M0 source-evidence shape. The extra
 | `deco.glazedterracotta` | 16 | 16 | 49 | 16 | 16 | ✅ mapped | |
 | `deco.grindstone` | 1 | 1 | 4 | 1 | 1 | ✅ mapped | |
 | `deco.log` | 24 | 24 | 251 | 24 | 24 | ✅ mapped | |
-| `deco.slabs` | 62 | 61 | 298 | 61 | 61 | ✅ mapped | 62 sidecars, but one is orphan duplicate `pale_oak_slab.rpo`; 61 effective slab targets. |
+| `deco.slabs` | 62 | 61 | 298 | 61 | 61 | ✅ mapped | one orphan duplicate `pale_oak_slab.rpo`; 61 effective slab targets |
 | `deco.stainedglass` | 32 | 32 | 160 | 32 | 32 | ✅ mapped | |
 | `deco.stairs` | 58 | 58 | 2758 | 58 | 58 | ✅ mapped | |
-| `deco.trapdoor` | 32 | 32 | 120 | 21 | 21 | ✅ mapped | 21 blockstate gates + 11 model gates; 21 logical block targets. |
+| `deco.trapdoor` | 32 | 32 | 120 | 21 | 21 | ✅ mapped | 21 blockstate gates + 11 model gates; 21 logical block targets |
 | `deco.wood` | 22 | 22 | 237 | 22 | 22 | ✅ mapped | |
 | `gaming.ancient_debris` | 1 | 1 | 6 | 1 | 1 | ✅ mapped | |
 | `gaming.coal_ore` | 1 | 1 | 4 | 1 | 1 | ✅ mapped | |
@@ -71,29 +71,44 @@ These effective counts match the established M0 source-evidence shape. The extra
 | `gaming.lapis_ore` | 1 | 1 | 4 | 1 | 1 | ✅ mapped | |
 | `gaming.obsidian` | 1 | 1 | 4 | 1 | 1 | ✅ mapped | |
 | `gaming.redstone_ore` | 1 | 1 | 4 | 1 | 1 | ✅ mapped | |
-| `outline.blueice` | 1 | 1 | 1 | 1 | 1 | ✅ mapped | One gated texture maps to the Blue Ice block. |
-| `outline.deadcoral` | 15 | 15 | 15 | 20 | 20 | ✅ mapped | 15 texture gates cover 20 logical block forms because wall-fans reuse fan textures. |
-| `outline.powdersnow` | 1 | 1 | 1 | 1 | 1 | ✅ mapped | One gated texture maps to Powder Snow. |
-| `outline.sculk_catalyst` | 1 | 1 | 9 | 1 | 1 | ✅ mapped | State-aware behavior remains represented by BlockLens semantic state. |
-| `others.nethertweaks` | 34 | 34 | 34 | 27 | 27 | ✅ mapped | 33 texture gates + 1 magma model gate represent 27 logical Nether block targets. |
-| `others.stringtweaks` | 1 | 1 | 23 | 1 | 1 | ✅ mapped | The source gate is Tripwire; P0 later adds Tripwire Hook as ChiseTweaks-derived behavior. |
+| `outline.blueice` | 1 | 1 | 1 | 1 | 1 | ✅ mapped | one gated texture maps to Blue Ice |
+| `outline.deadcoral` | 15 | 15 | 15 | 20 | 20 | ✅ mapped | 15 texture gates cover 20 logical forms because wall-fans reuse fan textures |
+| `outline.powdersnow` | 1 | 1 | 1 | 1 | 1 | ✅ mapped | one gated texture maps to Powder Snow |
+| `outline.sculk_catalyst` | 1 | 1 | 9 | 1 | 1 | ✅ mapped | state-aware behavior remains represented by BlockLens semantic state |
+| `others.nethertweaks` | 34 | 34 | 34 | 27 | 27 | ✅ mapped | 33 texture gates + one magma model gate represent 27 logical Nether targets |
+| `others.stringtweaks` | 1 | 1 | 23 | 1 | 1 | ✅ mapped | source gate is Tripwire; P0 later adds Tripwire Hook additively |
 
-## Current JAR conclusions
+## Frozen v0.1.0 conclusions
 
 1. **No RPO capability key is missing:** 37 distinct source conditions map to the 37 compiled v0.1.0 capabilities.
-2. **Effective logical target coverage is preserved:** Decoration 254, Resource 18, Visibility/String 24, Nether 27 = **323 capability-to-target bindings**.
-3. The apparent `337 vs 336` discrepancy is an orphan duplicate sidecar, not missing BlockLens behavior.
-4. Thousands of source helper models/textures are intentionally collapsed into semantic state + compiled target catalogs + procedural cues. Literal source-byte inclusion would destroy the size advantage without adding user-visible capability.
-5. The 95 unreachable source assets should remain excluded unless new evidence shows they are functionally reachable.
+2. **Effective logical target coverage is preserved:** the frozen source contract contains **323 capability-to-target bindings / 320 unique block targets**.
+3. Decoration contributes 254 target bindings, Resource 18, Visibility/String 24, and Nether 27.
+4. The apparent `337 vs 336` discrepancy is an orphan duplicate sidecar, not missing BlockLens behavior.
+5. Thousands of source helper models/textures are intentionally collapsed into semantic state + compiled target catalogs + procedural cues. Literal source-byte inclusion would destroy the size advantage without adding user-visible capability.
+6. The 95 unreachable source assets remain excluded unless new evidence shows they are functionally reachable.
 
 ## P0 / ChiseTweaks migration relationship
 
-P0 extends BlockLens beyond the frozen 37-capability AMATERAS contract. The original 37 entries stay stable while ChiseTweaks-derived behavior is additive. The current P0 design targets **40 capabilities / 328 bindings / 322 unique targets**, while retaining the original AMATERAS baseline as a regression contract.
+P0 extends BlockLens beyond the frozen 37-capability AMATERAS contract. The original 37 entries stay stable while ChiseTweaks-derived behavior is additive. The current P0 design is **40 capabilities / 328 bindings / 322 unique targets**.
 
-## Follow-up gates
+Reviewed target additions to original AMATERAS capabilities are limited to:
 
-- freeze this per-capability source-to-runtime map as a repository contract;
-- keep the original 37 capability ordinals/config keys stable;
-- keep raw-source parity tests separate from ChiseTweaks-derived additive features;
-- fail CI if any frozen AMATERAS condition loses its logical target/state mapping;
-- preserve the 100 KiB release ceiling unless separately reviewed with evidence.
+- `others.stringtweaks` → `tripwire_hook`
+- `others.nethertweaks` → `polished_basalt`
+
+The other three P0 additions are independent Resource capabilities: Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore.
+
+## Executable regression gate
+
+`AmaterasRawParityContractTest` now enforces in CI:
+
+- exactly 37 frozen source rows;
+- exactly 336 effective gated roots from the frozen machine-readable contract;
+- exactly 323 frozen capability-target bindings;
+- exactly 320 frozen unique targets;
+- every frozen source key still resolves to a runtime `CapabilityId`;
+- every frozen logical target remains present in the compiled runtime catalog;
+- only the two reviewed additive target extensions above are allowed on the original capabilities;
+- this audit retains the raw-source evidence boundary (337 / 336 / 4,101 / 95).
+
+This keeps raw-source parity separate from additive ChiseTweaks-derived features and makes accidental deletion of an AMATERAS behavior a hard CI failure.
