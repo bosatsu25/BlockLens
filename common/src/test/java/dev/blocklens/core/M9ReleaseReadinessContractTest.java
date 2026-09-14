@@ -84,8 +84,9 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        // v0.1.0 remains immutable historical release evidence. P0 is an additive minor release.
-        assertTrue(properties.contains("mod_version=0.2.0"));
+        // v0.1.0 remains immutable historical release evidence; v0.2.0 remains published P0
+        // evidence while v0.2.1 carries the backward-compatible runtime/settings hardening.
+        assertTrue(properties.contains("mod_version=0.2.1"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability AMATERAS baseline"));
 
         // The current source is explicitly rebaselined from measured dual-version evidence,
@@ -95,7 +96,7 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
         assertTrue(properties.contains("Post-v0.2.0 stability/performance review measurement"));
 
-        // Historical v0.1.0 evidence stays visible while the P0 release candidate is verified.
+        // Historical v0.1.0 and published v0.2.0 evidence stay visible while v0.2.1 is verified.
         assertTrue(english.contains("v0.1.0"));
         assertTrue(japanese.contains("v0.1.0"));
         assertTrue(english.contains("v0.2.0"));
