@@ -33,10 +33,10 @@ public final class MinecraftStateAdapter {
                 case STATIC_OUTLINE -> SemanticState.empty();
                 case SCULK_BLOOM -> SemanticState.sculkCatalyst(require(state, BlockStateProperties.BLOOM));
                 case TRIPWIRE -> SemanticState.tripwire(
-                        require(state, BlockStateProperties.NORTH),
-                        require(state, BlockStateProperties.EAST),
-                        require(state, BlockStateProperties.SOUTH),
-                        require(state, BlockStateProperties.WEST),
+                        booleanOrFalse(state, BlockStateProperties.NORTH),
+                        booleanOrFalse(state, BlockStateProperties.EAST),
+                        booleanOrFalse(state, BlockStateProperties.SOUTH),
+                        booleanOrFalse(state, BlockStateProperties.WEST),
                         require(state, BlockStateProperties.POWERED),
                         require(state, BlockStateProperties.ATTACHED));
             };
