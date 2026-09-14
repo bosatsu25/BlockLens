@@ -40,5 +40,8 @@
   "blocklens.capability.powdersnow": "粉雪",
   "blocklens.capability.sculk_catalyst": "スカルクカタリスト",
   "blocklens.capability.nethertweaks": "ネザー表示調整",
-  "blocklens.capability.stringtweaks": "糸表示調整"
+  "blocklens.capability.stringtweaks": "糸表示調整",
+  "blocklens.capability.crying_obsidian": "泣く黒曜石",
+  "blocklens.capability.nether_gold_ore": "ネザー金鉱石",
+  "blocklens.capability.nether_quartz_ore": "ネザークォーツ鉱石"
 }
