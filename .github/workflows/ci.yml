@@ -197,7 +197,7 @@ jobs:
           fi
           for screenshot in "${screenshots[@]}"; do cp "$screenshot" "$target/"; done
           for locale in en_us ja_jp; do
-            for category in decoration resource outline others compact; do
+            for category in decoration resource outline other compact; do
               test -s "$target/settings-$locale-$category.png"
             done
           done
