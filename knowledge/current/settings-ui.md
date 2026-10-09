@@ -22,6 +22,8 @@ Select a category to view its option rows. Each row shows a name, a short explan
 a separate localized Enabled/Disabled button. The tooltip and keyboard narration include
 the complete name. Long names are ellipsized; descriptions wrap within the row.
 All categories share the same local draft, with a separate bounded scroll position per category.
+A dark panel behind the list and status area keeps names and explanations readable on bright
+menu/world backgrounds. Framebuffer tests check the complete viewport and a bounded dark backdrop.
 
 | Action | Behavior |
 | --- | --- |

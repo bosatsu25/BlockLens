@@ -187,6 +187,8 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
 
     @Override
     public final void extractRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float delta) {
+        extractor.fill(layout.left(), layout.listTop(), layout.left() + layout.contentWidth(),
+                layout.footerY() - 2, 0xF4000000);
         super.extractRenderState(extractor, mouseX, mouseY, delta);
         extractor.centeredText(font, title, width / 2, 12, 0xFFFFFFFF);
         extractor.horizontalLine(layout.left(), layout.left() + layout.contentWidth(), 60, 0x80FFFFFF);
