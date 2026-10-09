@@ -1,5 +1,6 @@
 package dev.blocklens.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -91,7 +92,7 @@ final class RepositoryContractTest {
         Path directory = root().resolve("versions/" + module + "/src/gametest");
         Path bridge = directory.resolve("java/dev/blocklens/gametest/SettingsClientAccess.java");
         try (var paths = Files.walk(directory)) {
-            assertEquals(java.util.List.of(bridge), paths.filter(Files::isRegularFile).toList(),
+            assertEquals(List.of(bridge), paths.filter(Files::isRegularFile).toList(),
                     "All GameTest logic and fixtures remain shared except the overlay API bridge");
         }
         String source = Files.readString(bridge);
