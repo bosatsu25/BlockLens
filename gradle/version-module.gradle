@@ -43,6 +43,7 @@ sourceSets {
     // The common project is a Java library, not a standalone Fabric mod, so merely putting its JAR
     // on the classpath does not make assets/blocklens visible to Minecraft's ResourceManager.
     main {
+        java.srcDir rootProject.file('fabric-shared/src/main/java')
         resources.srcDir project(':common').file('src/main/resources')
     }
     gametest {
@@ -77,6 +78,7 @@ tasks.named('jar') {
 tasks.named('sourcesJar') {
     // Main resources already include common resources; add only the shared Java sources explicitly.
     from(project(':common').sourceSets.main.allJava)
+    from(rootProject.file('fabric-shared/src/main/java'))
     duplicatesStrategy = DuplicatesStrategy.FAIL
     preserveFileTimestamps = false
     reproducibleFileOrder = true

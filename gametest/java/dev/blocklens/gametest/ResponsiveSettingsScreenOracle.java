@@ -1,71 +1,92 @@
 package dev.blocklens.gametest;
 
+import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.ui.SettingsCatalog;
 import dev.blocklens.fabric.BlockLensConfigScreen;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.Component;
 
-/** Real-screen resize, scroll, and focus oracle shared by both Minecraft adapters. */
+/** Exercises all categories and keyboard reachability on the real screen in both adapters. */
 final class ResponsiveSettingsScreenOracle {
-    private static final int FOOTER_BUTTONS = 1;
-
     private ResponsiveSettingsScreenOracle() {
     }
 
     static void verify(ClientGameTestContext context) {
         context.runOnClient(client -> {
             Screen previous = BlockLensConfigScreen.current(client);
+            long baseline = BlockLensRuntime.config().enabledMask();
             BlockLensConfigScreen screen = new BlockLensConfigScreen(previous);
             try {
                 BlockLensConfigScreen.show(client, screen);
-                int expectedChildren = CapabilityId.values().length + FOOTER_BUTTONS;
-                verifySize(screen, 320, 240, expectedChildren, true);
-                verifySize(screen, 640, 360, expectedChildren, true);
-                verifySize(screen, 854, 480, expectedChildren, false);
-                verifySize(screen, 1920, 1080, expectedChildren, false);
+                for (int[] size : new int[][] {{320, 240}, {640, 360}, {854, 480}, {1920, 1080}}) {
+                    screen.resize(size[0], size[1]);
+                    for (CapabilityId.Category category : CapabilityId.Category.values()) {
+                        select(screen, category);
+                        verifySize(screen, size[0], size[1], category);
+                    }
+                }
+                require(BlockLensRuntime.config().enabledMask() == baseline, "Navigation applied edits");
                 System.out.println("BLOCKLENS_RESPONSIVE_SETTINGS sizes=320x240,640x360,854x480,1920x1080"
-                        + " widgets=" + expectedChildren + " bounded=true");
+                        + " categories=4 capabilities=40 keyboard_reachable=true bounded=true");
             } finally {
                 BlockLensConfigScreen.show(client, previous);
             }
         });
     }
 
+    static void select(BlockLensConfigScreen screen, CapabilityId.Category category) {
+        String label = Component.translatable("blocklens.category."
+                + category.name().toLowerCase(Locale.ROOT)).getString();
+        Button tab = buttons(screen).stream().filter(button -> button.getMessage().getString().equals(label))
+                .findFirst().orElseThrow(() -> new AssertionError("Missing category tab"));
+        tab.onPress(new KeyEvent(257, 0, 0));
+    }
+
+    static List<Button> buttons(Screen screen) {
+        return screen.children().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
+    }
+
     private static void verifySize(
-            BlockLensConfigScreen screen,
-            int width,
-            int height,
-            int expectedChildren,
-            boolean expectsScroll) {
-        screen.resize(width, height);
-        List<Button> buttons = screen.children().stream()
-                .filter(Button.class::isInstance)
-                .map(Button.class::cast)
-                .toList();
-        require(buttons.size() == expectedChildren,
-                width + "x" + height + ": widget registry changed: " + buttons.size());
-        long visible = buttons.stream().filter(button -> button.visible).count();
-        require(visible >= FOOTER_BUTTONS && visible <= expectedChildren,
-                width + "x" + height + ": visible widget count is invalid: " + visible);
-        for (Button button : buttons) {
-            if (!button.visible) continue;
-            require(button.getX() >= 0 && button.getRight() <= width,
-                    width + "x" + height + ": visible button exceeds horizontal bounds");
-            require(button.getY() >= 0 && button.getBottom() <= height,
-                    width + "x" + height + ": visible button exceeds vertical bounds");
+            BlockLensConfigScreen screen, int width, int height, CapabilityId.Category category) {
+        List<Button> buttons = buttons(screen);
+        int count = SettingsCatalog.capabilities(category).size();
+        require(buttons.size() == count + 6, "widget registry changed");
+        List<Button> toggles = buttons.subList(4, 4 + count);
+        var reached = new HashSet<Button>();
+        for (int index = 0; index < buttons.size() * 2; index++) {
+            screen.keyPressed(new KeyEvent(258, 0, 0));
+            require(screen.getFocused() instanceof Button, "keyboard focus escaped the controls");
+            Button focused = (Button) screen.getFocused();
+            require(focused.visible && focused.active, "keyboard focus escaped the visible controls");
+            if (toggles.contains(focused)) reached.add(focused);
+            for (Button button : buttons) {
+                if (!button.visible) continue;
+                require(button.getX() >= 0 && button.getRight() <= width,
+                        "Visible button exceeds horizontal bounds");
+                require(button.getY() >= 0 && button.getBottom() <= height,
+                        "Visible button exceeds vertical bounds");
+            }
         }
-        if (expectsScroll) {
-            require(visible < expectedChildren, width + "x" + height + ": compact layout should scroll");
+        require(reached.size() == count, "Keyboard cannot reach every category option");
+        for (int index = 0; index < buttons.size() * 2; index++) {
+            screen.keyPressed(new KeyEvent(258, 0, 1));
+            require(screen.getFocused() instanceof Button focused && focused.visible && focused.active,
+                    "Reverse keyboard focus escaped visible controls");
+        }
+        if (toggles.stream().anyMatch(button -> !button.visible)) {
             require(screen.mouseScrolled(width / 2.0, height / 2.0, 0.0, -2.0),
-                    width + "x" + height + ": scroll input was not accepted");
+                    "Compact category did not accept scrolling");
+            require(screen.getFocused() == null
+                    || screen.getFocused() instanceof Button focused && focused.visible,
+                    "Mouse scroll left focus on a hidden row");
         }
-        screen.keyPressed(new KeyEvent(258, 0, 0));
-        require(screen.getFocused() == null
-                        || screen.getFocused() instanceof Button focused && focused.visible && focused.active,
-                width + "x" + height + ": keyboard focus escaped the visible interactive widgets");
     }
 
     private static void require(boolean condition, String message) {
