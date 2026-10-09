@@ -57,7 +57,7 @@ final class SettingsStateReloadOracle {
                     client.options.languageCode = locale;
                 });
                 reload(context);
-                BlockLensConfigScreen screen = new BlockLensConfigScreen(parent);
+                BlockLensConfigScreen screen = context.computeOnClient(client -> new BlockLensConfigScreen(parent));
                 context.runOnClient(client -> {
                     BlockLensConfigScreen.show(client, screen);
                     String category = Component.translatable("blocklens.category.resource").getString();
