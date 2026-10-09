@@ -42,6 +42,11 @@ retry/discard message in a reserved area above the footer. No exception details 
 SettingsCatalog, SettingsDraft and SettingsLayout contain Minecraft-independent policies in common.
 The Minecraft-facing AbstractBlockLensConfigScreen is compiled from fabric-shared for both targets.
 The version-specific BlockLensConfigScreen adapters keep the distinct 26.1.2 and 26.2 screen APIs.
+GameTest scenarios and fixtures remain shared. The sole version-specific test source is a small
+SettingsClientAccess bridge for the loading-overlay API, which moved from Minecraft.getOverlay()
+to Minecraft.gui.overlay() in 26.2. The repository contract restricts each local GameTest tree to
+that one bridge. Screenshot evidence waits for the overlay to clear and uses actual window resizing
+with GUI scale 1, checks the complete bounded viewport, and restores the original window/options.
 No new required UI dependency, telemetry, startup network call, registry scan or renderer is introduced.
 
 ## Verification and limitations
