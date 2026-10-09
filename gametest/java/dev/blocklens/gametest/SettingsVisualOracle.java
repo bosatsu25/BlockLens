@@ -60,7 +60,7 @@ final class SettingsVisualOracle {
     }
 
     private static void capture(ClientGameTestContext context, String name, int width, int height) {
-        Path destination = FabricLoader.getInstance().getGameDir().resolve("m3-visual");
+        Path destination = FabricLoader.getInstance().getGameDir().resolve("settings-ui");
         try {
             Files.createDirectories(destination);
             Path image = context.takeScreenshot(TestScreenshotOptions.of(name)
