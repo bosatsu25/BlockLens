@@ -204,6 +204,14 @@ jobs:
           (cd "$target" && sha256sum *.png > SHA256SUMS.txt)
           echo "path=$target" >> "$GITHUB_OUTPUT"
           echo "### Settings UI: both languages, four categories and compact size" >> "$GITHUB_STEP_SUMMARY"
+          # Controlled settings-only frames, readable through the GitHub connector's text-log API.
+          for locale in en_us ja_jp; do
+            for category in decoration resource outline other compact; do
+              echo "BLOCKLENS_SETTINGS_IMAGE_BEGIN:$locale:$category"
+              base64 -w 120 "$target/settings-$locale-$category.png"
+              echo "BLOCKLENS_SETTINGS_IMAGE_END"
+            done
+          done
       - name: Upload settings UI visual evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
