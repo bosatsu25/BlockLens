@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
+import javax.imageio.ImageIO;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions;
 import net.fabricmc.loader.api.FabricLoader;
@@ -96,6 +97,14 @@ final class SettingsVisualOracle {
                     .withDestinationDir(destination).disableCounterPrefix());
             if (!Files.isRegularFile(image) || Files.size(image) < 1000) {
                 throw new AssertionError("Settings framebuffer capture is missing or empty");
+            }
+            var pixels = ImageIO.read(image.toFile());
+            if (pixels == null || pixels.getWidth() != width || pixels.getHeight() != height) {
+                throw new AssertionError("Settings framebuffer dimensions differ from the viewport");
+            }
+            int backdrop = pixels.getRGB(width / 2, height - 31);
+            if ((backdrop >> 16 & 255) > 64 || (backdrop >> 8 & 255) > 64 || (backdrop & 255) > 64) {
+                throw new AssertionError("Settings text backdrop lacks contrast: " + (backdrop & 0xFFFFFF));
             }
         } catch (IOException exception) {
             throw new AssertionError("Settings framebuffer capture failed");
