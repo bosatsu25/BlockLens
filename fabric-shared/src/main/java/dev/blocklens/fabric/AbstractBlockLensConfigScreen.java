@@ -16,6 +16,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 /** One settings implementation compiled against both supported Minecraft APIs. */
@@ -43,6 +44,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
 
     @Override
     protected final void init() {
+        clearFocus();
         tabs.clear();
         toggles.clear();
         capabilities = SettingsCatalog.capabilities(category);
@@ -52,7 +54,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
             rowHeight = Math.max(rowHeight, 28 + font.wordWrapHeight(
                     Component.translatable(SettingsCatalog.descriptionKey(capability)), layout.contentWidth() - 16));
         }
-        layout = SettingsLayout.create(width, height, capabilities.size(), layout.scroll(), rowHeight);
+        layout = SettingsLayout.create(width, height, capabilities.size(), categoryScroll[category.ordinal()], rowHeight);
         categoryScroll[category.ordinal()] = layout.scroll();
         int tabWidth = (layout.contentWidth() - 12) / 4;
         for (CapabilityId.Category candidate : CapabilityId.Category.values()) {
@@ -80,6 +82,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                 ignored -> saveAndClose()).bounds(layout.left() + footerWidth + 8, layout.footerY(),
                         footerWidth, 20).build());
         positionRows();
+        setInitialFocus();
     }
 
     private Component state(CapabilityId capability) {
@@ -159,6 +162,16 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
             return true;
         }
         return super.keyPressed(event);
+    }
+
+    @Override
+    public final boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        boolean handled = super.mouseClicked(event, doubleClick);
+        if (getFocused() != null && !children().contains(getFocused())) {
+            clearFocus();
+            setInitialFocus();
+        }
+        return handled;
     }
 
     @Override
