@@ -6,11 +6,11 @@ import dev.blocklens.core.ui.SettingsCatalog;
 import dev.blocklens.core.ui.SettingsDraft;
 import dev.blocklens.core.ui.SettingsLayout;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -21,6 +21,7 @@ import net.minecraft.network.chat.Component;
 /** One settings implementation compiled against both supported Minecraft APIs. */
 public abstract class AbstractBlockLensConfigScreen extends Screen {
     private final Screen parent;
+    private final Path configDirectory;
     private final SettingsDraft draft = new SettingsDraft(BlockLensRuntime.config());
     private final int[] categoryScroll = new int[CapabilityId.Category.values().length];
     private final List<Button> tabs = new ArrayList<>();
@@ -32,9 +33,10 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private Button applyButton;
     private boolean saveFailed;
 
-    protected AbstractBlockLensConfigScreen(Screen parent) {
+    protected AbstractBlockLensConfigScreen(Screen parent, Path configDirectory) {
         super(Component.translatable("blocklens.title"));
         this.parent = parent;
+        this.configDirectory = Objects.requireNonNull(configDirectory, "configDirectory");
     }
 
     protected abstract void showParent(Screen parent);
@@ -214,7 +216,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
 
     private void saveAndClose() {
         try {
-            if (draft.save(FabricLoader.getInstance().getConfigDir())) {
+            if (draft.save(configDirectory)) {
                 BlockLensRuntime.installConfig(draft.config());
                 MinecraftTerrainInvalidator.invalidateAll(minecraft);
             }
