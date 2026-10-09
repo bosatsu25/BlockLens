@@ -1,0 +1,9 @@
+{
+  "pack": {
+    "description": {
+      "text": "BlockLens settings state regression fixture"
+    },
+    "min_format": 71,
+    "max_format": 2048
+  }
+}

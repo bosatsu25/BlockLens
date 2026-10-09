@@ -28,6 +28,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             M4M6StateAdapterOracle.verify();
             MinecraftDecorationTargetOracle.verify();
         });
+        SettingsStateReloadOracle.verify(context);
         ResponsiveSettingsScreenOracle.verify(context);
         SettingsEditingOracle.verify(context);
         SettingsVisualOracle.verify(context);

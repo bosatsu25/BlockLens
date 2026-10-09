@@ -19,6 +19,7 @@ public final class M5ActiveResourcePackFixture implements ClientModInitializer {
         if (!ResourceLoader.registerBuiltinPack(PACK_ID, container, PackActivationType.ALWAYS_ENABLED)) {
             throw new IllegalStateException("failed to register M5 active resource-pack fixture: " + PACK_ID);
         }
+        SettingsStateReloadOracle.register(container);
         System.out.println("BLOCKLENS_M5_ACTIVE_PACK_FIXTURE registered=true id=" + PACK_ID);
     }
 }

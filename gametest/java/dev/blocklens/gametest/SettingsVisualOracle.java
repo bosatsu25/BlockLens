@@ -37,6 +37,8 @@ final class SettingsVisualOracle {
                     capture(context, "settings-" + locale + "-" + category.name().toLowerCase(java.util.Locale.ROOT),
                             854, 480);
                 }
+                context.runOnClient(client -> ResponsiveSettingsScreenOracle.select(
+                        (BlockLensConfigScreen) BlockLensConfigScreen.current(client), CapabilityId.Category.RESOURCE));
                 capture(context, "settings-" + locale + "-compact", 320, 240);
             }
         } finally {
