@@ -102,7 +102,7 @@ Nylium additionally uses an upper color band. BlockLens recreates that grammar p
 - existing baked model retained as the base/frame geometry
 - reusable BlockLens-owned `interior_fill` extra model
 - reusable BlockLens-owned `upper_band` extra model for Nylium
-- no copied AMATERAS texture binaries
+- no copied source texture binaries
 - overlap cues from M3/M5 remain composable on the same state
 
 The two BlockLens-owned models are part of the actual Fabric resource pack in development, Client GameTest, and packaged runtime JARs. CI fails if either model cannot resolve or has incomplete texture references.

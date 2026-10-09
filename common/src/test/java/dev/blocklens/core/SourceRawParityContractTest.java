@@ -16,13 +16,13 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Executable guard for the frozen AMATERAS raw-source contract.
+ * Executable guard for the frozen source raw-source contract.
  *
- * <p>The source resource pack is intentionally not redistributed byte-for-byte. This test instead
+ * <p>The resource pack is intentionally not redistributed byte-for-byte. This test instead
  * freezes the effective RPO-derived logical contract and proves that the current compiled catalog
  * never drops an original source target while allowing only reviewed additive P0 targets.</p>
  */
-final class AmaterasRawParityContractTest {
+final class SourceRawParityContractTest {
     private static final int FROZEN_CAPABILITIES = 37;
     private static final int FROZEN_EFFECTIVE_GATED_ROOTS = 336;
     private static final int FROZEN_BINDINGS = 323;
@@ -53,11 +53,11 @@ final class AmaterasRawParityContractTest {
 
         for (Row row : rows()) {
             CapabilityId capability = bySourceKey.get(row.sourceKey());
-            assertNotNull(capability, () -> "Missing frozen AMATERAS capability: " + row.sourceKey());
+            assertNotNull(capability, () -> "Missing frozen source capability: " + row.sourceKey());
 
             Set<String> currentTargets = Set.copyOf(BlockLensTargetCatalog.targets(capability));
             assertTrue(currentTargets.containsAll(row.targets()),
-                    () -> "Current runtime dropped AMATERAS targets for " + row.sourceKey()
+                    () -> "Current runtime dropped source targets for " + row.sourceKey()
                             + "; frozen=" + row.targets() + " current=" + currentTargets);
 
             Set<String> extras = new HashSet<>(currentTargets);
@@ -70,7 +70,7 @@ final class AmaterasRawParityContractTest {
     @Test
     void rawParityAuditDocumentsPhysicalSourceVsSemanticRuntimeBoundary() throws IOException {
         Path root = Path.of(System.getProperty("blocklens.repoRoot"));
-        String audit = Files.readString(root.resolve("knowledge/current/amateras-raw-parity-audit.md"));
+        String audit = Files.readString(root.resolve("knowledge/current/source-raw-parity-audit.md"));
 
         assertTrue(audit.contains("337"), "audit must retain observed raw RPO-sidecar count");
         assertTrue(audit.contains("336"), "audit must retain effective gated-root count");
@@ -84,17 +84,17 @@ final class AmaterasRawParityContractTest {
     private static List<Row> rows() throws IOException {
         Path root = Path.of(System.getProperty("blocklens.repoRoot"));
         List<String> lines = Files.readAllLines(root.resolve("knowledge/current/capability-contract.tsv"));
-        assertTrue(!lines.isEmpty(), "frozen AMATERAS capability contract must exist");
+        assertTrue(!lines.isEmpty(), "frozen source capability contract must exist");
 
         return lines.subList(1, lines.size()).stream()
                 .filter(line -> !line.isBlank())
-                .map(AmaterasRawParityContractTest::parse)
+                .map(SourceRawParityContractTest::parse)
                 .toList();
     }
 
     private static Row parse(String line) {
         String[] columns = line.split("\\t", -1);
-        assertTrue(columns.length >= 9, () -> "Invalid AMATERAS contract row: " + line);
+        assertTrue(columns.length >= 9, () -> "Invalid source contract row: " + line);
 
         Set<String> targets = columns[2].isBlank()
                 ? Set.of()

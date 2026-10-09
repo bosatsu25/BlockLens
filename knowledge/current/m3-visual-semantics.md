@@ -4,13 +4,13 @@ Status: **authoritative current M3 visual contract — DONE**
 
 This document separates two things that must not be conflated:
 
-1. behavior and visual intent derived from the pinned AMATERAS source baseline,
+1. behavior and visual intent derived from the pinned source baseline,
 2. BlockLens-owned procedural rendering choices used to reproduce that value without redistributing source binary assets.
 
 The pinned source remains:
 
 ```text
-AMATERAS_Resourcepack_mc26.1.2.zip
+reference-source-mc26.1.2.zip (neutral documentation label)
 SHA-256: 36e5c5bba4e77f05b8c22d549593dfb95e8aebc7bfebdba57e229257b46640ef
 ```
 
@@ -96,7 +96,7 @@ flowchart LR
 - Minecraft `BlockState` interpretation occurs during model bake, not for every rendered frame.
 - The render hot path uses immutable descriptors and primitive capability masks.
 - If none of the capabilities represented by a wrapper are enabled, the wrapped model is emitted directly with no BlockLens quad transform.
-- BlockLens owns only its additional render transformation. It does not replace the user's base resource-pack model with copied AMATERAS models/textures.
+- BlockLens owns only its additional render transformation. It does not replace the user's base resource-pack model with copied source models/textures.
 
 ## 5. Configuration behavior
 
@@ -162,7 +162,7 @@ The CI renderer for this evidence is OpenGL/llvmpipe. This M3 evidence **does no
 
 ## 8. Licensing boundary
 
-The AMATERAS pack contains attribution to other creators and no redistribution permission is assumed.
+The reference pack contains attribution to other creators and no redistribution permission is assumed.
 
 Therefore M3 follows a fail-closed asset policy:
 

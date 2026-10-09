@@ -16,7 +16,7 @@ flowchart LR
     BAKE --> MASK[primitive capability mask]
 ```
 
-The original 37-capability AMATERAS migration baseline remains frozen historical evidence. P0 appends capabilities and target bindings without changing the first 37 `CapabilityId` ordinals or their default values.
+The original 37-capability source migration baseline remains frozen historical evidence. P0 appends capabilities and target bindings without changing the first 37 `CapabilityId` ordinals or their default values.
 
 ## P0 mapping
 
@@ -31,7 +31,7 @@ The original 37-capability AMATERAS migration baseline remains frozen historical
 
 P0 current resource scope is **21 independently configurable capabilities**:
 
-- the original 18 AMATERAS-derived resource capabilities;
+- the original 18 source-derived resource capabilities;
 - `gaming.crying_obsidian`;
 - `gaming.nether_gold_ore`;
 - `gaming.nether_quartz_ore`.
@@ -49,7 +49,7 @@ The version adapters treat directional connection properties as optional for thi
 
 ### Nether detail
 
-The AMATERAS M0 Nether contract remains exactly **27 targets** and keeps its original direct-path hash. Runtime P0 scope is the additive union of:
+The source M0 Nether contract remains exactly **27 targets** and keeps its original direct-path hash. Runtime P0 scope is the additive union of:
 
 - all 27 original BlockLens Nether targets, including Obsidian;
 - ChiseTweaks-only `minecraft:polished_basalt`.
@@ -77,7 +77,7 @@ PR #23 was squash-merged as `b440d43904e2a93236549efc571b7cc127622352`. Main CI 
 - Minecraft 26.2: **96,248 B**, SHA-256 `54b99d9b66a403195e28850dcfb165083007ee6cddb3521c36176d51af031105`;
 - `SHA256SUMS.txt` is the third release asset.
 
-The original 37-capability AMATERAS contract remains a permanent regression boundary. Issue #22 remains open only as the authority for P1-P5.
+The original 37-capability source contract remains a permanent regression boundary. Issue #22 remains open only as the authority for P1-P5.
 
 ## Architecture invariants
 

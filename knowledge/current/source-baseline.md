@@ -1,4 +1,4 @@
-# Source Baseline — AMATERAS Resource Pack
+# Source Baseline — Reference Resource Pack
 
 Status: **authoritative migration baseline — M0 complete**
 
@@ -6,10 +6,13 @@ This document pins the exact source files used to define BlockLens M0.
 
 ## Files
 
+Archive and preset names below are neutral documentation labels, not replacement files.
+Original file names are omitted; the pinned hashes, sizes and measured evidence are unchanged.
+
 ### Resource-pack ZIP
 
 ```text
-Name:   AMATERAS_Resourcepack_mc26.1.2.zip
+Label:  reference-source-mc26.1.2.zip
 SHA-256: 36e5c5bba4e77f05b8c22d549593dfb95e8aebc7bfebdba57e229257b46640ef
 Size:   2,366,865 bytes
 ```
@@ -17,7 +20,7 @@ Size:   2,366,865 bytes
 ### RPO preset
 
 ```text
-Name:   AMATERAS_Resourcepack_mc26.1.2.zip.rpo
+Label:  reference-source-mc26.1.2.zip.rpo
 SHA-256: 37a429a543d9b5163b8c351ac2b81b5db5c7c7ac08c9d777ccdcf6a45367b949
 Size:   1,128 bytes
 ```

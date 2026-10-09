@@ -6,13 +6,13 @@
 
 **English** | [日本語](README_ja.md)
 
-BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It converts the useful behavior encoded by the AMATERAS resource-pack/RPO source into compact, testable Java/Fabric runtime behavior instead of redistributing thousands of state-specific JSON/PNG files.
+BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It makes block orientation and state, resources, fine geometry and Nether materials easier to distinguish through 40 independently configurable visual capabilities. See the [complete current feature list](knowledge/current/features.md).
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Current stable release:** BlockLens **v0.2.0** provides **40 independently configurable capabilities** for Minecraft **26.1.2** and **26.2**, while preserving every identity and behavior contract in the original 37-capability AMATERAS baseline.
+> **Current stable release:** BlockLens **v0.2.0** provides **40 independently configurable capabilities** for Minecraft **26.1.2** and **26.2**, while preserving every identity and behavior contract in the original 37-capability source baseline.
 >
-> **Historical release:** BlockLens **v0.1.0** remains the immutable 37-capability AMATERAS release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets**; the strict **100 KiB** release budget remains unchanged.
+> **Historical release:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets**; the strict **100 KiB** release budget remains unchanged.
 
 ## Product direction
 
@@ -21,7 +21,7 @@ BlockLens is the product base. ChiseTweaks is a source of selected capabilities 
 ```mermaid
 flowchart TB
     BL[BlockLens Next]
-    BL --> AM[AMATERAS baseline · 37 capabilities]
+    BL --> AM[source baseline · 37 capabilities]
     BL --> CH[ChiseTweaks migration · P0-P5]
 
     AM --> D[Orientation / State · 13]
@@ -39,9 +39,9 @@ flowchart TB
 
 The migration plan is tracked in **Issue #22** and [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md).
 
-## AMATERAS raw-source parity
+## Source raw-source parity
 
-The original intent is preserved: **all useful behavior represented by the effective AMATERAS raw source must be represented by BlockLens**. That does not mean copying every source file into the runtime JAR.
+The original intent is preserved: **all useful behavior represented by the effective source raw source must be represented by BlockLens**. That does not mean copying every source file into the runtime JAR.
 
 The latest raw-source audit reproduced the established M0 evidence shape:
 
@@ -58,7 +58,7 @@ The raw source is therefore compressed into logical behavior rather than embedde
 
 ```mermaid
 flowchart LR
-    RAW[AMATERAS raw source<br/>4,196 non-RPO assets] --> RPO[37 RPO capabilities]
+    RAW[source raw source<br/>4,196 non-RPO assets] --> RPO[37 RPO capabilities]
     RPO --> CONTRACT[logical target + state contracts]
     CONTRACT --> IDX[compiled target catalogs]
     IDX --> SEM[SemanticState]
@@ -81,7 +81,7 @@ Two cases are worth calling out:
 - **Dead Coral:** 15 gated textures represent 20 logical dead-coral block forms because wall-fan forms reuse fan textures. BlockLens targets all 20 logical forms.
 - **Nether Tweaks:** 33 gated textures plus one Magma Block model represent 27 logical block targets. BlockLens targets those 27 blocks rather than shipping the original texture set.
 
-The complete per-capability audit is in [`knowledge/current/amateras-raw-parity-audit.md`](knowledge/current/amateras-raw-parity-audit.md) and tracked by **Issue #24**.
+The complete per-capability audit is in [`knowledge/current/source-raw-parity-audit.md`](knowledge/current/source-raw-parity-audit.md) and tracked by **Issue #24**.
 
 ## Stable v0.1.0 capability map
 
@@ -162,7 +162,7 @@ Runtime principles:
 
 ### Current source hardening
 
-The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its AMATERAS-style redesign groups all 40 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is under review; the supplied third-party pack combinations, source-screen pixel equivalence, shaders and Vulkan are not yet verified.
+The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 40 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is under review; the supplied third-party pack combinations, source-screen pixel equivalence, shaders and Vulkan are not yet verified.
 
 The same review also adds bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model instead of four. Current dual-version GameTest performance evidence covers OFF, default, and all-40 configurations. The reviewed local artifacts are **101,877 B (26.1.2) / 101,913 B (26.2)**; **101,913 B** is the new development no-growth baseline and the **102,400 B** hard release ceiling was not changed.
 
@@ -235,7 +235,7 @@ Quality gates remain:
 
 Both supported Minecraft versions run **Fabric Client GameTest** under Xvfb. The gate covers configuration round-trips, resource reload, Overworld/Nether transitions, target/state mapping, full enable/OFF restoration, rendered visual evidence, resource-pack preservation fixtures, M8 performance/retention observations, model resolution, and reproducible artifact checks.
 
-The original 37-capability AMATERAS baseline remains a historical regression contract even as the development runtime grows beyond it.
+The original 37-capability source baseline remains a historical regression contract even as the development runtime grows beyond it.
 
 ## Automated quality and release pipeline
 
@@ -312,7 +312,7 @@ Verified support is intentionally evidence-bounded:
 
 ## Release / redistribution audit
 
-The runtime JAR contains BlockLens code/resources and BlockLens-owned assets. CI rejects nested dependency JARs, local paths, logs, saves, crash dumps, secret/private-key markers, source RPO residue, and retired runtime-policy bytecode. AMATERAS source PNG/JSON assets are not redistributed.
+The runtime JAR contains BlockLens code/resources and BlockLens-owned assets. CI rejects nested dependency JARs, local paths, logs, saves, crash dumps, secret/private-key markers, source RPO residue, and retired runtime-policy bytecode. Source PNG/JSON assets are not redistributed.
 
 ## Engineering Graph Loop
 
@@ -340,7 +340,7 @@ flowchart LR
 - [`knowledge/index.md`](knowledge/index.md) — knowledge index
 - [`knowledge/current/product-spec.md`](knowledge/current/product-spec.md) — product contract
 - [`knowledge/current/architecture.md`](knowledge/current/architecture.md) — architecture
-- [`knowledge/current/amateras-raw-parity-audit.md`](knowledge/current/amateras-raw-parity-audit.md) — raw-source/RPO parity audit
+- [`knowledge/current/source-raw-parity-audit.md`](knowledge/current/source-raw-parity-audit.md) — raw-source/RPO parity audit
 - [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) — ChiseTweaks → BlockLens migration
 - [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md) — quality strategy
 - [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md) — performance strategy

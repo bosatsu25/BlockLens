@@ -182,7 +182,7 @@ The runtime and release gates reject or protect against:
 - missing BlockLens icon
 - unexplained JAR growth
 
-AMATERAS PNG assets are not redistributed in the runtime JAR.
+Source PNG assets are not redistributed in the runtime JAR.
 
 ## Compatibility support boundary
 

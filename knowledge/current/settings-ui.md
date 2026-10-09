@@ -4,12 +4,11 @@ Status: implementation under review in PR #40; not a released feature.
 
 ## Scope
 
-The native settings screen follows the four AMATERAS option categories while retaining all
-40 current BlockLens capabilities: Decoration (13), Resources (21), Visibility (4), Other (2).
+The native settings screen groups all 40 current BlockLens capabilities into four categories: Decoration (13), Resources (21), Visibility (4), Other (2).
 The original 37 source keys and their bit positions stay unchanged. Crying Obsidian,
 Nether Gold Ore and Nether Quartz Ore remain independent Resource options after the original 18.
 
-The uploaded AMATERAS pack defines its option hierarchy in respackopts.json5; it does not
+The uploaded UI reference pack defines its option hierarchy in respackopts.json5; it does not
 supply custom GUI textures. Its current upload has SHA-256
 070bc338936f89320408e7b78bb6f74856917f5944deecc1a1b52390f5363616 and is 3,527,738 bytes.
 This is a UI reference, not a replacement for the repository's frozen behavioral/size baseline.
@@ -60,11 +59,11 @@ settings persistence/failure recovery, keyboard reachability at 320×240 / 640×
 The existing size thresholds in gradle.properties remain unchanged; the newly uploaded ZIP
 does not redefine them. CI results must be tied to the current PR head.
 
-Uploaded compatibility references include AMATERAS, Small Handhelds, NewGlowingOres,
+Uploaded compatibility references include the UI reference pack, Small Handhelds, NewGlowingOres,
 LowOnFire and both Chise packs. Their static resource domains and metadata were inspected,
 but those particular uploads have not been exercised together in a real client.
 Their pack-format declarations alone do not establish compatibility with Minecraft 26.1.2/26.2.
-Pixel-equivalence with the source AMATERAS options screen, shader support and Vulkan support
+Pixel-equivalence with the source options screen, shader support and Vulkan support
 remain unverified. Existing synthetic active-pack/render GameTests remain regression gates.
 
 Do not describe the change as complete until the required gates and remaining intended
@@ -75,5 +74,5 @@ manual compatibility/visual checks are recorded. Keep the PR draft while these c
 - [PR #40](https://github.com/bosatsu25/BlockLens/pull/40)
 - [Respackopts official gallery](https://modrinth.com/mod/respackopts/gallery) describes
   Cloth Config's default appearance; its 2022 screenshots are not a capture of the uploaded pack.
-- [AMATERAS historical baseline](source-baseline.md)
+- [Source historical baseline](source-baseline.md)
 - [Current additive capability scope](chisetweaks-migration.md)

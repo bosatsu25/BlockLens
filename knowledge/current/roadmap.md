@@ -7,7 +7,7 @@ Status: **M0-M9 complete / v0.2.0 published / post-release stability hardening l
 Every future change must preserve, unless deliberately revised with evidence:
 
 - Minecraft **26.1.2** and **26.2** support
-- the frozen original **37-capability AMATERAS contract** as a permanent regression boundary
+- the frozen original **37-capability source contract** as a permanent regression boundary
 - additive post-v0.1 capabilities may expand the current runtime without rewriting that historical source contract
 - client-only behavior
 - Java **25+**
@@ -27,7 +27,7 @@ Performance and artifact size remain continuous gates rather than deferred clean
 
 | Milestone / phase | Status | Result |
 | --- | --- | --- |
-| M0 | ✅ DONE | pinned AMATERAS source baseline and 37-capability contract |
+| M0 | ✅ DONE | pinned source baseline and 37-capability contract |
 | M1 | ✅ DONE | Java 25, dual-version Fabric scaffold, CI and quality gates |
 | M2 | ✅ DONE | shared semantic-state engine and thin version adapters |
 | M3 | ✅ DONE | 13 Decoration / Orientation capabilities |
@@ -52,7 +52,7 @@ Completed:
 - redistribution classification
 - later raw-source audit confirms **337 observed sidecars / 336 effective gated roots**, **4,101 reachable raw assets**, and **95 source-residue candidates**
 
-Evidence: `source-baseline.md`, `capability-map.md`, `capability-contract.tsv`, `amateras-raw-parity-audit.md`.
+Evidence: `source-baseline.md`, `capability-map.md`, `capability-contract.tsv`, `source-raw-parity-audit.md`.
 
 The first 37 source keys remain immutable historical evidence. New functionality is additive and must not silently alter their config identity, defaults, or source-derived target coverage.
 
@@ -204,7 +204,7 @@ The first 37 capability IDs/config keys/defaults remain stable. The three new in
 - [x] Polished Basalt state-adapter coverage
 - [x] Resource-only performance scenario updated from 18 historical to 21 current Resource capabilities
 - [x] dark-area real-client scene updated to exercise all 21 current Resource capabilities
-- [x] raw AMATERAS audit documented
+- [x] raw source audit documented
 - [x] executable raw-source parity contract protects 37 keys / 336 effective roots / 323 original bindings / 320 original unique targets
 - [x] only reviewed additive target drift is allowed on original capabilities (`tripwire_hook`, `polished_basalt`)
 - [x] P0 JAR growth measured and 100 KiB ceiling preserved
