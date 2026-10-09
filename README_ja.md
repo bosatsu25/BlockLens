@@ -162,7 +162,7 @@ runtime原則:
 
 ### 現在のsource hardening
 
-現在のsource treeには、外部UI dependencyを追加しないnativeな**Bキー設定画面**があります。widget registryは41個で固定し、画面幅に応じて1列/2列を切り替え、狭い画面ではscrollします。両Minecraft実clientで **320×240 / 640×360 / 854×480 / 1920×1080** を検証します。
+現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。AMATERASを基準にした再設計では、40設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。この再設計はレビュー中です。添付パック同士の実ゲーム併用、元画面との画素単位の一致、シェーダー、Vulkanは未確認です。
 
 同じ見直しで、config readの上限、同期temp-file書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum table/instructionのcache、wrapped modelごとのdescriptor arrayを4本から2本へ削減しました。OFF/default/all-40を実Client GameTestのperformance evidenceに含めています。見直し後のlocal artifactは **101,877 B (26.1.2) / 101,913 B (26.2)**、新しいdevelopment no-growth baselineは **101,913 B** で、**102,400 B**のhard release ceilingは変更していません。
 

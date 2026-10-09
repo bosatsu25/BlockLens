@@ -11,6 +11,8 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
 
 /** Exercises all categories and keyboard reachability on the real screen in both adapters. */
@@ -46,7 +48,14 @@ final class ResponsiveSettingsScreenOracle {
                 + category.name().toLowerCase(Locale.ROOT)).getString();
         Button tab = buttons(screen).stream().filter(button -> button.getMessage().getString().equals(label))
                 .findFirst().orElseThrow(() -> new AssertionError("Missing category tab"));
-        tab.onPress(new KeyEvent(257, 0, 0));
+        if (tab.active) {
+            require(screen.mouseClicked(new MouseButtonEvent(
+                    tab.getX() + 5.0, tab.getY() + 5.0, new MouseButtonInfo(0, 0)), false),
+                    "Category click was not handled");
+            screen.afterMouseAction();
+            require(screen.getFocused() == null || buttons(screen).contains(screen.getFocused()),
+                    "Category click left focus on a removed control");
+        }
     }
 
     static List<Button> buttons(Screen screen) {

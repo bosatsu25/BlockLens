@@ -26,6 +26,8 @@ Read these before implementation or review:
 20. [`current/m8-performance.md`](current/m8-performance.md) — dual-version resource-reload/allocation observations, Resource Highlight instruction-reuse hardening, raw CI evidence, and measurement limitations
 21. [`current/release-readiness.md`](current/release-readiness.md) — M9/v0.1.0 and v0.2.0 release contracts, technology foundation, artifact baselines, licensing/security audit, exact-CI-artifact publishing, checksums, and compatibility support boundary
 
+22. [`current/settings-ui.md`](current/settings-ui.md) — AMATERAS-style native settings redesign, editing semantics, shared screen architecture and verification boundaries
+
 ## Historical-baseline rule
 
 The AMATERAS M0 documents remain authoritative **historical baseline evidence** for the first 37 capabilities. Post-v0.1.0 additive product work must not rewrite those source facts.

@@ -162,7 +162,7 @@ Runtime principles:
 
 ### Current source hardening
 
-The current source tree adds a native **B-key settings screen** without an external UI dependency. It keeps a fixed 41-widget registry, switches between one and two columns, scrolls compact layouts, and is exercised at **320×240, 640×360, 854×480, and 1920×1080** on both real Minecraft clients.
+The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its AMATERAS-style redesign groups all 40 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is under review; the supplied third-party pack combinations, source-screen pixel equivalence, shaders and Vulkan are not yet verified.
 
 The same review also adds bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model instead of four. Current dual-version GameTest performance evidence covers OFF, default, and all-40 configurations. The reviewed local artifacts are **101,877 B (26.1.2) / 101,913 B (26.2)**; **101,913 B** is the new development no-growth baseline and the **102,400 B** hard release ceiling was not changed.
 
