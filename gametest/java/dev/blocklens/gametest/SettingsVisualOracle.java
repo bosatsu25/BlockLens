@@ -20,7 +20,11 @@ final class SettingsVisualOracle {
         Screen previous = context.computeOnClient(BlockLensConfigScreen::current);
         String originalLanguage = context.computeOnClient(client -> client.getLanguageManager().getSelected());
         String originalOption = context.computeOnClient(client -> client.options.languageCode);
+        int originalScale = context.computeOnClient(client -> client.options.guiScale().get());
+        int originalWidth = context.computeOnClient(client -> client.getWindow().getWidth());
+        int originalHeight = context.computeOnClient(client -> client.getWindow().getHeight());
         try {
+            context.runOnClient(client -> client.options.guiScale().set(1));
             for (String locale : new String[] {"en_us", "ja_jp"}) {
                 context.runOnClient(client -> {
                     client.getLanguageManager().setSelected(locale);
@@ -45,8 +49,14 @@ final class SettingsVisualOracle {
             context.runOnClient(client -> {
                 client.getLanguageManager().setSelected(originalLanguage);
                 client.options.languageCode = originalOption;
+                client.options.guiScale().set(originalScale);
+                client.getWindow().setWindowed(originalWidth, originalHeight);
+                client.resizeGui();
                 BlockLensConfigScreen.show(client, previous);
             });
+            context.waitFor(client -> client.getWindow().getWidth() == originalWidth
+                    && client.getWindow().getHeight() == originalHeight);
+            context.runOnClient(client -> client.resizeGui());
             reload(context);
         }
         System.out.println("BLOCKLENS_SETTINGS_VISUAL locales=en_us,ja_jp categories=4 compact=true");
@@ -56,15 +66,34 @@ final class SettingsVisualOracle {
         CompletableFuture<Void> reloaded = context.computeOnClient(client -> client.reloadResourcePacks());
         context.waitFor(client -> reloaded.isDone(), 1200);
         reloaded.join();
-        context.waitTicks(20);
+        context.waitFor(SettingsClientAccess::ready, 1200);
     }
 
     private static void capture(ClientGameTestContext context, String name, int width, int height) {
+        context.runOnClient(client -> client.getWindow().setWindowed(width, height));
+        context.waitFor(client -> client.getWindow().getWidth() == width
+                && client.getWindow().getHeight() == height);
+        context.runOnClient(client -> {
+            client.resizeGui();
+            Screen screen = BlockLensConfigScreen.current(client);
+            if (!(screen instanceof BlockLensConfigScreen) || screen.width != width || screen.height != height
+                    || !SettingsClientAccess.ready(client)) {
+                throw new AssertionError("Settings capture requires the complete requested viewport");
+            }
+            for (var button : ResponsiveSettingsScreenOracle.buttons(screen)) {
+                if (button.visible && (button.getX() < 0 || button.getY() < 0
+                        || button.getX() + button.getWidth() > width
+                        || button.getY() + button.getHeight() > height)) {
+                    throw new AssertionError("Settings capture has an out-of-bounds control");
+                }
+            }
+        });
+        context.waitTicks(2);
         Path destination = FabricLoader.getInstance().getGameDir().resolve("settings-ui");
         try {
             Files.createDirectories(destination);
             Path image = context.takeScreenshot(TestScreenshotOptions.of(name)
-                    .withDestinationDir(destination).withSize(width, height).disableCounterPrefix());
+                    .withDestinationDir(destination).disableCounterPrefix());
             if (!Files.isRegularFile(image) || Files.size(image) < 1000) {
                 throw new AssertionError("Settings framebuffer capture is missing or empty");
             }

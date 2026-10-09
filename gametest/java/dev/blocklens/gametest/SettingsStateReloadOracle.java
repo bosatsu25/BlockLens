@@ -129,7 +129,7 @@ final class SettingsStateReloadOracle {
         CompletableFuture<Void> reloaded = context.computeOnClient(client -> client.reloadResourcePacks());
         context.waitFor(client -> reloaded.isDone(), 1200);
         reloaded.join();
-        context.waitTicks(25);
+        context.waitFor(SettingsClientAccess::ready, 1200);
     }
 
     private static void require(boolean condition, String message) {
