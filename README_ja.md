@@ -6,13 +6,13 @@
 
 [English](README.md) | **日本語**
 
-BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。AMATERASリソースパック/RPOの生ファイルに埋め込まれている有用な挙動を、何千個ものstate別JSON/PNGをそのまま再配布するのではなく、コンパクトでテスト可能なJava/Fabricのruntimeとして再構築します。
+BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする40機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現在の安定版:** BlockLens **v0.2.0** はMinecraft **26.1.2** / **26.2**向けに**独立設定可能な40機能**を提供し、元のAMATERAS 37機能のidentityとbehavior contractをすべて維持しています。
+> **現在の安定版:** BlockLens **v0.2.0** はMinecraft **26.1.2** / **26.2**向けに**独立設定可能な40機能**を提供し、元の参照パック 37機能のidentityとbehavior contractをすべて維持しています。
 >
-> **歴史的release:** BlockLens **v0.1.0** は変更しないAMATERAS 37機能のrelease baselineです。P0はv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。厳格な**100 KiB** release budgetは変更していません。
+> **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0はv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。厳格な**100 KiB** release budgetは変更していません。
 
 ## 製品方針
 
@@ -21,7 +21,7 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 ```mermaid
 flowchart TB
     BL[BlockLens Next]
-    BL --> AM[AMATERAS baseline · 37 capabilities]
+    BL --> AM[参照パック baseline · 37 capabilities]
     BL --> CH[ChiseTweaks migration · P0-P5]
 
     AM --> D[Orientation / State · 13]
@@ -39,9 +39,9 @@ flowchart TB
 
 移行計画は **Issue #22** と [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) で管理します。
 
-## AMATERAS raw-source parity
+## 参照パック raw-source parity
 
-元々の狙いである、**AMATERASの有効な生ソースに表現されている機能を全部BlockLensへ取り込む**、という方針は維持しています。ただし「全ファイルをそのままJARへコピーする」という意味ではありません。
+元々の狙いである、**参照パックの有効な生ソースに表現されている機能を全部BlockLensへ取り込む**、という方針は維持しています。ただし「全ファイルをそのままJARへコピーする」という意味ではありません。
 
 最新のraw-source auditでは、M0で固定した証拠構造を再現できました。
 
@@ -58,7 +58,7 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    RAW[AMATERAS raw source<br/>4,196 non-RPO assets] --> RPO[37 RPO capabilities]
+    RAW[参照パック raw source<br/>4,196 non-RPO assets] --> RPO[37 RPO capabilities]
     RPO --> CONTRACT[logical target + state contract]
     CONTRACT --> IDX[compiled target catalog]
     IDX --> SEM[SemanticState]
@@ -81,7 +81,7 @@ flowchart LR
 - **Dead Coral:** source側は15 texture gateですが、wall-fanがfan textureを共有するため論理block形態は20。BlockLensは20形態すべてをtargetにしています。
 - **Nether Tweaks:** 33 texture + Magma Block model 1個が、27個の論理block targetを表現しています。BlockLensでは元textureをそのまま積まず、その27 blockを直接targetにします。
 
-37機能すべての詳細表は [`knowledge/current/amateras-raw-parity-audit.md`](knowledge/current/amateras-raw-parity-audit.md) に保存し、**Issue #24** で回帰防止まで追跡します。
+37機能すべての詳細表は [`knowledge/current/source-raw-parity-audit.md`](knowledge/current/source-raw-parity-audit.md) に保存し、**Issue #24** で回帰防止まで追跡します。
 
 ## 安定版 v0.1.0 の37機能
 
@@ -162,7 +162,7 @@ runtime原則:
 
 ### 現在のsource hardening
 
-現在のsource treeには、外部UI dependencyを追加しないnativeな**Bキー設定画面**があります。widget registryは41個で固定し、画面幅に応じて1列/2列を切り替え、狭い画面ではscrollします。両Minecraft実clientで **320×240 / 640×360 / 854×480 / 1920×1080** を検証します。
+現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。今回の設定画面の再設計では、40設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。この再設計はレビュー中です。添付パック同士の実ゲーム併用、元画面との画素単位の一致、シェーダー、Vulkanは未確認です。
 
 同じ見直しで、config readの上限、同期temp-file書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum table/instructionのcache、wrapped modelごとのdescriptor arrayを4本から2本へ削減しました。OFF/default/all-40を実Client GameTestのperformance evidenceに含めています。見直し後のlocal artifactは **101,877 B (26.1.2) / 101,913 B (26.2)**、新しいdevelopment no-growth baselineは **101,913 B** で、**102,400 B**のhard release ceilingは変更していません。
 
@@ -235,7 +235,7 @@ Java compileでは`-Xlint:deprecation`、`-Xlint:unchecked`、**`-Werror`**を�
 
 両Minecraft versionで **Fabric Client GameTest** をXvfb上で実行します。config round-trip、resource reload、Overworld/Nether遷移、target/state mapping、全機能ON/OFF復元、rendered visual evidence、resource-pack preservation fixture、M8 performance/retention、model resolution、reproducible artifactまで検証対象です。
 
-開発runtimeが37機能を超えても、元のAMATERAS 37機能は歴史的regression contractとして残します。
+開発runtimeが37機能を超えても、元の参照パック 37機能は歴史的regression contractとして残します。
 
 ## 自動品質・Releaseパイプライン
 
@@ -312,7 +312,7 @@ version別gate:
 
 ## Release / Redistribution Audit
 
-runtime JARへ入れるのはBlockLens code/resourceとBlockLens所有assetです。CIはnested dependency JAR、local path、log、save、crash dump、secret/private-key marker、source RPO residue、retired runtime-policy bytecodeを拒否します。AMATERASの元PNG/JSONは再配布しません。
+runtime JARへ入れるのはBlockLens code/resourceとBlockLens所有assetです。CIはnested dependency JAR、local path、log、save、crash dump、secret/private-key marker、source RPO residue、retired runtime-policy bytecodeを拒否します。参照パックの元PNG/JSONは再配布しません。
 
 ## Engineering Graph Loop
 
@@ -340,7 +340,7 @@ flowchart LR
 - [`knowledge/index.md`](knowledge/index.md) — knowledge index
 - [`knowledge/current/product-spec.md`](knowledge/current/product-spec.md) — product contract
 - [`knowledge/current/architecture.md`](knowledge/current/architecture.md) — architecture
-- [`knowledge/current/amateras-raw-parity-audit.md`](knowledge/current/amateras-raw-parity-audit.md) — raw-source/RPO parity audit
+- [`knowledge/current/source-raw-parity-audit.md`](knowledge/current/source-raw-parity-audit.md) — raw-source/RPO parity audit
 - [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) — ChiseTweaks → BlockLens migration
 - [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md) — quality strategy
 - [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md) — performance strategy

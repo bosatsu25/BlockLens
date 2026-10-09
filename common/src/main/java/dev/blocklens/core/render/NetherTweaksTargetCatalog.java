@@ -8,12 +8,12 @@ import java.util.Objects;
 /**
  * Exact compiled target scope for Nether Tweaks.
  *
- * <p>The original 27 AMATERAS targets remain frozen as the M0 baseline. P0 adds ChiseTweaks'
+ * <p>The original 27 source targets remain frozen as the M0 baseline. P0 adds ChiseTweaks'
  * `polished_basalt` target to the runtime union without dropping BlockLens' existing `obsidian`
  * target. This makes the migration additive and keeps the original baseline auditable.</p>
  */
 public final class NetherTweaksTargetCatalog {
-    /** Hash of the pinned AMATERAS M0 direct-path set; intentionally remains baseline-only evidence. */
+    /** Hash of the pinned source M0 direct-path set; intentionally remains baseline-only evidence. */
     public static final String DIRECT_PATH_SET_SHA256 =
             "e20ab1991f3b4da58f67b94585ec79f5bb73e6d872090480cac96c56f8b73e40";
 
@@ -56,7 +56,7 @@ public final class NetherTweaksTargetCatalog {
         return capability == CapabilityId.NETHER_TWEAKS ? TARGETS : List.of();
     }
 
-    /** Returns the exact 27-target AMATERAS M0 baseline used by the frozen parity contract. */
+    /** Returns the exact 27-target source M0 baseline used by the frozen parity contract. */
     public static List<String> m0Targets() {
         return M0_TARGETS;
     }

@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Stable BlockLens product catalog.
  *
- * <p>The first 37 entries preserve the pinned M0 AMATERAS contract and their historical ordinal
+ * <p>The first 37 entries preserve the pinned M0 source contract and their historical ordinal
  * positions. New product capabilities are appended only, so existing runtime bit positions stay
  * stable while BlockLens absorbs selected ChiseTweaks behavior.</p>
  *

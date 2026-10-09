@@ -22,7 +22,7 @@ final class FullTargetCatalogTest {
 
     @Test
     void resourceScopeKeepsEighteenM0BindingsAndAddsThreeChiseMaterials() {
-        assertEquals(18, ResourceTargetCatalog.AMATERAS_M0_BINDING_COUNT);
+        assertEquals(18, ResourceTargetCatalog.SOURCE_M0_BINDING_COUNT);
         assertEquals(21, ResourceTargetCatalog.totalBindingCount());
         for (CapabilityId capability : CapabilityId.values()) {
             if (capability.category() == CapabilityId.Category.RESOURCE) {

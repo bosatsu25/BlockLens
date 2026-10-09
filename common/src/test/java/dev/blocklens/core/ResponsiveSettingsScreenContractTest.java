@@ -19,13 +19,8 @@ final class ResponsiveSettingsScreenContractTest {
                     + "/src/main/java/dev/blocklens/fabric/BlockLensConfigScreen.java"));
             String client = Files.readString(root().resolve("versions/" + module
                     + "/src/main/java/dev/blocklens/fabric/BlockLensClient.java"));
-            assertTrue(screen.contains("CapabilityId[] CAPABILITIES = CapabilityId.values()"));
-            assertTrue(screen.contains("columns = width >= 520 ? 2 : 1"));
-            assertTrue(screen.contains("maxScroll = Math.max(0"));
-            assertTrue(screen.contains("toggles[index].visible = y >= TOP"));
-            assertTrue(screen.contains("BlockLensConfigFiles.save"));
-            assertTrue(screen.contains("BlockLensRuntime.installConfig(draft)"));
-            assertTrue(screen.contains("MinecraftTerrainInvalidator.invalidateAll(minecraft)"));
+            assertTrue(screen.contains("extends AbstractBlockLensConfigScreen"));
+            assertTrue(screen.contains("protected void showParent(Screen parent)"));
             assertTrue(client.contains("KeyMappingHelper.registerKeyMapping(OPEN_SETTINGS)"));
             assertTrue(client.contains("ClientTickEvents.END_CLIENT_TICK.register"));
         }

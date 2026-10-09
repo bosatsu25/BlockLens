@@ -7,7 +7,7 @@ M4 migrates the five source capabilities that improve visibility without turning
 The pinned behavioral source remains:
 
 ```text
-AMATERAS_Resourcepack_mc26.1.2.zip
+reference-source-mc26.1.2.zip (neutral documentation label)
 SHA-256: 36e5c5bba4e77f05b8c22d549593dfb95e8aebc7bfebdba57e229257b46640ef
 ```
 
@@ -74,7 +74,7 @@ flowchart TD
 Rules:
 
 - The active Minecraft/resource-pack model remains the base.
-- No AMATERAS PNG/model is copied into the runtime JAR by default.
+- No source PNG/model is copied into the runtime JAR by default.
 - All five controls remain independent and may be enabled together with all M3 controls.
 - No world scan or per-frame registry scan.
 - Exact target lookup must remain bounded/O(1) after bootstrap.

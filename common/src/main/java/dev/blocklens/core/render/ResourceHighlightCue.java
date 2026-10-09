@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * BlockLens-owned procedural accents for resource visibility.
  *
- * <p>The original AMATERAS-backed capabilities preserve their source-derived user value without
+ * <p>The original source-backed capabilities preserve their source-derived user value without
  * redistributing source binaries. P0 extends the same compact cue engine with clean-room colors
  * derived from ChiseTweaks' own material definitions for Crying Obsidian, Nether Gold Ore, and
  * Nether Quartz Ore.</p>

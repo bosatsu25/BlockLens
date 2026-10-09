@@ -1,0 +1,113 @@
+package dev.blocklens.gametest;
+
+import dev.blocklens.core.CapabilityId;
+import dev.blocklens.fabric.BlockLensConfigScreen;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+import javax.imageio.ImageIO;
+import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.gui.screens.Screen;
+
+/** Real framebuffer evidence for the settings screen; contains no third-party assets. */
+final class SettingsVisualOracle {
+    private SettingsVisualOracle() {
+    }
+
+    static void verify(ClientGameTestContext context) {
+        Screen previous = context.computeOnClient(BlockLensConfigScreen::current);
+        String originalLanguage = context.computeOnClient(client -> client.getLanguageManager().getSelected());
+        String originalOption = context.computeOnClient(client -> client.options.languageCode);
+        int originalScale = context.computeOnClient(client -> client.options.guiScale().get());
+        int originalWidth = context.computeOnClient(client -> client.getWindow().getWidth());
+        int originalHeight = context.computeOnClient(client -> client.getWindow().getHeight());
+        try {
+            context.runOnClient(client -> client.options.guiScale().set(1));
+            for (String locale : new String[] {"en_us", "ja_jp"}) {
+                context.runOnClient(client -> {
+                    client.getLanguageManager().setSelected(locale);
+                    client.options.languageCode = locale;
+                });
+                reload(context);
+                context.runOnClient(client -> BlockLensConfigScreen.show(client,
+                        new BlockLensConfigScreen(previous)));
+                context.waitTicks(5);
+                for (CapabilityId.Category category : CapabilityId.Category.values()) {
+                    context.runOnClient(client -> ResponsiveSettingsScreenOracle.select(
+                            (BlockLensConfigScreen) BlockLensConfigScreen.current(client), category));
+                    context.waitTicks(2);
+                    capture(context, "settings-" + locale + "-" + category.name().toLowerCase(java.util.Locale.ROOT),
+                            854, 480);
+                }
+                context.runOnClient(client -> ResponsiveSettingsScreenOracle.select(
+                        (BlockLensConfigScreen) BlockLensConfigScreen.current(client), CapabilityId.Category.RESOURCE));
+                capture(context, "settings-" + locale + "-compact", 320, 240);
+            }
+        } finally {
+            context.runOnClient(client -> {
+                client.getLanguageManager().setSelected(originalLanguage);
+                client.options.languageCode = originalOption;
+                client.options.guiScale().set(originalScale);
+                client.getWindow().setWindowed(originalWidth, originalHeight);
+                client.resizeGui();
+                BlockLensConfigScreen.show(client, previous);
+            });
+            context.waitFor(client -> client.getWindow().getWidth() == originalWidth
+                    && client.getWindow().getHeight() == originalHeight);
+            context.runOnClient(client -> client.resizeGui());
+            reload(context);
+        }
+        System.out.println("BLOCKLENS_SETTINGS_VISUAL locales=en_us,ja_jp categories=4 compact=true");
+    }
+
+    private static void reload(ClientGameTestContext context) {
+        CompletableFuture<Void> reloaded = context.computeOnClient(client -> client.reloadResourcePacks());
+        context.waitFor(client -> reloaded.isDone(), 1200);
+        reloaded.join();
+        context.waitFor(SettingsClientAccess::ready, 1200);
+    }
+
+    private static void capture(ClientGameTestContext context, String name, int width, int height) {
+        context.runOnClient(client -> client.getWindow().setWindowed(width, height));
+        context.waitFor(client -> client.getWindow().getWidth() == width
+                && client.getWindow().getHeight() == height);
+        context.runOnClient(client -> {
+            client.resizeGui();
+            Screen screen = BlockLensConfigScreen.current(client);
+            if (!(screen instanceof BlockLensConfigScreen) || screen.width != width || screen.height != height
+                    || !SettingsClientAccess.ready(client)) {
+                throw new AssertionError("Settings capture requires the complete requested viewport");
+            }
+            for (var button : ResponsiveSettingsScreenOracle.buttons(screen)) {
+                if (button.visible && (button.getX() < 0 || button.getY() < 0
+                        || button.getX() + button.getWidth() > width
+                        || button.getY() + button.getHeight() > height)) {
+                    throw new AssertionError("Settings capture has an out-of-bounds control");
+                }
+            }
+        });
+        context.waitTicks(2);
+        Path destination = FabricLoader.getInstance().getGameDir().resolve("settings-ui");
+        try {
+            Files.createDirectories(destination);
+            Path image = context.takeScreenshot(TestScreenshotOptions.of(name)
+                    .withDestinationDir(destination).disableCounterPrefix());
+            if (!Files.isRegularFile(image) || Files.size(image) < 1000) {
+                throw new AssertionError("Settings framebuffer capture is missing or empty");
+            }
+            var pixels = ImageIO.read(image.toFile());
+            if (pixels == null || pixels.getWidth() != width || pixels.getHeight() != height) {
+                throw new AssertionError("Settings framebuffer dimensions differ from the viewport");
+            }
+            int backdrop = pixels.getRGB(width / 2, height - 31);
+            if ((backdrop >> 16 & 255) > 64 || (backdrop >> 8 & 255) > 64 || (backdrop & 255) > 64) {
+                throw new AssertionError("Settings text backdrop lacks contrast: " + (backdrop & 0xFFFFFF));
+            }
+        } catch (IOException exception) {
+            throw new AssertionError("Settings framebuffer capture failed");
+        }
+    }
+}

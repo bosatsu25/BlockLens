@@ -1,5 +1,6 @@
 package dev.blocklens.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -82,8 +83,22 @@ final class RepositoryContractTest {
         assertTrue(convention.contains("rootProject.file('gametest/resources')"));
         assertTrue(ci.contains(":versions:${{ matrix.module }}:runClientGameTest"));
 
-        assertFalse(Files.exists(root().resolve("versions/mc26_1_2/src/gametest")));
-        assertFalse(Files.exists(root().resolve("versions/mc26_2/src/gametest")));
+        // The loading-overlay API moved in 26.2; only this tiny test bridge may vary.
+        assertSettingsOverlayBridge("mc26_1_2", "client.getOverlay()");
+        assertSettingsOverlayBridge("mc26_2", "client.gui.overlay()");
+    }
+
+    private void assertSettingsOverlayBridge(String module, String overlayApi) throws IOException {
+        Path directory = root().resolve("versions/" + module + "/src/gametest");
+        Path bridge = directory.resolve("java/dev/blocklens/gametest/SettingsClientAccess.java");
+        try (var paths = Files.walk(directory)) {
+            assertEquals(List.of(bridge), paths.filter(Files::isRegularFile).toList(),
+                    "All GameTest logic and fixtures remain shared except the overlay API bridge");
+        }
+        String source = Files.readString(bridge);
+        assertTrue(source.contains("static boolean ready(Minecraft client)"));
+        assertTrue(source.contains(overlayApi + " == null"));
+        assertTrue(source.lines().count() <= 20, "The version bridge must not duplicate an oracle");
     }
 
     @Test

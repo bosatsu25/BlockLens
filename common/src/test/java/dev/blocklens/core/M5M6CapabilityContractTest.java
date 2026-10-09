@@ -47,7 +47,7 @@ final class M5M6CapabilityContractTest {
         hashes.put(CapabilityId.OBSIDIAN, "ca0efbbc1255dd487d22967eeb6c03cb68aefbcbf8ec83dc9af7b73cd8dbd393");
         hashes.put(CapabilityId.REDSTONE_ORE, "85880309d416ae679d3d905850cc0902dd7f9f4b49c0c557ae13e6428ae258f8");
 
-        assertEquals(ResourceTargetCatalog.AMATERAS_M0_BINDING_COUNT, hashes.size());
+        assertEquals(ResourceTargetCatalog.SOURCE_M0_BINDING_COUNT, hashes.size());
         for (Map.Entry<CapabilityId, String> entry : hashes.entrySet()) {
             CapabilityId capability = entry.getKey();
             Row row = rows.get(capability.sourceKey());

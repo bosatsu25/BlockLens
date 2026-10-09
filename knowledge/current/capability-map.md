@@ -2,7 +2,7 @@
 
 Status: **authoritative source-to-product baseline**
 
-This document was generated from the pinned AMATERAS ZIP/RPO baseline. It maps all 37 RPO conditions to the files and Minecraft states that actually implement them.
+This document was generated from the pinned source ZIP/RPO baseline. It maps all 37 RPO conditions to the files and Minecraft states that actually implement them.
 
 ## Evidence summary
 
@@ -13,7 +13,7 @@ This document was generated from the pinned AMATERAS ZIP/RPO baseline. It maps a
 - Shared transitive dependencies across capabilities: **6**
 - Explicit source-pack license file: **not found**
 
-No AMATERAS binary asset is approved for redistribution by this mapping. Until rights are confirmed, BlockLens uses the pack as behavior/reference evidence and prefers independently generated overlays/geometry.
+No source binary asset is approved for redistribution by this mapping. Until rights are confirmed, BlockLens uses the pack as behavior/reference evidence and prefers independently generated overlays/geometry.
 
 ## Complete capability mapping
 

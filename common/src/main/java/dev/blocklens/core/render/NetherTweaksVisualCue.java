@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * Procedural Nether palette used by BlockLens without redistributing source textures.
  *
- * <p>The pinned AMATERAS source uses mostly 16x16 textures with a 14x14 flat interior and a
+ * <p>The pinned source uses mostly 16x16 textures with a 14x14 flat interior and a
  * one-pixel contrasting frame. P0 keeps those existing cues and extends the same grammar to the
  * ChiseTweaks-only polished-basalt target.</p>
  */

@@ -1,16 +1,16 @@
-# AMATERAS raw-source parity audit
+# Source raw-source parity audit
 
 Status: **comparison complete; executable regression contract added in P0**
 
 ## Purpose
 
-This audit answers a stricter question than “does BlockLens expose 37 toggles?”: **does the compact BlockLens runtime preserve the useful behavior encoded by the complete effective AMATERAS RPO-gated raw source?**
+This audit answers a stricter question than “does BlockLens expose 37 toggles?”: **does the compact BlockLens runtime preserve the useful behavior encoded by the complete effective source RPO-gated raw source?**
 
 BlockLens does **not** redistribute the source JSON/PNG files byte-for-byte. The product invariant is semantic/function parity: every effective RPO behavior must map to a BlockLens capability and logical target/state contract, while unreachable/source-residue files are not copied into the runtime JAR.
 
 ## Comparison inputs
 
-- AMATERAS: `AMATERAS Resourcepack 1.21.7 v2.zip` — SHA-256 `174a952ef9d385c8a72b9f8509e51ca59dfa5a4cff618d91a4d8d75fa38aaced`, 3,865,945 B, 4,744 ZIP entries.
+- Source pack (neutral documentation label): `source-1.21.7-v2.zip` — SHA-256 `174a952ef9d385c8a72b9f8509e51ca59dfa5a4cff618d91a4d8d75fa38aaced`, 3,865,945 B, 4,744 ZIP entries.
 - Supplied BlockLens: `BlockLens-26.1.2-release.jar` — metadata `0.1.0+mc26.1.2`, SHA-256 `2e12a92ffadc280f3cf3cdf272a338e93a7fc9ad2fb25b4fde52d28a75cef671`, 94,227 B, 69 JAR entries.
 
 > The supplied JAR is not byte-identical to the published v0.1.0 26.1.2 release artifact documented in README. This report therefore treats behavioral/catalog parity separately from release-byte identity.
@@ -89,9 +89,9 @@ These effective counts match the established M0 source-evidence shape. The extra
 
 ## P0 / ChiseTweaks migration relationship
 
-P0 extends BlockLens beyond the frozen 37-capability AMATERAS contract. The original 37 entries stay stable while ChiseTweaks-derived behavior is additive. The current P0 design is **40 capabilities / 328 bindings / 322 unique targets**.
+P0 extends BlockLens beyond the frozen 37-capability source contract. The original 37 entries stay stable while ChiseTweaks-derived behavior is additive. The current P0 design is **40 capabilities / 328 bindings / 322 unique targets**.
 
-Reviewed target additions to original AMATERAS capabilities are limited to:
+Reviewed target additions to original source capabilities are limited to:
 
 - `others.stringtweaks` → `tripwire_hook`
 - `others.nethertweaks` → `polished_basalt`
@@ -100,7 +100,7 @@ The other three P0 additions are independent Resource capabilities: Crying Obsid
 
 ## Executable regression gate
 
-`AmaterasRawParityContractTest` now enforces in CI:
+`SourceRawParityContractTest` now enforces in CI:
 
 - exactly 37 frozen source rows;
 - exactly 336 effective gated roots from the frozen machine-readable contract;
@@ -111,4 +111,4 @@ The other three P0 additions are independent Resource capabilities: Crying Obsid
 - only the two reviewed additive target extensions above are allowed on the original capabilities;
 - this audit retains the raw-source evidence boundary (337 / 336 / 4,101 / 95).
 
-This keeps raw-source parity separate from additive ChiseTweaks-derived features and makes accidental deletion of an AMATERAS behavior a hard CI failure.
+This keeps raw-source parity separate from additive ChiseTweaks-derived features and makes accidental deletion of a source behavior a hard CI failure.

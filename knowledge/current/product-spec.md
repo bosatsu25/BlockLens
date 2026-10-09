@@ -8,7 +8,7 @@ BlockLens is a **client-side Minecraft Java Edition visual inspection mod**.
 
 Its purpose is to make block orientation, block state, resources, outlines, and other hard-to-see visual information easier to inspect without replacing the user's world, automating gameplay, or requiring a server-side BlockLens component.
 
-The initial product is a clean reimplementation of the user value represented by the supplied AMATERAS resource pack and its RPO configuration.
+The initial product is a clean reimplementation of the user value represented by the supplied resource pack and its RPO configuration.
 
 ## 2. Supported platform targets
 
@@ -215,7 +215,7 @@ BlockLens is not intended to become:
 - an auto-placement mod,
 - a server management mod,
 - a generic X-ray mod,
-- an AMATERAS code/asset dump inside a JAR,
+- a source code/asset dump inside a JAR,
 - or a feature-count competition with other Tweaks mods.
 
 The product value is **visual clarity and state inspection**.

@@ -21,6 +21,7 @@ jacoco {
 }
 
 def coverageGateClasses = [
+        'dev/blocklens/core/ui/SettingsDraft*.class',
         'dev/blocklens/core/CapabilityId*.class',
         'dev/blocklens/core/BlockLensConfig*.class',
         'dev/blocklens/core/BlockLensConfigCodec*.class',
@@ -78,6 +79,7 @@ jacocoTestCoverageVerification {
 
 pitest {
     targetClasses = [
+            'dev.blocklens.core.ui.SettingsDraft',
             'dev.blocklens.core.CapabilityId',
             'dev.blocklens.core.BlockLensConfig',
             'dev.blocklens.core.BlockLensConfigCodec',
@@ -97,6 +99,7 @@ pitest {
     // Mutation tests intentionally exclude repository/filesystem contract tests and large frozen
     // M0 target/palette data tables; deterministic product-policy logic remains mutation-gated.
     targetTests = [
+            'dev.blocklens.core.ui.SettingsDraftTest',
             'dev.blocklens.core.CapabilityIdTest',
             'dev.blocklens.core.BlockLensConfigCodecTest',
             'dev.blocklens.core.state.SemanticStateTest',

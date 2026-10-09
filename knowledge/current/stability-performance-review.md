@@ -2,7 +2,7 @@
 
 Status: **implemented; local and Linux PR CI verified on 2026-09-14; final v0.2.1 metadata rerun in progress**
 
-This review hardens the post-v0.2.0 source tree without adding a second rendering engine, a world scan, telemetry, network access, or an external UI dependency. The frozen 37-capability AMATERAS contract and the current 40-capability product contract remain unchanged.
+This review hardens the post-v0.2.0 source tree without adding a second rendering engine, a world scan, telemetry, network access, or an external UI dependency. The frozen 37-capability source contract and the current 40-capability product contract remain unchanged.
 
 ## Runtime changes
 

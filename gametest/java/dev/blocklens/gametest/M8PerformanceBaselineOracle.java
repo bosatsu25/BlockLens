@@ -178,7 +178,11 @@ final class M8PerformanceBaselineOracle {
                             && offRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
                             && defaultRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
                             && onRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES,
-                    "M8 allocation median exceeded coarse regression guard");
+                    "M8 allocation median exceeded coarse regression guard: off=" + offAllocation.median()
+                            + " default=" + defaultAllocation.median() + " allOn=" + onAllocation.median()
+                            + " offRelevant=" + offRelevantAllocation.median()
+                            + " defaultRelevant=" + defaultRelevantAllocation.median()
+                            + " allOnRelevant=" + onRelevantAllocation.median());
 
             System.out.println("BLOCKLENS_M8_BASELINE minecraft=" + BlockLensRuntime.minecraftVersion()
                     + " measuredSamples=" + MEASURED_SAMPLES

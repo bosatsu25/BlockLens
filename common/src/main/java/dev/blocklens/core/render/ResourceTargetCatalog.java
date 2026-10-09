@@ -9,7 +9,7 @@ import java.util.Objects;
 
 /** Exact compiled target scope for BlockLens resource/highlight capabilities. */
 public final class ResourceTargetCatalog {
-    public static final int AMATERAS_M0_BINDING_COUNT = 18;
+    public static final int SOURCE_M0_BINDING_COUNT = 18;
 
     private static final Map<CapabilityId, List<String>> TARGETS;
 

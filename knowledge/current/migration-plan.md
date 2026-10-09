@@ -4,9 +4,9 @@ Status: **authoritative migration strategy**
 
 ## Goal
 
-Rebuild the visual value of the supplied AMATERAS resource pack as a Fabric client mod while preserving all 37 source capabilities, supporting **Minecraft 26.1.2 and 26.2**, and reducing each runtime artifact below 50% of the source ZIP size.
+Rebuild the visual value of the supplied resource pack as a Fabric client mod while preserving all 37 source capabilities, supporting **Minecraft 26.1.2 and 26.2**, and reducing each runtime artifact below 50% of the source ZIP size.
 
-This is a **black-box / behavior-first reimplementation strategy**. The source pack establishes observable visual behavior and supported block-state combinations. The mod must not preserve the source pack's internal file explosion merely for convenience.
+This is a **black-box / behavior-first reimplementation strategy**. The reference pack establishes observable visual behavior and supported block-state combinations. The mod must not preserve the source pack's internal file explosion merely for convenience.
 
 ## M0 — Freeze the source baseline
 

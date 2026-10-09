@@ -69,7 +69,7 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(release.contains("no duplicate release"));
 
         assertTrue(release.contains("40 independently configurable capabilities"));
-        assertTrue(release.contains("37-capability AMATERAS baseline"));
+        assertTrue(release.contains("37-capability source baseline"));
         assertTrue(release.contains("Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore"));
         assertTrue(release.contains("Tripwire Hook coverage in String Tweaks"));
         assertTrue(release.contains("Polished Basalt coverage in Nether Tweaks"));
@@ -83,7 +83,7 @@ final class M9ReleaseReadinessContractTest {
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
         assertTrue(properties.contains("mod_version=0.2.2"));
-        assertTrue(properties.contains("v0.1.0 is the published 37-capability AMATERAS baseline"));
+        assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
         assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
 
         assertTrue(properties.contains("runtime_jar_baseline_bytes=112640"));
@@ -126,7 +126,7 @@ final class M9ReleaseReadinessContractTest {
             assertTrue(document.contains("shader-OFF"));
             assertTrue(document.contains("Vulkan"));
             assertTrue(document.contains("release-readiness.md"));
-            assertTrue(document.contains("amateras-raw-parity-audit.md"));
+            assertTrue(document.contains("source-raw-parity-audit.md"));
             assertTrue(document.contains("chisetweaks-migration.md"));
         }
     }

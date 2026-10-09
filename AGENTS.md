@@ -6,7 +6,7 @@ This repository is used to design, implement, review, test, and release BlockLen
 
 - `knowledge/current/` is the authoritative current specification.
 - `archive/`, `deprecated/`, and `superseded/` material, if added later, is historical only.
-- Do not revive an older behavior because it existed in the source resource pack if the current specification intentionally replaces it.
+- Do not revive an older behavior because it existed in the resource pack if the current specification intentionally replaces it.
 
 ## Supported platform contract
 
@@ -136,7 +136,7 @@ For bug fixes, add a regression test whenever the failure can be represented mec
 
 ## Resource-pack migration rule
 
-The source AMATERAS resource pack is a behavioral and visual reference, not an instruction to copy its internal structure into the mod.
+The resource pack is a behavioral and visual reference, not an instruction to copy its internal structure into the mod.
 
 Preferred transformation:
 
