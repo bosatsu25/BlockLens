@@ -10,9 +10,9 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Current stable release:** BlockLens **v0.2.0** provides **40 independently configurable capabilities** for Minecraft **26.1.2** and **26.2**, while preserving every identity and behavior contract in the original 37-capability source baseline.
+> **Current stable release:** BlockLens **v0.2.2** provides **40 independently configurable capabilities** for Minecraft **26.1.2** and **26.2**, including an optional Mod Menu settings entrypoint. Current main additionally supports **26.3**; that development build has not been published as a new release.
 >
-> **Historical release:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets**; the strict **100 KiB** release budget remains unchanged.
+> **Historical release:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget. Current policy uses a **150 KiB** release ceiling and a tighter **111 KiB** reviewed development guard.
 
 ## Current development: three Minecraft versions
 
@@ -43,7 +43,7 @@ flowchart TB
     CH --> P5[P5 · compatibility / extensions]
 ```
 
-The migration plan is tracked in **Issue #22** and [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md).
+Delivered P0 is recorded in closed **Issue #22**. Remaining migration is tracked in **#42 and #34-#38** and [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md).
 
 ## Source raw-source parity
 
@@ -168,13 +168,22 @@ Runtime principles:
 
 ### Current source hardening
 
-The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 40 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is under review; the supplied third-party pack combinations, source-screen pixel equivalence, shaders and Vulkan are not yet verified.
+The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 40 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is merged in PR #40. Supplied third-party pack combinations, source-screen pixel equivalence, shaders and Vulkan are not yet verified.
 
-The same review also adds bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model instead of four. Current dual-version GameTest performance evidence covers OFF, default, and all-40 configurations. The reviewed local artifacts are **101,877 B (26.1.2) / 101,913 B (26.2)**; **101,913 B** is the new development no-growth baseline and the **102,400 B** hard release ceiling was not changed.
+Bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model are implemented. Historical v0.2.1 local artifacts measured **101,877 B / 101,913 B** under the then-current **102,400 B** ceiling. Current three-version gates use the reviewed **113,664 B** development baseline and **153,600 B** release ceiling. OFF/default/all-capability M8 measurements remain coarse regression guards; observed CI allocation variability is tracked in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
 
 ## Release
 
-**v0.2.0** is the current verified stable release.
+**v0.2.2** is the latest published stable release, at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`.
+
+| Minecraft | Published JAR | Size | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
+| 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
+
+The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). A 26.3 release artifact is not yet published. Current development budgets are **113,664 B (111 KiB)** no-growth, **153,600 B (150 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
+
+**v0.2.0** remains historical P0 release evidence.
 
 | Minecraft | Published JAR | Size | SHA-256 |
 | --- | --- | ---: | --- |
@@ -192,7 +201,7 @@ The release targets `b440d43904e2a93236549efc571b7cc127622352`. Successful main 
 
 The release was produced from successful `main` CI **#245 / `34768792311`** at commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`. Release run **#3 / `34769093202`** published the exact CI-verified JAR bytes plus `SHA256SUMS.txt`.
 
-## Supported environment
+## Published v0.2.2 environment
 
 | Item | Current verified contract |
 | --- | --- |
@@ -206,7 +215,7 @@ The release was produced from successful `main` CI **#245 / `34768792311`** at c
 | Shader-ON | not yet claimed as supported |
 | Minecraft 26.2 Vulkan | experimental |
 
-Issue #5 remains intentionally open for representative shader-ON / broader external compatibility evidence.
+Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31) tracks unverified shader-ON, third-party pack and Vulkan combinations across current development targets. Core M5 Issue #5 is complete.
 
 ## Technology foundation
 
@@ -217,7 +226,7 @@ BlockLens is intentionally small at runtime, but its engineering and QA foundati
 | Language | **Java 25** | production code, semantic engine, adapters, tests |
 | Build | **Gradle 9.5.1** | multi-project build, deterministic artifacts, verification |
 | Minecraft tooling | **Fabric Loom 1.17.19** | mappings, development runtime, build integration |
-| Loader | **Fabric Loader 0.19.3** | client-side mod loading |
+| Loader | **Fabric Loader 0.19.5** | current development client-side mod loading |
 | Runtime API | **Fabric API** | Minecraft/Fabric hooks and Client GameTest integration |
 | Unit / contract tests | **JUnit Jupiter 5.14.4** | semantic, config, target, repository and release contracts |
 | Coverage | **JaCoCo 0.8.15** | line-coverage gate |
@@ -274,7 +283,9 @@ The Release job does not rebuild BlockLens. It promotes the exact verified raw C
 - v0.1.0 icon-inclusive stable baseline: **95,333 B**
 - P0 measured development maximum: **96,257 B**
 - P0 growth over v0.1.0 baseline: **924 B maximum**
-- release budget: **100 KiB / 102,400 B**, unchanged
+- historical v0.1.0 / P0 release budget: **100 KiB / 102,400 B**
+- current reviewed development no-growth guard: **111 KiB / 113,664 B**
+- current product release ceiling: **150 KiB / 153,600 B**
 - source-pack `<50%` absolute hard maximum remains unchanged
 
 Size reduction is never allowed to remove functional parity, tests, compatibility evidence, or safety gates.
@@ -286,7 +297,7 @@ For the stable release:
 1. Install Fabric Loader for the target Minecraft version.
 2. Install the matching Fabric API.
 3. Use Java 25 or later.
-4. Download the matching JAR from the `v0.1.0` GitHub Release.
+4. Download the matching 26.1.2 or 26.2 JAR from the [`v0.2.2` GitHub Release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2). A 26.3 stable release is not yet published.
 5. Put the JAR in the Minecraft `mods` directory.
 6. Launch the client.
 
@@ -294,16 +305,19 @@ BlockLens is client-only; server-side installation is not required.
 
 ## Build and verify
 
+Install Gradle **9.5.1** on PATH and set JAVA_HOME to Java **25**. This repository does not contain a Gradle Wrapper.
+
 ```bash
-./gradlew qualityGate
-./gradlew ciGate
+gradle qualityGate
+gradle ciGate
 ```
 
 Per-version gates:
 
 ```bash
-./gradlew :versions:mc26_1_2:build :versions:mc26_1_2:versionSmokeContract :versions:mc26_1_2:verifyRuntimeJarBudget
-./gradlew :versions:mc26_2:build :versions:mc26_2:versionSmokeContract :versions:mc26_2:verifyRuntimeJarBudget
+gradle :versions:mc26_1_2:build :versions:mc26_1_2:versionSmokeContract :versions:mc26_1_2:verifyRuntimeJarBudget
+gradle :versions:mc26_2:build :versions:mc26_2:versionSmokeContract :versions:mc26_2:verifyRuntimeJarBudget
+gradle :versions:mc26_3:build :versions:mc26_3:versionSmokeContract :versions:mc26_3:verifyRuntimeJarBudget
 ```
 
 ## Compatibility scope
@@ -314,7 +328,7 @@ Verified support is intentionally evidence-bounded:
 - representative non-vanilla active resource-pack preservation: **verified fixture**
 - arbitrary third-party resource packs: **not universally claimed**
 - representative shader-ON configurations: **not yet claimed**
-- Minecraft 26.2 Vulkan: **experimental**
+- Minecraft 26.2 / 26.3 Vulkan: **not verified**
 
 ## Release / redistribution audit
 

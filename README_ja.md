@@ -10,9 +10,9 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現在の安定版:** BlockLens **v0.2.0** はMinecraft **26.1.2** / **26.2**向けに**独立設定可能な40機能**を提供し、元の参照パック 37機能のidentityとbehavior contractをすべて維持しています。
+> **現在の安定版:** BlockLens **v0.2.2** はMinecraft **26.1.2** / **26.2**向けに**独立設定可能な40機能**と任意のMod Menu設定入口を提供します。現在のmainは**26.3**にも対応しますが、新リリースとしては未公開です。
 >
-> **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0はv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。厳格な**100 KiB** release budgetは変更していません。
+> **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。現行の公開上限は**150 KiB**、より厳しいレビュー済み開発基準は**111 KiB**です。
 
 ## 開発版の対応：Minecraft 3バージョン
 
@@ -43,7 +43,7 @@ flowchart TB
     CH --> P5[P5 · compatibility / extensions]
 ```
 
-移行計画は **Issue #22** と [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) で管理します。
+完了済みP0はクローズ済みの **Issue #22** に記録しています。残りの移行は **#42と#34〜#38**、[`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) で管理します。
 
 ## 参照パック raw-source parity
 
@@ -168,13 +168,22 @@ runtime原則:
 
 ### 現在のsource hardening
 
-現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。今回の設定画面の再設計では、40設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。この再設計はレビュー中です。添付パック同士の実ゲーム併用、元画面との画素単位の一致、シェーダー、Vulkanは未確認です。
+現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。40設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付パック同士の実ゲーム併用、元画面との画素単位の一致、シェーダー、Vulkanは未確認です。
 
-同じ見直しで、config readの上限、同期temp-file書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum table/instructionのcache、wrapped modelごとのdescriptor arrayを4本から2本へ削減しました。OFF/default/all-40を実Client GameTestのperformance evidenceに含めています。見直し後のlocal artifactは **101,877 B (26.1.2) / 101,913 B (26.2)**、新しいdevelopment no-growth baselineは **101,913 B** で、**102,400 B**のhard release ceilingは変更していません。
+config readの上限、同期一時ファイル書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum/instructionの再利用、wrapped modelごとのdescriptor arrayの2本化は実装済みです。歴史的v0.2.1のlocal artifactは **101,877 B / 101,913 B**で、当時の上限は**102,400 B**でした。現在の3版ゲートはレビュー済み開発基準**113,664 B**と公開上限**153,600 B**を使います。OFF/default/全機能のM8測定は粗い回帰ガードであり、観測されたCI割り当て量のばらつきは[#43](https://github.com/bosatsu25/BlockLens/issues/43)で追跡します。
 
 ## Release
 
-**v0.2.0** が現在の検証済み安定版です。
+**v0.2.2** が最新の公開済み安定版です。対象コミットは`46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`です。
+
+| Minecraft | 公開JAR | サイズ | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
+| 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
+
+カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。26.3用の公開リリースはまだありません。現行基準は開発時**113,664 B（111 KiB）**、公開上限**153,600 B（150 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
+
+**v0.2.0** はP0の歴史的リリース証拠として維持します。
 
 | Minecraft | 公開JAR | サイズ | SHA-256 |
 | --- | --- | ---: | --- |
@@ -192,7 +201,7 @@ release targetは`b440d43904e2a93236549efc571b7cc127622352`です。成功した
 
 成功した`main` CI **#245 / `34768792311`**、commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`から生成され、Release run **#3 / `34769093202`** がCI検証済みJARと`SHA256SUMS.txt`をそのまま公開しました。
 
-## 対応環境
+## 公開済みv0.2.2の対応環境
 
 | 項目 | 現在の検証済みcontract |
 | --- | --- |
@@ -206,7 +215,7 @@ release targetは`b440d43904e2a93236549efc571b7cc127622352`です。成功した
 | Shader-ON | 現時点では対応を主張しない |
 | Minecraft 26.2 Vulkan | experimental |
 
-Issue #5は代表的なshader-ON / broader external compatibilityの検証用として意図的にopenのまま残します。
+Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31)で、開発版各対象の未検証のshader-ON・第三者パック・Vulkanを追跡します。M5のコア実装を扱うIssue #5は完了済みです。
 
 ## 技術基盤
 
@@ -217,7 +226,7 @@ BlockLensのruntime自体は小さく保ちますが、開発・QA基盤は厳�
 | 言語 | **Java 25** | production code、semantic engine、adapter、test |
 | Build | **Gradle 9.5.1** | multi-project build、deterministic artifact、verification |
 | Minecraft開発 | **Fabric Loom 1.17.19** | mapping、development runtime、build integration |
-| Loader | **Fabric Loader 0.19.3** | client-side mod loading |
+| Loader | **Fabric Loader 0.19.5** | 現在の開発版のclient-side mod loading |
 | Runtime API | **Fabric API** | Minecraft/Fabric hook、Client GameTest連携 |
 | Unit / contract test | **JUnit Jupiter 5.14.4** | semantic/config/target/repository/release contract |
 | Coverage | **JaCoCo 0.8.15** | line coverage gate |
@@ -274,7 +283,9 @@ Release jobではBlockLensを再buildせず、CIで検証したraw JARそのも�
 - v0.1.0 icon込み安定baseline: **95,333 B**
 - P0開発実測最大: **96,257 B**
 - v0.1.0 baselineからP0の最大増加: **924 B**
-- release budget: **100 KiB / 102,400 B** のまま
+- 歴史的v0.1.0 / P0のrelease budget: **100 KiB / 102,400 B**
+- 現行のレビュー済み開発基準: **111 KiB / 113,664 B**
+- 現行の製品公開上限: **150 KiB / 153,600 B**
 - source-pack `<50%` absolute hard maximumも維持
 
 容量削減のためにfunctional parity、test、compatibility evidence、安全gateを落とすことは禁止します。
@@ -286,7 +297,7 @@ Release jobではBlockLensを再buildせず、CIで検証したraw JARそのも�
 1. 対象Minecraft版のFabric Loaderを導入します。
 2. 対応するFabric APIを導入します。
 3. Java 25以上を使用します。
-4. GitHub Releasesの`v0.1.0`から対象Minecraft版JARを取得します。
+4. [GitHub Releasesの`v0.2.2`](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2)から26.1.2または26.2用JARを取得します。26.3用の安定版はまだ公開されていません。
 5. JARをMinecraftの`mods`フォルダへ入れます。
 6. clientを起動します。
 
@@ -294,16 +305,19 @@ BlockLensはclient-onlyなので、server側導入は不要です。
 
 ## Build / Verify
 
+Gradle **9.5.1**をPATHに設定し、JAVA_HOMEにJava **25**を設定します。このリポジトリにはGradle Wrapperはありません。
+
 ```bash
-./gradlew qualityGate
-./gradlew ciGate
+gradle qualityGate
+gradle ciGate
 ```
 
 version別gate:
 
 ```bash
-./gradlew :versions:mc26_1_2:build :versions:mc26_1_2:versionSmokeContract :versions:mc26_1_2:verifyRuntimeJarBudget
-./gradlew :versions:mc26_2:build :versions:mc26_2:versionSmokeContract :versions:mc26_2:verifyRuntimeJarBudget
+gradle :versions:mc26_1_2:build :versions:mc26_1_2:versionSmokeContract :versions:mc26_1_2:verifyRuntimeJarBudget
+gradle :versions:mc26_2:build :versions:mc26_2:versionSmokeContract :versions:mc26_2:verifyRuntimeJarBudget
+gradle :versions:mc26_3:build :versions:mc26_3:versionSmokeContract :versions:mc26_3:verifyRuntimeJarBudget
 ```
 
 ## Compatibility Scope
@@ -314,7 +328,7 @@ version別gate:
 - representative non-vanilla active resource-pack preservation: **fixtureで検証済み**
 - 任意third-party resource pack: **全面保証しない**
 - representative shader-ON: **未主張**
-- Minecraft 26.2 Vulkan: **experimental**
+- Minecraft 26.2 / 26.3 Vulkan: **未検証**
 
 ## Release / Redistribution Audit
 

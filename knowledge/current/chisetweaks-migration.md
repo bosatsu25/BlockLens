@@ -2,6 +2,8 @@
 
 Status: **Issue #22 / P0 merged and published in v0.2.0 / P1-P5 planned**
 
+Current publication is v0.2.2, including optional Mod Menu delivery; current main supports 26.1.2 / 26.2 / 26.3 with 40 capabilities. P1/P2 requirements are consolidated in #42; Analyzer #34, Scene Filter #35, Builder Assist #36, extension compatibility #37 and ecosystem decisions #38 remain separate. Issue #22 is complete only for P0. The P0 100 KiB statements below are historical; current reviewed development / product release ceilings are 111 KiB / 150 KiB. See [roadmap.md](roadmap.md) for current verified evidence and unresolved #31/#43 boundaries.
+
 BlockLens is the destination product. ChiseTweaks is a source of proven capabilities and UX ideas; it is **not** a runtime dependency and its feature framework is not copied into BlockLens.
 
 ## Direction
@@ -77,7 +79,7 @@ PR #23 was squash-merged as `b440d43904e2a93236549efc571b7cc127622352`. Main CI 
 - Minecraft 26.2: **96,248 B**, SHA-256 `54b99d9b66a403195e28850dcfb165083007ee6cddb3521c36176d51af031105`;
 - `SHA256SUMS.txt` is the third release asset.
 
-The original 37-capability source contract remains a permanent regression boundary. Issue #22 remains open only as the authority for P1-P5.
+The original 37-capability source contract remains a permanent regression boundary. Issue #22 is closed for P0; remaining P1-P5 work is tracked in #42 and #34-#38.
 
 ## Architecture invariants
 

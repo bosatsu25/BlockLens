@@ -21,7 +21,7 @@ Priority:
 
 CI must detect accidental changes to:
 
-- total capability count: **37**
+- frozen original source capability count: **37**; current additive runtime count: **40**
 - exact source RPO keys
 - category membership
 - supported target/block-state mappings once captured
@@ -60,7 +60,7 @@ Use parameterized tests, equivalence partitioning, boundary-value analysis, and 
 
 Verify:
 
-- exactly 37 capability IDs and source keys
+- preserve the original 37 capability IDs/source keys, plus current additive identities (40 runtime capabilities)
 - no duplicate IDs
 - every capability has translations/config representation
 - reference preset contains exactly the expected five enabled keys

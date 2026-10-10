@@ -1,8 +1,21 @@
 # BlockLens M9 Release Readiness
 
-Status: **DONE / authoritative v0.1.0 and v0.2.0 release evidence**
+Status: **current publication boundary plus immutable historical release evidence**
 
-## Current stable release: v0.2.0
+## Current published stable release: v0.2.2
+
+[v0.2.2](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2) is published at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`, with 40 capabilities and optional Mod Menu integration delivered by #27 / PR #30. GitHub release assets were verified on 2026-10-10:
+
+| Minecraft | Release asset | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
+| 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
+
+Current main adds merged PR #40 settings and PR #41 three-version support. [Main CI #313](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404) passed common and all three real-client/artifact jobs on merge `d91226c14f07c999256fc620b722a874be99958c`. No new release version or 26.3 release asset was published; the existing-version guard skipped publication.
+
+Current gates are the reviewed **113,664 B (111 KiB)** development guard, **153,600 B (150 KiB)** product release ceiling, and **1,183,432 B** absolute ceiling. Historical 100 KiB statements below describe v0.1.0/v0.2.0, not current policy. External shader/pack/Vulkan combinations remain #31; M8 diagnostic variability remains #43. See [roadmap.md](roadmap.md).
+
+## Historical stable release: v0.2.0
 
 P0 was published as **v0.2.0** without changing the historical v0.1.0 release.
 
@@ -160,7 +173,7 @@ flowchart TD
 - exact raw runtime artifacts from that CI run are used;
 - downloaded payloads must be valid JARs;
 - mod/Minecraft/client/icon metadata is checked before upload;
-- no-growth, 100 KiB, and hard maximum budgets are rechecked;
+- current no-growth, 150 KiB release, and absolute maximum budgets are rechecked;
 - publication is idempotent by `mod_version` / tag;
 - SHA-256 checksums are generated;
 - the final release asset set is verified after publication.
@@ -199,7 +212,7 @@ Not currently claimed:
 - universal third-party resource-pack compatibility
 - Minecraft 26.2 Vulkan as stable support
 
-Minecraft 26.2 Vulkan remains experimental. Issue #5 remains the authority for the external shader/resource-pack compatibility track. It is outside the advertised v0.1.0 support boundary and is not an unresolved core-release defect.
+Minecraft 26.2 / 26.3 Vulkan remains unverified. Issue #31 is the authority for external shader/resource-pack/Vulkan compatibility; completed #5 tracks historical core M5 parity. These combinations are outside the advertised default OpenGL boundary.
 
 ## M9 exit checklist
 
