@@ -1,6 +1,6 @@
 # Masa integration and standalone migration decision
 
-Status: source evaluation and independent review complete for #38; exact-head PR CI and merge pending.
+Status: #38 evaluation completed by PR #49; exact-head CI #326 passed all four jobs on the first attempt, and the decision is merged.
 
 BlockLens owns client rendering, bounded inspection and advisory assistance. It does not own other mods' automatic item selection, inventory workflows, container collection, shared-server schematic administration or global preference restoration. Installing ChiseTweaks is not required to use BlockLens.
 

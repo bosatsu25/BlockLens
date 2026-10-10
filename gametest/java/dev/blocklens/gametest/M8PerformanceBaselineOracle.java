@@ -28,7 +28,7 @@ import net.fabricmc.loader.api.FabricLoader;
  * regression guard. These limits detect large regressions; they are not evidence of a speedup.</p>
  */
 final class M8PerformanceBaselineOracle {
-    private static final int EXPECTED_CAPABILITIES = 46;
+    private static final int EXPECTED_CAPABILITIES = 51;
     private static final int EXPECTED_RESOURCE_CAPABILITIES = 21;
     private static final int RELOAD_WARMUPS = 1;
     private static final int MEASURED_SAMPLES = 3;

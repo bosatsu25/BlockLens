@@ -6,7 +6,7 @@
 
 [English](README.md) | **日本語**
 
-BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする46機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
+BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする51機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
@@ -16,9 +16,11 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 ## 開発版の対応：Minecraft 3バージョン
 
-開発版は **26.1.2 / 26.2 / 26.3** を対象とし、既存40機能を維持して6機能を追加します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。PR #40の設定画面再設計はマージ済みです。3版の検証結果はPRの最新コミットに対応するCIで確認してください。公開済みリリースに26.3対応が追加されたという意味ではありません。
+開発版は **26.1.2 / 26.2 / 26.3** を対象とし、既存40機能を維持して、表示・快適性の6機能と5つの解析機能を追加します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。PR #40の設定画面再設計はマージ済みです。3版の検証結果はPRの最新コミットに対応するCIで確認してください。公開済みリリースに26.3対応が追加されたという意味ではありません。
 
 Windowsで実際のMinecraft画面のUI自動テストを見るには、Java 25とGradle 9.5.1を用意し、`./scripts/run-ui-tests.ps1`（3版すべて）または `./scripts/run-ui-tests.ps1 -Version 26.3` を実行します。ビルドした配布用JARで実クライアントを順番に開き、クラスのロード元を確認してテスト後に終了し、失敗時は停止します。CIでは各版10枚の設定画面画像に加え、描画・JARの検証結果を残します。[正確な依存関係と検証状況](knowledge/current/minecraft-26-3.md)を参照してください。
+
+解析機能は、読み込み済みの古代の残骸・条件を満たす溶岩源・ビーコンや避雷針の範囲・実際に届いた村人の職業場所メモリを表示します。5機能とも初期設定は無効です。半径・マーカー数・最小更新間隔を調整でき、保存・破棄の編集内容を共有します。未読み込みチャンクは走査せず、密集時は複数tickかかり、職業場所メモリが届かない場合は線を推測しません。[正確な動作と処理上限](knowledge/current/world-analyzers.md)を参照してください。
 
 ## 製品方針
 

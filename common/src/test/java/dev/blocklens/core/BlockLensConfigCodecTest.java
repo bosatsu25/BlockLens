@@ -47,7 +47,7 @@ final class BlockLensConfigCodecTest {
         assertEquals(expected.asMap(), actual.asMap());
         assertEquals(expected.enabledMask(), actual.enabledMask());
         assertTrue(encoded.startsWith("# BlockLens native config v1\n"));
-        assertEquals(CapabilityId.values().length + 5L, encoded.lines().count());
+        assertEquals(CapabilityId.values().length + 24L, encoded.lines().count());
     }
 
     @Test

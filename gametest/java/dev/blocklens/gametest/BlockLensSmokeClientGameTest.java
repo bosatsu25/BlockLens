@@ -16,7 +16,7 @@ import net.fabricmc.loader.api.FabricLoader;
 
 /** Shared client smoke and integration oracle executed against every supported Minecraft version. */
 public final class BlockLensSmokeClientGameTest implements FabricClientGameTest {
-    private static final int EXPECTED_CAPABILITY_COUNT = 46;
+    private static final int EXPECTED_CAPABILITY_COUNT = 51;
 
     @Override
     public void runTest(ClientGameTestContext context) {
@@ -33,8 +33,10 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         ResponsiveSettingsScreenOracle.verify(context);
         SettingsEditingOracle.verify(context);
         ComfortSettingsOracle.verify(context);
+        AnalyzerSettingsOracle.verify(context);
         SettingsVisualOracle.verify(context);
 
+        BlockLensConfig disconnectBaseline=BlockLensRuntime.config();
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             context.waitTicks(20);
             context.runOnClient(client -> verifyRuntime("singleplayer world joined", false));
@@ -43,15 +45,22 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             M5DarkAreaVisualOracle.verify(context, singleplayer);
             M5ActiveResourcePackOracle.verify(context, singleplayer);
             LightweightVisualOracle.verify(context, singleplayer);
+            AnalyzerVisualOracle.verify(context, singleplayer);
             M8PerformanceBaselineOracle.verify(context, singleplayer);
+            AnalyzerVisualOracle.prepareDisconnect(context, singleplayer);
         }
 
-        context.runOnClient(client -> verifyRuntime("singleplayer world closed", false));
+        context.runOnClient(client -> {
+            require(dev.blocklens.fabric.AnalyzerClient.engine().markers().isEmpty(), "disconnect retained analyzer markers");
+            BlockLensRuntime.installConfig(disconnectBaseline);
+            verifyRuntime("singleplayer world closed", false);
+            System.out.println("BLOCKLENS_ANALYZER_DISCONNECT nonemptyBeforeClose=true emptyAfterClose=true");
+        });
     }
 
     private static void verifyRuntime(String phase, boolean reportBaseline) {
         require(CapabilityId.values().length == EXPECTED_CAPABILITY_COUNT,
-                phase + ": expected 46 capabilities");
+                phase + ": expected 51 capabilities");
 
         String minecraftVersion = FabricLoader.getInstance()
                 .getModContainer("minecraft")

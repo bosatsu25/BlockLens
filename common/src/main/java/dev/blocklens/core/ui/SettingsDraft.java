@@ -4,6 +4,7 @@ import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensConfigFiles;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.ComfortOptions;
+import dev.blocklens.core.analyzer.AnalyzerOptions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -30,9 +31,12 @@ public final class SettingsDraft {
         config = config.withComfortOptions(options);
     }
 
+    public void setAnalyzerOptions(AnalyzerOptions options) { config = config.withAnalyzerOptions(options); }
+
     public boolean changed() {
         return config.enabledMask() != baseline.enabledMask()
-                || !config.comfortOptions().equals(baseline.comfortOptions());
+                || !config.comfortOptions().equals(baseline.comfortOptions())
+                || !config.analyzerOptions().equals(baseline.analyzerOptions());
     }
 
     public void discard() {

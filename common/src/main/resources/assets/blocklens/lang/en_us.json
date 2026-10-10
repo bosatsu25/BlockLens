@@ -114,5 +114,19 @@
   "blocklens.comfort.held.2": "Tools and weapons",
   "blocklens.comfort.decrease": "Decrease",
   "blocklens.comfort.increase": "Increase",
-  "blocklens.comfort.draft_hint": "Changes apply when saved on the main settings screen."
+  "blocklens.comfort.draft_hint": "Changes apply when saved on the main settings screen.",
+  "blocklens.capability.debris_analyzer": "Ancient debris analyzer",
+  "blocklens.capability.debris_analyzer.description": "Occluded frames for loaded ancient debris in a bounded sphere. Dense scans take several ticks; ordering uses the pass start viewpoint.",
+  "blocklens.capability.lava_analyzer": "Lava source analyzer",
+  "blocklens.capability.lava_analyzer.description": "Loaded source lava with a known non-source neighbor. Bounded scanning skips unavailable chunks.",
+  "blocklens.capability.beacon_range": "Beacon range",
+  "blocklens.capability.beacon_range.description": "Horizontal square for completed beacon base layers. Does not infer beam clearance or active effects.",
+  "blocklens.capability.lightning_rod_range": "Lightning rod range",
+  "blocklens.capability.lightning_rod_range.description": "Horizontal 128-block square and target frame. Does not predict lightning or follow terrain.",
+  "blocklens.capability.villager_job_site_links": "Villager job site links",
+  "blocklens.capability.villager_job_site_links.description": "Links actual client job-site memories to loaded nearby sites. Vanilla often lacks this memory; dense samples may omit villagers.",
+  "blocklens.analyzer.radius": "Horizontal / sphere radius",
+  "blocklens.analyzer.vertical_radius": "Vertical radius",
+  "blocklens.analyzer.markers": "Maximum markers",
+  "blocklens.analyzer.interval": "Minimum interval (ticks)"
 }

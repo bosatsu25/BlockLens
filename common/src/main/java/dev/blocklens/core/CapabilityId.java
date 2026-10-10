@@ -68,7 +68,13 @@ public enum CapabilityId {
     BRIGHT_CONCRETE("outline.bright_concrete", Category.OUTLINE, true),
     LOW_FIRE("others.low_fire", Category.OTHER, false),
     HANDHELD_SIZE("others.handheld_size", Category.OTHER, false),
-    BRIGHT_CHEST("outline.bright_chest", Category.OUTLINE, true);
+    BRIGHT_CHEST("outline.bright_chest", Category.OUTLINE, true),
+
+    DEBRIS_ANALYZER("analyzer.debris_analyzer", Category.OTHER, false),
+    LAVA_ANALYZER("analyzer.lava_analyzer", Category.OTHER, false),
+    BEACON_RANGE("analyzer.beacon_range", Category.OTHER, false),
+    LIGHTNING_ROD_RANGE("analyzer.lightning_rod_range", Category.OTHER, false),
+    VILLAGER_JOB_SITE_LINKS("analyzer.villager_job_site_links", Category.OTHER, false);
 
     public enum Category {
         DECORATION,

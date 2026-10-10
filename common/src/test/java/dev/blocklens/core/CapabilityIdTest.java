@@ -21,8 +21,8 @@ final class CapabilityIdTest {
         assertEquals(13L, counts.get(CapabilityId.Category.DECORATION));
         assertEquals(21L, counts.get(CapabilityId.Category.RESOURCE));
         assertEquals(8L, counts.get(CapabilityId.Category.OUTLINE));
-        assertEquals(4L, counts.get(CapabilityId.Category.OTHER));
-        assertEquals(46, CapabilityId.values().length);
+        assertEquals(9L, counts.get(CapabilityId.Category.OTHER));
+        assertEquals(51, CapabilityId.values().length);
         assertTrue(CapabilityId.values().length <= Long.SIZE, "capability mask exhausted");
     }
 

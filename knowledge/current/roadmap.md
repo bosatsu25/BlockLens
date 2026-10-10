@@ -15,11 +15,11 @@ Current size policy is **143,360 B (140 KiB)** reviewed development no-growth gu
 | Track | Issue | Dependency and completion boundary |
 | --- | --- | --- |
 | Lightweight visual / comfort migration | [#42](https://github.com/bosatsu25/BlockLens/issues/42) | Completed by PR #46: CI #320 passed all four jobs for PR head `d4f313491ada47788bc46459e4f34a8f8396ef5a`, then merged as `5f992800cde79236d2d47fea304dbfe5831307dc`. That merge's main CI #321 allocation failure remains #43. Six controls, numeric details and three-version UI/render evidence preserve the superseded #32/#33 requirements. |
-| Bounded Analyzer | [#34](https://github.com/bosatsu25/BlockLens/issues/34) | Loaded-world inspection engine with radius/marker/update budgets; distinct from ordinary Resource Highlight. |
+| Bounded Analyzer | [#34](https://github.com/bosatsu25/BlockLens/issues/34) | Five default-OFF analyzers implemented with 19 draft numeric fields. Local clean quality, reproducible audited JARs and all three packaged UI/render/lifecycle/performance suites pass; exact-head hosted PR evidence remains required. See world-analyzers.md for limits and measurements. |
 | Scene Filter | [#35](https://github.com/bosatsu25/BlockLens/issues/35) | Reversible client rendering filters; separate ownership from Analyzer and Builder Assist. |
 | Builder Assist / Inspector | [#36](https://github.com/bosatsu25/BlockLens/issues/36) | Read-only/advisory capabilities; optional Litematica boundary. |
 | Extension compatibility | [#37](https://github.com/bosatsu25/BlockLens/issues/37) | Explicit bounded registration/tags; no per-frame discovery. |
-| Masa / deprecation decisions | [#38](https://github.com/bosatsu25/BlockLens/issues/38) | Per-integration value and compatibility decisions; deprecation only after parity evidence. |
+| Masa / deprecation decisions | [#38](https://github.com/bosatsu25/BlockLens/issues/38) | Completed evaluation by PR #49 / CI #326: eight explicit scope exclusions, separate read-only #36 candidate, ChiseTweaks retained without deprecation or archival. |
 | External compatibility | [#31](https://github.com/bosatsu25/BlockLens/issues/31) | Representative shader-ON, third-party packs and Vulkan evidence. Default OpenGL success does not close this track. |
 
 Diagnostic implementation: [PR #45](https://github.com/bosatsu25/BlockLens/pull/45) and [PR #47](https://github.com/bosatsu25/BlockLens/pull/47) are merged. #43 remains OPEN after main CI #321 reproduced the 26.1.2 allocation failure. PR #47 adds bounded role/main-pass attribution and preserves failing samples; exact-head CI #322 and main CI #323 passed all four jobs on their first attempts. These passing runs do not identify or resolve the cause; guard values are unchanged.

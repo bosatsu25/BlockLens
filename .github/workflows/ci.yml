@@ -124,7 +124,7 @@ jobs:
             \( -path '*/logs/latest.log' -o -path '*/m3-visual/*' \
             -o -path '*/m5-dark-visual/*' -o -path '*/m5-pack-visual/*' \
             -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
-            -o -path '*/lightweight-visual/*' \) \
+            -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \) \
             -exec cp --parents '{}' "$target" \;
       - name: Upload failed Client GameTest diagnostics
         if: failure()
@@ -398,6 +398,48 @@ jobs:
         with:
           name: blocklens-lightweight-visual-${{ matrix.minecraft }}
           path: ${{ steps.lightweight.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Collect analyzer UI and rendered evidence
+        id: analyzers
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="versions/${{ matrix.module }}/build/run/clientGameTest"
+          target="build/ci/analyzers-${{ matrix.minecraft }}"
+          mkdir -p "$target/ui" "$target/visual"
+          test "$(find "$root/analyzer-ui" -maxdepth 1 -name '*.png' | wc -l)" -eq 10
+          test "$(find "$root/analyzer-visual" -maxdepth 1 -name '*.png' | wc -l)" -eq 15
+          for locale in en_us ja_jp; do
+            for kind in 0 1 2 3 4; do
+              test -s "$root/analyzer-ui/analyzer-$locale-$kind.png"
+            done
+          done
+          manifest="$root/analyzer-visual/analyzer-visual-manifest.txt"
+          for check in all51Enabled all51Reload dimensionCleanup finalOffEmpty jobMemoryMissing jobMemoryLoaded jobMemoryWrongDimension jobMemoryErased; do
+            grep -q "^$check=true$" "$manifest"
+          done
+          for kind in 0 1 2 3 4; do
+            for budget in MaxCells MaxPaletteSections MaxCursorSteps MaxEntitySections MaxEntities; do
+              grep -q "^kind${kind}Off${budget}=0$" "$manifest"
+            done
+          done
+          cp "$root/analyzer-ui/"*.png "$target/ui/"
+          cp "$root/analyzer-visual/"*.png "$target/visual/"
+          cp "$manifest" "$target/visual/"
+          (cd "$target" && sha256sum ui/*.png visual/*.png > SHA256SUMS.txt)
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Analyzer UI, rendering and bounded tick observations ${{ matrix.minecraft }}"
+            echo '```text'
+            cat "$manifest"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload analyzer UI and rendered evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-analyzers-${{ matrix.minecraft }}
+          path: ${{ steps.analyzers.outputs.path }}
           if-no-files-found: error
           retention-days: 14
       - name: Resolve runtime artifact
