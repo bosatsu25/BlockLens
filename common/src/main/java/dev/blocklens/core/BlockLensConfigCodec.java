@@ -1,5 +1,7 @@
 package dev.blocklens.core;
 
+import dev.blocklens.core.analyzer.AnalyzerCatalog;
+import dev.blocklens.core.analyzer.AnalyzerOptions;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -25,6 +27,11 @@ public final class BlockLensConfigCodec {
         output.append("others.handheld_size.blocks_percent=").append(options.blocksPercent()).append('\n');
         output.append("others.handheld_size.items_percent=").append(options.itemsPercent()).append('\n');
         output.append("others.handheld_size.tools_percent=").append(options.toolsPercent()).append('\n');
+        for(int kind=0;kind<5;kind++) for(int field=0;field<4;field++) {
+            if(kind==0 && field==1) continue;
+            output.append(AnalyzerCatalog.optionKey(kind,field)).append('=')
+                    .append(config.analyzerOptions().value(kind,field)).append('\n');
+        }
         return output.toString();
     }
 
@@ -34,6 +41,7 @@ public final class BlockLensConfigCodec {
             return BlockLensConfig.defaults();
         }
 
+        AnalyzerOptions analyzers = AnalyzerOptions.defaults();
         ComfortOptions defaults = ComfortOptions.defaults();
         int fireSize = defaults.fireSize();
         int blocksPercent = defaults.blocksPercent();
@@ -55,6 +63,14 @@ public final class BlockLensConfigCodec {
             String value = line.substring(separator + 1).trim();
             CapabilityId capability = CapabilityId.bySourceKey().get(key);
             if (capability == null) {
+                for(int kind=0;kind<5;kind++) for(int field=0;field<4;field++) {
+                    if(kind==0 && field==1) continue;
+                    if(key.equals(AnalyzerCatalog.optionKey(kind,field))) {
+                        int parsed=bounded(value,AnalyzerOptions.minimum(kind,field),AnalyzerOptions.maximum(kind,field),
+                                analyzers.value(kind,field));
+                        analyzers=analyzers.with(kind,field,parsed);
+                    }
+                }
                 switch (key) {
                     case "others.low_fire.size" -> fireSize = bounded(value, 0, 2, fireSize);
                     case "others.handheld_size.blocks_percent" -> blocksPercent = bounded(value, 40, 100, blocksPercent);
@@ -72,7 +88,7 @@ public final class BlockLensConfigCodec {
             }
         }
         return BlockLensConfig.fromOverrides(overrides,
-                new ComfortOptions(fireSize, blocksPercent, itemsPercent, toolsPercent));
+                new ComfortOptions(fireSize, blocksPercent, itemsPercent, toolsPercent)).withAnalyzerOptions(analyzers);
     }
 
     private static int bounded(String text, int min, int max, int fallback) {

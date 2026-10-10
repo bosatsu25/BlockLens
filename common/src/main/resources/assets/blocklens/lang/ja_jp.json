@@ -114,5 +114,19 @@
   "blocklens.comfort.held.2": "道具・武器",
   "blocklens.comfort.decrease": "小さくする",
   "blocklens.comfort.increase": "大きくする",
-  "blocklens.comfort.draft_hint": "変更は設定画面で「保存・適用」を選ぶまで保存されません。"
+  "blocklens.comfort.draft_hint": "変更は設定画面で「保存・適用」を選ぶまで保存されません。",
+  "blocklens.capability.debris_analyzer": "古代の残骸の解析",
+  "blocklens.capability.debris_analyzer.description": "読み込み済みの球状範囲にある残骸を遮蔽物越しに表示。走査には複数tickかかり、順序は走査開始時の視点基準です。",
+  "blocklens.capability.lava_analyzer": "溶岩源の解析",
+  "blocklens.capability.lava_analyzer.description": "既知の非源ブロックが隣接する溶岩源を表示。走査量を制限し、未読み込みのチャンクは調べません。",
+  "blocklens.capability.beacon_range": "ビーコンの範囲",
+  "blocklens.capability.beacon_range.description": "完成済みの土台段数に応じた水平の正方形を表示。光の遮断や効果の有効性は推測しません。",
+  "blocklens.capability.lightning_rod_range": "避雷針の範囲",
+  "blocklens.capability.lightning_rod_range.description": "避雷針と半径128ブロックの水平な正方形を表示。落雷の予測や地形に沿った表示は行いません。",
+  "blocklens.capability.villager_job_site_links": "村人の職業場所リンク",
+  "blocklens.capability.villager_job_site_links.description": "クライアントに届いた記憶と近隣の読み込み済み職業場所を結びます。通常は記憶が届かず、密集時は一部を省略します。",
+  "blocklens.analyzer.radius": "水平／球の半径",
+  "blocklens.analyzer.vertical_radius": "上下の半径",
+  "blocklens.analyzer.markers": "マーカーの上限",
+  "blocklens.analyzer.interval": "最小間隔（tick）"
 }

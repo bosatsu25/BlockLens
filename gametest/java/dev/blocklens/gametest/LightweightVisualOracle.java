@@ -343,7 +343,7 @@ final class LightweightVisualOracle {
         context.waitTicks(6);
     }
     private static BlockLensConfig all(BlockLensConfig base, boolean enabled) {
-        for (CapabilityId capability : CapabilityId.values()) base = base.withEnabled(capability, enabled);
+        for (CapabilityId capability : CapabilityId.values()) base = base.withEnabled(capability, enabled && capability.ordinal() < 46);
         return base;
     }
     private static void install(ClientGameTestContext context, BlockLensConfig config) {

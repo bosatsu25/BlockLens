@@ -34,6 +34,7 @@ public final class BlockLensClient implements ClientModInitializer {
         long initializationNanos = System.nanoTime() - startedNanos;
         BlockLensRuntime.initialize(SharedConstants.getCurrentVersion().id(), config, initializationNanos);
         MinecraftDecorationModelPlugin.register();
+        AnalyzerClient.register();
         KeyMappingHelper.registerKeyMapping(OPEN_SETTINGS);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OPEN_SETTINGS.consumeClick()) {

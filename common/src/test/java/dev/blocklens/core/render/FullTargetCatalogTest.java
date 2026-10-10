@@ -15,13 +15,13 @@ final class FullTargetCatalogTest {
     void everyCurrentCapabilityHasAnExactCompiledTargetContract() {
         for (CapabilityId capability : CapabilityId.values()) {
             if (capability == CapabilityId.LOW_FIRE || capability == CapabilityId.HANDHELD_SIZE
-                    || capability == CapabilityId.BRIGHT_CHEST) {
+                    || capability == CapabilityId.BRIGHT_CHEST || capability.ordinal() >= 46) {
                 assertTrue(BlockLensTargetCatalog.targets(capability).isEmpty(), capability.sourceKey());
             } else {
                 assertFalse(BlockLensTargetCatalog.targets(capability).isEmpty(), capability.sourceKey());
             }
         }
-        assertEquals(46, CapabilityId.values().length);
+        assertEquals(51, CapabilityId.values().length);
         assertEquals(366, BlockLensTargetCatalog.totalBindingCount());
         assertEquals(328, java.util.Arrays.stream(CapabilityId.values()).filter(c -> c.ordinal() < 40)
                 .mapToInt(c -> BlockLensTargetCatalog.targets(c).size()).sum());

@@ -5,7 +5,11 @@
   "client": [
     "HandheldSizeMixin",
     "LowFireMixin",
-    "BrightChestMixin"
+    "BrightChestMixin",
+    "ClientEntityStorageAccess",
+    "EntitySectionStorageAccess",
+    "AnalyzerLifecycleMixin",
+    "AnalyzerRenderMixin"
   ],
   "injectors": {
     "defaultRequire": 1
