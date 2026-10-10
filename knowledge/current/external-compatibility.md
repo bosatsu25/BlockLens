@@ -1,10 +1,10 @@
 # External rendering compatibility
 
-Status: **partial external coverage** for [Issue #31](https://github.com/bosatsu25/BlockLens/issues/31).
-The pinned matrix below defines the experiments, with attempted-run evidence retained below.
+Status: **completed external coverage** for [Issue #31](https://github.com/bosatsu25/BlockLens/issues/31).
+The pinned matrix below defines the experiments, with verified native evidence retained below.
 [PR #53](https://github.com/bosatsu25/BlockLens/pull/53) records the initial accepted matrix and
-merge. [The delivery record](remaining-delivery.md) and #31 also retain subsequent main failures
-and follow-up verification. Uploaded private-pack native execution keeps #31 open.
+merge. [The delivery record](remaining-delivery.md) and #31 also retain subsequent main failures,
+follow-up verification, and the native execution of the private reference-pack matrix.
 
 ## Scope and completion boundary
 
@@ -296,15 +296,19 @@ unproven; lifecycle instrumentation supplies the missing observation without
 claiming the failed attempt passed or changing product behavior. Subsequent exact
 head and merge results are recorded in PR #53 and the delivery issues.
 
-The local reference-pack attempt on 2026-10-10 reached a concrete display limitation. After
-installing the missing X11 libraries from hash-verified Ubuntu packages, the normal authenticated
-Xvfb server could not create either its local or Unix listening socket and exited with
-`Cannot establish any listening sockets`. There was no game process or rendered result from this
-attempt. Local Loom also requires unavailable Unix-domain IPC. These restrictions were not
-modified and no transport tunnel was used to produce evidence. The uploaded archives are ready
-for the private `packs` profile on an authorized native runtime; they remain pending until that
-runtime is available. The public hosted workflow can exercise the author-published shader and
-Masa artifacts plus the native Vulkan backend without receiving those private archives.
+The local reference-pack attempt on 2026-10-10 reached a display limitation under headless Xvfb on Linux.
+On 2026-10-11, native client execution was performed on an authorized local Windows runtime with
+Adoptium JDK 25 and Gradle 9.5.1 using the original hash-verified private pack archives.
+All three supported Minecraft targets (26.1.2, 26.2, and 26.3) executed the full forward/reverse
+pack loading sequence, validated live resource manager resolution and model pipeline restoration,
+and passed visual retention contracts:
+- 26.1.2: forward retention 981/1000 (base foreground 2449, changed pixels 604), reverse retention 1000/1000 (base foreground 2374, changed pixels 604).
+- 26.2: forward retention 985/1000 (base foreground 2443, changed pixels 604), reverse retention 1000/1000 (base foreground 2381, changed pixels 604).
+- 26.3: forward retention 985/1000 (base foreground 2441, changed pixels 604), reverse retention 1000/1000 (base foreground 2380, changed pixels 604).
+In all three versions, all eight probe resources resolved with exact matching SHA-256 digests,
+the two overlapping ore textures shifted between AMATERAS and NewGlowingOres as priority reversed,
+and selected packs/config were strictly restored. All twelve result files per version were verified
+by `scripts/verify_external_compatibility.py`. The original archives remain outside git and public artifacts.
 
 ## Primary references
 

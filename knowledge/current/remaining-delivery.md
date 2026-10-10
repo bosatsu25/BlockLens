@@ -52,11 +52,12 @@ Masa for each supported Minecraft release, plus Vulkan for 26.2 and 26.3. These 
 focused compatibility observations; they do not replace the full normal graph or prove
 M8 performance. A requested backend or installed shader is insufficient evidence.
 
-Original uploaded resource packs have been recovered and hash-checked. Their private
-native execution remains blocked by the current environment's unavailable X11 sockets;
-the public repository and public artifacts do not receive their archive bytes. The
-prepared all-three-version forward/reverse-order harness is documented in the external
-specification. Issue #31 remains open until that missing real-client evidence exists.
+Original uploaded resource packs have been recovered, hash-checked, and successfully executed
+on a native client across all three supported Minecraft targets (26.1.2, 26.2, 26.3).
+Both forward and reverse pack priority orders passed resource manager resolution probes,
+priority switching between overlapping textures, and visual retention thresholds (981–1000/1000).
+The public repository and public artifacts do not receive their archive bytes. With this native
+evidence collected and validated, the external compatibility criteria of Issue #31 are met.
 
 Final completion requires the exact PR head's normal and advertised external CI results,
 independent review, merge at that head, and verification of the resulting main workflow.
