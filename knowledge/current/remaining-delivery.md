@@ -108,3 +108,33 @@ M5 but measured 862/1000 base retention against the unchanged 950/1000 minimum.
 Its first failed run did not archive the rendered M5 frames, so bounded diagnostic
 frame collection is required to investigate that failure without accepting it or
 weakening the visual assertion.
+
+At head `71f6d9a5cbe1f9b9bc35ca9c3415dbf54840e05f`,
+[External CI #3](https://github.com/bosatsu25/BlockLens/actions/runs/38070878498)
+passed ten of eleven rows, including the repaired 26.1.2 Shader-OFF capture.
+The 26.1.2 Shader-ON row again failed M5, this time at 780/1000 retention.
+Its failure artifact `11677081534` preserves the actual OFF/ON/air frames,
+their hashes and explicitly failed diagnostic status. Of 487 OFF-mask pixels
+without a matching ON neighbor, 445 (91.4%) are in the unchanged grass below
+the quartz board, at image rows 290–314. The metric was counting changing
+background samples as removed target geometry. This diagnosis does not turn
+either failed run into a pass: the external fixture needs a static background
+covering the original measurement region, followed by the same native gate.
+
+The same head's [normal CI #343](https://github.com/bosatsu25/BlockLens/actions/runs/38070878467)
+passed all four jobs. The three native steps completed in **514 / 473 / 470 seconds**,
+including M8 and the final Builder/ore disconnect cleanup. The 26.1.2 step exceeded
+the old 480-second execution cap while passing its actual assertions, validating
+the expanded test window. Each version produced four bilingual Builder screenshots
+and fourteen ore-extension images plus success manifests. Common JUnit, selected
+JaCoCo/PIT, packaged-runtime audits and clean-rebuild reproducibility also passed.
+
+| Minecraft | Runtime JAR | Growth from starting main | Headroom below 204800 B |
+| --- | ---: | ---: | ---: |
+| 26.1.2 | 168534 B | +27236 B | 36266 B |
+| 26.2 | 168863 B | +27297 B | 35937 B |
+| 26.3 | 168930 B | +27302 B | 35870 B |
+
+This is complete normal-graph evidence for `71f6d9a5cbe1f9b9bc35ca9c3415dbf54840e05f`.
+The subsequent external-fixture correction still requires its own current-head CI;
+the successful normal run alone does not complete the external matrix or merge.

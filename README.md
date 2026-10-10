@@ -243,7 +243,7 @@ The release was produced from successful `main` CI **#245 / `34768792311`** at c
 | Shader-ON | not yet claimed as supported |
 | Minecraft 26.2 Vulkan | experimental |
 
-Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31) tracks unverified shader-ON, third-party pack and Vulkan combinations across current development targets. Core M5 Issue #5 is complete.
+Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31) tracks the development shader/backend matrix and remaining third-party pack and renderer boundaries. Its results do not change the published v0.2.2 environment above. Core M5 Issue #5 is complete.
 
 ## Technology foundation
 
@@ -355,8 +355,12 @@ Verified support is intentionally evidence-bounded:
 - default / shader-OFF OpenGL: **verified**
 - representative non-vanilla active resource-pack preservation: **verified fixture**
 - arbitrary third-party resource packs: **not universally claimed**
-- representative shader-ON configurations: **not yet claimed**
-- Minecraft 26.2 / 26.3 Vulkan: **not verified**
+- Iris/Sodium with Complementary Reimagined r5.9.3 LOW: **pinned three-version matrix and per-row evidence** in [external compatibility](knowledge/current/external-compatibility.md)
+- Minecraft 26.2 / 26.3 Vulkan on the recorded Mesa software driver: **M3/M5 fixtures verified**; hardware-driver performance is outside this evidence
+- Sodium ore extensions and terrain block filtering: **unsupported**; the shader fixtures do not establish these paths
+
+The exact final development commit, full normal gate and public matrix results are recorded in
+[PR #53](https://github.com/bosatsu25/BlockLens/pull/53). Uploaded private-pack execution remains open in #31.
 
 ## Release / redistribution audit
 

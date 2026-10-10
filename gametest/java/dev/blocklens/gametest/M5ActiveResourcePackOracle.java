@@ -5,6 +5,7 @@ import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.fabric.MinecraftDecorationModelPlugin;
 import dev.blocklens.fabric.MinecraftTerrainInvalidator;
+import dev.blocklens.testing.M5BackgroundFloor;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,8 +17,10 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.block.Blocks;
 
 /**
  * Representative active-resource-pack preservation oracle for M5.
@@ -64,6 +67,7 @@ final class M5ActiveResourcePackOracle {
             Files.createDirectories(outputDir);
             buildScene(singleplayer);
             context.waitTicks(20);
+            verifyExternalBackground(context);
 
             BlockLensConfig offConfig = allOff(original);
             install(offConfig);
@@ -198,9 +202,34 @@ final class M5ActiveResourcePackOracle {
         server.runCommand("time set noon");
         server.runCommand("weather clear");
         server.runCommand("gamemode spectator @a");
-        server.runCommand("fill -8 -60 -3 8 -60 5 minecraft:smooth_quartz");
+        // Temporal shader sampling of grass inside the fixed ROI is not target geometry. The
+        // external fixture covers that entire region with quartz; the normal/M8 scene is retained.
+        server.runCommand(externalBackground() ? M5BackgroundFloor.EXTERNAL.fillCommand()
+                : "fill -8 -60 -3 8 -60 5 minecraft:smooth_quartz");
         placeTargets(singleplayer);
         server.runCommand("tp @a 0 -54 13 180 18");
+    }
+
+    private static boolean externalBackground() {
+        return "external".equals(System.getProperty("blocklens.test.focus"));
+    }
+
+    private static void verifyExternalBackground(ClientGameTestContext context) {
+        if (!externalBackground()) return;
+        context.runOnClient(client -> {
+            var player = client.player;
+            require(Math.abs(player.getX()) < 0.001 && Math.abs(player.getZ() - 13) < 0.001
+                            && Math.abs(player.getXRot() - 18) < 0.001
+                            && Math.abs(Math.IEEEremainder(player.getYRot() - 180, 360)) < 0.001,
+                    "External M5 background projection requires the fixed fixture camera");
+            for (var cell : M5BackgroundFloor.viewportCorners(player.getEyeY(), client.options.fov().get(),
+                    WIDTH, HEIGHT, TARGET_MIN_X, TARGET_MIN_Y, TARGET_MAX_X, TARGET_MAX_Y)) {
+                require(M5BackgroundFloor.EXTERNAL.contains(cell), "External M5 ROI extends beyond static floor");
+                require(client.level.getBlockState(new BlockPos(cell.x(), M5BackgroundFloor.BLOCK_Y, cell.z()))
+                                .is(Blocks.SMOOTH_QUARTZ),
+                        "External M5 background corner is not smooth quartz: " + cell);
+            }
+        });
     }
 
     private static void placeTargets(TestSingleplayerContext singleplayer) {
@@ -412,6 +441,8 @@ final class M5ActiveResourcePackOracle {
                 + "activePack=" + M5ActiveResourcePackFixture.PACK_ID + "\n"
                 + "fixtureModels=3\n"
                 + "enabledCapabilities=" + EXPECTED_ENABLED_CAPABILITIES + "\n"
+                + "externalStaticBackground=" + externalBackground() + "\n"
+                + "backgroundFloor=" + (externalBackground() ? M5BackgroundFloor.EXTERNAL : "normal") + "\n"
                 + "fixtures=diamond_ore:half-height-magenta,deepslate_redstone_ore:narrow-lime,obsidian:inset-yellow\n"
                 + "diamondResource=" + resolvedPack.diamond().resourceId() + "\n"
                 + "diamondSourcePack=" + resolvedPack.diamond().sourcePackId() + "\n"

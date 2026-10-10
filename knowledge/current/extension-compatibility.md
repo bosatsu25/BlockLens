@@ -1,6 +1,10 @@
 # Bounded ore extension contract
 
-Status: implementation in progress for Issue #37; current-head three-version verification is required before advertising completion.
+Status: **implemented with three-version native evidence** in
+[PR #53](https://github.com/bosatsu25/BlockLens/pull/53), within the standard Fabric
+renderer boundary below. Exact commits, quality results and artifact sizes are in
+[remaining-delivery.md](remaining-delivery.md); [Issue #37](https://github.com/bosatsu25/BlockLens/issues/37)
+records final merge completion.
 
 ## Supported inputs
 

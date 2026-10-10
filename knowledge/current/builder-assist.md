@@ -1,7 +1,9 @@
 # Builder Assist and Inspector
 
-Status: implementation in progress for #36. Required current-head three-version CI and
-native evidence are not yet established by this document.
+Status: **implemented with three-version native evidence** in
+[PR #53](https://github.com/bosatsu25/BlockLens/pull/53). The exact tested commits,
+quality results and artifact sizes are recorded in [remaining-delivery.md](remaining-delivery.md).
+[Issue #36](https://github.com/bosatsu25/BlockLens/issues/36) records final merge completion.
 
 ## Source and accepted user interactions
 

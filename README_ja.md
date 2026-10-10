@@ -239,7 +239,7 @@ release targetは`b440d43904e2a93236549efc571b7cc127622352`です。成功した
 | Shader-ON | 現時点では対応を主張しない |
 | Minecraft 26.2 Vulkan | experimental |
 
-Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31)で、開発版各対象の未検証のshader-ON・第三者パック・Vulkanを追跡します。M5のコア実装を扱うIssue #5は完了済みです。
+Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31)で、開発版のShader・描画バックエンドの試験結果と、残る第三者パック・描画経路の対応範囲を追跡します。その結果によって、上記の公開済みv0.2.2の確認範囲が変わることはありません。M5のコア実装を扱うIssue #5は完了済みです。
 
 ## 技術基盤
 
@@ -351,8 +351,12 @@ gradle :versions:mc26_3:build :versions:mc26_3:versionSmokeContract :versions:mc
 - default / shader-OFF OpenGL: **検証済み**
 - representative non-vanilla active resource-pack preservation: **fixtureで検証済み**
 - 任意third-party resource pack: **全面保証しない**
-- representative shader-ON: **未主張**
-- Minecraft 26.2 / 26.3 Vulkan: **未検証**
+- Iris/SodiumとComplementary Reimagined r5.9.3 LOW: **3版の固定した試験構成と各結果**を[外部互換性](knowledge/current/external-compatibility.md)に記録
+- Minecraft 26.2 / 26.3 Vulkan（記録したMesaソフトウェアドライバー）: **M3/M5の指定表示を検証済み**。実機GPUの性能を示す測定ではありません
+- Sodiumでの拡張鉱石と地形ブロックフィルター: **未対応**。Shaderの表示試験は、この2経路の動作を示しません
+
+最終開発コミットの通常CIと外部試験の結果は[PR #53](https://github.com/bosatsu25/BlockLens/pull/53)に記録します。
+添付された非公開パックの実クライアント試験は#31で継続しています。
 
 ## Release / Redistribution Audit
 

@@ -1,8 +1,9 @@
 # External rendering compatibility
 
-Status: **verification in progress** for [Issue #31](https://github.com/bosatsu25/BlockLens/issues/31).
-The harness and pinned matrix below define the experiments. They are not pass evidence until the
-corresponding current-head real-client job and its archived results succeed.
+Status: **partial external coverage** for [Issue #31](https://github.com/bosatsu25/BlockLens/issues/31).
+The pinned matrix below defines the experiments, with attempted-run evidence retained below.
+[PR #53](https://github.com/bosatsu25/BlockLens/pull/53) records the final exact-head matrix,
+archived results and merge checks. The uploaded-pack and known Sodium boundaries keep #31 open.
 
 ## Scope and completion boundary
 
@@ -78,8 +79,26 @@ the previous window and render-target dimensions in `finally`. The evidence reco
 
 The same run passed both shader profiles on 26.2/26.3, all three Masa profiles and both Vulkan
 profiles. The separate 26.1.2 shader-ON M5 failure measured 862/1000 base retention against the
-unchanged 950/1000 minimum. That result remains failed pending actual failure-frame diagnosis;
+unchanged 950/1000 minimum. That result remains a failed run in the evidence record;
 the shader-OFF lifecycle exception does not establish a fix for it.
+
+The next [external run](https://github.com/bosatsu25/BlockLens/actions/runs/38070878498),
+at `71f6d9a5cbe1f9b9bc35ca9c3415dbf54840e05f`, passed Shader-OFF on 26.1.2
+and the other nine previously passing rows. Shader-ON on 26.1.2 again failed,
+at 780/1000 retention. The hash-verified failure frames show that 445 of 487
+unmatched OFF-mask pixels are in the unchanged grass below the fixture board
+(rows 290–314). Its dynamic rendered background was contaminating the target
+subtraction mask. Both failures remain in the record; the correction must
+retain the original three models, full measurement region, 950/1000 minimum,
+two-pixel neighborhood and exact shader settings.
+
+The external M5 fixture therefore extends its smooth-quartz floor to cover the
+entire original measurement region. A bounded native guard projects all four
+region corners from the actual camera height/FOV and checks both the fixed floor
+bounds and the loaded quartz cells. The normal full-graph floor is unchanged.
+The three target positions, screenshot path, original ROI, color threshold,
+two-pixel tolerance, 95% retention minimum and LOW profile are unchanged. This
+repairs a test background; it adds no product renderer adapter or support claim.
 
 ## Native Vulkan matrix
 
@@ -185,10 +204,16 @@ for diagnosis and cannot turn a failed row into passing evidence.
 
 ## Evidence state
 
-At harness implementation, the 15 Python provenance/isolation/false-pass regression tests pass.
-Actual shader, Vulkan and uploaded-pack rendering results remain pending the corresponding native
-runs. Record each attempted configuration, current commit, driver/backend, artifact hashes and
-failure or pass outcome before changing this section or closing #31.
+The 18 Python provenance/isolation/false-pass regression tests pass. Normal
+[CI #343](https://github.com/bosatsu25/BlockLens/actions/runs/38070878467) passed
+all four jobs at `71f6d9a5cbe1f9b9bc35ca9c3415dbf54840e05f`. Its paired
+[external run](https://github.com/bosatsu25/BlockLens/actions/runs/38070878498)
+passed all three exact Masa pairs, actual Vulkan on 26.2/26.3, both shader profiles
+on 26.2/26.3 and Shader-OFF on 26.1.2. The separate Shader-ON failure and subsequent
+fixture correction are documented above. Final current-head acceptance requires
+every public matrix row and the normal graph; its immutable run and merge links
+are retained in PR #53 and the delivery issues. None of these observations validates
+the uploaded-pack matrix or the unsupported Sodium terrain paths.
 
 The local reference-pack attempt on 2026-10-10 reached a concrete display limitation. After
 installing the missing X11 libraries from hash-verified Ubuntu packages, the normal authenticated
