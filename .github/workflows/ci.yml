@@ -38,6 +38,8 @@ jobs:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
       - name: Test bounded failure-log sanitizer
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p test_sanitize_client_diagnostics.py -v
+      - name: Test external preparation and evidence validation
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p '*external_compatibility.py' -v
       - name: Run shared quality gate
         run: gradle --stacktrace :common:qualityGate
 
@@ -108,7 +110,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y libegl1 libgl1-mesa-dri
       - name: Run client GameTest Minecraft ${{ matrix.minecraft }}
-        timeout-minutes: 8
+        # CI #342 completed the added Builder/ore oracles but exhausted eight minutes in M8.
+        # Allow the full expanded test graph; individual M8 performance guards stay unchanged.
+        timeout-minutes: 12
         env:
           # SDL3 uses EGL for an sRGB-capable OpenGL framebuffer under Xvfb.
           SDL_VIDEO_FORCE_EGL: ${{ matrix.module == 'mc26_3' && '1' || '0' }}
@@ -440,7 +444,7 @@ jobs:
             done
           done
           manifest="$root/scene-filter-visual/scene-filter-visual-manifest.txt"
-          for check in generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all53Enabled all53Reload dimensionCleanup finalOffEmpty; do
+          for check in generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all57Enabled all57Reload dimensionCleanup finalOffEmpty; do
             grep -q "^$check=true$" "$manifest"
           done
           cp "$root/scene-filter-ui/"*.png "$target/ui/"
@@ -453,6 +457,64 @@ jobs:
         with:
           name: blocklens-scene-filters-${{ matrix.minecraft }}
           path: ${{ steps.scene-filters.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Collect Builder Assist evidence
+        id: builder-assist
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="versions/${{ matrix.module }}/build/run/clientGameTest/builder-assist"
+          target="build/ci/builder-assist-${{ matrix.minecraft }}"
+          manifest="$root/builder-assist-manifest.txt"
+          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 4
+          grep -q '^minecraft=${{ matrix.minecraft }}$' "$manifest"
+          for check in blockAndEntityInspector missCleared placementStateInputs readonlyPrediction independentTools coordinateBounds allEnabledCoexistence waterlogged occupiedUnavailable patternCounts optionalAbsentSafe compactControls referenceButtons panelConfigReadonly referenceReplacement reloadCleanup dimensionCleanup finalOffEmpty; do
+            grep -q "^$check=true$" "$manifest"
+          done
+          grep -q '^placementFamilies=10$' "$manifest"
+          grep -q '^patternDomain=2601$' "$manifest"
+          grep -q '^patternBudget=256$' "$manifest"
+          mkdir -p "$target"
+          for locale in en_us ja_jp; do
+            for part in top bottom; do
+              test -s "$root/builder-$locale-$part.png"
+              cp "$root/builder-$locale-$part.png" "$target/"
+            done
+          done
+          cp "$manifest" "$target/"
+          (cd "$target" && sha256sum *.png builder-assist-manifest.txt > SHA256SUMS.txt)
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+      - name: Upload Builder Assist evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-builder-assist-${{ matrix.minecraft }}
+          path: ${{ steps.builder-assist.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Collect ore extension evidence
+        id: ore-extensions
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="versions/${{ matrix.module }}/build/run/clientGameTest/ore-extension-visual"
+          target="build/ci/ore-extensions-${{ matrix.minecraft }}"
+          manifest="$root/metrics.txt"
+          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 14
+          grep -q '^minecraft=${{ matrix.minecraft }}$' "$manifest"
+          for check in explicitRegistration unsupportedIsolation absentTags activeModelResource tagAdd tagRemove noModelReloadForTags equivalentTagsStable explicitPrecedence targetOverflowIsolated tagMemberOverflowIsolated combinedTargetOverflowIsolated overflowRecovery sceneFilterComposition resourceReload; do
+            grep -q "^$check=true$" "$manifest"
+          done
+          mkdir -p "$target"
+          cp "$root/"*.png "$target/"
+          cp "$manifest" "$target/"
+          (cd "$target" && sha256sum *.png metrics.txt > SHA256SUMS.txt)
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+      - name: Upload ore extension evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-ore-extensions-${{ matrix.minecraft }}
+          path: ${{ steps.ore-extensions.outputs.path }}
           if-no-files-found: error
           retention-days: 14
       - name: Resolve runtime artifact
@@ -485,6 +547,8 @@ jobs:
             echo "- M5 active resource-pack evidence: \`PASS\`"
             echo "- M7 all-40 full parity evidence: \`PASS\`"
             echo "- Lightweight features and all-46 reload evidence: \`PASS\`"
+            echo "- Builder Assist and read-only inspection: \`PASS\`"
+            echo "- Explicit ore registration and synchronized tag compatibility: \`PASS\`"
             echo "- M8 performance observation: \`PASS\`"
             echo "- Reproducible artifact: \`PASS\`"
             echo "- Privacy/residue audit: \`PASS\`"
@@ -510,7 +574,8 @@ jobs:
             -o -path '*/m5-dark-visual/*' -o -path '*/m5-pack-visual/*' \
             -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
             -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \
-            -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \) \
+            -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \
+            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' \) \
             -exec cp --parents '{}' "$target" \;
       - name: Upload failed Client GameTest diagnostics
         if: failure()

@@ -16,10 +16,14 @@ import net.fabricmc.loader.api.FabricLoader;
 
 /** Shared client smoke and integration oracle executed against every supported Minecraft version. */
 public final class BlockLensSmokeClientGameTest implements FabricClientGameTest {
-    private static final int EXPECTED_CAPABILITY_COUNT = 53;
+    private static final int EXPECTED_CAPABILITY_COUNT = 57;
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if ("external".equals(System.getProperty("blocklens.test.focus", "all"))) {
+            ExternalCompatibilityOracle.verify(context);
+            return;
+        }
         if ("m8".equals(System.getProperty("blocklens.test.focus", "all"))) {
             verifyM8Only(context);
             return;
@@ -56,18 +60,26 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             LightweightVisualOracle.verify(context, singleplayer);
             AnalyzerVisualOracle.verify(context, singleplayer);
             SceneFilterVisualOracle.verify(context, singleplayer);
+            BuilderAssistOracle.verify(context, singleplayer);
+            OreExtensionVisualOracle.verify(context, singleplayer);
             M8PerformanceBaselineOracle.verify(context, singleplayer);
             AnalyzerVisualOracle.prepareDisconnect(context, singleplayer);
             SceneFilterVisualOracle.prepareDisconnect(context);
+            BuilderAssistOracle.prepareDisconnect(context, singleplayer);
         }
 
+        BuilderAssistOracle.verifyDisconnected(context);
         context.runOnClient(client -> {
             require(dev.blocklens.fabric.AnalyzerClient.engine().markers().isEmpty(), "disconnect retained analyzer markers");
             require(dev.blocklens.fabric.SceneFilterClient.compiledLookupCount()==0,"disconnect retained compiled scene rules");
+            require(dev.blocklens.fabric.MinecraftOreExtensions.compiledModelCount() == 0
+                    && dev.blocklens.fabric.MinecraftOreExtensions.tagCandidateCount() == 0,
+                    "disconnect retained ore extension models or synchronized tags");
             BlockLensRuntime.installConfig(disconnectBaseline);
             verifyRuntime("singleplayer world closed", false);
             System.out.println("BLOCKLENS_ANALYZER_DISCONNECT nonemptyBeforeClose=true emptyAfterClose=true");
             System.out.println("BLOCKLENS_SCENE_DISCONNECT nonemptyBeforeClose=true emptyAfterClose=true");
+            System.out.println("BLOCKLENS_ORE_DISCONNECT cleared=true");
         });
     }
 
@@ -103,7 +115,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
 
     private static void verifyRuntime(String phase, boolean reportBaseline) {
         require(CapabilityId.values().length == EXPECTED_CAPABILITY_COUNT,
-                phase + ": expected 53 capabilities");
+                phase + ": expected 57 capabilities");
 
         String minecraftVersion = FabricLoader.getInstance()
                 .getModContainer("minecraft")

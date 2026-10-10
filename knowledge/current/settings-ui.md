@@ -4,8 +4,8 @@ Status: settings redesign merged in PR #40; three-version integration is the dev
 
 ## Scope
 
-The native settings screen groups all 46 current BlockLens capabilities into four categories: Decoration (13), Resources (21), Visibility (8), Other (4).
-The original 40 source keys, bit positions and defaults stay unchanged. Six reviewed additions are specified in [lightweight-visuals.md](lightweight-visuals.md). Crying Obsidian,
+The native settings screen groups all 57 current BlockLens capabilities into four categories: Decoration (13), Resources (21), Visibility (8), Other (15).
+The original 40 source keys, bit positions and defaults stay unchanged. The six visual/comfort additions, five analyzers, two scene filters and four Builder Assist controls are documented in their current feature specifications. Crying Obsidian,
 Nether Gold Ore and Nether Quartz Ore remain independent Resource options after the original 18.
 
 The uploaded UI reference pack defines its option hierarchy in respackopts.json5; it does not
@@ -81,3 +81,14 @@ Shared input code uses InputConstants so SDL-based 26.3 and earlier GLFW-based t
 ## Numeric detail controls
 
 Low Fire and Handheld Size rows include a separate Details button. The child screen shares the parent draft. Fire offers three presets; held categories use explicit decrease/increase controls bounded to 40–100 percent. Child Back/Esc returns to the parent without writing. Parent Discard/Esc discards all edits, including numeric-only edits. Only parent Save and Apply persists and installs the complete snapshot; failed saving retains it for retry. Mouse actions revalidate focus after preset widget rebuilds, and keyboard navigation uses current widgets. The real client oracle checks numeric-only edits, compact bounds, mouse preset selection, return/Esc, discard and persistence.
+
+## Builder Assist session panel
+
+The four Builder Assist rows include an Open button while a client world is loaded.
+The panel receives the parent screen and navigation callback, never the SettingsDraft.
+Inspection uses only saved runtime toggles; enable a tool and Save and apply first.
+Back/Esc returns to the same parent draft without writing settings. The dedicated
+Builder Assist key is unbound by default, preserving the existing B settings binding.
+Reference selection and clearing affect only the current session. The nonpausing panel
+supports wheel, Page Up/Down and Home/End scrolling, with English/Japanese compact
+framebuffer evidence. See [builder-assist.md](builder-assist.md).

@@ -1,5 +1,6 @@
 package dev.blocklens.fabric;
 
+import dev.blocklens.api.OreHighlightExtensions;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.BlockLensTargetCatalog;
 import dev.blocklens.core.state.TargetCapabilityIndex;
@@ -25,6 +26,7 @@ public final class MinecraftDecorationTargetIndex {
                 builder.bind(BuiltInRegistries.BLOCK.getId(block), capability);
             }
         }
+        OreHighlightExtensions.freeze();
         return builder.build();
     }
 

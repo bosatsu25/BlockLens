@@ -8,7 +8,7 @@ Latest published release: [v0.2.2](https://github.com/bosatsu25/BlockLens/releas
 
 Current main additionally contains the category-based settings redesign (PR #40) and **26.3** support (PR #41). [Main CI #313](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404) verified merge `d91226c14f07c999256fc620b722a874be99958c`: common quality and all three real-client/build/artifact jobs succeeded on the first attempt. The settings artifacts contain ten English/Japanese screenshots per version. These merged changes have not been published as a new release.
 
-Current size policy is **143,360 B (140 KiB)** reviewed development no-growth guard, **153,600 B (150 KiB)** release ceiling and **1,183,432 B** absolute ceiling. The release ceiling provides headroom; it is not a growth target. A new baseline requires review and evidence. Older 100 KiB limits and artifact measurements below are historical release evidence.
+Current size policy is **204,800 B (200 KiB)** for both development and release gates, explicitly authorized by the user on 2026-10-11. The **1,183,432 B** absolute ceiling and runtime/quality guards are unchanged. Exact artifact growth is reported separately. Older 100/140/150 KiB limits and measurements below are historical evidence. See [remaining-delivery.md](remaining-delivery.md).
 
 ## Remaining implementation graph
 
@@ -17,10 +17,10 @@ Current size policy is **143,360 B (140 KiB)** reviewed development no-growth gu
 | Lightweight visual / comfort migration | [#42](https://github.com/bosatsu25/BlockLens/issues/42) | Completed by PR #46: CI #320 passed all four jobs for PR head `d4f313491ada47788bc46459e4f34a8f8396ef5a`, then merged as `5f992800cde79236d2d47fea304dbfe5831307dc`. That merge's main CI #321 allocation failure remains #43. Six controls, numeric details and three-version UI/render evidence preserve the superseded #32/#33 requirements. |
 | Bounded Analyzer | [#34](https://github.com/bosatsu25/BlockLens/issues/34) | Completed by PR #50, head `3df8117983c60db2baf1b9b194cccc305cce3039`, merged as `90105fb702b30a7619300cd668836a1314f4815b`. PR CI #328 and main CI #329 passed all four jobs on their first attempts. The three hosted analyzer artifacts contain 75 checksum-verified UI/render images and completion manifests. Five default-OFF analyzers and 19 numeric fields; no release claimed. See world-analyzers.md. |
 | Scene Filter | [#35](https://github.com/bosatsu25/BlockLens/issues/35) | Completed by PR #51, latest head `8b1121044010d9a29a007b75ca2dd5964126549b` and CI #332, then merged as `fd9eefb2ce6ef06fd091e649dde9ace3b094a2ba`. The PR passed all four jobs; the merge's CI #333 allocation failure remains recorded under #43. Two default-OFF controls bring the development runtime to 53 capabilities. See scene-filter.md. |
-| Builder Assist / Inspector | [#36](https://github.com/bosatsu25/BlockLens/issues/36) | Read-only/advisory capabilities; optional Litematica boundary. |
-| Extension compatibility | [#37](https://github.com/bosatsu25/BlockLens/issues/37) | Explicit bounded registration/tags; no per-frame discovery. |
+| Builder Assist / Inspector | [#36](https://github.com/bosatsu25/BlockLens/issues/36) | PR #53 implements four advisory tools and exact optional Litematica/MaLiLib pairs. Normal CI #343 proves all-three native behavior, UI, coexistence and cleanup; the PR and issue record final current-head acceptance and merge. See [builder-assist.md](builder-assist.md). |
+| Extension compatibility | [#37](https://github.com/bosatsu25/BlockLens/issues/37) | PR #53 implements versioned registration and synchronized conventional tags with bounded retained models. Normal CI #343 proves all-three native rendering, overflow isolation and cleanup within standard Fabric; the PR and issue record final acceptance and merge. See [extension-compatibility.md](extension-compatibility.md). |
 | Masa / deprecation decisions | [#38](https://github.com/bosatsu25/BlockLens/issues/38) | Completed evaluation by PR #49 / CI #326: eight explicit scope exclusions, separate read-only #36 candidate, ChiseTweaks retained without deprecation or archival. |
-| External compatibility | [#31](https://github.com/bosatsu25/BlockLens/issues/31) | Representative shader-ON, third-party packs and Vulkan evidence. Default OpenGL success does not close this track. |
+| External compatibility | [#31](https://github.com/bosatsu25/BlockLens/issues/31) | Pinned Shader ON/OFF, Masa and Vulkan native workflow with preserved per-run evidence. Uploaded private-pack execution and known Sodium ore/filter terrain paths remain open. See [external-compatibility.md](external-compatibility.md). |
 
 Diagnostic implementation: [PR #45](https://github.com/bosatsu25/BlockLens/pull/45) and [PR #47](https://github.com/bosatsu25/BlockLens/pull/47) are merged. #43 was reopened after main CI #321 reproduced the 26.1.2 allocation failure. PR #47 adds bounded role/main-pass attribution and preserves failing samples; exact-head CI #322 and main CI #323 passed all four jobs on their first attempts. These passing runs do not identify or resolve the cause; guard values are unchanged.
 
@@ -29,11 +29,14 @@ test-only C2/foreground conformance condition while preserving all M8 thresholds
 and historical failures. Its CI #336 analyzer timeout exposed a separate
 test-fixture lifetime issue, repaired with identity-scoped replacement inputs
 and native regression controls; see [world-analyzers.md](world-analyzers.md#dimension-return-fixture-repair--pr-52).
-The current-head shared and three-version full clients remain the completion
-gate. Neither a focused experiment nor one successful version closes #43 or
-establishes a performance improvement for ordinary clients.
-The final PR-head and merged-main verification records and current issue state
-are maintained in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
+Final PR CI #339 and merged-main CI #340 passed all four jobs on their first attempts.
+Issue #43 is completed under its explicitly permitted measured test-environment exception:
+Java 25 C2 foreground compilation, requested 60 FPS, unchanged 32 MiB / 30-tick / three-sample
+conditions. The historical allocation cause remains unproven and failed samples remain recorded.
+Main commit `6c355e3831a6df4dded2bc46ac641911480da31d` and
+[CI #340](https://github.com/bosatsu25/BlockLens/actions/runs/38065290177) are the starting
+baseline for this remaining delivery; they do not prove its new functionality.
+
 
 Issue #22 records delivered P0 only. Planned capabilities remain unimplemented until their own contracts, all-three-version evidence and PRs are complete. [#39](https://github.com/bosatsu25/BlockLens/issues/39) synchronizes these repository-owned status documents.
 
@@ -52,8 +55,8 @@ Every future change must preserve, unless deliberately revised with evidence:
 - current JUnit / JaCoCo / PIT thresholds without silent relaxation
 - v0.1.0 historical icon-inclusive baseline: **95,333 B**
 - published v0.2.0 cross-platform baseline: **96,257 B**
-- current additive-development no-growth baseline: **143,360 B**
-- **150 KiB** release ceiling
+- current user-authorized development ceiling: **204,800 B**
+- **200 KiB** release ceiling
 - source-pack **<50%** absolute requirement
 
 Performance and artifact size remain continuous gates rather than deferred cleanup tasks.
@@ -292,4 +295,4 @@ The following remain outside the verified default OpenGL support boundary and ar
 
 Do not reinterpret those unchecked external combinations as regressions in the verified default/shader-OFF OpenGL path.
 
-The six additive controls and the measured 140 KiB development baseline are specified in [lightweight-visuals.md](lightweight-visuals.md). No new release is implied by implementation or a merged PR.
+The six additive controls and their historical 140 KiB development baseline are specified in [lightweight-visuals.md](lightweight-visuals.md). The current accepted ceiling is 200 KiB; see [remaining-delivery.md](remaining-delivery.md). No new release is implied by implementation or a merged PR.

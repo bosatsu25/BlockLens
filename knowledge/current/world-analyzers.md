@@ -28,7 +28,7 @@ Numeric limits: debris radius 16–256, markers 8–128, interval 5–100 (verti
 
 ## Required evidence before completion
 
-Pure JUnit budget/geometry/unknown-data/nearest-selection/lifecycle/configuration contracts, selected coverage/PIT, all-three builds, actual rendered OFF/single/all evidence, loaded/missing job memory controls, dimension/disconnect cleanup, reload and numeric UI persistence, OFF/single/all operation/time/allocation observations, reproducible audited runtime JARs ≤153600 bytes, independent review and exact-head hosted CI. No compatibility claim for third-party shaders/Vulkan is made by these tests; #31 remains separate.
+Pure JUnit budget/geometry/unknown-data/nearest-selection/lifecycle/configuration contracts, selected coverage/PIT, all-three builds, actual rendered OFF/single/all evidence, loaded/missing job memory controls, dimension/disconnect cleanup, reload and numeric UI persistence, OFF/single/all operation/time/allocation observations, reproducible audited runtime JARs within the current 204800-byte ceiling, independent review and exact-head hosted CI. No compatibility claim for third-party shaders/Vulkan is made by these tests; #31 remains separate.
 
 ## Dimension-return fixture repair — PR #52
 

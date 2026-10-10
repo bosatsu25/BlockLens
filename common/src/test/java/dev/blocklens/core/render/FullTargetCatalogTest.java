@@ -21,7 +21,7 @@ final class FullTargetCatalogTest {
                 assertFalse(BlockLensTargetCatalog.targets(capability).isEmpty(), capability.sourceKey());
             }
         }
-        assertEquals(53, CapabilityId.values().length);
+        assertEquals(57, CapabilityId.values().length);
         assertEquals(366, BlockLensTargetCatalog.totalBindingCount());
         assertEquals(328, java.util.Arrays.stream(CapabilityId.values()).filter(c -> c.ordinal() < 40)
                 .mapToInt(c -> BlockLensTargetCatalog.targets(c).size()).sum());

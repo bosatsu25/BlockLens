@@ -12,7 +12,8 @@
     "AnalyzerRenderMixin",
     "SceneBlockMixin",
     "SceneBlockEntityMixin",
-    "SceneEntityMixin"
+    "SceneEntityMixin",
+    "OreExtensionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

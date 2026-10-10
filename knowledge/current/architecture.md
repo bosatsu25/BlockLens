@@ -73,7 +73,7 @@ test-support/   (only if justified)
 
 Pure/testable product logic shared by all three versions:
 
-- 46-capability catalog, retaining the frozen original 37 identities
+- 57-capability catalog, retaining the frozen original 37 identities
 - config schema/migration policy
 - functional-parity contracts
 - stable state semantic model
@@ -263,3 +263,18 @@ Priority:
 6. inspect class-level size only if materially useful
 
 Never trade away diagnostics, correctness, or capability parity for byte count.
+
+## Advisory tools and ore extension ownership
+
+BuilderAssistClient owns a separate client-local read model and an explicit session reference.
+Its fixed-domain PatternInspector processes at most 256 operations per tick. The nonpausing
+panel reads saved runtime controls and never receives the settings draft. Typed optional
+Litematica access is isolated behind an exact-version predicate and a narrow loaded-chunk reader.
+
+OreHighlightExtensions exposes a versioned bounded declaration API. MinecraftOreExtensions
+freezes declarations at model loading, resolves a fixed set of synchronized ore tags, and
+retains a bounded state-to-model map. Section compilation performs one immutable-map lookup
+with base-model identity validation; extension discovery never runs per frame. All rendering
+uses the existing Resource cue and Scene Filter composition. Details and compatibility
+boundaries are authoritative in [builder-assist.md](builder-assist.md) and
+[extension-compatibility.md](extension-compatibility.md).

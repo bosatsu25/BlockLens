@@ -38,7 +38,8 @@ final class ResponsiveSettingsScreenOracle {
                 }
                 require(BlockLensRuntime.config().enabledMask() == baseline, "Navigation applied edits");
                 System.out.println("BLOCKLENS_RESPONSIVE_SETTINGS sizes=320x240,640x360,854x480,1920x1080"
-                        + " categories=4 capabilities=53 keyboard_reachable=true bounded=true");
+                        + " categories=4 capabilities=" + CapabilityId.values().length
+                        + " keyboard_reachable=true bounded=true");
             } finally {
                 BlockLensConfigScreen.show(client, previous);
             }
@@ -68,7 +69,9 @@ final class ResponsiveSettingsScreenOracle {
             BlockLensConfigScreen screen, int width, int height, CapabilityId.Category category) {
         List<Button> buttons = buttons(screen);
         int count = SettingsCatalog.capabilities(category).size();
-        require(buttons.size() == count + 6 + (category == CapabilityId.Category.OTHER ? 9 : 0), "widget registry changed");
+        // Other has two comfort, five analyzer, two filter and four Builder actions.
+        int actions = category == CapabilityId.Category.OTHER ? 13 : 0;
+        require(buttons.size() == count + 6 + actions, "widget registry changed");
         List<Button> toggles = buttons.subList(4, 4 + count);
         var reached = new HashSet<Button>();
         for (int index = 0; index < buttons.size() * 2; index++) {

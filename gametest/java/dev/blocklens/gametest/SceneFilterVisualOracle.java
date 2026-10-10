@@ -187,13 +187,13 @@ final class SceneFilterVisualOracle {
             for(int kind=1;kind<5;kind++) options=options.with(kind,0,8).with(kind,1,5).with(kind,3,5);
             server.runCommand("tp @a 0 -56 12 180 25");
             install(context,off);
-            var allOff=read(capture(context,output,"all53-off"));
+            var allOff=read(capture(context,output,"all57-off"));
             var combined=all(original,true).withAnalyzerOptions(options).withSceneFilterOptions(SceneFilterOptions.defaults().withEntityPreset(0)
                     .withMode(0,SceneFilterOptions.Mode.BLACKLIST).withList(0,false,"minecraft:stone"));
-            require(Long.bitCount(combined.enabledMask())==53,"all53 fixture incomplete");
+            require(Long.bitCount(combined.enabledMask())==57,"all57 fixture incomplete");
             install(context,combined);
-            combined(context,output,"all53-on",allOff);
-            reload(context);combined(context,output,"all53-reloaded",allOff);
+            combined(context,output,"all57-on",allOff);
+            reload(context);combined(context,output,"all57-reloaded",allOff);
             require(context.computeOnClient(c->SceneFilterClient.hiddenBlock(Blocks.STONE) && !SceneFilterClient.hiddenEntity(c.player)),"reload lost scene rules");
             server.runCommand("execute in minecraft:the_nether run tp @a 0 80 0");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.NETHER),1200);
@@ -202,14 +202,14 @@ final class SceneFilterVisualOracle {
             server.runCommand("execute in minecraft:overworld run tp @a 0 -56 12 180 25");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.OVERWORLD),1200);
             try (var returnFixture=VillagerJobSiteFixture.open(context,600)) {
-                combined(context,output,"all53-dimension-return",allOff);
+                combined(context,output,"all57-dimension-return",allOff);
             }
             install(context,off);
             require(context.computeOnClient(c->!SceneFilterClient.blockFilterActive() && SceneFilterClient.compiledLookupCount()==0
                     && !SceneFilterClient.hiddenBlock(Blocks.STONE)),"OFF retained compiled filter state");
-            evidence.append("blockModes=true\nentityModes=true\nblockEntityExtraction=true\nselfPreserved=true\nphysicalStatePreserved=true\nfluidPreserved=true\nmodelGroupsPreserved=true\njobSiteHidden=true\nall53Enabled=true\nall53Reload=true\ndimensionCleanup=true\nfinalOffEmpty=true\n");
+            evidence.append("blockModes=true\nentityModes=true\nblockEntityExtraction=true\nselfPreserved=true\nphysicalStatePreserved=true\nfluidPreserved=true\nmodelGroupsPreserved=true\njobSiteHidden=true\nall57Enabled=true\nall57Reload=true\ndimensionCleanup=true\nfinalOffEmpty=true\n");
             Files.writeString(output.resolve("scene-filter-visual-manifest.txt"),evidence,StandardCharsets.UTF_8);
-            System.out.println("BLOCKLENS_SCENE_VISUAL blocks=true blockEntities=true entities=true self=true fluids=true modelGroupRestore=true hiddenJobSites=true all53Reload=true dimensionCleanup=true");
+            System.out.println("BLOCKLENS_SCENE_VISUAL blocks=true blockEntities=true entities=true self=true fluids=true modelGroupRestore=true hiddenJobSites=true all57Reload=true dimensionCleanup=true");
         } catch(IOException e) { throw new AssertionError("scene filter framebuffer evidence failed",e); }
         finally {
             BlockLensRuntime.installConfig(original);
@@ -285,7 +285,7 @@ final class SceneFilterVisualOracle {
                 if(dev.blocklens.testing.CueColorEvidence.matches(baseline.getRGB(x,y),color)) before++;
                 if(dev.blocklens.testing.CueColorEvidence.matches(frame.getRGB(x,y),color)) after++;
             }
-            require(after-before>=12,"all53 filter interaction lost an analyzer cue: "+name);
+            require(after-before>=12,"all57 filter interaction lost an analyzer cue: "+name);
         }
     }
     static void prepareDisconnect(ClientGameTestContext context) {

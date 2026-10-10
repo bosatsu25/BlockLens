@@ -13,7 +13,7 @@ Status: **current publication boundary plus immutable historical release evidenc
 
 Current main adds merged PR #40 settings and PR #41 three-version support. [Main CI #313](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404) passed common and all three real-client/artifact jobs on merge `d91226c14f07c999256fc620b722a874be99958c`. No new release version or 26.3 release asset was published; the existing-version guard skipped publication.
 
-Current gates are the reviewed **143,360 B (140 KiB)** development guard, **153,600 B (150 KiB)** product release ceiling, and **1,183,432 B** absolute ceiling. Historical 100 KiB statements below describe v0.1.0/v0.2.0, not current policy. External shader/pack/Vulkan combinations remain #31; M8 diagnostic implementation is merged through PR #45/#47, while reopened #43 still investigates the recurring allocation failure. See [roadmap.md](roadmap.md).
+Current gates are the user-authorized **204,800 B (200 KiB)** development and product release ceiling, and **1,183,432 B** absolute ceiling. Historical 100 KiB statements below describe v0.1.0/v0.2.0, not current policy. External shader/pack/Vulkan combinations remain #31; M8 diagnostic implementation is merged through PR #45/#47, while #43 completed its measured test-environment exception, retaining the unproven historical cause. See [roadmap.md](roadmap.md).
 
 Current packaging permits exactly one owned `blocklens-runtime` container with exact compiled-byte, metadata and recursive privacy audits; see [runtime-packaging.md](runtime-packaging.md). The historical blanket nested-JAR prohibition below is replaced only for this owned container. Third-party dependency containers remain forbidden.
 
@@ -175,7 +175,7 @@ flowchart TD
 - exact raw runtime artifacts from that CI run are used;
 - downloaded payloads must be valid JARs;
 - mod/Minecraft/client/icon metadata is checked before upload;
-- current no-growth, 150 KiB release, and absolute maximum budgets are rechecked;
+- current 200 KiB development/release and absolute maximum budgets are rechecked;
 - publication is idempotent by `mod_version` / tag;
 - SHA-256 checksums are generated;
 - the final release asset set is verified after publication.
