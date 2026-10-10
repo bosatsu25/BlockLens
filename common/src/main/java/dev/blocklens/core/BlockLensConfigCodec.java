@@ -2,7 +2,10 @@ package dev.blocklens.core;
 
 import dev.blocklens.core.analyzer.AnalyzerCatalog;
 import dev.blocklens.core.analyzer.AnalyzerOptions;
+import dev.blocklens.core.scene.SceneFilterCatalog;
+import dev.blocklens.core.scene.SceneFilterOptions;
 import java.util.EnumMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -32,6 +35,12 @@ public final class BlockLensConfigCodec {
             output.append(AnalyzerCatalog.optionKey(kind,field)).append('=')
                     .append(config.analyzerOptions().value(kind,field)).append('\n');
         }
+        for (int kind = 0; kind < 2; kind++) {
+            var rule = config.sceneFilterOptions().rule(kind);
+            output.append(SceneFilterCatalog.optionKey(kind,0)).append('=').append(rule.mode()).append('\n');
+            output.append(SceneFilterCatalog.optionKey(kind,1)).append('=').append(String.join(",",rule.blacklist())).append('\n');
+            output.append(SceneFilterCatalog.optionKey(kind,2)).append('=').append(String.join(",",rule.whitelist())).append('\n');
+        }
         return output.toString();
     }
 
@@ -42,6 +51,7 @@ public final class BlockLensConfigCodec {
         }
 
         AnalyzerOptions analyzers = AnalyzerOptions.defaults();
+        SceneFilterOptions scene = SceneFilterOptions.defaults();
         ComfortOptions defaults = ComfortOptions.defaults();
         int fireSize = defaults.fireSize();
         int blocksPercent = defaults.blocksPercent();
@@ -63,6 +73,19 @@ public final class BlockLensConfigCodec {
             String value = line.substring(separator + 1).trim();
             CapabilityId capability = CapabilityId.bySourceKey().get(key);
             if (capability == null) {
+                for (int kind = 0; kind < 2; kind++) {
+                    try {
+                        if (key.equals(SceneFilterCatalog.optionKey(kind,0))) {
+                            scene = scene.withMode(kind,SceneFilterOptions.Mode.valueOf(value.toUpperCase(Locale.ROOT)));
+                        } else if (key.equals(SceneFilterCatalog.optionKey(kind,1))) {
+                            scene = scene.withList(kind,false,value);
+                        } else if (key.equals(SceneFilterCatalog.optionKey(kind,2))) {
+                            scene = scene.withList(kind,true,value);
+                        }
+                    } catch (IllegalArgumentException invalid) {
+                        // Malformed/oversized replacement retains the last valid bounded draft.
+                    }
+                }
                 for(int kind=0;kind<5;kind++) for(int field=0;field<4;field++) {
                     if(kind==0 && field==1) continue;
                     if(key.equals(AnalyzerCatalog.optionKey(kind,field))) {
@@ -88,7 +111,8 @@ public final class BlockLensConfigCodec {
             }
         }
         return BlockLensConfig.fromOverrides(overrides,
-                new ComfortOptions(fireSize, blocksPercent, itemsPercent, toolsPercent)).withAnalyzerOptions(analyzers);
+                new ComfortOptions(fireSize, blocksPercent, itemsPercent, toolsPercent))
+                .withAnalyzerOptions(analyzers).withSceneFilterOptions(scene);
     }
 
     private static int bounded(String text, int min, int max, int fallback) {

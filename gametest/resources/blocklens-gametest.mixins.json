@@ -5,7 +5,8 @@
   "client": [
     "FireTransformProbeMixin",
     "HeldTransformProbeMixin",
-    "AnalyzerTickProbeMixin"
+    "AnalyzerTickProbeMixin",
+    "SectionCompileAllocationProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

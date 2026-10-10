@@ -7,6 +7,7 @@ import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.ui.SettingsCatalog;
 import dev.blocklens.core.ui.SettingsDraft;
 import dev.blocklens.core.analyzer.AnalyzerCatalog;
+import dev.blocklens.core.scene.SceneFilterCatalog;
 import dev.blocklens.core.ui.SettingsLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -85,9 +86,11 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
         for (int index = 0; index < capabilities.size(); index++) {
             CapabilityId capability = capabilities.get(index);
             if (capability != CapabilityId.LOW_FIRE && capability != CapabilityId.HANDHELD_SIZE
-                    && AnalyzerCatalog.index(capability)<0) continue;
+                    && AnalyzerCatalog.index(capability)<0 && SceneFilterCatalog.index(capability)<0) continue;
             details.add(addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.details"),
-                    ignored -> showParent(AnalyzerCatalog.index(capability)>=0
+                    ignored -> showParent(SceneFilterCatalog.index(capability)>=0
+                            ? new SceneFilterOptionsScreen(this,draft,SceneFilterCatalog.index(capability),this::showParent)
+                            : AnalyzerCatalog.index(capability)>=0
                             ? new AnalyzerOptionsScreen(this,draft,AnalyzerCatalog.index(capability),this::showParent)
                             : new ComfortOptionsScreen(this, draft, capability, this::showParent)))
                     .createNarration(ignored -> Component.translatable(SettingsCatalog.nameKey(capability))

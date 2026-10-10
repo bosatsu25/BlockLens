@@ -74,7 +74,10 @@ public enum CapabilityId {
     LAVA_ANALYZER("analyzer.lava_analyzer", Category.OTHER, false),
     BEACON_RANGE("analyzer.beacon_range", Category.OTHER, false),
     LIGHTNING_ROD_RANGE("analyzer.lightning_rod_range", Category.OTHER, false),
-    VILLAGER_JOB_SITE_LINKS("analyzer.villager_job_site_links", Category.OTHER, false);
+    VILLAGER_JOB_SITE_LINKS("analyzer.villager_job_site_links", Category.OTHER, false),
+
+    BLOCK_FILTER("scene.block_filter", Category.OTHER, false),
+    ENTITY_FILTER("scene.entity_filter", Category.OTHER, false);
 
     public enum Category {
         DECORATION,

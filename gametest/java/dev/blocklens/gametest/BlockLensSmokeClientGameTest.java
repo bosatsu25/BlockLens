@@ -16,10 +16,14 @@ import net.fabricmc.loader.api.FabricLoader;
 
 /** Shared client smoke and integration oracle executed against every supported Minecraft version. */
 public final class BlockLensSmokeClientGameTest implements FabricClientGameTest {
-    private static final int EXPECTED_CAPABILITY_COUNT = 51;
+    private static final int EXPECTED_CAPABILITY_COUNT = 53;
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if ("scene".equals(System.getProperty("blocklens.test.focus","all"))) {
+            verifySceneOnly(context);
+            return;
+        }
         context.runOnClient(client -> {
             PackagedRuntimeOracle.verify();
             verifyRuntime("initial client launch", true);
@@ -34,6 +38,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         SettingsEditingOracle.verify(context);
         ComfortSettingsOracle.verify(context);
         AnalyzerSettingsOracle.verify(context);
+        SceneFilterSettingsOracle.verify(context);
         SettingsVisualOracle.verify(context);
 
         BlockLensConfig disconnectBaseline=BlockLensRuntime.config();
@@ -46,21 +51,44 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             M5ActiveResourcePackOracle.verify(context, singleplayer);
             LightweightVisualOracle.verify(context, singleplayer);
             AnalyzerVisualOracle.verify(context, singleplayer);
+            SceneFilterVisualOracle.verify(context, singleplayer);
             M8PerformanceBaselineOracle.verify(context, singleplayer);
             AnalyzerVisualOracle.prepareDisconnect(context, singleplayer);
+            SceneFilterVisualOracle.prepareDisconnect(context);
         }
 
         context.runOnClient(client -> {
             require(dev.blocklens.fabric.AnalyzerClient.engine().markers().isEmpty(), "disconnect retained analyzer markers");
+            require(dev.blocklens.fabric.SceneFilterClient.compiledLookupCount()==0,"disconnect retained compiled scene rules");
             BlockLensRuntime.installConfig(disconnectBaseline);
             verifyRuntime("singleplayer world closed", false);
             System.out.println("BLOCKLENS_ANALYZER_DISCONNECT nonemptyBeforeClose=true emptyAfterClose=true");
+            System.out.println("BLOCKLENS_SCENE_DISCONNECT nonemptyBeforeClose=true emptyAfterClose=true");
+        });
+    }
+
+    /** Opt-in local diagnosis only; hosted CI and the normal launcher always run the full graph. */
+    private static void verifySceneOnly(ClientGameTestContext context) {
+        context.runOnClient(c->{PackagedRuntimeOracle.verify();verifyRuntime("focused scene client",true);});
+        SceneFilterSettingsOracle.verify(context);
+        var original=BlockLensRuntime.config();
+        try(TestSingleplayerContext world=context.worldBuilder().create()) {
+            context.waitTicks(20);
+            SceneFilterVisualOracle.verify(context,world);
+            AnalyzerVisualOracle.prepareDisconnect(context,world);
+            SceneFilterVisualOracle.prepareDisconnect(context);
+        }
+        context.runOnClient(c->{
+            require(dev.blocklens.fabric.SceneFilterClient.compiledLookupCount()==0,"disconnect retained scene rules");
+            require(dev.blocklens.fabric.AnalyzerClient.engine().markers().isEmpty(),"disconnect retained analyzer markers");
+            BlockLensRuntime.installConfig(original);
+            System.out.println("BLOCKLENS_SCENE_FOCUSED nativeScope=scene fullGraph=false disconnect=true");
         });
     }
 
     private static void verifyRuntime(String phase, boolean reportBaseline) {
         require(CapabilityId.values().length == EXPECTED_CAPABILITY_COUNT,
-                phase + ": expected 51 capabilities");
+                phase + ": expected 53 capabilities");
 
         String minecraftVersion = FabricLoader.getInstance()
                 .getModContainer("minecraft")

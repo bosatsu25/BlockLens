@@ -28,7 +28,7 @@ import net.fabricmc.loader.api.FabricLoader;
  * regression guard. These limits detect large regressions; they are not evidence of a speedup.</p>
  */
 final class M8PerformanceBaselineOracle {
-    private static final int EXPECTED_CAPABILITIES = 51;
+    private static final int EXPECTED_CAPABILITIES = 53;
     private static final int EXPECTED_RESOURCE_CAPABILITIES = 21;
     private static final int RELOAD_WARMUPS = 1;
     private static final int MEASURED_SAMPLES = 3;
@@ -293,6 +293,7 @@ final class M8PerformanceBaselineOracle {
         } catch (IOException exception) {
             throw new AssertionError("M8 performance observation failed", exception);
         } finally {
+            SectionCompileAllocationProbe.end();
             M8FrameTimeProbe.endAllocationCapture();
             M8FrameTimeProbe.endCapture();
             context.runOnClient(client -> client.options.framerateLimit().set(originalFpsLimit));
@@ -388,7 +389,9 @@ final class M8PerformanceBaselineOracle {
 
     private static RebuildMeasurement measureRebuild(ClientGameTestContext context) {
         prepareMeasurementWindow(context);
+        int loadedBefore=context.computeOnClient(c->c.level.getChunkSource().getLoadedChunksCount());
         AllocationSnapshot before = captureAllocation();
+        SectionCompileAllocationProbe.begin();
         M8FrameTimeProbe.beginAllocationCapture();
         long framesBefore = M8FrameTimeProbe.renderedFrames();
         long start = System.nanoTime();
@@ -396,13 +399,16 @@ final class M8PerformanceBaselineOracle {
         context.waitTicks(REBUILD_SETTLE_TICKS);
         long elapsed = System.nanoTime() - start;
         long[] mainPassAllocation = M8FrameTimeProbe.endAllocationCapture();
+        var compileAllocation=SectionCompileAllocationProbe.end();
         AllocationSnapshot after = captureAllocation();
+        int loadedAfter=context.computeOnClient(c->c.level.getChunkSource().getLoadedChunksCount());
         return new RebuildMeasurement(
                 elapsed,
                 before.totalDeltaTo(after),
                 before.renderRelevantDeltaTo(after),
                 M8FrameTimeProbe.renderedFrames() - framesBefore,
-                before.roleDeltasTo(after),mainPassAllocation[0],mainPassAllocation[1]);
+                before.roleDeltasTo(after),mainPassAllocation[0],mainPassAllocation[1],
+                compileAllocation,loadedBefore,loadedAfter);
     }
 
     private static long[] measureFrameMainPass(ClientGameTestContext context) {
@@ -634,6 +640,7 @@ final class M8PerformanceBaselineOracle {
                 + "netherWrappedModels=" + retention.netherWrappedModels() + "\n"
                 + "initializationNanos=" + BlockLensRuntime.initializationNanos() + "\n";
         manifest += allocationBreakdown(allocationBreakdowns);
+        manifest += compileAllocationBreakdown(allocationBreakdowns);
         Files.writeString(
                 outputDir.resolve("m8-performance-baseline.txt"),
                 manifest,
@@ -688,7 +695,8 @@ final class M8PerformanceBaselineOracle {
             long elapsedNanos,
             long totalAllocatedBytes,
             long renderRelevantAllocatedBytes,
-            long renderedFrames,long[] roleBytes,long mainPassBytes,long mainPassFrames) {
+            long renderedFrames,long[] roleBytes,long mainPassBytes,long mainPassFrames,
+            dev.blocklens.testing.StageAllocationCounters.Snapshot compileAllocation,int loadedChunksBefore,int loadedChunksAfter) {
     }
 
     private record AllocationSnapshot(long[] ids, long[] allocatedBytes, String[] names) {
@@ -742,6 +750,38 @@ final class M8PerformanceBaselineOracle {
         private static int nearestRankIndex(int sampleCount, double percentile) {
             return Math.max(0, (int) Math.ceil(sampleCount * percentile) - 1);
         }
+    }
+
+    private static String compileAllocationBreakdown(RebuildMeasurement[][] measurements) {
+        var result=new StringBuilder("compileAllocationProbeEnabled=true\n"
+                +"compileAllocationScope=normal RETURN completed inside the same measurement epoch; probe may affect JIT/allocation\n"
+                +"compileAllocationSlots=512\ncompileRoleOrder=render,chunk,worker,test,other\n");
+        String[] scenarios={"off","default","on"};
+        for(int scenario=0;scenario<3;scenario++) {
+            for(int role=0;role<5;role++) {
+                long[] bytes=new long[MEASURED_SAMPLES],counts=new long[MEASURED_SAMPLES];
+                for(int i=0;i<MEASURED_SAMPLES;i++) {
+                    var sample=measurements[scenario][i].compileAllocation();
+                    bytes[i]=sample.bytesByRole()[role];counts[i]=sample.completedByRole()[role];
+                }
+                result.append(scenarios[scenario]).append("CompileRole").append(role).append("Bytes=").append(csv(bytes)).append('\n');
+                result.append(scenarios[scenario]).append("CompileRole").append(role).append("Completed=").append(csv(counts)).append('\n');
+            }
+            long[] incomplete=new long[MEASURED_SAMPLES],dropped=new long[MEASURED_SAMPLES],invalid=new long[MEASURED_SAMPLES],
+                    saturation=new long[MEASURED_SAMPLES],loadedBefore=new long[MEASURED_SAMPLES],loadedAfter=new long[MEASURED_SAMPLES];
+            for(int i=0;i<MEASURED_SAMPLES;i++) {
+                var measurement=measurements[scenario][i];var sample=measurement.compileAllocation();
+                incomplete[i]=sample.incomplete();dropped[i]=sample.dropped();invalid[i]=sample.invalid();saturation[i]=sample.saturations();
+                loadedBefore[i]=measurement.loadedChunksBefore();loadedAfter[i]=measurement.loadedChunksAfter();
+            }
+            result.append(scenarios[scenario]).append("CompileIncomplete=").append(csv(incomplete)).append('\n');
+            result.append(scenarios[scenario]).append("CompileDropped=").append(csv(dropped)).append('\n');
+            result.append(scenarios[scenario]).append("CompileInvalid=").append(csv(invalid)).append('\n');
+            result.append(scenarios[scenario]).append("CompileSaturations=").append(csv(saturation)).append('\n');
+            result.append(scenarios[scenario]).append("LoadedChunksBefore=").append(csv(loadedBefore)).append('\n');
+            result.append(scenarios[scenario]).append("LoadedChunksAfter=").append(csv(loadedAfter)).append('\n');
+        }
+        return result.toString();
     }
 
     private static String allocationBreakdown(RebuildMeasurement[][] measurements) {

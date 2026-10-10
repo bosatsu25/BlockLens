@@ -22,7 +22,7 @@ public final class AllocationDeltas {
         }
         return totals;
     }
-    private static int role(String name) {
+    public static int role(String name) {
         if(name==null) return 4;
         if(name.contains("Render")) return 0;
         if(name.contains("Chunk")) return 1;

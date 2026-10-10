@@ -25,7 +25,7 @@ final class M8PerformanceBaselineContractTest {
                 "knowledge/current/performance-strategy.md"));
 
         assertTrue(smoke.contains("M8PerformanceBaselineOracle.verify(context, singleplayer)"));
-        assertTrue(oracle.contains("EXPECTED_CAPABILITIES = 51"));
+        assertTrue(oracle.contains("EXPECTED_CAPABILITIES = 53"));
         for (String family : new String[] {"minecraft:glass", "minecraft:glass_pane", "minecraft:white_concrete",
                 "minecraft:chest", "minecraft:kelp[", "minecraft:kelp_plant"}) {
             assertTrue(oracle.contains(family), "M8 workload excludes added family: " + family);

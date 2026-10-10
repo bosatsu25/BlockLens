@@ -6,7 +6,7 @@
 
 **English** | [日本語](README_ja.md)
 
-BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It makes block orientation and state, resources, fine geometry and Nether materials easier to distinguish through 51 independently configurable visual capabilities. See the [complete current feature list](knowledge/current/features.md).
+BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It makes block orientation and state, resources, fine geometry and Nether materials easier to distinguish through 53 independently configurable visual capabilities. See the [complete current feature list](knowledge/current/features.md).
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
@@ -16,11 +16,13 @@ The core design goal is **source/function parity, not byte-for-byte asset bundli
 
 ## Current development: three Minecraft versions
 
-The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls and five bounded analyzers. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
+The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, five bounded analyzers and two independent scene filters. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
 
 To watch real Minecraft UI automation on Windows, with Java 25 and Gradle 9.5.1 on PATH, run `./scripts/run-ui-tests.ps1` (all three) or `./scripts/run-ui-tests.ps1 -Version 26.3`. The runner opens actual clients sequentially using the built distribution JAR, checks loaded class origins, exits after testing and stops on failure. CI requires ten settings screenshots per target and separate rendering/JAR evidence. See [current version contract, exact dependencies and verification status](knowledge/current/minecraft-26-3.md).
 
 The five analyzers find loaded ancient debris and qualifying source lava, outline beacon/rod ranges, and link actual client villager job-site memories. They default OFF and share numeric radius/marker/interval settings and the existing save/discard draft. Unloaded chunks are skipped, dense scans take multiple ticks, and unavailable villager memory never produces an inferred workstation. See [work limits and exact behavior](knowledge/current/world-analyzers.md).
+
+The two scene filters independently edit block/entity type ID blacklists and whitelists. They default OFF, retain the local player, and preserve fluids, physical state and solid occlusion. List edits share the parent save/discard draft. See [the filter contract and pending verification](knowledge/current/scene-filter.md).
 
 ## Product direction
 
