@@ -246,6 +246,11 @@ final class M8PerformanceBaselineOracle {
 
             System.out.println("BLOCKLENS_M8_BASELINE minecraft=" + BlockLensRuntime.minecraftVersion()
                     + " measuredSamples=" + MEASURED_SAMPLES
+                    + " measurementFpsLimit=" + measurementFpsLimit
+                    + " testAfkTimerReset=true"
+                    + " offRenderedFrames=" + csv(offRenderedFrames)
+                    + " defaultRenderedFrames=" + csv(defaultRenderedFrames)
+                    + " onRenderedFrames=" + csv(onRenderedFrames)
                     + " reloadMedianNanos=" + reload.median()
                     + " reloadP95NearestRankNanos=" + reload.p95NearestRank()
                     + " offAllocatedMedianBytes=" + offAllocation.median()
@@ -367,6 +372,7 @@ final class M8PerformanceBaselineOracle {
     }
 
     private static RebuildMeasurement measureRebuild(ClientGameTestContext context) {
+        prepareMeasurementWindow(context);
         AllocationSnapshot before = captureAllocation();
         long framesBefore = M8FrameTimeProbe.renderedFrames();
         long start = System.nanoTime();
@@ -382,12 +388,25 @@ final class M8PerformanceBaselineOracle {
     }
 
     private static long[] measureFrameMainPass(ClientGameTestContext context) {
+        prepareMeasurementWindow(context);
         M8FrameTimeProbe.beginCapture();
         context.waitTicks(FRAME_CAPTURE_TICKS);
         long[] samples = M8FrameTimeProbe.endCapture();
         require(samples.length >= MIN_FRAME_SAMPLES,
                 "M8 did not capture enough rendered main-pass frames: " + samples.length);
         return samples;
+    }
+
+    private static void prepareMeasurementWindow(ClientGameTestContext context) {
+        context.runOnClient(client -> {
+            // Test bookkeeping only: no key, mouse, interaction or world action is synthesized.
+            client.getFramerateLimitTracker().onInputReceived();
+            require(client.getFramerateLimitTracker().getThrottleReason()
+                            == com.mojang.blaze3d.platform.FramerateLimitTracker.FramerateThrottleReason.NONE
+                            && client.getFramerateLimitTracker().getFramerateLimit()
+                            == client.options.framerateLimit().get(),
+                    "M8 test window must not be AFK-throttled or minimized");
+        });
     }
 
     private static void rebuild(ClientGameTestContext context) {
@@ -540,6 +559,7 @@ final class M8PerformanceBaselineOracle {
                 + "reloadRetentionStable=true\n"
                 + "measurementFpsLimit=" + measurementFpsLimit + "\n"
                 + "fpsLimitMeaning=requested upper bound; actual frames are recorded separately\n"
+                + "testAfkTimerResetBeforeEachWindow=true\n"
                 + "vsyncEnabled=" + vsyncEnabled + "\n"
                 + "osFamily=" + osFamily() + "\n"
                 + "javaMajor=" + Runtime.version().feature() + "\n"

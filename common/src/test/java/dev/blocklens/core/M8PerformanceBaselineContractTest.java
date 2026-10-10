@@ -77,6 +77,8 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(oracle.contains("framerateLimit().set(originalFpsLimit)"));
         assertFalse(oracle.contains("options.save()"));
         assertTrue(oracle.contains("M8FrameTimeProbe.renderedFrames() - framesBefore"));
+        assertTrue(oracle.contains("client.getFramerateLimitTracker().onInputReceived()"));
+        assertTrue(oracle.contains("M8 test window must not be AFK-throttled or minimized"));
         assertTrue(oracle.contains("offRenderedFrames="));
         assertTrue(oracle.contains("defaultRenderedFrames="));
         assertTrue(oracle.contains("onRenderedFrames="));

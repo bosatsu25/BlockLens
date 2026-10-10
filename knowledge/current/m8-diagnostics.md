@@ -16,6 +16,8 @@ Allocation and rebuild samples observe a 30-tick window after terrain invalidati
 
 Main-pass timing is measured separately for 80 ticks. At most 1,024 timing samples are retained per capture. Percentiles describe those sampled main passes, not complete frame presentation or FPS. A requested FPS limit is an upper bound; VSync, focus, backend and scheduling may yield fewer actual rendered frames. Do not substitute the configured upper bound for measured frame counts.
 
+Minecraft's AFK limiter reduces the requested bound to at most 30 after 60 seconds without input. The test's earlier UI interactions can be more than a minute before its M8 phase, so merely changing the FPS option does not control the effective limit. Each allocation/rebuild or timing window now resets the isolated client's AFK timer through the tracker bookkeeping API and asserts that its throttle reason is NONE and its effective configured limit matches the option. This synthesizes no keyboard, mouse, world or server action. The window must remain visible; minimization fails the measurement-condition check. VSync/backend scheduling may still reduce actual rendered frames, which are recorded.
+
 The isolated test client requests an upper bound of 60 by default. It restores the original option in `finally` and never saves options. Product clients are unaffected. To vary this single condition reproducibly, configure Gradle 9.5.1 and Java 25, then run each version module with one of the accepted test-only bounds:
 
 ```sh
