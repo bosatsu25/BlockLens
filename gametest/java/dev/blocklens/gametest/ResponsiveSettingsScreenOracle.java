@@ -1,5 +1,7 @@
 package dev.blocklens.gametest;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.ui.SettingsCatalog;
@@ -50,7 +52,7 @@ final class ResponsiveSettingsScreenOracle {
                 .findFirst().orElseThrow(() -> new AssertionError("Missing category tab"));
         if (tab.active) {
             require(screen.mouseClicked(new MouseButtonEvent(
-                    tab.getX() + 5.0, tab.getY() + 5.0, new MouseButtonInfo(0, 0)), false),
+                    tab.getX() + 5.0, tab.getY() + 5.0, new MouseButtonInfo(InputConstants.MOUSE_BUTTON_LEFT, 0)), false),
                     "Category click was not handled");
             screen.afterMouseAction();
             require(screen.getFocused() == null || buttons(screen).contains(screen.getFocused()),
@@ -70,7 +72,7 @@ final class ResponsiveSettingsScreenOracle {
         List<Button> toggles = buttons.subList(4, 4 + count);
         var reached = new HashSet<Button>();
         for (int index = 0; index < buttons.size() * 2; index++) {
-            screen.keyPressed(new KeyEvent(258, 0, 0));
+            screen.keyPressed(new KeyEvent(InputConstants.KEY_TAB, 0, 0));
             require(screen.getFocused() instanceof Button, "keyboard focus escaped the controls");
             Button focused = (Button) screen.getFocused();
             require(focused.visible && focused.active, "keyboard focus escaped the visible controls");
@@ -85,7 +87,7 @@ final class ResponsiveSettingsScreenOracle {
         }
         require(reached.size() == count, "Keyboard cannot reach every category option");
         for (int index = 0; index < buttons.size() * 2; index++) {
-            screen.keyPressed(new KeyEvent(258, 0, 1));
+            screen.keyPressed(new KeyEvent(InputConstants.KEY_TAB, 0, InputConstants.MOD_SHIFT));
             require(screen.getFocused() instanceof Button focused && focused.visible && focused.active,
                     "Reverse keyboard focus escaped visible controls");
         }

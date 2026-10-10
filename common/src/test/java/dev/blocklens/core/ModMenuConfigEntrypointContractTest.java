@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 final class ModMenuConfigEntrypointContractTest {
-    private static final String[] VERSIONS = {"mc26_1_2", "mc26_2"};
+    private static final java.util.List<String> VERSIONS = SupportedVersionFixtures.MODULES;
 
     @Test
     void bothVersionsExposeSettingsThroughOptionalModMenuEntrypoint() throws IOException {
@@ -17,8 +17,7 @@ final class ModMenuConfigEntrypointContractTest {
         for (String version : VERSIONS) {
             Path module = root.resolve("versions").resolve(version);
             String metadata = Files.readString(module.resolve("src/main/resources/fabric.mod.json"));
-            String adapter = Files.readString(module.resolve(
-                    "src/main/java/dev/blocklens/fabric/BlockLensModMenu.java"));
+            String adapter = Files.readString(SupportedVersionFixtures.sourceRoot(root, version).resolve("BlockLensModMenu.java"));
 
             assertTrue(metadata.contains("\"modmenu\""), version);
             assertTrue(metadata.contains("dev.blocklens.fabric.BlockLensModMenu"), version);

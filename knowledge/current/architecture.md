@@ -4,7 +4,7 @@ Status: **authoritative current architecture direction**
 
 ## 1. Architecture objective
 
-Replace repeated static resource-pack state definitions with a small number of reusable runtime concepts while preserving independently controllable user-facing capabilities across **Minecraft 26.1.2 and 26.2**.
+Replace repeated static resource-pack state definitions with a small number of reusable runtime concepts while preserving independently controllable user-facing capabilities across **Minecraft 26.1.2, 26.2 and 26.3**.
 
 The architecture must optimize for:
 
@@ -68,7 +68,7 @@ test-support/   (only if justified)
 
 ### `common`
 
-Pure/testable product logic shared by both versions:
+Pure/testable product logic shared by all three versions:
 
 - 37-capability catalog
 - config schema/migration policy
@@ -94,6 +94,8 @@ Only 26.1.2-specific Fabric/Minecraft glue:
 ### `versions/mc26_2`
 
 Equivalent boundary for 26.2. Do not duplicate product policy merely because mapped APIs differ.
+
+The mc26_3 module reuses the modern mc26_2 adapters and test bridge, with independent dependency/metadata pins and a tiny version-specific MinecraftQuadLighting implementation. Product policy and the complete renderer are shared. See [26.3 integration](minecraft-26-3.md).
 
 ## 4. Core module boundaries
 
@@ -128,7 +130,7 @@ No runtime reflection/classpath discovery. The catalog is compiled/static and co
 ### `config`
 
 - persistent enable/disable state
-- shared schema across both Minecraft versions
+- shared schema across all three Minecraft versions
 - config migration
 - corruption-safe fallback
 

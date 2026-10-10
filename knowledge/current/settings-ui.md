@@ -1,6 +1,6 @@
 # BlockLens settings UI
 
-Status: implementation under review in PR #40; not a released feature.
+Status: settings redesign merged in PR #40; three-version integration is the development target and is not a published release.
 
 ## Scope
 
@@ -41,8 +41,8 @@ retry/discard message in a reserved area above the footer. No exception details 
 ## Architecture
 
 SettingsCatalog, SettingsDraft and SettingsLayout contain Minecraft-independent policies in common.
-The Minecraft-facing AbstractBlockLensConfigScreen is compiled from fabric-shared for both targets.
-The version-specific BlockLensConfigScreen adapters keep the distinct 26.1.2 and 26.2 screen APIs.
+The Minecraft-facing AbstractBlockLensConfigScreen is compiled from fabric-shared for all three targets.
+The version-specific BlockLensConfigScreen adapters keep the distinct 26.1.2 and modern 26.2/26.3 screen APIs.
 GameTest scenarios and fixtures remain shared. The sole version-specific test source is a small
 SettingsClientAccess bridge for the loading-overlay API, which moved from Minecraft.getOverlay()
 to Minecraft.gui.overlay() in 26.2. The repository contract restricts each local GameTest tree to
@@ -52,22 +52,23 @@ No new required UI dependency, telemetry, startup network call, registry scan or
 
 ## Verification and limitations
 
-Required verification includes common JUnit/JaCoCo/PIT, both-version build, client GameTests,
+Required verification includes common JUnit/JaCoCo/PIT, three-version build, client GameTests,
 settings persistence/failure recovery, keyboard reachability at 320×240 / 640×360 / 854×480 /
 1920×1080, actual English/Japanese framebuffer evidence, JAR structure/size and reproducibility.
 
-The existing size thresholds in gradle.properties remain unchanged; the newly uploaded ZIP
+The reviewed three-version baseline adjustment is recorded in [26.3 integration](minecraft-26-3.md); the newly uploaded ZIP
 does not redefine them. CI results must be tied to the current PR head.
 
 Uploaded compatibility references include the UI reference pack, Small Handhelds, NewGlowingOres,
 LowOnFire and both Chise packs. Their static resource domains and metadata were inspected,
 but those particular uploads have not been exercised together in a real client.
-Their pack-format declarations alone do not establish compatibility with Minecraft 26.1.2/26.2.
+Their pack-format declarations alone do not establish compatibility with Minecraft 26.1.2/26.2/26.3.
 Pixel-equivalence with the source options screen, shader support and Vulkan support
 remain unverified. Existing synthetic active-pack/render GameTests remain regression gates.
 
-Do not describe the change as complete until the required gates and remaining intended
-manual compatibility/visual checks are recorded. Keep the PR draft while these checks are open.
+The three-version integration requires passing current-head CI. Pack combinations, shaders and Vulkan are separate open compatibility tracks; do not claim them from passing native UI tests.
+
+Shared input code uses InputConstants so SDL-based 26.3 and earlier GLFW-based targets retain keyboard/mouse semantics. The local visible-window runner and per-version CI screenshot evidence are described in [26.3 integration](minecraft-26-3.md).
 
 ## References
 

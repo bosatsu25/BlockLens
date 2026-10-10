@@ -29,9 +29,10 @@ final class RepositoryContractTest {
     }
 
     @Test
-    void bothVersionModulesRemainThinExactClientOnlyAdapters() throws IOException {
+    void allVersionModulesRemainThinExactClientOnlyAdapters() throws IOException {
         assertVersionModule("mc26_1_2", "rootProject.minecraft_26_1_2", "rootProject.fabric_api_26_1_2");
         assertVersionModule("mc26_2", "rootProject.minecraft_26_2", "rootProject.fabric_api_26_2");
+        assertVersionModule("mc26_3", "rootProject.minecraft_26_3", "rootProject.fabric_api_26_3");
     }
 
     @Test
@@ -86,10 +87,11 @@ final class RepositoryContractTest {
         // The loading-overlay API moved in 26.2; only this tiny test bridge may vary.
         assertSettingsOverlayBridge("mc26_1_2", "client.getOverlay()");
         assertSettingsOverlayBridge("mc26_2", "client.gui.overlay()");
+        assertSettingsOverlayBridge("mc26_3", "client.gui.overlay()");
     }
 
     private void assertSettingsOverlayBridge(String module, String overlayApi) throws IOException {
-        Path directory = root().resolve("versions/" + module + "/src/gametest");
+        Path directory = SupportedVersionFixtures.testSourceRoot(root(), module);
         Path bridge = directory.resolve("java/dev/blocklens/gametest/SettingsClientAccess.java");
         try (var paths = Files.walk(directory)) {
             assertEquals(List.of(bridge), paths.filter(Files::isRegularFile).toList(),
@@ -171,8 +173,8 @@ final class RepositoryContractTest {
 
     @Test
     void unifiedModelPipelineRemainsZeroScanAndHasPrimitiveOffFastPath() throws IOException {
-        for (String module : List.of("mc26_1_2", "mc26_2")) {
-            Path sourceRoot = root().resolve("versions").resolve(module).resolve("src/main/java/dev/blocklens/fabric");
+        for (String module : SupportedVersionFixtures.MODULES) {
+            Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), module);
             String client = Files.readString(sourceRoot.resolve("BlockLensClient.java"));
             String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
             String model = Files.readString(sourceRoot.resolve("MinecraftDecorationModel.java"));
@@ -271,7 +273,10 @@ final class RepositoryContractTest {
         for (Path sourceRoot : List.of(
                 root().resolve("common/src/main/java"),
                 root().resolve("versions/mc26_1_2/src/main/java"),
-                root().resolve("versions/mc26_2/src/main/java"))) {
+                root().resolve("versions/mc26_2/src/main/java"),
+                root().resolve("versions/mc26_2/src/compat/java"),
+                root().resolve("versions/mc26_3/src/main/java"),
+                root().resolve("fabric-shared/src/main/java"))) {
             try (var paths = Files.walk(sourceRoot)) {
                 for (Path file : paths.filter(path -> path.toString().endsWith(".java")).toList()) {
                     String source = Files.readString(file);

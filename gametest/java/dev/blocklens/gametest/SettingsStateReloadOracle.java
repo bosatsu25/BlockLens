@@ -1,5 +1,7 @@
 package dev.blocklens.gametest;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.fabric.BlockLensConfigScreen;
@@ -64,8 +66,8 @@ final class SettingsStateReloadOracle {
                     ResponsiveSettingsScreenOracle.buttons(screen).stream()
                             .filter(button -> button.getMessage().getString().equals(category)).findFirst()
                             .orElseThrow(() -> new AssertionError("Resource category missing"))
-                            .onPress(new KeyEvent(257, 0, 0));
-                    ResponsiveSettingsScreenOracle.buttons(screen).get(4).onPress(new KeyEvent(257, 0, 0));
+                            .onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
+                    ResponsiveSettingsScreenOracle.buttons(screen).get(4).onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
                 });
                 for (int scale : new int[] {1, 2}) {
                     context.runOnClient(client -> {
@@ -78,7 +80,7 @@ final class SettingsStateReloadOracle {
                     context.waitTicks(2);
                 }
                 context.runOnClient(client -> {
-                    screen.keyPressed(new KeyEvent(269, 0, 0));
+                    screen.keyPressed(new KeyEvent(InputConstants.KEY_END, 0, 0));
                     require(lastToggle(screen).visible, "End did not reveal the final long-text row");
                     screen.resize(screen.width, screen.height);
                     require(lastToggle(screen).visible, "Rebuild lost the long-text category scroll");

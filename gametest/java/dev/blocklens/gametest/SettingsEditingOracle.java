@@ -1,5 +1,7 @@
 package dev.blocklens.gametest;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensConfigFiles;
 import dev.blocklens.core.BlockLensRuntime;
@@ -48,7 +50,7 @@ final class SettingsEditingOracle {
                 screen = new BlockLensConfigScreen(previous);
                 BlockLensConfigScreen.show(client, screen);
                 pressFirstToggle(screen);
-                screen.keyPressed(new KeyEvent(256, 0, 0));
+                screen.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE, 0, 0));
                 require(BlockLensConfigScreen.current(client) == previous, "Esc did not return to parent");
                 require(BlockLensRuntime.config().enabledMask() == original.enabledMask(), "Esc applied edits");
 
@@ -121,7 +123,7 @@ final class SettingsEditingOracle {
     }
 
     private static void pressFirstToggle(Screen screen) {
-        firstToggle(screen).onPress(new KeyEvent(257, 0, 0));
+        firstToggle(screen).onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
     }
 
     private static void press(Screen screen, String key) {
@@ -129,7 +131,7 @@ final class SettingsEditingOracle {
         ResponsiveSettingsScreenOracle.buttons(screen).stream()
                 .filter(button -> button.getMessage().getString().equals(label)).findFirst()
                 .orElseThrow(() -> new AssertionError("Missing settings action"))
-                .onPress(new KeyEvent(257, 0, 0));
+                .onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
     }
 
     private static final class FixtureScreen extends AbstractBlockLensConfigScreen {

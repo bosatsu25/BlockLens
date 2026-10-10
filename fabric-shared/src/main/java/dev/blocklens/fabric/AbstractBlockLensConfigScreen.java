@@ -1,5 +1,7 @@
 package dev.blocklens.fabric;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.ui.SettingsCatalog;
@@ -129,12 +131,12 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
 
     @Override
     public final boolean keyPressed(KeyEvent event) {
-        if (event.key() == 258) {
+        if (event.key() == InputConstants.KEY_TAB) {
             List<Button> order = new ArrayList<>(tabs);
             order.addAll(toggles);
             order.add(discardButton);
             order.add(applyButton);
-            int direction = (event.modifiers() & 1) == 0 ? 1 : -1;
+            int direction = event.hasShiftDown() ? -1 : 1;
             int cursor = order.indexOf(getFocused());
             if (cursor < 0) cursor = direction > 0 ? -1 : 0;
             for (int step = 0; step < order.size(); step++) {
@@ -150,12 +152,13 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
             }
             return false;
         }
-        if (event.key() == 266 || event.key() == 267 || event.key() == 268 || event.key() == 269) {
+        if (event.key() == InputConstants.KEY_PAGEUP || event.key() == InputConstants.KEY_PAGEDOWN
+                || event.key() == InputConstants.KEY_HOME || event.key() == InputConstants.KEY_END) {
             int viewport = layout.listBottom() - layout.listTop();
             int scroll = switch (event.key()) {
-                case 266 -> layout.scroll() - viewport;
-                case 267 -> layout.scroll() + viewport;
-                case 268 -> 0;
+                case InputConstants.KEY_PAGEUP -> layout.scroll() - viewport;
+                case InputConstants.KEY_PAGEDOWN -> layout.scroll() + viewport;
+                case InputConstants.KEY_HOME -> 0;
                 default -> layout.maxScroll();
             };
             scrollTo(scroll);

@@ -1,6 +1,6 @@
 # BlockLens — 現在の40機能 / Current 40 capabilities
 
-Minecraft Java Edition **26.1.2 / 26.2** 向けのクライアント専用機能です。
+Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
 The compiled catalog contains 40 independent capabilities; existing keys, ordering and defaults are preserved.
 

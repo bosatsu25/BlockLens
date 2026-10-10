@@ -10,12 +10,13 @@ This repository is used to design, implement, review, test, and release BlockLen
 
 ## Supported platform contract
 
-BlockLens currently has two first-class Minecraft targets:
+BlockLens currently has three first-class Minecraft targets:
 
 - Minecraft Java Edition 26.1.2
 - Minecraft Java Edition 26.2
+- Minecraft Java Edition 26.3
 
-Both use Fabric and the Java 25 baseline unless the current specification explicitly changes it.
+All three use Fabric and the Java 25 baseline unless the current specification explicitly changes it.
 
 A feature is not complete if it only works on one supported target without an explicit documented version exception.
 
@@ -66,7 +67,7 @@ BlockLens should provide deterministic automated gates comparable in intent to C
 - per-version JAR-size budgets
 - structural performance/load contracts
 
-Changes that affect Minecraft integration must build/test against both supported version targets before completion.
+Changes that affect Minecraft integration must build/test against all three supported version targets before completion.
 
 ## Optimization rule
 
@@ -115,7 +116,7 @@ Rules:
 - Preserve failing evidence before editing and repair the smallest root cause that explains it.
 - Add or strengthen a regression test whenever a defect is mechanically representable.
 - A GitHub Actions result counts only for the current head SHA.
-- Minecraft integration changes must traverse both 26.1.2 and 26.2 branches of the verification graph.
+- Minecraft integration changes must traverse all three 26.1.2, 26.2 and 26.3 branches of the verification graph.
 - Only `DONE`, `BLOCKED`, or explicitly scoped `PARTIAL` are valid terminal states; PARTIAL must never be reported as DONE.
 
 ## Implementation workflow
@@ -124,8 +125,8 @@ For meaningful changes, aim for:
 
 1. establish or update the current specification,
 2. implement shared logic first where applicable,
-3. implement/adjust both version adapters,
-4. build both targets,
+3. implement/adjust all three version adapters,
+4. build all three targets,
 5. automated tests/quality gates,
 6. regression/functional-parity/version-parity checks,
 7. performance or rendering verification where relevant,

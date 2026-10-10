@@ -1,5 +1,7 @@
 package dev.blocklens.fabric;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensConfigFiles;
 import dev.blocklens.core.BlockLensRuntime;
@@ -10,12 +12,13 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.SharedConstants;
 
-/** Minecraft 26.2 Fabric boundary. Product logic stays in common. */
+/** Shared modern Fabric boundary compiled for 26.2 and 26.3. Product logic stays in common. */
 public final class BlockLensClient implements ClientModInitializer {
     private static final System.Logger LOGGER = System.getLogger("BlockLens");
     private static final KeyMapping OPEN_SETTINGS = new KeyMapping(
-            "key.blocklens.settings", 66, KeyMapping.Category.MISC);
+            "key.blocklens.settings", InputConstants.KEY_B, KeyMapping.Category.MISC);
 
     @Override
     public void onInitializeClient() {
@@ -29,7 +32,7 @@ public final class BlockLensClient implements ClientModInitializer {
         }
 
         long initializationNanos = System.nanoTime() - startedNanos;
-        BlockLensRuntime.initialize("26.2", config, initializationNanos);
+        BlockLensRuntime.initialize(SharedConstants.getCurrentVersion().id(), config, initializationNanos);
         MinecraftDecorationModelPlugin.register();
         KeyMappingHelper.registerKeyMapping(OPEN_SETTINGS);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

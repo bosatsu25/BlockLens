@@ -95,8 +95,10 @@ jobs:
 
           artifact_2612="$(resolve_name '26.1.2')"
           artifact_262="$(resolve_name '26.2')"
+          artifact_263="$(resolve_name '26.3')"
           echo "artifact_2612=$artifact_2612" >> "$GITHUB_OUTPUT"
           echo "artifact_262=$artifact_262" >> "$GITHUB_OUTPUT"
+          echo "artifact_263=$artifact_263" >> "$GITHUB_OUTPUT"
 
       - name: Download the exact raw JAR artifacts produced by successful CI
         if: steps.existing.outputs.exists == 'false'
@@ -133,6 +135,7 @@ jobs:
 
           download_raw_artifact '${{ steps.artifacts.outputs.artifact_2612 }}' 'dist/raw-26.1.2.jar'
           download_raw_artifact '${{ steps.artifacts.outputs.artifact_262 }}' 'dist/raw-26.2.jar'
+          download_raw_artifact '${{ steps.artifacts.outputs.artifact_263 }}' 'dist/raw-26.3.jar'
 
       - name: Validate, normalize and checksum release artifacts
         if: steps.existing.outputs.exists == 'false'
@@ -183,6 +186,7 @@ jobs:
 
           prepare '26.1.2' 'dist/raw-26.1.2.jar'
           prepare '26.2' 'dist/raw-26.2.jar'
+          prepare '26.3' 'dist/raw-26.3.jar'
 
           (
             cd dist
@@ -207,9 +211,9 @@ jobs:
           - executable raw-source parity regression protection for the original source contract
 
           ## Supported
-          - Minecraft **26.1.2** and **26.2**
+          - Minecraft **26.1.2**, **26.2**, and **26.3**
           - Java **25+**
-          - Fabric Loader **0.19.3+**
+          - Fabric Loader **0.19.5+**
           - verified default / shader-OFF OpenGL path
 
           ## Verification
@@ -239,6 +243,7 @@ jobs:
             --notes-file dist/RELEASE_NOTES.md \
             dist/BlockLens-26.1.2-v${version}.jar \
             dist/BlockLens-26.2-v${version}.jar \
+            dist/BlockLens-26.3-v${version}.jar \
             dist/SHA256SUMS.txt
 
       - name: Verify published release and assets
@@ -253,6 +258,7 @@ jobs:
           expected=(
             "BlockLens-26.1.2-v${version}.jar"
             "BlockLens-26.2-v${version}.jar"
+            "BlockLens-26.3-v${version}.jar"
             "SHA256SUMS.txt"
           )
           mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)

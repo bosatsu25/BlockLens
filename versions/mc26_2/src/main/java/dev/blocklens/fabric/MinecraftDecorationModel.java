@@ -220,7 +220,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
         if (instruction.emissive()) {
             quad.emissive(true);
-            quad.diffuseShade(false);
+            MinecraftQuadLighting.disableDirectionalShade(quad);
             quad.ambientOcclusion(TriState.FALSE);
         }
     }
