@@ -22,7 +22,7 @@ Current size policy is **143,360 B (140 KiB)** reviewed development no-growth gu
 | Masa / deprecation decisions | [#38](https://github.com/bosatsu25/BlockLens/issues/38) | Completed evaluation by PR #49 / CI #326: eight explicit scope exclusions, separate read-only #36 candidate, ChiseTweaks retained without deprecation or archival. |
 | External compatibility | [#31](https://github.com/bosatsu25/BlockLens/issues/31) | Representative shader-ON, third-party packs and Vulkan evidence. Default OpenGL success does not close this track. |
 
-Diagnostic implementation: [PR #45](https://github.com/bosatsu25/BlockLens/pull/45) and [PR #47](https://github.com/bosatsu25/BlockLens/pull/47) are merged. #43 remains OPEN after main CI #321 reproduced the 26.1.2 allocation failure. PR #47 adds bounded role/main-pass attribution and preserves failing samples; exact-head CI #322 and main CI #323 passed all four jobs on their first attempts. These passing runs do not identify or resolve the cause; guard values are unchanged.
+Diagnostic implementation: [PR #45](https://github.com/bosatsu25/BlockLens/pull/45) and [PR #47](https://github.com/bosatsu25/BlockLens/pull/47) are merged. #43 was reopened after main CI #321 reproduced the 26.1.2 allocation failure. PR #47 adds bounded role/main-pass attribution and preserves failing samples; exact-head CI #322 and main CI #323 passed all four jobs on their first attempts. These passing runs do not identify or resolve the cause; guard values are unchanged.
 
 [PR #52](https://github.com/bosatsu25/BlockLens/pull/52) defines the measured,
 test-only C2/foreground conformance condition while preserving all M8 thresholds
@@ -32,6 +32,8 @@ and native regression controls; see [world-analyzers.md](world-analyzers.md#dime
 The current-head shared and three-version full clients remain the completion
 gate. Neither a focused experiment nor one successful version closes #43 or
 establishes a performance improvement for ordinary clients.
+The final PR-head and merged-main verification records and current issue state
+are maintained in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
 
 Issue #22 records delivered P0 only. Planned capabilities remain unimplemented until their own contracts, all-three-version evidence and PRs are complete. [#39](https://github.com/bosatsu25/BlockLens/issues/39) synchronizes these repository-owned status documents.
 
