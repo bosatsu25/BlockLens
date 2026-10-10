@@ -39,6 +39,8 @@ The first Ubuntu 26.3 CI launch failed before tests with "Couldn't find matching
 
 PR #40's settings redesign was merged at ea488677cbae13ca2f80da685dd9831eace88e7f. Its two-version evidence does not validate this three-version change. Uploaded third-party pack combinations, shaders and Vulkan remain unverified. Release creation and merging are separate actions.
 
+The subsequent Ubuntu launch selected EGL but failed with "Could not load EGL library" before tests. SDL's loader falls back to libEGL.so.1. The 26.3 CI job therefore explicitly installs Ubuntu's libegl1 (including its Mesa EGL dependency) and libgl1-mesa-dri before client startup. This dependency setup is restricted to the ephemeral 26.3 CI runner; local machines and earlier version jobs are unchanged. Hosted client evidence is still required after this environment repair.
+
 ## Official references
 
 - [Fabric for Minecraft 26.3](https://www.fabricmc.net/2026/09/15/263.html)
@@ -46,3 +48,5 @@ PR #40's settings redesign was merged at ea488677cbae13ca2f80da685dd9831eace88e7
 - [Official Minecraft 26.3 launch metadata](https://piston-meta.mojang.com/v1/packages/702fe59163c6ee6578607daa85811d9bc9c7cc40/26.3.json)
 - [Upstream Windows native startup report and stack-shadow argument](https://github.com/PrismLauncher/PrismLauncher/issues/6073)
 - [Official SDL3 EGL context selection](https://wiki.libsdl.org/SDL3/SDL_HINT_VIDEO_FORCE_EGL)
+- [Official SDL EGL loader](https://github.com/libsdl-org/SDL/blob/main/src/video/SDL_egl.c)
+- [Ubuntu 24.04 EGL runtime and Mesa dependency](https://packages.ubuntu.com/noble/libegl1)

@@ -100,6 +100,11 @@ jobs:
             exit 1
           fi
           echo "Reproducible runtime SHA-256: $second_sha" >> "$GITHUB_STEP_SUMMARY"
+      - name: Install SDL3 EGL runtime
+        if: matrix.module == 'mc26_3'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libegl1 libgl1-mesa-dri
       - name: Run client GameTest Minecraft ${{ matrix.minecraft }}
         timeout-minutes: 8
         env:

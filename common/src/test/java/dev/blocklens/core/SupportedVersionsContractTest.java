@@ -41,6 +41,11 @@ final class SupportedVersionsContractTest {
         assertTrue(ci.contains("Collect settings UI visual evidence"));
         assertTrue(ci.contains("Expected exactly ten settings UI screenshots"));
         assertTrue(ci.contains("SDL_VIDEO_FORCE_EGL: ${{ matrix.module == 'mc26_3' && '1' || '0' }}"));
+        int eglSetup = ci.indexOf("name: Install SDL3 EGL runtime");
+        assertTrue(eglSetup >= 0 && eglSetup < ci.indexOf("name: Run client GameTest"));
+        String eglStep = ci.substring(eglSetup, ci.indexOf("name: Run client GameTest"));
+        assertTrue(eglStep.contains("if: matrix.module == 'mc26_3'"));
+        assertTrue(eglStep.contains("sudo apt-get install --no-install-recommends -y libegl1 libgl1-mesa-dri"));
     }
 
     @Test
