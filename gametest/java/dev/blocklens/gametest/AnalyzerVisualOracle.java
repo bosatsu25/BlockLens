@@ -109,8 +109,14 @@ final class AnalyzerVisualOracle {
                     "previous-world beacon/rod/village markers survived dimension change"));
             server.runCommand("execute in minecraft:overworld run tp @a 0 -56 12 180 25");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.OVERWORLD),1200);
-            setMemory(context,true,false);
-            context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==5,600);
+            var returnSeed=setMemory(context,true,false);
+            context.runOnClient(c->AnalyzerReturnProbe.report(c,returnSeed,AnalyzerReturnProbe.Stage.SEEDED));
+            try {
+                context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==5,600);
+            } catch(RuntimeException | AssertionError failure) {
+                context.runOnClient(c->AnalyzerReturnProbe.report(c,returnSeed,AnalyzerReturnProbe.Stage.TIMEOUT));
+                throw failure;
+            }
             verifyCombined(context,output,"all51-dimension-return",combinedOff,evidence);
             install(context,off);
             require(context.computeOnClient(c->AnalyzerClient.engine().markers().isEmpty()),"final OFF retained markers");
@@ -152,16 +158,18 @@ final class AnalyzerVisualOracle {
         for(var entity:level.entitiesForRendering()) if(entity instanceof Villager v && v.isAlive()) return v;
         throw new AssertionError("controlled client villager fixture missing");
     }
-    private static void setMemory(ClientGameTestContext context,boolean present,boolean wrongDimension) {
+    private static AnalyzerReturnProbe.Seed setMemory(ClientGameTestContext context,boolean present,boolean wrongDimension) {
         context.waitFor(c->{
             if(c.level==null) return false;
             for(var entity:c.level.entitiesForRendering()) if(entity instanceof Villager v && v.isAlive()) return true;
             return false;
         },1200);
-        context.runOnClient(c->{
-            var brain=villager(c.level).getBrain();
+        return context.computeOnClient(c->{
+            var selected=villager(c.level);
+            var brain=selected.getBrain();
             if(present) brain.setMemory(MemoryModuleType.JOB_SITE,GlobalPos.of(wrongDimension?Level.NETHER:c.level.dimension(),new BlockPos(2,-59,6)));
             else brain.eraseMemory(MemoryModuleType.JOB_SITE);
+            return new AnalyzerReturnProbe.Seed(c.level,selected);
         });
     }
     private static BlockLensConfig all(BlockLensConfig base,boolean enabled) {
