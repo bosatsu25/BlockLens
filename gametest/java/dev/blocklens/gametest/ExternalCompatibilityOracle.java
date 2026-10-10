@@ -107,6 +107,12 @@ final class ExternalCompatibilityOracle {
                     verifyShader(context, manifest, evidence);
                     copyEvidence("m3-visual", output);
                     copyEvidence("m5-pack-visual", output);
+                    if (profile.startsWith("shader-")) {
+                        SodiumTerrainOracle.verify(context, world);
+                        evidence.setProperty("sodiumTerrain", "true");
+                        verifyShader(context, manifest, evidence);
+                        copyEvidence("sodium-terrain", output);
+                    }
                 }
                 lifecycle.phase("world_close");
             }
@@ -177,8 +183,12 @@ final class ExternalCompatibilityOracle {
         try (var files = Files.list(source)) {
             for (Path path : files.toList()) {
                 String name = path.getFileName().toString();
-                if (name.endsWith(".png") || name.endsWith("-manifest.txt")) {
-                    require(Files.size(path) <= 4 * 1024 * 1024, "Visual evidence exceeds the bounded size");
+                boolean sodiumManifest = sourceName.equals("sodium-terrain")
+                        && name.equals("sodium-terrain-manifest.properties");
+                if (name.endsWith(".png") || name.endsWith("-manifest.txt") || sodiumManifest) {
+                    require(Files.isRegularFile(path) && !Files.isSymbolicLink(path)
+                            && Files.size(path) <= (sodiumManifest ? 16384 : 4 * 1024 * 1024),
+                            "Visual evidence exceeds the bounded size");
                     Files.copy(path, output.resolve(name), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
             }

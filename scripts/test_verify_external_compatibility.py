@@ -203,5 +203,170 @@ class ExternalEvidenceTest(unittest.TestCase):
                     evidence.collect_failure(root / "game", root / "diagnostics")
 
 
+    def sodium_fixture(self, directory):
+        self.rendering_fixture(directory, "true")
+        actual = self.base("shader-on")
+        actual.update(backend="opengl", shaderInUse="true", shaderOptionsVerified="true",
+                      m3Visual="true", m5ActivePackVisual="true", sodiumTerrain="true")
+        lock = evidence.read_lock()
+        actual.update(shaderPackSha256=lock["shader"]["sha256"], shaderPack=lock["shader"]["filename"],
+                      shaderProfile=lock["shader"]["profile"])
+        for mod in ("iris", "sodium"):
+            actual[f"mod.{mod}.sha256"] = lock["targets"]["26.3"][mod]["sha256"]
+        (directory / "external-compatibility-manifest.properties").write_text(
+            "".join(f"{key}={value}\n" for key, value in actual.items()))
+        native = {
+            "schema": "1", "minecraft": "26.3", "status": "passed", "scope": "sodium-terrain",
+            "captureMode": "fabric-test-capture", "sodiumVersion": "0.9.2+mc26.3", "imageCount": "15",
+            "minimumDifferencePixels": "80", "minimumRetentionPermille": "950", "colorDelta": "24",
+            "maskToleranceRadius": "2", "roiMinX": "90", "roiMaxX": "550", "roiMinY": "90",
+            "roiMaxY": "310", "observationLimit": "4096", "failedChecks": "", "stage": "stone-restored",
+        }
+        checks = ("originalIndexUnchanged", "activeNonCubeResource", "explicitBaselineEmission",
+                  "explicitRetainedModelEmission", "explicitHighlight", "explicitRestoration", "explicitBaseGeometry",
+                  "unsupportedBaseEmission", "unsupportedControl", "tagAbsentBaseline", "tagRetainedModelEmission",
+                  "tagHighlight", "tagBaseGeometry", "tagRemovedBaseEmission", "tagRemoval", "tagPreHideEmission",
+                  "tagFilterEmissionSuppressed", "tagFilterAir", "tagPhysicalStatePreserved", "tagRestoredEmission",
+                  "tagFilterRestoration", "resourceReloadEmission", "resourceReloadHighlight", "terrainBaselineEmission",
+                  "terrainVisible", "terrainEmissionSuppressed", "terrainHiddenAir", "terrainPhysicalStatePreserved",
+                  "terrainRestoredEmission", "terrainRestoration")
+        native.update({key: "true" for key in checks})
+        for name in ("explicitHighlight", "tagHighlight", "resourceReloadHighlight", "terrainVisible"):
+            native[name + "DifferentPixels"] = "100"
+        for name in ("explicitRestoration", "unsupportedControl", "tagRemoval", "tagFilterAir",
+                     "tagFilterRestoration", "terrainHiddenAir", "terrainRestoration"):
+            native[name + "DifferentPixels"] = "0"
+        for name in ("explicitBase", "tagBase"):
+            native.update({name + "Foreground": "100", name + "Retained": "100", name + "RetentionPermille": "1000"})
+        stages = ("air-control", "explicit-off", "explicit-on", "explicit-restored", "unsupported-off",
+                  "unsupported-on", "tagged-off", "tagged-on", "tag-removed", "tagged-filtered",
+                  "tagged-restored", "tagged-reloaded", "stone-off", "stone-hidden", "stone-restored")
+        wrapped = {"explicit-off", "explicit-on", "explicit-restored", "tagged-on", "tagged-filtered",
+                   "tagged-restored", "tagged-reloaded", "tag-pre-hide"}
+        png = (directory / "m5-pack-off.png").read_bytes()
+        for name in (*stages, "tag-pre-hide"):
+            calls = "0" if name == "air-control" else "2"
+            emitted = "0" if name in ("air-control", "tagged-filtered", "stone-hidden") else calls
+            native.update({name + ".visited": calls, name + ".completed": calls,
+                           name + ".emitted": emitted, name + ".expectedModel": emitted,
+                           name + ".saturated": "false", name + ".observationComplete": "true",
+                           name + ".expectedEmission": "true", name + ".preparedReplacement": str(name in wrapped).lower()})
+            if name != "tag-pre-hide":
+                filename = "sodium-" + name + ".png"
+                (directory / filename).write_bytes(png)
+                native[filename + ".sha256"] = hashlib.sha256(png).hexdigest()
+        self.write_sodium_manifest(directory, native)
+        return native
+
+    @staticmethod
+    def write_sodium_manifest(directory, native):
+        (directory / "sodium-terrain-manifest.properties").write_text(
+            "".join(f"{key}={value}\n" for key, value in native.items()))
+
+    def test_sodium_evidence_keeps_all_fifteen_new_frames_and_native_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            self.sodium_fixture(directory)
+            files = evidence.verify(directory, "26.3", "shader-on")
+            self.assertEqual(25, len(files))
+            self.assertEqual(15, sum(path.name.startswith("sodium-") and path.suffix == ".png" for path in files))
+            self.assertIn(directory / "sodium-terrain-manifest.properties", files)
+
+    def test_shader_rows_cannot_pass_without_sodium_native_assertions(self):
+        for key, value in (("status", "failed"), ("explicitRetainedModelEmission", "false"),
+                           ("terrainEmissionSuppressed", "false"), ("tagFilterEmissionSuppressed", None)):
+            with self.subTest(key=key), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                native = self.sodium_fixture(directory)
+                if value is None:
+                    del native[key]
+                else:
+                    native[key] = value
+                self.write_sodium_manifest(directory, native)
+                with self.assertRaises(ValueError):
+                    evidence.verify(directory, "26.3", "shader-on")
+
+    def test_sodium_manifest_booleans_do_not_override_missing_model_or_incomplete_filter_work(self):
+        cases = (("explicit-on.expectedModel", "0"), ("explicit-on.expectedModel", "1"),
+                 ("stone-hidden.completed", "0"), ("stone-hidden.emitted", "1"),
+                 ("stone-off.emitted", "0"), ("stone-restored.emitted", "0"),
+                 ("tagged-filtered.visited", "0"), ("tagged-on.saturated", "true"),
+                 ("explicit-on.visited", "4096"), ("tagged-on.expectedModel", "3"))
+        for key, value in cases:
+            with self.subTest(key=key, value=value), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                native = self.sodium_fixture(directory)
+                native[key] = value
+                self.write_sodium_manifest(directory, native)
+                with self.assertRaises(ValueError):
+                    evidence.verify(directory, "26.3", "shader-on")
+
+    def test_sodium_thresholds_native_metrics_and_image_hashes_are_enforced(self):
+        cases = (("minimumRetentionPermille", "900"), ("explicitHighlightDifferentPixels", "79"),
+                 ("terrainHiddenAirDifferentPixels", "80"), ("tagBaseRetained", "94"),
+                 ("explicitBaseRetentionPermille", "999"), ("roiMaxY", "300"),
+                 ("sodiumVersion", "0.9.3+mc26.3"), ("captureMode", "completed-native-frame"),
+                 ("sodium-explicit-on.png.sha256", "0" * 64))
+        for key, value in cases:
+            with self.subTest(key=key), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                native = self.sodium_fixture(directory)
+                native[key] = value
+                self.write_sodium_manifest(directory, native)
+                with self.assertRaises(ValueError):
+                    evidence.verify(directory, "26.3", "shader-on")
+
+    def test_sodium_missing_or_oversized_native_evidence_is_rejected(self):
+        for kind in ("manifest", "image", "oversized"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                self.sodium_fixture(directory)
+                manifest = directory / "sodium-terrain-manifest.properties"
+                if kind == "manifest":
+                    manifest.unlink()
+                elif kind == "image":
+                    (directory / "sodium-stone-hidden.png").unlink()
+                else:
+                    with manifest.open("a") as stream:
+                        stream.write("#" + "x" * 16384)
+                with self.assertRaises(ValueError):
+                    evidence.verify(directory, "26.3", "shader-on")
+
+    def test_failed_sodium_collection_is_fixed_bounded_and_never_acceptance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "game" / "sodium-terrain"
+            source.mkdir(parents=True)
+            native = self.sodium_fixture(source)
+            native.update(status="failed", terrainEmissionSuppressed="false")
+            self.write_sodium_manifest(source, native)
+            (source / "private-pack.zip").write_bytes(b"private")
+            destination = root / "diagnostics"
+            self.assertEqual(16, evidence.collect_failure(root / "game", destination))
+            self.assertEqual(15, len(list(destination.glob("sodium-*.png"))))
+            self.assertFalse((destination / "private-pack.zip").exists())
+            manifest = destination / "sodium-terrain-manifest.properties"
+            self.assertEqual("failed", evidence.properties(manifest)["status"])
+            self.assertIn(hashlib.sha256(manifest.read_bytes()).hexdigest() + "  " + manifest.name,
+                          (destination / "SHA256SUMS.txt").read_text())
+            self.assertIn("not acceptance evidence", (destination / "DIAGNOSTIC_STATUS.txt").read_text())
+
+    def test_failed_sodium_manifest_rejects_over_16_kib_and_symlinks(self):
+        for kind in ("oversized", "symlink"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                source = root / "game" / "sodium-terrain"
+                source.mkdir(parents=True)
+                manifest = source / "sodium-terrain-manifest.properties"
+                if kind == "oversized":
+                    manifest.write_bytes(b"x" * 16385)
+                else:
+                    private = root / "private"
+                    private.write_text("private")
+                    manifest.symlink_to(private)
+                with self.assertRaisesRegex(ValueError, "bounded|symlink"):
+                    evidence.collect_failure(root / "game", root / "diagnostics")
+
+
 if __name__ == "__main__":
     unittest.main()

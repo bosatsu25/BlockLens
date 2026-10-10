@@ -44,9 +44,12 @@ terrain models and no per-frame registry scan. Supported renderer/evidence bound
 including the exact Shader and Vulkan test matrix, are listed in
 [external compatibility](knowledge/current/external-compatibility.md).
 
-Sodium 0.9.2 uses a separate terrain mesher: the new ore extensions and terrain
-block filtering are currently unsupported on that path. The pinned Iris/Sodium
-shader tests cover the named M3/M5 visuals, not all 57 capabilities.
+Ore extensions and terrain block filtering also have an
+[optional Sodium adapter](knowledge/current/sodium-terrain-compatibility.md) for
+**0.9.2+mc26.1.2 / 0.9.2+mc26.2 / 0.9.2+mc26.3**, matched to the corresponding
+Minecraft version. Other versions skip this adapter. Dedicated native ore/filter
+probes supplement the pinned M3/M5 shader tests; the evidence covers these named
+paths and does not establish all 57 capabilities under shaders.
 
 ## Product direction
 
@@ -357,10 +360,10 @@ Verified support is intentionally evidence-bounded:
 - arbitrary third-party resource packs: **not universally claimed**
 - Iris/Sodium with Complementary Reimagined r5.9.3 LOW: **pinned three-version matrix and per-row evidence** in [external compatibility](knowledge/current/external-compatibility.md)
 - Minecraft 26.2 / 26.3 Vulkan on the recorded Mesa software driver: **M3/M5 fixtures verified**; hardware-driver performance is outside this evidence
-- Sodium ore extensions and terrain block filtering: **unsupported**; the shader fixtures do not establish these paths
+- Sodium ore extensions and terrain block filtering: **exact-version optional adapter**, with dedicated native emission/image controls in the six pinned Shader OFF/ON rows
 
 The exact final development commit, full normal gate and public matrix results are recorded in
-[PR #53](https://github.com/bosatsu25/BlockLens/pull/53). Uploaded private-pack execution remains open in #31.
+[the delivery record](knowledge/current/remaining-delivery.md) and linked PRs/issues. Uploaded private-pack execution remains open in #31.
 
 ## Release / redistribution audit
 

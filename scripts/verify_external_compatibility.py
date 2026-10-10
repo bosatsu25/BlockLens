@@ -16,6 +16,23 @@ DEFAULT_IMAGES = (
     "m3-all13-on.png", "m3-all13-reloaded.png", "m3-all13-off-active-pack.png",
     "m5-pack-off.png", "m5-pack-on.png", "m5-pack-air-control.png",
 )
+SODIUM_STAGES = (
+    "air-control", "explicit-off", "explicit-on", "explicit-restored", "unsupported-off",
+    "unsupported-on", "tagged-off", "tagged-on", "tag-removed", "tagged-filtered",
+    "tagged-restored", "tagged-reloaded", "stone-off", "stone-hidden", "stone-restored",
+)
+SODIUM_IMAGES = tuple(f"sodium-{stage}.png" for stage in SODIUM_STAGES)
+SODIUM_MANIFEST = "sodium-terrain-manifest.properties"
+SODIUM_CHECKS = (
+    "originalIndexUnchanged", "activeNonCubeResource", "explicitBaselineEmission",
+    "explicitRetainedModelEmission", "explicitHighlight", "explicitRestoration", "explicitBaseGeometry",
+    "unsupportedBaseEmission", "unsupportedControl", "tagAbsentBaseline", "tagRetainedModelEmission",
+    "tagHighlight", "tagBaseGeometry", "tagRemovedBaseEmission", "tagRemoval", "tagPreHideEmission",
+    "tagFilterEmissionSuppressed", "tagFilterAir", "tagPhysicalStatePreserved", "tagRestoredEmission",
+    "tagFilterRestoration", "resourceReloadEmission", "resourceReloadHighlight", "terrainBaselineEmission",
+    "terrainVisible", "terrainEmissionSuppressed", "terrainHiddenAir", "terrainPhysicalStatePreserved",
+    "terrainRestoredEmission", "terrainRestoration",
+)
 FAILURE_FILES = (
     "external-compatibility/external-compatibility-manifest.properties",
     "external-compatibility/external-lifecycle-diagnostics.txt",
@@ -23,11 +40,12 @@ FAILURE_FILES = (
     "m3-visual/m3-all13-off-active-pack.png", "m3-visual/m3-visual-manifest.txt",
     "m5-pack-visual/m5-pack-off.png", "m5-pack-visual/m5-pack-on.png",
     "m5-pack-visual/m5-pack-air-control.png", "m5-pack-visual/m5-pack-visual-manifest.txt",
+    *(f"sodium-terrain/{name}" for name in (*SODIUM_IMAGES, SODIUM_MANIFEST)),
 )
 
 
-def properties(path: Path) -> dict[str, str]:
-    if not path.is_file() or path.stat().st_size > 65536:
+def properties(path: Path, maximum_bytes: int = 65536) -> dict[str, str]:
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > maximum_bytes:
         raise ValueError("The bounded evidence manifest is missing")
     result = {}
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -43,6 +61,72 @@ def properties(path: Path) -> dict[str, str]:
 def require_value(evidence: dict, key: str, expected: str) -> None:
     if evidence.get(key) != expected:
         raise ValueError(f"Evidence {key} does not match the required {expected}")
+
+
+def bounded_number(evidence: dict[str, str], key: str, maximum: int) -> int:
+    value = evidence.get(key, "")
+    try:
+        number = int(value)
+    except ValueError as exception:
+        raise ValueError(f"Evidence {key} is not a bounded integer") from exception
+    if str(number) != value or not 0 <= number <= maximum:
+        raise ValueError(f"Evidence {key} is not a bounded integer")
+    return number
+
+
+def verify_sodium(directory: Path, minecraft: str, profile: str) -> Path:
+    manifest = directory / SODIUM_MANIFEST
+    native = properties(manifest, 16384)
+    expected = {
+        "schema": "1", "minecraft": minecraft, "status": "passed", "scope": "sodium-terrain",
+        "sodiumVersion": "0.9.2+mc" + minecraft, "imageCount": "15", "failedChecks": "",
+        "minimumDifferencePixels": "80", "minimumRetentionPermille": "950", "colorDelta": "24",
+        "maskToleranceRadius": "2", "roiMinX": "90", "roiMaxX": "550", "roiMinY": "90",
+        "roiMaxY": "310", "observationLimit": "4096", "stage": "stone-restored",
+        "captureMode": "completed-native-frame" if minecraft == "26.1.2" and profile == "shader-off"
+                       else "fabric-test-capture",
+    }
+    expected.update({key: "true" for key in SODIUM_CHECKS})
+    for key, value in expected.items():
+        require_value(native, key, value)
+    wrapped = {"explicit-off", "explicit-on", "explicit-restored", "tagged-on", "tagged-filtered",
+               "tagged-restored", "tagged-reloaded", "tag-pre-hide"}
+    hidden = {"tagged-filtered", "stone-hidden"}
+    for stage in (*SODIUM_STAGES, "tag-pre-hide"):
+        for key, value in {"saturated": "false", "observationComplete": "true", "expectedEmission": "true",
+                           "preparedReplacement": str(stage in wrapped).lower()}.items():
+            require_value(native, stage + "." + key, value)
+        visited, completed, emitted, selected = [bounded_number(native, stage + "." + key, 4095)
+                for key in ("visited", "completed", "emitted", "expectedModel")]
+        if completed != visited or not selected <= emitted <= completed:
+            raise ValueError(f"Sodium {stage} observation is incomplete or inconsistent")
+        if stage == "air-control":
+            valid = visited == emitted == selected == 0
+        elif stage in hidden:
+            valid = completed > 0 and emitted == selected == 0
+        else:
+            valid = completed > 0 and emitted > 0 and selected == emitted
+        if not valid:
+            raise ValueError(f"Sodium {stage} lacks completed native model emission evidence")
+    for key in ("explicitHighlight", "tagHighlight", "resourceReloadHighlight", "terrainVisible"):
+        if bounded_number(native, key + "DifferentPixels", 101200) < 80:
+            raise ValueError(f"Sodium {key} lacks the required image difference")
+    for key in ("explicitRestoration", "unsupportedControl", "tagRemoval", "tagFilterAir",
+                "tagFilterRestoration", "terrainHiddenAir", "terrainRestoration"):
+        if bounded_number(native, key + "DifferentPixels", 101200) >= 80:
+            raise ValueError(f"Sodium {key} image control differs")
+    for key in ("explicitBase", "tagBase"):
+        foreground = bounded_number(native, key + "Foreground", 101200)
+        retained = bounded_number(native, key + "Retained", foreground)
+        ratio = bounded_number(native, key + "RetentionPermille", 1000)
+        if foreground < 80 or ratio < 950 or ratio != retained * 1000 // foreground:
+            raise ValueError(f"Sodium {key} does not preserve base geometry")
+    for name in SODIUM_IMAGES:
+        image = directory / name
+        if image.is_symlink() or not image.is_file() or not 1000 < image.stat().st_size <= 4 * 1024 * 1024:
+            raise ValueError("Sodium rendered image is missing or exceeds bounds")
+        require_value(native, name + ".sha256", hashlib.sha256(image.read_bytes()).hexdigest())
+    return manifest
 
 
 def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
@@ -67,6 +151,7 @@ def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
         for mod in ("iris", "sodium"):
             require_value(evidence, f"mod.{mod}.sha256", lock["targets"][minecraft][mod]["sha256"])
         require_value(evidence, "shaderPackSha256", lock["shader"]["sha256"])
+        require_value(evidence, "sodiumTerrain", "true")
     if profile == "shader-on":
         require_value(evidence, "shaderOptionsVerified", "true")
         require_value(evidence, "shaderPack", lock["shader"]["filename"])
@@ -107,6 +192,9 @@ def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
         require_value(properties(directory / "m5-pack-visual-manifest.txt"), "externalSceneIsolated", "true")
         images = DEFAULT_IMAGES
         files += [directory / "m3-visual-manifest.txt", directory / "m5-pack-visual-manifest.txt"]
+        if profile.startswith("shader-"):
+            files.append(verify_sodium(directory, minecraft, profile))
+            images += SODIUM_IMAGES
     for name in images:
         path = directory / name
         if not path.is_file() or not 1000 < path.stat().st_size <= 4 * 1024 * 1024:
@@ -149,7 +237,8 @@ def collect_failure(game_directory: Path, destination: Path) -> int:
             raise ValueError("Failure diagnostic input must not contain a symlink")
         if not source.exists():
             continue
-        limit = 4 * 1024 * 1024 if source.suffix == ".png" else 65536
+        limit = (4 * 1024 * 1024 if source.suffix == ".png"
+                 else 16384 if source.name == SODIUM_MANIFEST else 65536)
         if not source.is_file() or source.stat().st_size > limit:
             raise ValueError("Failure diagnostic input is not a bounded regular file")
         if source.suffix == ".png":

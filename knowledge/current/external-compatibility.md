@@ -4,7 +4,7 @@ Status: **partial external coverage** for [Issue #31](https://github.com/bosatsu
 The pinned matrix below defines the experiments, with attempted-run evidence retained below.
 [PR #53](https://github.com/bosatsu25/BlockLens/pull/53) records the initial accepted matrix and
 merge. [The delivery record](remaining-delivery.md) and #31 also retain subsequent main failures
-and follow-up verification. The uploaded-pack and known Sodium boundaries keep #31 open.
+and follow-up verification. Uploaded private-pack native execution keeps #31 open.
 
 ## Scope and completion boundary
 
@@ -20,17 +20,21 @@ for three Resource Highlights. The reference-pack profile additionally checks ac
 priority and rendered base-model retention with the supplied archives. This does not claim that
 every shader feature, connected-texture rule, modded block or graphics driver has been tested.
 
-### Known Sodium boundary
+### Bounded Sodium terrain integration
 
 The pinned Sodium 0.9.2 terrain mesher bypasses vanilla `SectionCompiler.compile`
 on all three targets. This was confirmed from the published JAR call paths during
-independent review. BlockLens's new explicit/tagged ore-extension hook and existing
-terrain block-filter hook are attached to that vanilla compiler and have no Sodium
-adapter. Those two paths are therefore unsupported with this Sodium stack. Entity
-filter behavior is a separate path and is not proved by this code-level finding.
+independent review and was the unsupported boundary delivered in PR #53.
+The [optional Sodium terrain adapter](sodium-terrain-compatibility.md) now connects
+the existing explicit/tagged ore model selection and terrain block filtering at
+Sodium's model-rendering entry. Only exact matching `0.9.2+mc26.1.2`,
+`0.9.2+mc26.2` and `0.9.2+mc26.3` metadata pairs enable it. The six shader rows
+require separate native ore/filter images, actual emitted-model identity and
+restoration evidence. Entity filter behavior is a separate path and is not proved
+by the original compiler-bypass finding or by these terrain probes.
 The M3/M5 shader fixtures exercise existing model-bake wrappers, so passing those
 fixtures must not be presented as all-57-capability shader support. Issue #31 retains
-this renderer boundary alongside the pending uploaded-pack matrix.
+the exact version/rendering boundary alongside the pending uploaded-pack matrix.
 
 ## Pinned shader matrix
 
@@ -59,7 +63,10 @@ Shader acceptance requires:
 - `IrisApi.getInstance().isShaderPackInUse()` is true in the shader-ON world;
 - the active pack name and all 14 LOW profile options match, including after reload;
 - the shader-OFF control reports false with the same Iris/Sodium pair;
-- M3 rendered ON/reloaded/OFF and M5 active-pack OFF/ON/air controls pass.
+- M3 rendered ON/reloaded/OFF and M5 active-pack OFF/ON/air controls pass;
+- the separate Sodium fixture proves explicit/tagged ore emission, unchanged active
+  base models, terrain filtering, restoration and reload with its bounded observer
+  and image controls.
 
 The Iris probe is a compile-time selected, test-only source. The base source has no Iris dependency.
 Neither probe, nor the optional renderer JARs or shader assets, belongs to the product artifact.
@@ -234,16 +241,20 @@ python scripts/verify_external_compatibility.py --directory versions/mc26_3/buil
 ```
 
 The result verifier rejects wrong-version, partial, fallback-backend and inactive-shader manifests.
-For rendering profiles it also checks the six PNG headers/dimensions and required result files.
+Rendering profiles retain the six original M3/M5 PNGs. Each Shader OFF/ON row also requires
+the fifteen Sodium PNGs and its native manifest: 21 PNGs and 25 result files before
+SHA256SUMS. Vulkan and private-pack rows keep their six-image boundary. The verifier
+checks every required PNG header, dimensions and named result file.
 The separate Masa profile requires all typed read/absence/restoration assertions in the schematic
 manifest and the two pinned loaded-mod hashes. It has no image artifact. Every profile writes
 SHA256SUMS. Its collector copies an explicit allowlist only; original packs,
 mod JARs, configuration directories and arbitrary logs are not result artifacts.
 
 Failed public client rows also retain a bounded partial manifest and the six named M3/M5 PNGs,
-two metric manifests and the fixed external lifecycle diagnostic file, when created. This
-explicit ten-file allowlist rejects symlinks,
-limits images to 4 MiB at 640 by 360 and text to 64 KiB, and writes SHA-256 hashes plus
+two metric manifests and the fixed external lifecycle diagnostic file, when created. The
+fifteen named Sodium PNGs and its manifest extend that fixed allowlist to 26 possible
+inputs. The collector rejects symlinks, limits images to 4 MiB at 640 by 360,
+the Sodium manifest to 16 KiB and other text to 64 KiB, and writes SHA-256 hashes plus
 `DIAGNOSTIC_STATUS.txt` with `status=failed-or-incomplete`. The acceptance verifier rejects
 that diagnostic directory even if a copied native manifest says `passed`. This artifact is
 for diagnosis and cannot turn a failed row into passing evidence.

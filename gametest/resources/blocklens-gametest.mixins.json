@@ -6,7 +6,9 @@
     "FireTransformProbeMixin",
     "HeldTransformProbeMixin",
     "AnalyzerTickProbeMixin",
-    "SectionCompileAllocationProbeMixin"
+    "SectionCompileAllocationProbeMixin",
+    "SodiumTerrainProbeMixin",
+    "SodiumTerrainVisitProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

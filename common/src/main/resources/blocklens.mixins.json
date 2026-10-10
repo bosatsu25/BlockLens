@@ -1,6 +1,7 @@
 {
   "required": true,
   "package": "dev.blocklens.fabric.mixin",
+  "plugin": "dev.blocklens.fabric.BlockLensMixinPlugin",
   "compatibilityLevel": "JAVA_25",
   "client": [
     "HandheldSizeMixin",
@@ -13,7 +14,8 @@
     "SceneBlockMixin",
     "SceneBlockEntityMixin",
     "SceneEntityMixin",
-    "OreExtensionMixin"
+    "OreExtensionMixin",
+    "SodiumTerrainMixin"
   ],
   "injectors": {
     "defaultRequire": 1

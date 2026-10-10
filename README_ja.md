@@ -40,9 +40,12 @@ Litematica設計図との状態比較を表示します。設置・破壊・独�
 毎フレームのレジストリー走査は行いません。Shader・Vulkanを含む正確な試験条件と確認範囲は
 [外部互換性](knowledge/current/external-compatibility.md)に記録します。
 
-Sodium 0.9.2は独自の地形メッシュ生成を使うため、新しい鉱石拡張と地形ブロックの表示フィルターは
-現在その経路に対応していません。固定したIris/SodiumのShader試験はM3/M5の指定した表示を対象とし、
-57機能すべてのShader対応を示すものではありません。
+鉱石拡張と地形ブロックの表示フィルターには、対応するMinecraft版と一致する
+**Sodium 0.9.2+mc26.1.2 / 0.9.2+mc26.2 / 0.9.2+mc26.3**用の
+[任意の連携処理](knowledge/current/sodium-terrain-compatibility.md)もあります。
+対象外の版ではこの連携を無効にします。固定したM3/M5のShader試験に加え、
+鉱石とフィルター専用の実クライアント試験で表示・復元・実際のモデル出力を検証します。
+この結果は指定した描画経路の証拠であり、57機能すべてのShader対応を示すものではありません。
 
 ## 製品方針
 
@@ -353,9 +356,9 @@ gradle :versions:mc26_3:build :versions:mc26_3:versionSmokeContract :versions:mc
 - 任意third-party resource pack: **全面保証しない**
 - Iris/SodiumとComplementary Reimagined r5.9.3 LOW: **3版の固定した試験構成と各結果**を[外部互換性](knowledge/current/external-compatibility.md)に記録
 - Minecraft 26.2 / 26.3 Vulkan（記録したMesaソフトウェアドライバー）: **M3/M5の指定表示を検証済み**。実機GPUの性能を示す測定ではありません
-- Sodiumでの拡張鉱石と地形ブロックフィルター: **未対応**。Shaderの表示試験は、この2経路の動作を示しません
+- Sodiumでの拡張鉱石と地形ブロックフィルター: **指定した3組だけで有効になる任意連携**。Shader OFF/ONの6構成で専用のモデル出力・画像試験を行います
 
-最終開発コミットの通常CIと外部試験の結果は[PR #53](https://github.com/bosatsu25/BlockLens/pull/53)に記録します。
+最終開発コミットの通常CIと外部試験の結果は[実装記録](knowledge/current/remaining-delivery.md)と関連PR・Issueに記録します。
 添付された非公開パックの実クライアント試験は#31で継続しています。
 
 ## Release / Redistribution Audit
