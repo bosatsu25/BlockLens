@@ -16,13 +16,24 @@ Current size policy is **143,360 B (140 KiB)** reviewed development no-growth gu
 | --- | --- | --- |
 | Lightweight visual / comfort migration | [#42](https://github.com/bosatsu25/BlockLens/issues/42) | Completed by PR #46: CI #320 passed all four jobs for PR head `d4f313491ada47788bc46459e4f34a8f8396ef5a`, then merged as `5f992800cde79236d2d47fea304dbfe5831307dc`. That merge's main CI #321 allocation failure remains #43. Six controls, numeric details and three-version UI/render evidence preserve the superseded #32/#33 requirements. |
 | Bounded Analyzer | [#34](https://github.com/bosatsu25/BlockLens/issues/34) | Completed by PR #50, head `3df8117983c60db2baf1b9b194cccc305cce3039`, merged as `90105fb702b30a7619300cd668836a1314f4815b`. PR CI #328 and main CI #329 passed all four jobs on their first attempts. The three hosted analyzer artifacts contain 75 checksum-verified UI/render images and completion manifests. Five default-OFF analyzers and 19 numeric fields; no release claimed. See world-analyzers.md. |
-| Scene Filter | [#35](https://github.com/bosatsu25/BlockLens/issues/35) | Implemented in PR #51. Implementation head `d73aa17abe104e24458526a4f9cf9c06978346a8` passed CI #330 all four jobs on the first attempt, including full native UI/render/reload/disconnect verification for all three versions, reproducibility and unchanged budgets. Two default-OFF controls bring the development runtime to 53 capabilities. Independent review is clear; the documentation follow-up and merge remain gated by their exact head. See scene-filter.md. |
+| Scene Filter | [#35](https://github.com/bosatsu25/BlockLens/issues/35) | Completed by PR #51, latest head `8b1121044010d9a29a007b75ca2dd5964126549b` and CI #332, then merged as `fd9eefb2ce6ef06fd091e649dde9ace3b094a2ba`. The PR passed all four jobs; the merge's CI #333 allocation failure remains recorded under #43. Two default-OFF controls bring the development runtime to 53 capabilities. See scene-filter.md. |
 | Builder Assist / Inspector | [#36](https://github.com/bosatsu25/BlockLens/issues/36) | Read-only/advisory capabilities; optional Litematica boundary. |
 | Extension compatibility | [#37](https://github.com/bosatsu25/BlockLens/issues/37) | Explicit bounded registration/tags; no per-frame discovery. |
 | Masa / deprecation decisions | [#38](https://github.com/bosatsu25/BlockLens/issues/38) | Completed evaluation by PR #49 / CI #326: eight explicit scope exclusions, separate read-only #36 candidate, ChiseTweaks retained without deprecation or archival. |
 | External compatibility | [#31](https://github.com/bosatsu25/BlockLens/issues/31) | Representative shader-ON, third-party packs and Vulkan evidence. Default OpenGL success does not close this track. |
 
-Diagnostic implementation: [PR #45](https://github.com/bosatsu25/BlockLens/pull/45) and [PR #47](https://github.com/bosatsu25/BlockLens/pull/47) are merged. #43 remains OPEN after main CI #321 reproduced the 26.1.2 allocation failure. PR #47 adds bounded role/main-pass attribution and preserves failing samples; exact-head CI #322 and main CI #323 passed all four jobs on their first attempts. These passing runs do not identify or resolve the cause; guard values are unchanged.
+Diagnostic implementation: [PR #45](https://github.com/bosatsu25/BlockLens/pull/45) and [PR #47](https://github.com/bosatsu25/BlockLens/pull/47) are merged. #43 was reopened after main CI #321 reproduced the 26.1.2 allocation failure. PR #47 adds bounded role/main-pass attribution and preserves failing samples; exact-head CI #322 and main CI #323 passed all four jobs on their first attempts. These passing runs do not identify or resolve the cause; guard values are unchanged.
+
+[PR #52](https://github.com/bosatsu25/BlockLens/pull/52) defines the measured,
+test-only C2/foreground conformance condition while preserving all M8 thresholds
+and historical failures. Its CI #336 analyzer timeout exposed a separate
+test-fixture lifetime issue, repaired with identity-scoped replacement inputs
+and native regression controls; see [world-analyzers.md](world-analyzers.md#dimension-return-fixture-repair--pr-52).
+The current-head shared and three-version full clients remain the completion
+gate. Neither a focused experiment nor one successful version closes #43 or
+establishes a performance improvement for ordinary clients.
+The final PR-head and merged-main verification records and current issue state
+are maintained in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
 
 Issue #22 records delivered P0 only. Planned capabilities remain unimplemented until their own contracts, all-three-version evidence and PRs are complete. [#39](https://github.com/bosatsu25/BlockLens/issues/39) synchronizes these repository-owned status documents.
 

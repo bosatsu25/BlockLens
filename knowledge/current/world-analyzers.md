@@ -30,6 +30,38 @@ Numeric limits: debris radius 16–256, markers 8–128, interval 5–100 (verti
 
 Pure JUnit budget/geometry/unknown-data/nearest-selection/lifecycle/configuration contracts, selected coverage/PIT, all-three builds, actual rendered OFF/single/all evidence, loaded/missing job memory controls, dimension/disconnect cleanup, reload and numeric UI persistence, OFF/single/all operation/time/allocation observations, reproducible audited runtime JARs ≤153600 bytes, independent review and exact-head hosted CI. No compatibility claim for third-party shaders/Vulkan is made by these tests; #31 remains separate.
 
+## Dimension-return fixture repair — PR #52
+
+[CI #336](https://github.com/bosatsu25/BlockLens/actions/runs/38050485835), for PR head
+`afc4dd4b479d03d3f76703c524c9e9db747f759e`, failed the 26.1.2 analyzer return wait
+before reaching M8. Common quality and the 26.2/26.3 full clients passed. The
+bounded probe initially recorded all five physical/configuration predicates and
+the controlled villager memory. At timeout it recorded `markerMask=15`,
+`sameLevel=true`, `sameVillager=false`, and `memoryPresent=false`. The lookup uses
+the seeded entity ID, so these observations establish replacement of that
+client object within the same world, followed by loss of the synthetic input.
+They do not establish which upstream packet caused the replacement. The probe's
+`entities` value counts analyzer scan work, not the world entity population.
+
+The test-only `VillagerJobSiteFixture` scopes the controlled JOB_SITE input to
+one client-level identity, entity ID and UUID. An entity-load callback initializes
+each matching replacement object once. Repeated notifications for the same
+object do not restore erased memory. The callback has one active fixture and
+releases its world/entity references on scope exit, including failure paths.
+Both analyzer and scene-filter dimension-return captures use that scope; their
+600-tick waits, five-kind assertions and rendered-image checks remain intact.
+The production analyzer still reads only actual available client memory.
+
+The full native graph deliberately removes/adds a villager with the same ID,
+UUID and pose. It checks the initially absent replacement memory, initialization
+through the load event, real analyzer discovery, preserved same-instance erased
+memory, and absent memory/line after a replacement following fixture closure.
+CI requires `jobMemoryReplacement=true` and `jobMemoryFixtureClosed=true` in
+addition to the existing memory controls. Shared regression tests cover logical
+ID equality versus object identity, world identity, transient absence and failed
+initialization. No production JAR content or performance threshold changes are
+part of this repair. Current-head full three-version CI is required before merge.
+
 ## Local verification record
 
 Implementation adds five independent default-OFF analyzers and 19 numeric fields; the runtime catalog contains 51 capabilities. The original 46 identities, seven enabled defaults and model binding/target counts remain unchanged.

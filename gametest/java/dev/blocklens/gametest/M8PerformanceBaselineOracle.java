@@ -7,6 +7,7 @@ import dev.blocklens.fabric.MinecraftDecorationModelPlugin;
 import dev.blocklens.fabric.MinecraftTerrainInvalidator;
 import dev.blocklens.testing.GuardedEvidence;
 import dev.blocklens.testing.AllocationDeltas;
+import dev.blocklens.testing.M8EnvironmentSnapshot;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -55,6 +56,9 @@ final class M8PerformanceBaselineOracle {
 
         int originalFpsLimit = context.computeOnClient(client -> client.options.framerateLimit().get());
         boolean vsyncEnabled = context.computeOnClient(client -> client.options.enableVsync().get());
+        M8EnvironmentSnapshot environment = M8EnvironmentSnapshot.capture();
+        int renderDistance = context.computeOnClient(client -> client.options.renderDistance().get());
+        boolean ambientOcclusion = context.computeOnClient(client -> client.options.ambientOcclusion().get());
         try {
             Files.createDirectories(outputDir);
             verifyFailureEvidence(outputDir);
@@ -234,7 +238,8 @@ final class M8PerformanceBaselineOracle {
                     observedRetention,
                     offRenderedFrames, defaultRenderedFrames, onRenderedFrames,
                     reloadWithinGuard, rebuildWithinGuard, allocationWithinGuard,
-                    measurementFpsLimit, vsyncEnabled, allocationBreakdowns), () -> {
+                    measurementFpsLimit, vsyncEnabled, environment, renderDistance, ambientOcclusion,
+                    allocationBreakdowns), () -> {
                 require(reloadWithinGuard,
                         "M8 reload median exceeded coarse regression guard: " + reload.median());
                 require(rebuildWithinGuard,
@@ -560,7 +565,8 @@ final class M8PerformanceBaselineOracle {
             ModelRetention retention,
             long[] offRenderedFrames, long[] defaultRenderedFrames, long[] onRenderedFrames,
             boolean reloadWithinGuard, boolean rebuildWithinGuard, boolean allocationWithinGuard,
-            int measurementFpsLimit, boolean vsyncEnabled, RebuildMeasurement[][] allocationBreakdowns) throws IOException {
+            int measurementFpsLimit, boolean vsyncEnabled, M8EnvironmentSnapshot environment,
+            int renderDistance, boolean ambientOcclusion, RebuildMeasurement[][] allocationBreakdowns) throws IOException {
         String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
                 + "mode=m8-coarse-regression-guard\n"
                 + "reloadGuard=" + (reloadWithinGuard ? "passed" : "failed") + "\n"
@@ -586,8 +592,11 @@ final class M8PerformanceBaselineOracle {
                 + "fpsLimitMeaning=requested upper bound; actual frames are recorded separately\n"
                 + "testAfkTimerResetBeforeEachWindow=true\n"
                 + "vsyncEnabled=" + vsyncEnabled + "\n"
-                + "osFamily=" + osFamily() + "\n"
-                + "javaMajor=" + Runtime.version().feature() + "\n"
+                + environment.manifest()
+                + "javaMajor=" + environment.javaFeature() + "\n"
+                + "renderDistanceChunks=" + renderDistance + "\n"
+                + "ambientOcclusionEnabled=" + ambientOcclusion + "\n"
+                + "fullGraph=" + !"m8".equals(System.getProperty("blocklens.test.focus", "all")) + "\n"
                 + "allocationWindow=tick duration; rendered frame count varies\n"
                 + "offRenderedFrames=" + csv(offRenderedFrames) + "\n"
                 + "defaultRenderedFrames=" + csv(defaultRenderedFrames) + "\n"
@@ -654,14 +663,6 @@ final class M8PerformanceBaselineOracle {
             builder.append(values[i]);
         }
         return builder.toString();
-    }
-
-    private static String osFamily() {
-        String name = System.getProperty("os.name", "");
-        if (name.startsWith("Windows")) return "windows";
-        if (name.startsWith("Linux")) return "linux";
-        if (name.startsWith("Mac")) return "macos";
-        return "other";
     }
 
     private static String csv(int[] values) {

@@ -201,10 +201,9 @@ final class SceneFilterVisualOracle {
             require(context.computeOnClient(c->SceneFilterClient.readyForCurrentConfig()),"dimension did not rebuild filter snapshot");
             server.runCommand("execute in minecraft:overworld run tp @a 0 -56 12 180 25");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.OVERWORLD),1200);
-            context.waitFor(c->findVillager(c.level)!=null,600);
-            context.runOnClient(c->findVillager(c.level).getBrain().setMemory(MemoryModuleType.JOB_SITE,
-                    GlobalPos.of(c.level.dimension(),new BlockPos(2,-59,6))));
-            combined(context,output,"all53-dimension-return",allOff);
+            try (var returnFixture=VillagerJobSiteFixture.open(context,600)) {
+                combined(context,output,"all53-dimension-return",allOff);
+            }
             install(context,off);
             require(context.computeOnClient(c->!SceneFilterClient.blockFilterActive() && SceneFilterClient.compiledLookupCount()==0
                     && !SceneFilterClient.hiddenBlock(Blocks.STONE)),"OFF retained compiled filter state");
