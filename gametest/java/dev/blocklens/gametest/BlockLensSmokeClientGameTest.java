@@ -20,6 +20,10 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if ("m8".equals(System.getProperty("blocklens.test.focus", "all"))) {
+            verifyM8Only(context);
+            return;
+        }
         if ("scene".equals(System.getProperty("blocklens.test.focus","all"))) {
             verifySceneOnly(context);
             return;
@@ -65,6 +69,17 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             System.out.println("BLOCKLENS_ANALYZER_DISCONNECT nonemptyBeforeClose=true emptyAfterClose=true");
             System.out.println("BLOCKLENS_SCENE_DISCONNECT nonemptyBeforeClose=true emptyAfterClose=true");
         });
+    }
+
+    /** Opt-in experiment with fresh world history; never substitutes for the full graph. */
+    private static void verifyM8Only(ClientGameTestContext context) {
+        require(Boolean.getBoolean("blocklens.test.packagedRuntime"),"M8 experiments require packaged runtime");
+        context.runOnClient(client -> PackagedRuntimeOracle.verify());
+        System.out.println("BLOCKLENS_M8_FOCUSED nativeScope=m8 fullGraph=false");
+        try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
+            context.waitTicks(20);
+            M8PerformanceBaselineOracle.verify(context, singleplayer);
+        }
     }
 
     /** Opt-in local diagnosis only; hosted CI and the normal launcher always run the full graph. */

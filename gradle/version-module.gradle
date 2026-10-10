@@ -44,12 +44,28 @@ if (!(m8FpsLimit in ['30', '60', '120'])) {
     throw new GradleException('m8FpsLimit must be 30, 60 or 120')
 }
 def clientTestFocus = providers.gradleProperty('clientTestFocus').orElse('all').get()
-if (!(clientTestFocus in ['all', 'scene'])) {
-    throw new GradleException('clientTestFocus must be all or scene')
+if (!(clientTestFocus in ['all', 'scene', 'm8'])) {
+    throw new GradleException('clientTestFocus must be all, scene or m8')
+}
+def m8EscapeAnalysis = providers.gradleProperty('m8EscapeAnalysis').orElse('default').get()
+if (!(m8EscapeAnalysis in ['default', 'disabled'])) {
+    throw new GradleException('m8EscapeAnalysis must be default or disabled')
+}
+def m8Compilation = providers.gradleProperty('m8Compilation').orElse('default').get()
+if (!(m8Compilation in ['default', 'c1', 'c2-batch'])) {
+    throw new GradleException('m8Compilation must be default, c1 or c2-batch')
 }
 tasks.named('runClientGameTest') {
     systemProperty 'blocklens.test.m8.fpsLimit', m8FpsLimit
     systemProperty 'blocklens.test.focus', clientTestFocus
+    if (m8EscapeAnalysis == 'disabled') {
+        jvmArgs '-XX:-DoEscapeAnalysis'
+    }
+    if (m8Compilation == 'c1') {
+        jvmArgs '-XX:TieredStopAtLevel=1', '-XX:ReservedCodeCacheSize=240m'
+    } else if (m8Compilation == 'c2-batch') {
+        jvmArgs '-XX:-TieredCompilation', '-Xbatch', '-XX:ReservedCodeCacheSize=240m'
+    }
 }
 
 sourceSets {
@@ -137,6 +153,9 @@ tasks.named('processResources') {
 def verifyPackagedRuntime = providers.gradleProperty('verifyPackagedRuntime').orElse('false').get()
 if (!(verifyPackagedRuntime in ['true', 'false'])) {
     throw new GradleException('verifyPackagedRuntime must be true or false')
+}
+if (clientTestFocus == 'm8' && verifyPackagedRuntime != 'true') {
+    throw new GradleException('M8 experiments require verifyPackagedRuntime=true')
 }
 if (verifyPackagedRuntime == 'true') {
     tasks.named('runClientGameTest') {

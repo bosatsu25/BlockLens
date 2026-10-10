@@ -36,6 +36,8 @@ jobs:
         with:
           gradle-version: '9.5.1'
           cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - name: Test bounded failure-log sanitizer
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p test_sanitize_client_diagnostics.py -v
       - name: Run shared quality gate
         run: gradle --stacktrace :common:qualityGate
 
@@ -112,29 +114,8 @@ jobs:
           SDL_VIDEO_FORCE_EGL: ${{ matrix.module == 'mc26_3' && '1' || '0' }}
         run: >-
           xvfb-run -a gradle --stacktrace -PverifyPackagedRuntime=true
+          -Pm8Compilation=c2-batch -Pm8FpsLimit=60
           :versions:${{ matrix.module }}:runClientGameTest
-      - name: Collect failed Client GameTest diagnostics
-        if: failure()
-        shell: bash
-        run: |
-          set -euo pipefail
-          target="build/ci/client-gametest-failure-${{ matrix.minecraft }}"
-          mkdir -p "$target"
-          find "versions/${{ matrix.module }}" -type f \
-            \( -path '*/logs/latest.log' -o -path '*/m3-visual/*' \
-            -o -path '*/m5-dark-visual/*' -o -path '*/m5-pack-visual/*' \
-            -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
-            -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \
-            -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \) \
-            -exec cp --parents '{}' "$target" \;
-      - name: Upload failed Client GameTest diagnostics
-        if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: blocklens-client-gametest-failure-${{ matrix.minecraft }}
-          path: build/ci/client-gametest-failure-${{ matrix.minecraft }}
-          if-no-files-found: warn
-          retention-days: 14
       - name: Verify BlockLens model resources resolved Minecraft ${{ matrix.minecraft }}
         shell: bash
         run: |
@@ -516,3 +497,26 @@ jobs:
           archive: false
           if-no-files-found: error
           retention-days: 7
+      - name: Collect failed Client GameTest diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="build/ci/client-gametest-failure-${{ matrix.minecraft }}"
+          mkdir -p "$target"
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/sanitize-client-diagnostics.py '${{ matrix.module }}' > "$target/log-summary.txt"
+          find "versions/${{ matrix.module }}" -type f \
+            \( -path '*/m3-visual/*' \
+            -o -path '*/m5-dark-visual/*' -o -path '*/m5-pack-visual/*' \
+            -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
+            -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \
+            -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \) \
+            -exec cp --parents '{}' "$target" \;
+      - name: Upload failed Client GameTest diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-client-gametest-failure-${{ matrix.minecraft }}
+          path: build/ci/client-gametest-failure-${{ matrix.minecraft }}
+          if-no-files-found: warn
+          retention-days: 14
