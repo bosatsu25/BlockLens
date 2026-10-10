@@ -40,6 +40,10 @@ Litematica設計図との状態比較を表示します。設置・破壊・独�
 毎フレームのレジストリー走査は行いません。Shader・Vulkanを含む正確な試験条件と確認範囲は
 [外部互換性](knowledge/current/external-compatibility.md)に記録します。
 
+Sodium 0.9.2は独自の地形メッシュ生成を使うため、新しい鉱石拡張と地形ブロックの表示フィルターは
+現在その経路に対応していません。固定したIris/SodiumのShader試験はM3/M5の指定した表示を対象とし、
+57機能すべてのShader対応を示すものではありません。
+
 ## 製品方針
 
 **BlockLensが母艦です。** ChiseTweaksは移植元となる機能・設計アイデアの供給元であり、runtime dependencyにはしません。
@@ -188,7 +192,7 @@ runtime原則:
 
 ### 現在のsource hardening
 
-現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。46設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付パック同士の実ゲーム併用、元画面との画素単位の一致、シェーダー、Vulkanは未確認です。
+現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。57設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付パック同士の実ゲーム併用と元画面との画素単位の一致は未確認です。Shader・Vulkanの正確な試験結果は[今回の実装記録](knowledge/current/remaining-delivery.md)に記載します。
 
 config readの上限、同期一時ファイル書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum/instructionの再利用、wrapped modelごとのdescriptor arrayの2本化は実装済みです。歴史的v0.2.1のlocal artifactは **101,877 B / 101,913 B**で、当時の上限は**102,400 B**でした。現在の3版ゲートはレビュー済み開発基準**204,800 B**と公開上限**204,800 B**を使います。OFF/default/全機能のM8測定は粗い回帰ガードであり、観測されたCI割り当て量のばらつきは[#43](https://github.com/bosatsu25/BlockLens/issues/43)で追跡します。
 

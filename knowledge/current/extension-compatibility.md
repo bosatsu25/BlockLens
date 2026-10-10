@@ -29,6 +29,14 @@ Changed effective bindings or a new baked-model generation rebuild the retained 
 
 Only the pinned Fabric renderer API on Minecraft 26.1.2, 26.2 and 26.3 is the integration boundary. Named external mods/renderers, shader packs and Vulkan require separate evidence; Issue #31 remains the authority for those combinations.
 
+Sodium 0.9.2 is a known unsupported path for these extension targets. Review of the
+three pinned Sodium JARs confirms that its `ChunkBuilderMeshingTask` obtains models
+directly and bypasses `SectionCompiler.compile`, where `OreExtensionMixin` selects
+the retained extension wrapper. Consequently, the separate Iris/Sodium M3/M5 shader
+fixtures do not establish explicit-API or conventional-tag ore highlighting. They
+exercise the pre-existing vanilla model-bake wrappers. A Sodium extension adapter
+requires its own native evidence before that boundary can change.
+
 ## Verification contract
 
 Pure tests cover API version/identifier/capability validation, idempotence/conflict order, bounds, immutable freeze, material/ground selection and overflow isolation. Three native clients must prove explicit and conventional custom ore targets, missing/unsupported controls, tag add/remove/overflow/recovery, resource reload, preservation of an active non-cube base model, scene-filter composition and disconnect cleanup. Common quality gates, full native regressions, M8, reproducibility, packaged runtime provenance and the user-authorized 204800-byte release ceiling remain required. Reports must identify the exact tested commit and artifact bytes.

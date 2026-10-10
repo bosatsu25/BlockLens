@@ -442,7 +442,7 @@ jobs:
             done
           done
           manifest="$root/scene-filter-visual/scene-filter-visual-manifest.txt"
-          for check in generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all53Enabled all53Reload dimensionCleanup finalOffEmpty; do
+          for check in generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all57Enabled all57Reload dimensionCleanup finalOffEmpty; do
             grep -q "^$check=true$" "$manifest"
           done
           cp "$root/scene-filter-ui/"*.png "$target/ui/"
@@ -467,7 +467,7 @@ jobs:
           manifest="$root/builder-assist-manifest.txt"
           test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 4
           grep -q '^minecraft=${{ matrix.minecraft }}$' "$manifest"
-          for check in blockAndEntityInspector missCleared placementStateInputs readonlyPrediction independentTools coordinateBounds waterlogged occupiedUnavailable patternCounts optionalAbsentSafe compactControls referenceButtons panelConfigReadonly referenceReplacement reloadCleanup dimensionCleanup finalOffEmpty; do
+          for check in blockAndEntityInspector missCleared placementStateInputs readonlyPrediction independentTools coordinateBounds allEnabledCoexistence waterlogged occupiedUnavailable patternCounts optionalAbsentSafe compactControls referenceButtons panelConfigReadonly referenceReplacement reloadCleanup dimensionCleanup finalOffEmpty; do
             grep -q "^$check=true$" "$manifest"
           done
           grep -q '^placementFamilies=10$' "$manifest"

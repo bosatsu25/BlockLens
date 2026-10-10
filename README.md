@@ -44,6 +44,10 @@ terrain models and no per-frame registry scan. Supported renderer/evidence bound
 including the exact Shader and Vulkan test matrix, are listed in
 [external compatibility](knowledge/current/external-compatibility.md).
 
+Sodium 0.9.2 uses a separate terrain mesher: the new ore extensions and terrain
+block filtering are currently unsupported on that path. The pinned Iris/Sodium
+shader tests cover the named M3/M5 visuals, not all 57 capabilities.
+
 ## Product direction
 
 BlockLens is the product base. ChiseTweaks is a source of selected capabilities and design ideas; it is **not** a runtime dependency.
@@ -192,7 +196,7 @@ Runtime principles:
 
 ### Current source hardening
 
-The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 46 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is merged in PR #40. Supplied third-party pack combinations, source-screen pixel equivalence, shaders and Vulkan are not yet verified.
+The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 57 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is merged in PR #40. Supplied third-party pack combinations and source-screen pixel equivalence remain unverified; exact Shader and Vulkan results are tracked in [the delivery record](knowledge/current/remaining-delivery.md).
 
 Bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model are implemented. Historical v0.2.1 local artifacts measured **101,877 B / 101,913 B** under the then-current **102,400 B** ceiling. Current three-version gates use the reviewed **204,800 B** development baseline and **204,800 B** release ceiling. OFF/default/all-capability M8 measurements remain coarse regression guards; observed CI allocation variability is tracked in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
 

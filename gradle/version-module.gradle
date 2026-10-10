@@ -85,6 +85,7 @@ tasks.named('runClientGameTest') {
     systemProperty 'blocklens.test.external.profile', externalProfile
     if (externalProfile != 'none') {
         File prepared = rootProject.file(externalDirectory)
+        def launchDirectory = loom.runs.named('clientGameTest').flatMap { it.runDirectory }
         systemProperty 'blocklens.test.external.directory', prepared.absolutePath
         if (blockLensMinecraftVersionValue != '26.1.2') {
             args '--graphicsBackend', externalProfile == 'vulkan' ? 'VULKAN' : 'OPENGL'
@@ -93,10 +94,13 @@ tasks.named('runClientGameTest') {
             if (externalProfile == 'vulkan' && blockLensMinecraftVersionValue == '26.1.2') {
                 throw new GradleException('The Vulkan compatibility matrix starts at Minecraft 26.2')
             }
+            // Loom assigns JavaExec.workingDir inside exec(), after doFirst actions.
+            // Resolve the same public run-directory provider before staging launch inputs.
+            File gameDirectory = launchDirectory.get().asFile
             for (String folder : ['config', 'shaderpacks', 'resourcepacks']) {
                 copy {
                     from new File(prepared, folder)
-                    into new File(workingDir, folder)
+                    into new File(gameDirectory, folder)
                 }
             }
         }

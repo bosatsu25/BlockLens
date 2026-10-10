@@ -18,6 +18,18 @@ for three Resource Highlights. The reference-pack profile additionally checks ac
 priority and rendered base-model retention with the supplied archives. This does not claim that
 every shader feature, connected-texture rule, modded block or graphics driver has been tested.
 
+### Known Sodium boundary
+
+The pinned Sodium 0.9.2 terrain mesher bypasses vanilla `SectionCompiler.compile`
+on all three targets. This was confirmed from the published JAR call paths during
+independent review. BlockLens's new explicit/tagged ore-extension hook and existing
+terrain block-filter hook are attached to that vanilla compiler and have no Sodium
+adapter. Those two paths are therefore unsupported with this Sodium stack. Entity
+filter behavior is a separate path and is not proved by this code-level finding.
+The M3/M5 shader fixtures exercise existing model-bake wrappers, so passing those
+fixtures must not be presented as all-57-capability shader support. Issue #31 retains
+this renderer boundary alongside the pending uploaded-pack matrix.
+
 ## Pinned shader matrix
 
 Primary release metadata was retrieved on 2026-10-10 UTC from the author's Modrinth projects.

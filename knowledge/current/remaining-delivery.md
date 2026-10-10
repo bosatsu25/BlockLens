@@ -9,7 +9,7 @@ The user requested implementation, review and merge of the remaining #36, #37 an
 That baseline contains 53 controls and measured runtime JARs of
 141298 / 141566 / 141628 bytes for 26.1.2 / 26.2 / 26.3.
 
-On **2026-10-11**, the user explicitly replaced the 150 KiB requirement with
+On **2026-10-10 UTC (2026-10-11 JST)**, the user explicitly replaced the 150 KiB requirement with
 **200 KiB (204800 bytes)** and requested completion through merge. Both development
 and release size gates now enforce that accepted ceiling. The source-pack absolute
 ceiling remains 1183432 bytes. Historical 140/150 KiB measurements remain intact;
@@ -59,3 +59,26 @@ Final completion requires the exact PR head's normal and advertised external CI 
 independent review, merge at that head, and verification of the resulting main workflow.
 Issue/PR delivery records carry those exact immutable commit and CI links. The published
 release remains v0.2.2 until a separate release decision changes its version.
+
+## Initial hosted verification and corrections
+
+[PR #53](https://github.com/bosatsu25/BlockLens/pull/53) first ran at
+`d9d0c8a208ee94e27ebf0e2e9d9e1adc783fde04`.
+[CI #341](https://github.com/bosatsu25/BlockLens/actions/runs/38069083325) passed
+the common JUnit/JaCoCo/PIT gate (414/429 killed mutations, 97%) and all three
+build, runtime audit and clean-rebuild reproducibility steps. Initial runtime sizes
+were 168534 / 168863 / 168930 bytes in target order. The real-client graph stopped
+in all three versions at the responsive settings oracle's obsolete action-button
+count. The oracle now includes the four Builder actions and retains its actual
+keyboard reachability and viewport-bound assertions. The all-capabilities Scene
+Filter fixture and its evidence names also move from 53 to the current 57 controls;
+the original capability identities remain unchanged.
+
+[External CI #1](https://github.com/bosatsu25/BlockLens/actions/runs/38069083342)
+passed all three actual Masa integrations and both supported Vulkan rows. Its six
+Shader rows failed before visual testing because prepared files were copied to
+JavaExec's preliminary working directory, before Loom assigned the client run
+directory in its task action. Preparation now targets the configured Loom run
+directory directly. Actual shader activation, dependency hashes and rendered visual
+assertions remain required. These initial failures are retained as failed evidence;
+they are not passing completion results for the full delivery.
