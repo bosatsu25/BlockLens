@@ -231,4 +231,23 @@ final class M8PerformanceBaselineContractTest {
             from = index + needle.length();
         }
     }
+
+    @Test void allocationBreakdownsUseFixedRolesAndPrimaryEvidenceOnly() throws IOException {
+        String oracle=Files.readString(root().resolve("gametest/java/dev/blocklens/gametest/M8PerformanceBaselineOracle.java"));
+        String probe=Files.readString(root().resolve("gametest/java/dev/blocklens/gametest/M8FrameTimeProbe.java"));
+        String helper=Files.readString(root().resolve("test-support/java/dev/blocklens/testing/AllocationDeltas.java"));
+        assertTrue(oracle.contains("allocationBreakdownEnabled=true"));
+        assertTrue(oracle.contains("rawJfrRecording=false"));
+        assertTrue(oracle.contains("allocationRoleOrder=render,chunk,worker,test,other"));
+        assertTrue(oracle.contains("manifest += allocationBreakdown(allocationBreakdowns)"));
+        assertTrue(oracle.contains("ids.length <= AllocationDeltas.MAX_THREADS"));
+        assertTrue(oracle.indexOf("AllocationSnapshot before = captureAllocation()")
+                < oracle.indexOf("M8FrameTimeProbe.beginAllocationCapture()"));
+        assertTrue(oracle.indexOf("long[] mainPassAllocation = M8FrameTimeProbe.endAllocationCapture()")
+                < oracle.indexOf("AllocationSnapshot after = captureAllocation()"));
+        assertTrue(probe.contains("getCurrentThreadAllocatedBytes()"));
+        assertTrue(helper.contains("MAX_THREADS=512"));
+        assertFalse(probe.contains("jdk.jfr"));
+        assertFalse(oracle.contains("jdk.jfr"));
+    }
 }
