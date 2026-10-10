@@ -1,6 +1,6 @@
 # Bounded client scene filters
 
-Status: #35 implemented, independently reviewed and verified by three-version hosted CI; PR #51 merge pending.
+Status: #35 implemented, independently reviewed and verified by three-version hosted CI; [PR #51](https://github.com/bosatsu25/BlockLens/pull/51) is merged. The optional Sodium terrain boundary is documented below.
 
 ## Source and scope
 
@@ -15,6 +15,15 @@ The details screen edits one selected list and mode in the main screen's draft. 
 Compile only the configured IDs through direct registry lookup, with at most 2048 ID resolutions (4096 registry operations) on a relevant configuration/world generation change. Publish immutable typed sets; normal renderer calls perform membership tests, with no world scan or per-frame registry enumeration. OFF and a published NONE generation use an immediate false path. A tiny inactive-generation guard precedes per-block membership work. Enabled rendering retains the last published generation until client-tick synchronization; unrelated entity edits and equivalent reloaded options must not expose a previously filtered block between config publication and terrain invalidation. Changed block rules are then published and terrain invalidated on that tick. OFF bypasses immediately; analyzer overlays retain the separate current-generation guard. The published state retains no entities, positions or world data. Join/leave/dimension transitions discard the generation and rebuild from current configuration; reload and block-rule changes invalidate retained terrain through the existing version adapter. Renderer refresh is required and cannot be disabled.
 
 The world SectionCompiler consumes INVISIBLE for filtered models; pure BlockState and reload-time model classification are unchanged. Filtered block-entity extraction returns no state. World entity extraction returns a fresh empty invisible INTERACTION state, with no inherited name, shadow, leash or glowing data; the local player bypasses this path. 26.1.2 hooks LevelRenderer; 26.2/26.3 hook LevelExtractor. The latter block-entity signature adds a boolean; adapters remain thin.
+
+The [optional Sodium terrain adapter](sodium-terrain-compatibility.md) applies the
+same published block membership before Sodium emits a terrain model. It is bounded
+to the three exact matching Sodium 0.9.2/Minecraft metadata pairs and skips other
+versions. Its native controls include visible/hidden/restored vanilla stone and
+tagged ore with the highlight enabled, actual emission observations, and unchanged
+physical block state. Existing invalidation reaches Sodium; no additional cache or
+renderer refresh path is introduced. This terrain evidence makes no new claim about
+external entity or block-entity extraction.
 
 This follows the source model boundary: fluids, waterlogged-fluid rendering and solid occlusion are retained. Hiding a solid does not reveal geometry culled behind it. Inventory item models, collisions, lighting, server state and game interactions are unchanged. Filtered targets also suppress BlockLens's corresponding analyzer markers during bounded tick inspection; beacon base interpretation still uses physical world state. Entity filtering suppresses villager link candidates. Changing filters clears previously published analyzer markers before another pass, so additional overlays do not remain after their target is hidden.
 

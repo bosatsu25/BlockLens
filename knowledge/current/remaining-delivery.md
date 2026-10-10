@@ -30,6 +30,9 @@ its actual artifact size, SHA-256, clean-rebuild reproducibility and source-clas
   active-base terrain models composed with existing Resource controls and Scene Filter.
 - [External compatibility](external-compatibility.md): byte-pinned Shader ON/OFF,
   Masa and Vulkan profiles, actual backend/shader checks and strict result collection.
+- [Sodium terrain integration](sodium-terrain-compatibility.md): one optional shared
+  adapter for the three exact Sodium 0.9.2 pairs, reusing bounded ore model selection
+  and block filtering, with dedicated native emission and image controls.
 
 The compiled catalog is 57 controls, preserving the prior 53 identities and defaults
 and the frozen original 37-capability source contract. No custom server protocol,
@@ -211,7 +214,64 @@ now requires an external-only 52-cell clear and a native check for exactly the t
 original targets plus 49 AIR cells before capture. Strict artifact verification
 requires the resulting isolation flag. Real temporary-artifact regressions first
 reproduced acceptance of missing/false isolation flags, then passed after the verifier
-change. All **55** local Python tests and all three exact Minecraft API compilations pass.
+change. At that stage, all **55** local Python tests and all three exact Minecraft API compilations passed.
 The runtime code, normal/M8 scene, capture path, shader settings, metric and 200 KiB
-ceilings are unchanged. Fresh follow-up PR and resulting main gates remain required;
-their immutable workflow links and final Issue states record completion.
+ceilings were unchanged. Fresh follow-up PR and resulting main gates remained required;
+their accepted outcomes are recorded in the following section.
+
+## Accepted scene-isolation follow-up
+
+[PR #54](https://github.com/bosatsu25/BlockLens/pull/54) passed
+[normal CI #348](https://github.com/bosatsu25/BlockLens/actions/runs/38076555618)
+and [external #8](https://github.com/bosatsu25/BlockLens/actions/runs/38076555580)
+at `652f937d20a29f5dc3a1d1a30a04a96c88bb9dd1`. All four normal jobs and eleven
+external rows passed. Every external M5 row retained 1000/1000; all 24 fresh M5
+frames were reviewed after their hashes were verified.
+
+The signed squash merge `a1cf4388ecbf5641a121ca7b088c03d9e27536d8` preserves
+that accepted tree. Resulting [main CI #349](https://github.com/bosatsu25/BlockLens/actions/runs/38077475970)
+passed 4/4, and [main external #9](https://github.com/bosatsu25/BlockLens/actions/runs/38077475947)
+passed 11/11. All six fresh normal runtime/M8 artifacts, eleven external ZIPs and
+78 internal hashes were independently verified. Every actual 52-cell scene guard
+preceded measurement. Seven M5 rows retained 1000/1000; 26.2 Shader ON retained
+1383/1384, or 999/1000. All three Masa lifecycles closed normally, and all M8 and
+normal cleanup checks passed with unchanged conditions. The three runtime JARs
+remain 168534 / 168863 / 168930 bytes.
+
+Actual [Release #109](https://github.com/bosatsu25/BlockLens/actions/runs/38078217849)
+verified source CI #349 and this exact main head, detected existing v0.2.2, and
+skipped publication. The release and its three asset IDs, sizes and digests are
+unchanged. This completes the fixture-isolation repair; the subsequent optional
+Sodium terrain adapter has its own current-head native and normal merge gates.
+
+## Sodium regression before the adapter
+
+[PR #55](https://github.com/bosatsu25/BlockLens/pull/55) first published only the
+eight test-harness and collector files at
+`acdcd8bc23024abfbe8648d9153a16b2ba15e96a`; the runtime remained identical to the
+accepted PR #54 main. [External #10](https://github.com/bosatsu25/BlockLens/actions/runs/38078916644)
+completed with the intended failures in all six pinned Shader OFF/ON rows, while
+the three Masa and two Vulkan rows passed. Each shader row completed the original
+M3/M5 checks and all fifteen new Sodium captures before its final aggregated
+missing-path assertion. No observation-completion, saturation, restoration or
+unsupported-control failure interrupted that sequence.
+
+In all three Shader-OFF rows, explicit and tagged highlighting changed zero pixels.
+The actual renderer emitted the original model once per observed target call while
+the required retained model was selected zero times. The tagged target still
+remained after filtering (350 pixels different from AIR), as did ordinary stone
+(944 pixels different from AIR). Both visible/restored controls and the AIR fixture
+were preserved. The original native failures, bounded manifests, images and hashes
+remain evidence of the missing integration; they are never accepted as successful
+compatibility results.
+
+The subsequent runtime change connects the existing model and filter contracts at
+the byte-verified Sodium entry described in the
+[adapter specification](sodium-terrain-compatibility.md). Independent reviews covered
+the production adapter, exact-version gate, native probes and strict collector.
+The pinned Mixin engine successfully transformed the original classes for all three
+versions, both with the observer alone and with the adapter (six combinations).
+That scoped bytecode check proves injection signatures and ordering only. Actual
+packaged Fabric/Iris/Sodium execution, current-head normal and external gates, and
+the resulting main gates remain required; PR #55 and the delivery issues record
+their immutable outcomes.

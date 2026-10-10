@@ -58,4 +58,5 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 - [Builder Assist and Inspector](current/builder-assist.md) — four independent advisory tools, session references and exact optional Masa pairs.
 - [Bounded ore extensions](current/extension-compatibility.md) — versioned registration, synchronized tags and retained terrain-model limits.
 - [External compatibility](current/external-compatibility.md) — exact Shader/Masa/Vulkan matrix, private pack evidence and actual-backend checks.
+- [Optional Sodium terrain adapter](current/sodium-terrain-compatibility.md) — exact version gating, retained ore models, block-filter precedence and native emission/image controls.
 - [Remaining delivery and revised size contract](current/remaining-delivery.md) — user-authorized 200 KiB limit, preserved gates and evidence links.

@@ -2,7 +2,7 @@
 
 Status: **implemented with three-version native evidence** in
 [PR #53](https://github.com/bosatsu25/BlockLens/pull/53), within the standard Fabric
-renderer boundary below. Exact commits, quality results and artifact sizes are in
+renderer boundary below, with an optional exact-version Sodium adapter documented separately. Exact commits, quality results and artifact sizes are in
 [remaining-delivery.md](remaining-delivery.md); [Issue #37](https://github.com/bosatsu25/BlockLens/issues/37)
 records final merge completion.
 
@@ -31,15 +31,16 @@ Explicit registrations are frozen at the first model bake. Both explicit and con
 
 Changed effective bindings or a new baked-model generation rebuild the retained extension wrappers and invalidate terrain. Equivalent tag updates leave them intact. Removing a tag restores the base model for its conventional targets while explicit targets remain active; resource reload rebuilds from the new active base; disconnect releases tag and model snapshots. The frozen explicit identifier declarations are session-wide and are resolved again for the next world. Scene-filter suppression remains earlier in section compilation and retains precedence over emitted geometry.
 
-Only the pinned Fabric renderer API on Minecraft 26.1.2, 26.2 and 26.3 is the integration boundary. Named external mods/renderers, shader packs and Vulkan require separate evidence; Issue #31 remains the authority for those combinations.
+The pinned Fabric renderer API on Minecraft 26.1.2, 26.2 and 26.3 is the standard integration boundary. Named external mods/renderers, shader packs and Vulkan require separate evidence; Issue #31 remains the authority for those combinations.
 
-Sodium 0.9.2 is a known unsupported path for these extension targets. Review of the
-three pinned Sodium JARs confirms that its `ChunkBuilderMeshingTask` obtains models
-directly and bypasses `SectionCompiler.compile`, where `OreExtensionMixin` selects
-the retained extension wrapper. Consequently, the separate Iris/Sodium M3/M5 shader
-fixtures do not establish explicit-API or conventional-tag ore highlighting. They
-exercise the pre-existing vanilla model-bake wrappers. A Sodium extension adapter
-requires its own native evidence before that boundary can change.
+The three pinned Sodium 0.9.2 JARs bypass `SectionCompiler.compile`; this was the
+unsupported boundary in PR #53. The [optional Sodium terrain adapter](sodium-terrain-compatibility.md)
+selects the same retained wrapper at Sodium's actual terrain model-rendering entry
+and preserves block-filter precedence. It is enabled only for the exact matching
+Minecraft/Sodium metadata pairs listed there. Its dedicated six-row native probes
+cover explicit and conventional targets, actual emitted model identity, active-base
+retention, removal, filtering, restoration and reload. M3/M5 evidence alone still
+does not establish ore-extension behavior or all-57-capability shader support.
 
 ## Verification contract
 
