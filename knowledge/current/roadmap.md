@@ -1,29 +1,52 @@
 # BlockLens Current Roadmap
 
-Status: **M0-M9 complete / v0.2.0 published / post-release stability hardening locally verified**
+Status: **M0-M9 and P0 complete / v0.2.2 published / three-version main verified**
+
+## Current release and development boundary
+
+Latest published release: [v0.2.2](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2), target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`. It ships 40 capabilities for **26.1.2 / 26.2**, with artifacts **102,607 B / 102,644 B**. Optional Mod Menu delivery (#27 / PR #30) is complete.
+
+Current main additionally contains the category-based settings redesign (PR #40) and **26.3** support (PR #41). [Main CI #313](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404) verified merge `d91226c14f07c999256fc620b722a874be99958c`: common quality and all three real-client/build/artifact jobs succeeded on the first attempt. The settings artifacts contain ten English/Japanese screenshots per version. These merged changes have not been published as a new release.
+
+Current size policy is **113,664 B (111 KiB)** reviewed development no-growth guard, **153,600 B (150 KiB)** release ceiling and **1,183,432 B** absolute ceiling. The release ceiling provides headroom; it is not a growth target. A new baseline requires review and evidence. Older 100 KiB limits and artifact measurements below are historical release evidence.
+
+## Remaining implementation graph
+
+| Track | Issue | Dependency and completion boundary |
+| --- | --- | --- |
+| Lightweight visual / comfort migration | [#42](https://github.com/bosatsu25/BlockLens/issues/42) | All requirements from #32/#33 retained; both originals are superseded, not implemented. Bright Chest needs renderer-path discovery first. |
+| Bounded Analyzer | [#34](https://github.com/bosatsu25/BlockLens/issues/34) | Loaded-world inspection engine with radius/marker/update budgets; distinct from ordinary Resource Highlight. |
+| Scene Filter | [#35](https://github.com/bosatsu25/BlockLens/issues/35) | Reversible client rendering filters; separate ownership from Analyzer and Builder Assist. |
+| Builder Assist / Inspector | [#36](https://github.com/bosatsu25/BlockLens/issues/36) | Read-only/advisory capabilities; optional Litematica boundary. |
+| Extension compatibility | [#37](https://github.com/bosatsu25/BlockLens/issues/37) | Explicit bounded registration/tags; no per-frame discovery. |
+| Masa / deprecation decisions | [#38](https://github.com/bosatsu25/BlockLens/issues/38) | Per-integration value and compatibility decisions; deprecation only after parity evidence. |
+| External compatibility | [#31](https://github.com/bosatsu25/BlockLens/issues/31) | Representative shader-ON, third-party packs and Vulkan evidence. Default OpenGL success does not close this track. |
+| M8 diagnostic stability | [#43](https://github.com/bosatsu25/BlockLens/issues/43) | Preserve failing raw samples and investigate observed CI allocation variability; thresholds stay unchanged. |
+
+Issue #22 records delivered P0 only. Planned capabilities remain unimplemented until their own contracts, all-three-version evidence and PRs are complete. [#39](https://github.com/bosatsu25/BlockLens/issues/39) synchronizes these repository-owned status documents.
 
 ## Cross-cutting product rules
 
 Every future change must preserve, unless deliberately revised with evidence:
 
-- Minecraft **26.1.2** and **26.2** support
+- Minecraft **26.1.2**, **26.2** and **26.3** support in current main
 - the frozen original **37-capability source contract** as a permanent regression boundary
 - additive post-v0.1 capabilities may expand the current runtime without rewriting that historical source contract
 - client-only behavior
 - Java **25+**
-- dual-version real-client verification
+- three-version real-client verification
 - reproducible runtime artifacts
 - privacy/residue checks
 - current JUnit / JaCoCo / PIT thresholds without silent relaxation
 - v0.1.0 historical icon-inclusive baseline: **95,333 B**
 - published v0.2.0 cross-platform baseline: **96,257 B**
-- current reviewed source no-growth baseline: **101,913 B**
-- **100 KiB** release budget
+- current reviewed source no-growth baseline: **113,664 B**
+- **150 KiB** release ceiling
 - source-pack **<50%** absolute requirement
 
 Performance and artifact size remain continuous gates rather than deferred cleanup tasks.
 
-## Milestone summary
+## Historical milestone summary
 
 | Milestone / phase | Status | Result |
 | --- | --- | --- |
@@ -99,7 +122,7 @@ Original v0.1 source contract:
 - dark-area framebuffer evidence
 - deterministic active-resource-pack preservation fixture
 
-Remaining external compatibility work is deliberately separate and remains tracked in Issue #5:
+Remaining external compatibility work is deliberately separate and tracked in Issue #31 (the successor to completed #5):
 
 - representative shader-ON support before claiming shader support
 - broader third-party resource-pack matrix
@@ -227,9 +250,9 @@ Published v0.2.0 artifacts:
 - Release: **#31 / `34802548055` — GREEN**
 - release target: `b440d43904e2a93236549efc571b7cc127622352`
 
-The release-era **96,257 B** baseline remains historical v0.2.0 evidence. The 100 KiB release ceiling is unchanged.
+The release-era **96,257 B** baseline and 100 KiB release ceiling remain historical v0.2.0 evidence; current policy is stated above.
 
-## Post-v0.2.0 stability and performance hardening
+## Historical post-v0.2.0 stability and performance hardening
 
 The current source adds the bounded responsive settings screen, crash-safe config persistence, safe lazy publication, hot-path instruction/enum reuse, compact retained descriptor arrays, all-40 M8 evidence, and durable failure artifacts. Local dual-version Client GameTest is GREEN.
 
@@ -237,7 +260,7 @@ Measured local runtime artifacts are **101,877 B (26.1.2) / 101,913 B (26.2)**. 
 
 ## P1-P5 — Next consolidation phases ⏳
 
-Planned in Issue #22 after the published P0 baseline:
+The historical P1-P5 scope is now tracked by #42 and #34-#38; #22 is closed for delivered P0:
 
 - **P1:** Glass Highlight, Kelp Highlight, Bright Concrete; evaluate Bright Chest separately
 - **P2:** Low Fire, Handheld Size
@@ -249,10 +272,10 @@ Automation remains outside product scope unless deliberately reconsidered later.
 
 ## Compatibility track
 
-The following remain non-release-blocking relative to the verified v0.2.0 support boundary and are tracked separately:
+The following remain outside the verified default OpenGL support boundary and are tracked in #31:
 
 - representative shader-ON verification
 - broader third-party resource-pack compatibility evidence
-- Minecraft 26.2 Vulkan investigation before stable support is claimed
+- Minecraft 26.2 / 26.3 Vulkan investigation before support is claimed
 
 Do not reinterpret those unchecked external combinations as regressions in the verified default/shader-OFF OpenGL path.
