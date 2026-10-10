@@ -40,6 +40,7 @@ final class SupportedVersionsContractTest {
         assertTrue(ci.contains(":versions:${{ matrix.module }}:runClientGameTest"));
         assertTrue(ci.contains("Collect settings UI visual evidence"));
         assertTrue(ci.contains("Expected exactly ten settings UI screenshots"));
+        assertTrue(ci.contains("SDL_VIDEO_FORCE_EGL: ${{ matrix.module == 'mc26_3' && '1' || '0' }}"));
     }
 
     @Test

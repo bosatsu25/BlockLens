@@ -35,6 +35,8 @@ Diagnosis found that Mojang's official 26.3 launch metadata requires -XX:StackSh
 
 Per-version client results after this fix, current-head CI and screenshots must be checked on the pull request; an earlier SHA does not close these gates. Do not infer general native-startup stability from a bounded number of successful test runs.
 
+The first Ubuntu 26.3 CI launch failed before tests with "Couldn't find matching GLX visual"; Vulkan fallback also could not initialize in that virtual display. The CI client step selects SDL_VIDEO_FORCE_EGL=1 only for 26.3 under Xvfb so SDL creates the OpenGL context through EGL. Earlier GLFW targets keep their existing context path. The client step has an eight-minute timeout to preserve failure diagnostics instead of hanging indefinitely in a native startup dialog. This is CI environment configuration and does not enable or establish Vulkan support.
+
 PR #40's settings redesign was merged at ea488677cbae13ca2f80da685dd9831eace88e7f. Its two-version evidence does not validate this three-version change. Uploaded third-party pack combinations, shaders and Vulkan remain unverified. Release creation and merging are separate actions.
 
 ## Official references
@@ -43,3 +45,4 @@ PR #40's settings redesign was merged at ea488677cbae13ca2f80da685dd9831eace88e7
 - [Fabric automated testing](https://docs.fabricmc.net/develop/automatic-testing)
 - [Official Minecraft 26.3 launch metadata](https://piston-meta.mojang.com/v1/packages/702fe59163c6ee6578607daa85811d9bc9c7cc40/26.3.json)
 - [Upstream Windows native startup report and stack-shadow argument](https://github.com/PrismLauncher/PrismLauncher/issues/6073)
+- [Official SDL3 EGL context selection](https://wiki.libsdl.org/SDL3/SDL_HINT_VIDEO_FORCE_EGL)
