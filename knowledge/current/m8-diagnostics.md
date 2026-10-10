@@ -28,4 +28,26 @@ gradle --no-daemon --no-parallel -Pm8FpsLimit=120 :versions:mc26_3:runClientGame
 
 Use the same bound on all three modules when comparing them. Preserve each manifest before the next test run cleans its isolated game directory. Run clients sequentially, keep the same window/focus/VSync conditions, and avoid concurrent builds when collecting comparable final samples. Report raw values and observed variation; these diagnostics establish no percentage speedup or universal timing guarantee.
 
-Controlled 30/60-bound observations and current-head hosted verification will be recorded here before #43 is closed. No measurement limit or runtime feature has been changed by the diagnostic implementation.
+## Verified observations — 2026-10-10
+
+Each row has three repeated samples per OFF/default/all-on scenario. Windows clients ran sequentially with VSync enabled. The final 30-bound runs and [CI #317](https://github.com/bosatsu25/BlockLens/actions/runs/38015239232) used `7be715ce3b4734d6be841806f733f1901bc38bee`; the Windows 60-bound measurements used the same AFK-controlled measurement routine (the first run preceded a diagnostic stdout-only addition). All rows passed the unchanged guards. These are observations of this scene/environment, not transferable performance guarantees.
+
+| Environment | Minecraft | Requested upper bound | Rendered frames: OFF / default / all-on | Allocation medians B: OFF / default / all-on |
+| --- | --- | ---: | --- | --- |
+| Windows | 26.1.2 | 30 | 44,45,45 / 45,45,45 / 45,45,44 | 12687672 / 12442968 / 12816856 |
+| Windows | 26.1.2 | 60 | 87,90,90 / 90,90,90 / 89,89,89 | 16081720 / 16496336 / 16423928 |
+| Linux CI317 | 26.1.2 | 60 | 81,81,82 / 79,84,82 / 81,84,85 | 16223768 / 16625520 / 16469104 |
+| Windows | 26.2 | 30 | 46,45,45 / 45,45,45 / 45,44,45 | 12224728 / 12500360 / 12070384 |
+| Windows | 26.2 | 60 | 88,90,90 / 90,90,90 / 89,89,89 | 16060152 / 15743136 / 15625152 |
+| Linux CI317 | 26.2 | 60 | 74,78,78 / 76,75,72 / 75,76,79 | 14710064 / 14175064 / 14784344 |
+| Windows | 26.3 | 30 | 45,45,45 / 45,45,45 / 44,45,45 | 10495896 / 10580248 / 10549744 |
+| Windows | 26.3 | 60 | 88,89,89 / 90,90,90 / 90,90,90 | 10744704 / 11312008 / 10979760 |
+| Linux CI317 | 26.3 | 60 | 85,84,85 / 82,83,86 / 81,81,87 | 11868728 / 12192032 / 11949456 |
+
+The 81 controlled allocation raw samples span **8,737,552–17,283,256 B**, below the unchanged 33,554,432 B median guard. Raw reload times span **2.920–3.448 s**; raw rebuild windows span **1.452–1.532 s**. These observed ranges describe the current repeated captures; they do not define new thresholds or statistical confidence intervals. ON-minus-OFF changes sign between rows, so these numbers support no runtime improvement claim.
+
+The pre-control [CI #316](https://github.com/bosatsu25/BlockLens/actions/runs/38014738138) requested 60 but its 26.1.2 manifest recorded approximately 45 frames per window and allocation medians 28,663,856 / 28,619,056 / 28,629,896 B. Its artifact SHA-256 `0f69f406fdf897127243a423dd551f019fc6edf5d396a33b0de6a6e82cf5b2ba` was verified. The AFK-controlled CI317 records about 79–85 frames on that version while allocating less. This demonstrates both that the requested option alone did not control rendered work and that frame count alone does not explain cross-run allocation noise. It does not establish the missing conditions in the original CI312 failure, whose retrospective cause remains unknown.
+
+CI317's common quality gate and all three native-client/build/reproducibility/privacy/size jobs passed on the exact source head without retries. Its three M8 ZIP digests were verified directly and contain passed reload/rebuild/allocation statuses, AFK control, Linux/Java25/VSync conditions and all raw arrays. Synthetic guard-failure evidence is verified inside every client before measurement. Product runtime artifacts remain unchanged in size: locally 112,628 / 113,335 / 113,379 B for the three versions, with test diagnostics explicitly rejected by the artifact audit.
+
+No measurement limit or runtime feature has been changed by this diagnostic implementation. The original CI312 cause remains an evidence limitation, not a claimed fix.
