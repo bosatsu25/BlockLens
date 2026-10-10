@@ -44,7 +44,7 @@ public final class AnalyzerClient {
         var config=BlockLensRuntime.config();
         int mask=AnalyzerCatalog.mask(config);
         List<AnalyzerEngine.Marker> markers=ENGINE.markers(mask,config.analyzerOptions());
-        if(mask==0 || markers.isEmpty()) return;
+        if(mask==0 || markers.isEmpty() || !SceneFilterClient.readyForCurrentConfig()) return;
         try(var collection=AnalyzerGizmos.collect(renderer)) {
             for(var marker:markers) {
                 if((mask&(1<<marker.kind()))==0) continue;
@@ -77,12 +77,14 @@ public final class AnalyzerClient {
             var chunk=level.getChunkSource().getChunk(Math.floorDiv(x,16),Math.floorDiv(z,16),ChunkStatus.FULL,false);
             if(chunk==null) return AnalyzerEngine.UNKNOWN;
             var state=chunk.getBlockState(position.set(x,y,z));
-            if(state.is(Blocks.ANCIENT_DEBRIS)) return AnalyzerEngine.DEBRIS;
-            if(state.is(Blocks.BEACON)) return AnalyzerEngine.BEACON;
-            if(state.getBlock() instanceof net.minecraft.world.level.block.LightningRodBlock) return AnalyzerEngine.ROD;
+            int value;
             var fluid=state.getFluidState();
-            if(fluid.is(FluidTags.LAVA) && fluid.isSource()) return AnalyzerEngine.LAVA;
-            return state.is(BlockTags.BEACON_BASE_BLOCKS)?AnalyzerEngine.BASE:AnalyzerEngine.OTHER;
+            if(state.is(Blocks.ANCIENT_DEBRIS)) value=AnalyzerEngine.DEBRIS;
+            else if(state.is(Blocks.BEACON)) value=AnalyzerEngine.BEACON;
+            else if(state.getBlock() instanceof net.minecraft.world.level.block.LightningRodBlock) value=AnalyzerEngine.ROD;
+            else if(fluid.is(FluidTags.LAVA) && fluid.isSource()) value=AnalyzerEngine.LAVA;
+            else value=state.is(BlockTags.BEACON_BASE_BLOCKS)?AnalyzerEngine.BASE:AnalyzerEngine.OTHER;
+            return SceneFilterClient.hiddenBlock(state.getBlock())?value | AnalyzerEngine.HIDDEN:value;
         }
         @Override public boolean debrisSection(int x,int y,int z) {
             var chunk=level.getChunkSource().getChunk(x,z,ChunkStatus.FULL,false);
@@ -110,7 +112,7 @@ public final class AnalyzerClient {
                             var iterator=stream.iterator();
                             while(entities<entityLimit && iterator.hasNext()) {
                                 var entity=iterator.next(); entities++;
-                                if(entity instanceof Villager villager && villager.isAlive()
+                                if(entity instanceof Villager villager && villager.isAlive() && !SceneFilterClient.hiddenEntity(villager)
                                         && Math.abs(villager.getX()-eye.x())<=h
                                         && Math.abs(villager.getY()-eye.y())<=v
                                         && Math.abs(villager.getZ()-eye.z())<=h) candidates.add(villager);

@@ -21,7 +21,7 @@ final class CapabilityContractTest {
             "gaming.nether_gold_ore",
             "gaming.nether_quartz_ore", "outline.glass_highlight", "outline.kelp_highlight",
             "outline.bright_concrete", "others.low_fire", "others.handheld_size", "outline.bright_chest", "analyzer.debris_analyzer", "analyzer.lava_analyzer",
-            "analyzer.beacon_range", "analyzer.lightning_rod_range", "analyzer.villager_job_site_links");
+            "analyzer.beacon_range", "analyzer.lightning_rod_range", "analyzer.villager_job_site_links", "scene.block_filter", "scene.entity_filter");
 
     @Test
     void compiledCatalogPreservesPinnedM0ContractAndAddsReviewedCapabilities() throws IOException {
@@ -38,7 +38,7 @@ final class CapabilityContractTest {
         }
 
         assertEquals(37, baseline.size());
-        assertEquals(51, CapabilityId.values().length);
+        assertEquals(53, CapabilityId.values().length);
         assertTrue(CapabilityId.bySourceKey().keySet().containsAll(baseline.keySet()));
 
         Set<String> additions = new HashSet<>(CapabilityId.bySourceKey().keySet());
@@ -69,7 +69,7 @@ final class CapabilityContractTest {
         assertEquals(13, counts.get(CapabilityId.Category.DECORATION));
         assertEquals(21, counts.get(CapabilityId.Category.RESOURCE));
         assertEquals(8, counts.get(CapabilityId.Category.OUTLINE));
-        assertEquals(9, counts.get(CapabilityId.Category.OTHER));
+        assertEquals(11, counts.get(CapabilityId.Category.OTHER));
         assertEquals(Set.of(
                 "outline.blueice",
                 "outline.deadcoral",
@@ -84,7 +84,7 @@ final class CapabilityContractTest {
         assertEquals(CapabilityId.ANVIL, index.get("deco.anvil"));
         assertEquals(CapabilityId.STRING_TWEAKS, index.get("others.stringtweaks"));
         assertEquals(CapabilityId.CRYING_OBSIDIAN, index.get("gaming.crying_obsidian"));
-        assertEquals(51, index.size());
+        assertEquals(53, index.size());
         try {
             index.clear();
         } catch (UnsupportedOperationException expected) {

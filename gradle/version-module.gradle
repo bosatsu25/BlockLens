@@ -43,8 +43,13 @@ def m8FpsLimit = providers.gradleProperty('m8FpsLimit').orElse('60').get()
 if (!(m8FpsLimit in ['30', '60', '120'])) {
     throw new GradleException('m8FpsLimit must be 30, 60 or 120')
 }
+def clientTestFocus = providers.gradleProperty('clientTestFocus').orElse('all').get()
+if (!(clientTestFocus in ['all', 'scene'])) {
+    throw new GradleException('clientTestFocus must be all or scene')
+}
 tasks.named('runClientGameTest') {
     systemProperty 'blocklens.test.m8.fpsLimit', m8FpsLimit
+    systemProperty 'blocklens.test.focus', clientTestFocus
 }
 
 sourceSets {

@@ -8,6 +8,7 @@ import java.util.Objects;
 /** Tick-thread bounded inspection; immutable snapshots are the only render-thread input. */
 public final class AnalyzerEngine {
     public static final int UNKNOWN = -1, OTHER = 0, DEBRIS = 1, LAVA = 2, BEACON = 3, ROD = 4, BASE = 5;
+    public static final int HIDDEN = 256;
     public static final int CELL_LIMIT = 512, SECTION_LIMIT = 64, STEP_LIMIT = 4096;
     public record Point(double x, double y, double z) {
         public Point {
@@ -27,6 +28,7 @@ public final class AnalyzerEngine {
     }
     public record Work(int cells, int sections, int cursorSteps, int entitySections, int entities) { }
     public interface WorldView {
+        /** Physical kind, optionally HIDDEN for presentation; UNKNOWN remains unmodified. */
         int cell(int x, int y, int z);
         boolean debrisSection(int sectionX, int sectionY, int sectionZ);
         VillageSample villagers(Point eye, int horizontal, int vertical, int sectionLimit, int entityLimit, int candidates);
@@ -67,7 +69,7 @@ public final class AnalyzerEngine {
         for (Marker marker : published.markers) {
             if ((mask & (1<<marker.kind)) == 0 || !inside(marker.kind, marker.to, eye)) continue;
             int value=read(view, marker.to);
-            if (value != UNKNOWN && (marker.kind==4 || value==target(marker.kind))) retained.add(marker);
+            if (visible(value) && (marker.kind==4 || physical(value)==target(marker.kind))) retained.add(marker);
         }
         if ((mask & 16)!=0 && tick>=nextVillage && CELL_LIMIT-cells>=settings.value(4,2)) {
             VillageSample sample=view.villagers(eye,settings.value(4,0),settings.value(4,1),125,64,settings.value(4,2));
@@ -76,7 +78,7 @@ public final class AnalyzerEngine {
             entitySections=sample.sections; entities=sample.entities;
             retained.removeIf(marker -> marker.kind==4);
             for(Villager villager:sample.villagers) {
-                if(villager.site!=null && inside(4,villager.site,eye) && read(view,villager.site)!=UNKNOWN) {
+                if(villager.site!=null && inside(4,villager.site,eye) && visible(read(view,villager.site))) {
                     retained.add(new Marker(4,villager.from,villager.site,0));
                 }
             }
@@ -109,7 +111,8 @@ public final class AnalyzerEngine {
     }
     private Marker describe(WorldView view,int kind,Point position) {
         int x=(int)Math.floor(position.x),y=(int)Math.floor(position.y),z=(int)Math.floor(position.z);
-        if(read(view,x,y,z)!=target(kind)) return null;
+        int value=read(view,x,y,z);
+        if(!visible(value) || physical(value)!=target(kind)) return null;
         int radius=0;
         if(kind==1) {
             int[] neighbors={read(view,x+1,y,z),read(view,x-1,y,z),read(view,x,y+1,z),
@@ -119,7 +122,7 @@ public final class AnalyzerEngine {
             int level=0;
             layers: for(int layer=1;layer<=4;layer++) {
                 for(int dx=-layer;dx<=layer;dx++) for(int dz=-layer;dz<=layer;dz++) {
-                    if(read(view,x+dx,y-layer,z+dz)!=BASE) break layers;
+                    if(physical(read(view,x+dx,y-layer,z+dz))!=BASE) break layers;
                 }
                 level=layer;
             }
@@ -145,9 +148,11 @@ public final class AnalyzerEngine {
             default -> throw new IllegalArgumentException("not a block analyzer"); };
     }
     public static boolean lavaBoundary(int[] neighbors) {
-        for(int neighbor:neighbors) if(neighbor!=UNKNOWN && neighbor!=LAVA) return true;
+        for(int neighbor:neighbors) if(physical(neighbor)!=UNKNOWN && physical(neighbor)!=LAVA) return true;
         return false;
     }
+    private static int physical(int value) { return value==UNKNOWN?UNKNOWN:value & ~HIDDEN; }
+    private static boolean visible(int value) { return value!=UNKNOWN && (value & HIDDEN)==0; }
     private final class Scan {
         final int kind,x0,y0,z0,h,v,nx,ny,nz,minX,minY,minZ;
         final ArrayList<Marker> found=new ArrayList<>();

@@ -1,5 +1,7 @@
 # Bounded world analyzers — implementation contract
 
+Status: implemented and merged by [PR #50](https://github.com/bosatsu25/BlockLens/pull/50), main `90105fb702b30a7619300cd668836a1314f4815b`. [PR CI #328](https://github.com/bosatsu25/BlockLens/actions/runs/38029642258) and [main CI #329](https://github.com/bosatsu25/BlockLens/actions/runs/38030694745) passed shared quality and all three native/build/budget jobs on their first attempts. The PR's three hosted analyzer archives contain 75 SHA-256-verified UI/render frames and passing manifests. This does not identify #43's allocation cause or verify #31's third-party environments.
+
 This contract precedes #34 implementation. Add five independent, default-OFF capabilities after the existing 46, within the four existing categories. Model targets and the original 37/40/46 identities remain unchanged. Analyze only already loaded client state, without chunk creation, custom packets, server dependencies, automation, or persistent coordinates.
 
 ## Source interpretation

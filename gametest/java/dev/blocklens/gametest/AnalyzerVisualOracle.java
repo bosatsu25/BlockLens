@@ -165,7 +165,7 @@ final class AnalyzerVisualOracle {
         });
     }
     private static BlockLensConfig all(BlockLensConfig base,boolean enabled) {
-        for(var capability:CapabilityId.values()) base=base.withEnabled(capability,enabled);
+        for(var capability:CapabilityId.values()) base=base.withEnabled(capability,enabled && capability.ordinal()<51);
         return base;
     }
     private static void install(ClientGameTestContext context,BlockLensConfig config) {

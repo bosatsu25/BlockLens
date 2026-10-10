@@ -51,7 +51,7 @@ final class RepositoryContractTest {
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
         assertTrue(source.contains("implements FabricClientGameTest"));
-        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 51"));
+        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 53"));
         assertTrue(source.contains("context.worldBuilder().create()"));
         assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
         assertTrue(source.contains("MinecraftStateAdapterOracle.verify()"));
@@ -99,7 +99,7 @@ final class RepositoryContractTest {
         roots.add(moduleRoot.resolve("src/gametest"));
         roots.add(moduleRoot.resolve("src/compat/gametest"));
         var allowed = java.util.Set.of("SettingsClientAccess.java", "FireTransformProbeMixin.java",
-                "HeldTransformProbeMixin.java");
+                "HeldTransformProbeMixin.java", "SceneRenderAccess.java");
         for (Path sourceRoot : roots) {
             if (!Files.isDirectory(sourceRoot)) continue;
             try (var paths = Files.walk(sourceRoot)) {

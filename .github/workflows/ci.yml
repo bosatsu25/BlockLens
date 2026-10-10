@@ -124,7 +124,8 @@ jobs:
             \( -path '*/logs/latest.log' -o -path '*/m3-visual/*' \
             -o -path '*/m5-dark-visual/*' -o -path '*/m5-pack-visual/*' \
             -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
-            -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \) \
+            -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \
+            -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \) \
             -exec cp --parents '{}' "$target" \;
       - name: Upload failed Client GameTest diagnostics
         if: failure()
@@ -440,6 +441,37 @@ jobs:
         with:
           name: blocklens-analyzers-${{ matrix.minecraft }}
           path: ${{ steps.analyzers.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Collect scene filter UI and rendered evidence
+        id: scene-filters
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="versions/${{ matrix.module }}/build/run/clientGameTest"
+          target="build/ci/scene-filters-${{ matrix.minecraft }}"
+          mkdir -p "$target/ui" "$target/visual"
+          test "$(find "$root/scene-filter-ui" -maxdepth 1 -name '*.png' | wc -l)" -eq 4
+          test "$(find "$root/scene-filter-visual" -maxdepth 1 -name '*.png' | wc -l)" -eq 25
+          for locale in en_us ja_jp; do
+            for kind in 0 1; do
+              test -s "$root/scene-filter-ui/scene-$locale-$kind.png"
+            done
+          done
+          manifest="$root/scene-filter-visual/scene-filter-visual-manifest.txt"
+          for check in generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all53Enabled all53Reload dimensionCleanup finalOffEmpty; do
+            grep -q "^$check=true$" "$manifest"
+          done
+          cp "$root/scene-filter-ui/"*.png "$target/ui/"
+          cp "$root/scene-filter-visual/"*.png "$target/visual/"
+          cp "$manifest" "$target/visual/"
+          (cd "$target" && sha256sum ui/*.png visual/*.png > SHA256SUMS.txt)
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+      - name: Upload scene filter UI and rendered evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-scene-filters-${{ matrix.minecraft }}
+          path: ${{ steps.scene-filters.outputs.path }}
           if-no-files-found: error
           retention-days: 14
       - name: Resolve runtime artifact

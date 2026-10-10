@@ -9,7 +9,10 @@
     "ClientEntityStorageAccess",
     "EntitySectionStorageAccess",
     "AnalyzerLifecycleMixin",
-    "AnalyzerRenderMixin"
+    "AnalyzerRenderMixin",
+    "SceneBlockMixin",
+    "SceneBlockEntityMixin",
+    "SceneEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
