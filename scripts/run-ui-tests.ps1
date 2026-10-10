@@ -16,7 +16,7 @@ try {
     foreach ($target in $targets.GetEnumerator()) {
         if ($Version -ne 'All' -and $Version -ne $target.Key) { continue }
         Write-Output "Launching Minecraft $($target.Key): settings UI, save/discard, screenshots and render tests."
-        & $gradleCommand.Source --no-daemon --no-parallel --console=plain ":versions:$($target.Value):runClientGameTest"
+        & $gradleCommand.Source --no-daemon --no-parallel --console=plain -PverifyPackagedRuntime=true ":versions:$($target.Value):runClientGameTest"
         if ($LASTEXITCODE -ne 0) {
             throw "Minecraft $($target.Key) client tests failed (exit $LASTEXITCODE)."
         }

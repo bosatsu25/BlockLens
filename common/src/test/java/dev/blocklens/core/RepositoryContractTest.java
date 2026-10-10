@@ -224,9 +224,11 @@ final class RepositoryContractTest {
         String convention = Files.readString(root().resolve("gradle/version-module.gradle"));
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
-        assertTrue(convention.contains("forbiddenPayloadMarkers"));
-        assertTrue(convention.contains("respackopts.json5"));
-        assertTrue(convention.contains("Runtime JAR contains forbidden residue entry"));
+        String audit = Files.readString(root().resolve("gradle/runtime-container-audit.gradle"));
+        assertTrue(convention.contains("runtime-container-audit.gradle"));
+        assertTrue(audit.contains("forbiddenPayloadMarkers"));
+        assertTrue(audit.contains("respackopts.json5"));
+        assertTrue(audit.contains("Runtime archive contains forbidden test or local residue"));
         assertTrue(convention.contains("MinecraftDecorationModelPlugin.class"));
         assertTrue(convention.contains("DecorationQuadCuePolicy.class"));
         assertTrue(convention.contains("runtimeBaselineBytes"));

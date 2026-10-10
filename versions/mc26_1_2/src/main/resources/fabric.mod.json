@@ -6,6 +6,7 @@
   "description": "Client-side visual inspection for Minecraft blocks and resources.",
   "icon": "assets/blocklens/icon.png",
   "environment": "client",
+  "jars": [{ "file": "META-INF/jars/blocklens-runtime.jar" }],
   "entrypoints": {
     "client": [
       "dev.blocklens.fabric.BlockLensClient"
@@ -18,7 +19,8 @@
     "fabricloader": ">=${loader_version}",
     "minecraft": "=${minecraft_version}",
     "java": ">=25",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "blocklens-runtime": "=${version}"
   },
   "mixins": [
     "blocklens.mixins.json"

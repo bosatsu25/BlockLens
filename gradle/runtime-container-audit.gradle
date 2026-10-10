@@ -1,0 +1,206 @@
+import groovy.json.JsonSlurper
+import java.nio.charset.StandardCharsets
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
+
+// Build-time inspection only. Nothing is extracted and no third-party container is allowed.
+def containerPath = 'META-INF/jars/blocklens-runtime.jar'
+def maximumEntryBytes = 1024 * 1024
+def maximumDecodedBytes = 2 * 1024 * 1024
+def maximumEntries = 2048
+def forbiddenNames = ['dev/blocklens/testing/', 'dev/blocklens/gametest/', '.DS_Store', 'Thumbs.db',
+        '.env', '.log', '.jfr', '.hprof', '.java', 'crash-reports/', 'logs/', 'saves/', 'screenshots/',
+        '.git/', '.idea/', '.vscode/', 'respackopts.json5', '.rpo', 'Test.class', '/test/']
+def forbiddenPayloadMarkers = ['/home/runner/work/', 'C:\\Users\\', '/Users/', 'github_pat_',
+        '-----BEGIN PRIVATE KEY-----']
+
+def readArchive = { InputStream input, boolean ownedContainer ->
+    Map<String, byte[]> entries = new LinkedHashMap<>()
+    Set<String> foldedNames = new HashSet<>()
+    long decoded = 0
+    int count = 0
+    new ZipInputStream(input).withCloseable { zip ->
+        ZipEntry entry
+        while ((entry = zip.nextEntry) != null) {
+            String name = entry.name
+            if (++count > maximumEntries || name.startsWith('/') || name.contains('\\')
+                    || name.contains(':') || name.split('/').any { it in ['.', '..'] }
+                    || name.any { (int) it < 32 } || !foldedNames.add(name.toLowerCase(Locale.ROOT))) {
+                throw new GradleException('Runtime archive contains an unsafe, duplicate or excessive entry')
+            }
+            byte[] bytes = zip.readNBytes(maximumEntryBytes + 1)
+            decoded += bytes.length
+            if (bytes.length > maximumEntryBytes || decoded > maximumDecodedBytes) {
+                throw new GradleException('Runtime archive decoded size exceeds its bounded audit')
+            }
+            if (forbiddenNames.any { name.contains(it) }) {
+                throw new GradleException('Runtime archive contains forbidden test or local residue')
+            }
+            if (entry.directory) {
+                if (bytes.length != 0) throw new GradleException('Runtime archive directory contains hidden payload')
+                continue
+            }
+            if (ownedContainer && (entry.method != ZipEntry.STORED
+                    || !(name == 'fabric.mod.json' || name == 'META-INF/MANIFEST.MF'
+                    || name.startsWith('dev/blocklens/') && name.endsWith('.class')))) {
+                throw new GradleException('Owned runtime container contains compressed or unexpected content')
+            }
+            String payload = new String(bytes, StandardCharsets.ISO_8859_1)
+            if (forbiddenPayloadMarkers.any { payload.contains(it) }) {
+                throw new GradleException('Runtime archive contains a forbidden private or local marker')
+            }
+            entries.put(name, bytes)
+        }
+    }
+    entries
+}
+
+def inspectContents = { Map<String, byte[]> outer, String minecraft, String version,
+        Map<String, byte[]> compiled ->
+    if (outer.keySet().findAll { it.endsWith('.jar') }.toSet() != [containerPath].toSet()
+            || outer.keySet().any { it.endsWith('.class') }) {
+        throw new GradleException('Runtime artifact must contain exactly one fixed owned container and no loose classes')
+    }
+    Map<String, byte[]> inner = readArchive(new ByteArrayInputStream(outer.get(containerPath)), true)
+    if (!outer.containsKey('fabric.mod.json') || !inner.containsKey('fabric.mod.json')) {
+        throw new GradleException('Both runtime archive layers require Fabric metadata')
+    }
+    def parser = new JsonSlurper()
+    def mainMetadata = parser.parse(outer.get('fabric.mod.json'))
+    def libraryMetadata = parser.parse(inner.get('fabric.mod.json'))
+    if (!(mainMetadata instanceof Map) || mainMetadata.schemaVersion != 1
+            || !(mainMetadata.depends instanceof Map)
+            || mainMetadata.id != 'blocklens' || mainMetadata.environment != 'client'
+            || mainMetadata.version != version || mainMetadata.depends.minecraft != "=${minecraft}"
+            || mainMetadata.depends.'blocklens-runtime' != "=${version}"
+            || mainMetadata.jars != [[file: containerPath]]) {
+        throw new GradleException('Outer metadata does not require the exact client-only runtime container')
+    }
+    if (!(libraryMetadata instanceof Map) || libraryMetadata.schemaVersion != 1
+            || !(libraryMetadata.depends instanceof Map)
+            || libraryMetadata.id != 'blocklens-runtime' || libraryMetadata.environment != 'client'
+            || libraryMetadata.version != version || libraryMetadata.depends.minecraft != "=${minecraft}"
+            || libraryMetadata.depends.java != '>=25' || libraryMetadata.entrypoints
+            || libraryMetadata.jars || libraryMetadata.mixins) {
+        throw new GradleException('Owned library metadata must remain pinned, client-only and without entrypoints or further containers')
+    }
+    Set<String> classNames = inner.keySet().findAll { it.endsWith('.class') }.toSet()
+    if (classNames != compiled.keySet()) {
+        throw new GradleException('Owned container dropped or introduced compiled runtime classes')
+    }
+    for (String name : classNames) {
+        if (!Arrays.equals(inner.get(name), compiled.get(name))) {
+            throw new GradleException('Owned container changed compiled bytes or debug information')
+        }
+    }
+    [outer: outer, inner: inner]
+}
+
+ext.inspectBlockLensRuntimeContainer = { File artifact, String minecraft, String version,
+        Collection<File> classDirectories ->
+    Map<String, byte[]> outer = artifact.withInputStream { readArchive(it, false) }
+    Map<String, byte[]> compiled = new LinkedHashMap<>()
+    for (File directory : classDirectories) {
+        java.nio.file.Files.walk(directory.toPath()).withCloseable { paths ->
+            paths.filter { java.nio.file.Files.isRegularFile(it) && it.fileName.toString().endsWith('.class') }
+                    .forEach { path ->
+                        String name = directory.toPath().relativize(path).toString().replace('\\', '/')
+                        if (compiled.size() >= maximumEntries
+                                || compiled.put(name, java.nio.file.Files.readAllBytes(path)) != null) {
+                            throw new GradleException('Compiled runtime class directories overlap')
+                        }
+                    }
+        }
+    }
+    inspectContents(outer, minecraft, version, compiled)
+}
+
+tasks.register('runtimeContainerAuditContract') {
+    group = 'verification'
+    description = 'Rejects unsafe paths, residue, foreign containers and oversized decoded entries without extraction.'
+    doLast {
+        def fixture = { Map<String, byte[]> contents, boolean stored = true ->
+            def bytes = new ByteArrayOutputStream()
+            new ZipOutputStream(bytes).withCloseable { zip ->
+                contents.each { name, payload ->
+                    def entry = new ZipEntry(name)
+                    entry.method = stored ? ZipEntry.STORED : ZipEntry.DEFLATED
+                    entry.size = payload.length
+                    def crc = new java.util.zip.CRC32()
+                    crc.update(payload)
+                    entry.crc = crc.value
+                    zip.putNextEntry(entry)
+                    zip.write(payload)
+                    zip.closeEntry()
+                }
+            }
+            bytes.toByteArray()
+        }
+        byte[] safe = fixture(['fabric.mod.json': '{}'.getBytes(StandardCharsets.UTF_8),
+                'dev/blocklens/core/': new byte[0],
+                'dev/blocklens/core/Fixture.class': [1, 2, 3] as byte[]])
+        if (readArchive(new ByteArrayInputStream(safe), true).size() != 2) {
+            throw new GradleException('Valid owned archive fixture was rejected')
+        }
+        List<Map<String, byte[]>> invalid = [
+                ['../escape.class': [1] as byte[]],
+                ['/absolute.class': [1] as byte[]],
+                ['dev\\blocklens\\Unsafe.class': [1] as byte[]],
+                ['dev/blocklens/./Unsafe.class': [1] as byte[]],
+                ['dev/blocklens/C:/Unsafe.class': [1] as byte[]],
+                ['dev/blocklens/\u0001Unsafe.class': [1] as byte[]],
+                ['dev/blocklens/core/Foo.class': [1] as byte[], 'dev/blocklens/core/foo.class': [2] as byte[]],
+                ['foreign.jar': [1] as byte[]],
+                ['dev/blocklens/gametest/Leak.class': [1] as byte[]],
+                ['dev/blocklens/core/Leak.class': 'github_pat_fixture'.getBytes(StandardCharsets.UTF_8)],
+                ['dev/blocklens/core/Huge.class': new byte[maximumEntryBytes + 1]]]
+        invalid.add(['dev/blocklens/hidden/': new byte[maximumEntryBytes + 1]])
+        invalid.add(['dev/blocklens/hidden/': 'github_pat_fixture'.getBytes(StandardCharsets.UTF_8)])
+        invalid.add(['dev/blocklens/gametest/': new byte[0]])
+        Map<String, byte[]> tooMany = new LinkedHashMap<>()
+        for (int index = 0; index <= maximumEntries; index++) {
+            tooMany.put("dev/blocklens/core/Entry${index}.class".toString(), [1] as byte[])
+        }
+        invalid.add(tooMany)
+        invalid.add(['dev/blocklens/core/A.class': new byte[768 * 1024],
+                'dev/blocklens/core/B.class': new byte[768 * 1024],
+                'dev/blocklens/core/C.class': new byte[768 * 1024]])
+        for (def contents : invalid) {
+            boolean rejected = false
+            try {
+                readArchive(new ByteArrayInputStream(fixture(contents)), true)
+            } catch (GradleException expected) {
+                rejected = true
+            }
+            if (!rejected) throw new GradleException('Invalid runtime archive fixture passed its audit')
+        }
+        def json = { Map metadata -> groovy.json.JsonOutput.toJson(metadata).getBytes(StandardCharsets.UTF_8) }
+        def outerMetadata = [schemaVersion: 1, id: 'blocklens', environment: 'client', version: 'fixture',
+                depends: [minecraft: '=26.3', 'blocklens-runtime': '=fixture'], jars: [[file: containerPath]]]
+        def innerMetadata = [schemaVersion: 1, id: 'blocklens-runtime', environment: 'client', version: 'fixture',
+                depends: [minecraft: '=26.3', java: '>=25']]
+        def classes = ['dev/blocklens/core/Fixture.class': [1, 2, 3] as byte[]]
+        def innerContents = new LinkedHashMap(classes)
+        innerContents.put('fabric.mod.json', json(innerMetadata))
+        def outerContents = ['fabric.mod.json': json(outerMetadata), (containerPath): fixture(innerContents)]
+        inspectContents(outerContents, '26.3', 'fixture', classes)
+        List<Closure> negativeContainers = [
+                { readArchive(new ByteArrayInputStream(fixture(innerContents, false)), true) },
+                { inspectContents(outerContents + ['another.jar': [1] as byte[]], '26.3', 'fixture', classes) },
+                { inspectContents(outerContents + classes, '26.3', 'fixture', classes) },
+                { inspectContents(outerContents, '26.2', 'fixture', classes) },
+                { inspectContents(outerContents, '26.3', 'different', classes) },
+                { inspectContents(outerContents, '26.3', 'fixture', [:]) },
+                { inspectContents(outerContents, '26.3', 'fixture', ['dev/blocklens/core/Fixture.class': [4] as byte[]]) },
+                { inspectContents(outerContents + ['fabric.mod.json': json(outerMetadata + [depends: [:]])], '26.3', 'fixture', classes) },
+                { inspectContents(outerContents + [(containerPath): fixture(innerContents + ['fabric.mod.json': json(innerMetadata + [entrypoints: [client: ['Unexpected']]])])], '26.3', 'fixture', classes) }]
+        for (Closure negative : negativeContainers) {
+            boolean rejected = false
+            try { negative() } catch (GradleException expected) { rejected = true }
+            if (!rejected) throw new GradleException('Invalid container composition passed its audit')
+        }
+        logger.lifecycle('Owned runtime container audit contracts: valid fixtures and {} negative controls passed',
+                invalid.size() + negativeContainers.size())
+    }
+}

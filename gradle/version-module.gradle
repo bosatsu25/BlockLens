@@ -76,13 +76,11 @@ processResources {
 
 tasks.named('jar') {
     dependsOn project(':common').tasks.named('classes')
-    // Common resources are already copied by this module's processResources so Fabric sees them as
-    // BlockLens resources in both development and packaged runtimes. Add only common bytecode here.
-    from(project(':common').sourceSets.main.output.classesDirs)
+    // Resource ownership stays on the outer mod; bytecode is audited in its one owned container.
     duplicatesStrategy = DuplicatesStrategy.FAIL
     preserveFileTimestamps = false
     reproducibleFileOrder = true
-    exclude '**/*Test.class', '**/test/**'
+    exclude '**/*.class', '**/test/**'
 }
 
 tasks.named('sourcesJar') {
@@ -91,6 +89,7 @@ tasks.named('sourcesJar') {
     duplicatesStrategy = DuplicatesStrategy.FAIL
     preserveFileTimestamps = false
     reproducibleFileOrder = true
+    exclude 'META-INF/jars/**'
 }
 
 // Loom 1.17 can operate in either remapping or non-remapping mode depending on
@@ -100,14 +99,90 @@ def runtimeJarTask = tasks.findByName('remapJar') != null
         ? tasks.named('remapJar')
         : tasks.named('jar')
 
+// Exactly one owned container; compiled bytes and debug information are unchanged.
+def runtimeMetadata = tasks.register('processRuntimeMetadata', Copy) {
+    from rootProject.file('packaging/runtime')
+    into layout.buildDirectory.dir('generated/runtime-metadata')
+    inputs.property 'version', blockLensArtifactVersion
+    inputs.property 'minecraft_version', blockLensMinecraftVersionValue
+    inputs.property 'loader_version', blockLensLoaderVersionValue
+    filesMatching('fabric.mod.json') {
+        expand(version: blockLensArtifactVersion, minecraft_version: blockLensMinecraftVersionValue,
+                loader_version: blockLensLoaderVersionValue)
+    }
+}
+def runtimeContainer = tasks.register('runtimeContainerJar', Jar) {
+    dependsOn tasks.named('compileJava'), project(':common').tasks.named('classes'), runtimeMetadata
+    archiveFileName = 'blocklens-runtime.jar'
+    destinationDirectory = layout.buildDirectory.dir('runtime-container')
+    from(sourceSets.main.output.classesDirs) { include '**/*.class' }
+    from(project(':common').sourceSets.main.output.classesDirs) { include '**/*.class' }
+    from runtimeMetadata
+    entryCompression = org.gradle.api.tasks.bundling.ZipEntryCompression.STORED
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    exclude '**/*Test.class', '**/test/**'
+}
+tasks.named('processResources') {
+    dependsOn runtimeContainer
+    from(runtimeContainer) { into 'META-INF/jars' }
+}
+
+def verifyPackagedRuntime = providers.gradleProperty('verifyPackagedRuntime').orElse('false').get()
+if (!(verifyPackagedRuntime in ['true', 'false'])) {
+    throw new GradleException('verifyPackagedRuntime must be true or false')
+}
+if (verifyPackagedRuntime == 'true') {
+    tasks.named('runClientGameTest') {
+        dependsOn runtimeJarTask, tasks.named('gametestClasses')
+        // JavaExec finalizes its inputs before task actions; replace during configuration.
+        // Copy input providers into an independent collection, retaining inferred build dependencies.
+        List originalInputs = new ArrayList(((org.gradle.api.file.ConfigurableFileCollection) classpath).getFrom())
+        def originalClasspath = objects.fileCollection().from(originalInputs)
+        originalClasspath.builtBy(new ArrayList(((org.gradle.api.file.ConfigurableFileCollection) classpath).getBuiltBy()))
+        Set<File> excluded = files(sourceSets.main.output, project(':common').sourceSets.main.output,
+                project(':common').tasks.named('jar')).files.collect { it.canonicalFile }.toSet()
+        File artifact = runtimeJarTask.get().archiveFile.get().asFile.canonicalFile
+        def keptClasspath = originalClasspath.filter { !excluded.contains(it.canonicalFile) }
+        setClasspath(files(keptClasspath, runtimeJarTask.flatMap { it.archiveFile }))
+        systemProperty 'blocklens.test.packagedRuntime', 'true'
+        systemProperty 'blocklens.test.expectedArtifact', artifact.absolutePath
+        doFirst {
+            for (File candidate : keptClasspath.files) {
+                if (candidate.directory) {
+                    if (new File(candidate, 'dev/blocklens/fabric/BlockLensClient.class').exists()
+                            || new File(candidate, 'dev/blocklens/core/BlockLensRuntime.class').exists()) {
+                        throw new GradleException('Packaged test retained development runtime bytecode')
+                    }
+                } else if (candidate.name.endsWith('.jar')) {
+                    new java.util.zip.ZipFile(candidate).withCloseable { zip ->
+                        if (zip.getEntry('dev/blocklens/fabric/BlockLensClient.class') != null
+                                || zip.getEntry('dev/blocklens/core/BlockLensRuntime.class') != null) {
+                            throw new GradleException('Packaged test retained a development runtime JAR')
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+apply from: rootProject.file('gradle/runtime-container-audit.gradle')
+def ownedRuntimeInspector = project.ext.inspectBlockLensRuntimeContainer
+def compiledRuntimeDirectories = files(sourceSets.main.output.classesDirs,
+        project(':common').sourceSets.main.output.classesDirs).files.toList()
+
 tasks.register('versionSmokeContract') {
     group = 'verification'
-    description = "Checks the ${blockLensMinecraftVersionValue} runtime artifact structure, metadata, privacy, and residue."
-    dependsOn runtimeJarTask
-
+    description = "Checks both owned runtime archive layers, exact class bytes, metadata and privacy."
+    dependsOn runtimeJarTask, tasks.named('runtimeContainerAuditContract')
     doLast {
         File runtimeJar = runtimeJarTask.get().archiveFile.get().asFile
-        new java.util.zip.ZipFile(runtimeJar).withCloseable { archive ->
+        def audited = ownedRuntimeInspector(runtimeJar, blockLensMinecraftVersionValue,
+                blockLensArtifactVersion, compiledRuntimeDirectories)
+        Map<String, byte[]> inspected = new LinkedHashMap<>(audited.outer)
+        audited.inner.each { name, bytes -> if (name.endsWith('.class')) inspected.put(name, bytes) }
             for (String required : [
                     'fabric.mod.json',
                     'dev/blocklens/fabric/BlockLensClient.class',
@@ -138,7 +213,7 @@ tasks.register('versionSmokeContract') {
                     'assets/blocklens/textures/entity/chest/bright_single.png',
                     'assets/blocklens/textures/entity/chest/bright_left.png',
                     'assets/blocklens/textures/entity/chest/bright_right.png']) {
-                if (archive.getEntry(required) == null) {
+                if (inspected.get(required) == null) {
                     throw new GradleException("Runtime JAR missing required entry: ${required}")
                 }
             }
@@ -147,68 +222,14 @@ tasks.register('versionSmokeContract') {
                     'dev/blocklens/core/render/DecorationRenderPolicy$1.class',
                     'dev/blocklens/core/render/ResourceHighlightPolicy.class',
                     'dev/blocklens/core/render/VisibilityQuadCuePolicy.class']) {
-                if (archive.getEntry(retired) != null) {
+                if (inspected.get(retired) != null) {
                     throw new GradleException("Runtime JAR contains retired policy bytecode: ${retired}")
                 }
             }
-            if (archive.getEntry('assets/blocklens/models/block/nether/side_fill.json') != null) {
+            if (inspected.get('assets/blocklens/models/block/nether/side_fill.json') != null) {
                 throw new GradleException('Runtime JAR contains retired Nether Tweaks side_fill model')
             }
 
-            String metadata = archive.getInputStream(archive.getEntry('fabric.mod.json')).getText('UTF-8')
-            if (!metadata.contains('"environment": "client"')) {
-                throw new GradleException('fabric.mod.json must remain client-only')
-            }
-            if (!metadata.contains("\"minecraft\": \"=${blockLensMinecraftVersionValue}\"")) {
-                throw new GradleException("fabric.mod.json is not pinned to Minecraft ${blockLensMinecraftVersionValue}")
-            }
-
-            List entries = archive.entries().toList().findAll { !it.directory }
-            if (entries.any { entry -> entry.name.endsWith('.jar') }) {
-                throw new GradleException('Runtime JAR must not contain nested dependency JARs')
-            }
-
-            List<String> forbiddenNames = [
-                    'dev/blocklens/testing/',
-                    'dev/blocklens/gametest/',
-                    '.DS_Store',
-                    'Thumbs.db',
-                    '.env',
-                    '.log',
-                    '.jfr',
-                    '.hprof',
-                    'crash-reports/',
-                    'logs/',
-                    'saves/',
-                    'screenshots/',
-                    '.git/',
-                    '.idea/',
-                    '.vscode/',
-                    'respackopts.json5',
-                    '.rpo'
-            ]
-            List<String> forbiddenPayloadMarkers = [
-                    '/home/runner/work/',
-                    'C:\\Users\\',
-                    '/Users/',
-                    'github_pat_',
-                    '-----BEGIN PRIVATE KEY-----'
-            ]
-
-            for (def entry : entries) {
-                String entryName = entry.name
-                if (forbiddenNames.any { marker -> entryName.contains(marker) }) {
-                    throw new GradleException("Runtime JAR contains forbidden residue entry: ${entryName}")
-                }
-
-                byte[] bytes = archive.getInputStream(entry).withCloseable { stream -> stream.readAllBytes() }
-                String payload = new String(bytes, java.nio.charset.StandardCharsets.ISO_8859_1)
-                String leaked = forbiddenPayloadMarkers.find { marker -> payload.contains(marker) }
-                if (leaked != null) {
-                    throw new GradleException("Runtime JAR entry ${entryName} contains forbidden private/local marker: ${leaked}")
-                }
-            }
-        }
     }
 }
 
@@ -233,11 +254,13 @@ tasks.register('writeRuntimeJarSizeReport') {
                 'core-other',
                 'assets-lang',
                 'assets-models',
+                'owned-runtime-container',
                 'metadata-other']) {
             categories.put(category, 0L)
         }
 
         def categoryFor = { String entryName ->
+            if (entryName == 'META-INF/jars/blocklens-runtime.jar') return 'owned-runtime-container'
             if (entryName.startsWith('dev/blocklens/core/render/')) {
                 return 'core-rendering'
             }
@@ -270,6 +293,13 @@ tasks.register('writeRuntimeJarSizeReport') {
         }
 
         long bytes = runtimeJar.length()
+        def audited = ownedRuntimeInspector(runtimeJar, blockLensMinecraftVersionValue,
+                blockLensArtifactVersion, compiledRuntimeDirectories)
+        Map<String, Long> decodedCategories = new LinkedHashMap<>()
+        audited.inner.each { name, payload ->
+            String category = categoryFor(name)
+            decodedCategories.put(category, decodedCategories.getOrDefault(category, 0L) + payload.length)
+        }
         double sourcePercent = bytes * 100.0d / runtimeSourcePackBytes
         List<String> lines = []
         lines << "minecraft=${blockLensMinecraftVersionValue}"
@@ -285,6 +315,9 @@ tasks.register('writeRuntimeJarSizeReport') {
         categories.each { category, compressed ->
             lines << "${category}=${compressed}"
         }
+        lines << ''
+        lines << '[owned-container-decoded-category-bytes]'
+        decodedCategories.each { category, decodedBytes -> lines << "${category}=${decodedBytes}" }
         lines << ''
         lines << '[top-compressed-entries]'
         entries.sort { left, right ->
@@ -319,7 +352,7 @@ tasks.register('verifyRuntimeJarBudget') {
         }
         if (bytes > runtimeReleaseBudgetBytes) {
             throw new GradleException(
-                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; 100 KiB release budget is ${runtimeReleaseBudgetBytes} bytes.")
+                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; 150 KiB release budget is ${runtimeReleaseBudgetBytes} bytes.")
         }
         if (bytes > runtimeBaselineBytes) {
             throw new GradleException(
