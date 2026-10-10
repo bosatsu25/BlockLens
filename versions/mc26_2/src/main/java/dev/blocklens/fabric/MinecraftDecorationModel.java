@@ -110,6 +110,10 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         this.lightweightOverlay = (represented & LIGHTWEIGHT_OVERLAY_MASK) == 0L ? null : new RetainedValue<>();
     }
 
+    boolean wraps(BlockStateModel model) {
+        return wrapped == model;
+    }
+
     @Override
     public void emitQuads(
             QuadEmitter emitter,

@@ -85,17 +85,24 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
         }
         for (int index = 0; index < capabilities.size(); index++) {
             CapabilityId capability = capabilities.get(index);
+            boolean builderTool = capability.sourceKey().startsWith("builder.");
             if (capability != CapabilityId.LOW_FIRE && capability != CapabilityId.HANDHELD_SIZE
-                    && AnalyzerCatalog.index(capability)<0 && SceneFilterCatalog.index(capability)<0) continue;
-            details.add(addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.details"),
-                    ignored -> showParent(SceneFilterCatalog.index(capability)>=0
+                    && AnalyzerCatalog.index(capability)<0 && SceneFilterCatalog.index(capability)<0
+                    && !builderTool) continue;
+            String actionKey = builderTool ? "blocklens.settings.open_tool" : "blocklens.settings.details";
+            Button detailButton = addRenderableWidget(Button.builder(Component.translatable(actionKey),
+                    ignored -> showParent(builderTool
+                            ? new BuilderAssistScreen(this, this::showParent)
+                            : SceneFilterCatalog.index(capability)>=0
                             ? new SceneFilterOptionsScreen(this,draft,SceneFilterCatalog.index(capability),this::showParent)
                             : AnalyzerCatalog.index(capability)>=0
                             ? new AnalyzerOptionsScreen(this,draft,AnalyzerCatalog.index(capability),this::showParent)
                             : new ComfortOptionsScreen(this, draft, capability, this::showParent)))
                     .createNarration(ignored -> Component.translatable(SettingsCatalog.nameKey(capability))
-                            .append(": ").append(Component.translatable("blocklens.settings.details")))
-                    .bounds(0, 0, 68, 20).build()));
+                            .append(": ").append(Component.translatable(actionKey)))
+                    .bounds(0, 0, 68, 20).build());
+            detailButton.active = !builderTool || net.minecraft.client.Minecraft.getInstance().level != null;
+            details.add(detailButton);
             detailRows.add(index);
         }
         int footerWidth = (layout.contentWidth() - 8) / 2;

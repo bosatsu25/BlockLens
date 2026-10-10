@@ -1,8 +1,8 @@
-# BlockLens — 現在の53機能 / Current 53 capabilities
+# BlockLens — 現在の57機能 / Current 57 capabilities
 
 Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
-The compiled catalog contains 53 independent capabilities; existing keys, ordering and defaults are preserved.
+The compiled catalog contains 57 independent capabilities; existing keys, ordering and defaults are preserved.
 
 ## 向き・状態 / Orientation and state（13）
 
@@ -61,7 +61,7 @@ The compiled catalog contains 53 independent capabilities; existing keys, orderi
 | 明るい白色コンクリート | Bright Concrete | 元のモデルを保って白色コンクリートを発光表示します。 | 有効 / Enabled |
 | 明るいチェスト | Bright Chest | 通常のチェストを明るい白色にし、形と開閉を保ちます。 | 有効 / Enabled |
 
-## その他 / Other（11）
+## その他 / Other（15）
 
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
@@ -76,10 +76,14 @@ The compiled catalog contains 53 independent capabilities; existing keys, orderi
 | 村人の職業場所リンク | Villager job site links | 届いた職業場所メモリと近隣の読み込み済み職業場所を結びます。通常のクライアントはメモリが届かず、線が出ない場合があります。 | 無効 / Disabled |
 | ブロック表示フィルター | Block display filter | ブロックIDの許可・除外リストでモデルとブロックエンティティ表示を隠します。流体、衝突、固体の遮蔽は維持します。 | 無効 / Disabled |
 | エンティティ表示フィルター | Entity display filter | 種類IDの許可・除外リストでエンティティを隠します。自分のプレイヤーは維持します。 | 無効 / Disabled |
+| 照準先の情報 | Crosshair Inspector | 照準先のブロックID・状態、またはエンティティの種類を表示します。 | 無効 / Disabled |
+| 配置状態プレビュー | Placement State Preview | メインハンドに持った対応ブロックの予測配置状態を表示します。 | 無効 / Disabled |
+| パターン比較 | Pattern Consistency | 選択した基準と、水平8・垂直4ブロック以内の同種ブロックの状態を比較します。 | 無効 / Disabled |
+| 設計図との比較 | Schematic Comparison | 予測配置位置の状態を、対応するLitematicaの読み込み済み設計図と比較します。 | 無効 / Disabled |
 
 ## 設定画面 / Settings screen
 
-表示フィルターはモードと4つの独立リストを編集し、リストの反映は下書きだけを変更します。空の許可リストは対象の種類をすべて隠します（自分のプレイヤーを除く）。親画面の保存・適用まで実行時設定は変更しません。[表示フィルターの仕様](scene-filter.md)を参照してください。実クライアント検証とCIが揃うまで#35は未完了です。
+表示フィルターはモードと4つの独立リストを編集し、リストの反映は下書きだけを変更します。空の許可リストは対象の種類をすべて隠します（自分のプレイヤーを除く）。親画面の保存・適用まで実行時設定は変更しません。[表示フィルターの仕様](scene-filter.md)を参照してください。Scene FilterはPR #51で実装済みです。
 
 Bキーまたは任意のMod Menuから開きます。4カテゴリで機能を切り替え、各行に名前・説明・独立した有効/無効ボタンを表示します。「保存して適用」で保存し、「変更を破棄」またはEscでは保存せず戻ります。保存失敗時は編集内容を保持し、再試行できます。
 
@@ -89,6 +93,8 @@ Open with B or the optional Mod Menu entrypoint. Save and apply persists edits; 
 
 ## 確認範囲 / Verification boundary
 
-一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、5つの解析機能、2つの表示フィルターを追加した構成です。最初の51機能の設定キー・順序・既定値を保持します。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
+一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、5つの解析機能、2つの表示フィルター、4つの建築支援を追加した構成です。最初の53機能の設定キー・順序・既定値を保持します。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
 
-添付リソースパックの実ゲームでの組み合わせと読み込み順、元設定画面との画素単位の一致、シェーダーとVulkanは未確認です。This catalog is not a claim that these compatibility checks have passed or that the settings redesign has been released.
+建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。4機能を有効にして「保存して適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
+
+外部Shader・Vulkan・Litematicaの正確な版と実測条件は[外部互換性](external-compatibility.md)で管理します。アップロード済みの非公開リソースパックの組み合わせと読み込み順は、実クライアントを動かせる非公開環境での確認が必要です。This catalog does not claim blanket shader/pack/backend compatibility or a new published release.

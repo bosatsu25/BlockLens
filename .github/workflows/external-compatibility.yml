@@ -1,0 +1,122 @@
+name: External compatibility
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blocklens-external-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  external-client:
+    name: ${{ matrix.minecraft }} / ${{ matrix.profile }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {module: mc26_1_2, minecraft: '26.1.2', profile: shader-off}
+          - {module: mc26_1_2, minecraft: '26.1.2', profile: shader-on}
+          - {module: mc26_1_2, minecraft: '26.1.2', profile: masa}
+          - {module: mc26_2, minecraft: '26.2', profile: shader-off}
+          - {module: mc26_2, minecraft: '26.2', profile: shader-on}
+          - {module: mc26_2, minecraft: '26.2', profile: masa}
+          - {module: mc26_2, minecraft: '26.2', profile: vulkan}
+          - {module: mc26_3, minecraft: '26.3', profile: shader-off}
+          - {module: mc26_3, minecraft: '26.3', profile: shader-on}
+          - {module: mc26_3, minecraft: '26.3', profile: masa}
+          - {module: mc26_3, minecraft: '26.3', profile: vulkan}
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      LIBGL_ALWAYS_SOFTWARE: 'true'
+      SDL_VIDEO_FORCE_EGL: ${{ matrix.module == 'mc26_3' && matrix.profile != 'vulkan' && '1' || '0' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Gradle 9.5.1
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          gradle-version: '9.5.1'
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - name: Install Mesa rendering backends
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libegl1 libgl1-mesa-dri libvulkan1 mesa-vulkan-drivers vulkan-tools
+      - name: Select and inspect the Vulkan software device
+        if: matrix.profile == 'vulkan'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t drivers < <(find /usr/share/vulkan/icd.d -maxdepth 1 -name 'lvp*.json' -type f -print)
+          test "${#drivers[@]}" -eq 1
+          export VK_DRIVER_FILES="${drivers[0]}"
+          echo "VK_DRIVER_FILES=$VK_DRIVER_FILES" >> "$GITHUB_ENV"
+          xvfb-run -a vulkaninfo --summary
+      - name: Prepare exact external dependency bytes
+        run: >-
+          python3 scripts/prepare_external_compatibility.py
+          --minecraft '${{ matrix.minecraft }}' --profile '${{ matrix.profile }}'
+          --destination 'build/external/${{ matrix.minecraft }}-${{ matrix.profile }}'
+      - name: Build and audit the packaged runtime
+        run: >-
+          gradle --stacktrace
+          -PclientTestFocus=external
+          -PverifyPackagedRuntime=true
+          -PexternalCompatibilityProfile=${{ matrix.profile }}
+          -PexternalCompatibilityDirectory=build/external/${{ matrix.minecraft }}-${{ matrix.profile }}
+          :versions:${{ matrix.module }}:build
+          :versions:${{ matrix.module }}:versionSmokeContract
+          :versions:${{ matrix.module }}:verifyRuntimeJarBudget
+      - name: Run the actual external client configuration
+        timeout-minutes: 12
+        run: >-
+          xvfb-run -a gradle --stacktrace
+          -PclientTestFocus=external
+          -PverifyPackagedRuntime=true
+          -PexternalCompatibilityProfile=${{ matrix.profile }}
+          -PexternalCompatibilityDirectory=build/external/${{ matrix.minecraft }}-${{ matrix.profile }}
+          :versions:${{ matrix.module }}:runClientGameTest
+      - name: Verify and collect external evidence
+        run: >-
+          python3 scripts/verify_external_compatibility.py
+          --directory 'versions/${{ matrix.module }}/build/run/clientGameTest/external-compatibility'
+          --minecraft '${{ matrix.minecraft }}' --profile '${{ matrix.profile }}'
+          --destination 'build/ci/external-${{ matrix.minecraft }}-${{ matrix.profile }}'
+      - name: Upload verified external evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-external-${{ matrix.minecraft }}-${{ matrix.profile }}
+          path: build/ci/external-${{ matrix.minecraft }}-${{ matrix.profile }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Collect bounded failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="build/ci/external-failure-${{ matrix.minecraft }}-${{ matrix.profile }}"
+          mkdir -p "$target"
+          python3 scripts/sanitize-client-diagnostics.py '${{ matrix.module }}' > "$target/log-summary.txt"
+      - name: Upload bounded failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-external-failure-${{ matrix.minecraft }}-${{ matrix.profile }}
+          path: build/ci/external-failure-${{ matrix.minecraft }}-${{ matrix.profile }}
+          if-no-files-found: warn
+          retention-days: 14

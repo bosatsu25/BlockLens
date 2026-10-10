@@ -19,6 +19,8 @@ public final class BlockLensClient implements ClientModInitializer {
     private static final System.Logger LOGGER = System.getLogger("BlockLens");
     private static final KeyMapping OPEN_SETTINGS = new KeyMapping(
             "key.blocklens.settings", InputConstants.KEY_B, KeyMapping.Category.MISC);
+    private static final KeyMapping OPEN_BUILDER = new KeyMapping(
+            "key.blocklens.builder", InputConstants.UNKNOWN.getValue(), KeyMapping.Category.MISC);
 
     @Override
     public void onInitializeClient() {
@@ -36,11 +38,20 @@ public final class BlockLensClient implements ClientModInitializer {
         MinecraftDecorationModelPlugin.register();
         SceneFilterClient.register();
         AnalyzerClient.register();
+        BuilderAssistClient.register();
+        MinecraftOreExtensions.register();
         KeyMappingHelper.registerKeyMapping(OPEN_SETTINGS);
+        KeyMappingHelper.registerKeyMapping(OPEN_BUILDER);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OPEN_SETTINGS.consumeClick()) {
                 if (BlockLensConfigScreen.current(client) == null) {
                     BlockLensConfigScreen.show(client, new BlockLensConfigScreen(null));
+                }
+            }
+            while (OPEN_BUILDER.consumeClick()) {
+                if (client.level != null && BlockLensConfigScreen.current(client) == null) {
+                    BlockLensConfigScreen.show(client, new BuilderAssistScreen(null,
+                            screen -> BlockLensConfigScreen.show(client, screen)));
                 }
             }
         });

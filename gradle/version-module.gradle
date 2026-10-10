@@ -17,12 +17,20 @@ def runtimeSourcePackBytes = Long.parseLong(rootProject.runtime_jar_source_pack_
 def runtimeHardMaxBytes = Long.parseLong(rootProject.runtime_jar_hard_max_bytes.toString())
 def runtimeBaselineBytes = Long.parseLong(rootProject.runtime_jar_baseline_bytes.toString())
 def runtimeReleaseBudgetBytes = Long.parseLong(rootProject.runtime_jar_release_budget_bytes.toString())
+def masaCompilePins = [
+        '26.1.2': ['w8P6TokG', 'FItuNokS'],
+        '26.2': ['CuniXtbo', 'KvjmGjAV'],
+        '26.3': ['ZqV316KY', 'JX9bESec']
+][blockLensMinecraftVersionValue]
 
 dependencies {
     minecraft "com.mojang:minecraft:${blockLensMinecraftVersionValue}"
     implementation "net.fabricmc:fabric-loader:${blockLensLoaderVersionValue}"
     implementation "net.fabricmc.fabric-api:fabric-api:${blockLensFabricApiVersion}"
     implementation project(':common')
+    // Typed optional boundary; these dependencies are never packaged or required at runtime.
+    compileOnly "maven.modrinth:litematica:${masaCompilePins[0]}"
+    compileOnly "maven.modrinth:malilib:${masaCompilePins[1]}"
 
     testImplementation platform('org.junit:junit-bom:5.14.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -38,14 +46,30 @@ fabricApi {
     }
 }
 
+dependencies {
+    gametestCompileOnly "maven.modrinth:litematica:${masaCompilePins[0]}"
+    gametestCompileOnly "maven.modrinth:malilib:${masaCompilePins[1]}"
+}
+
 // Diagnostic variation applies only to the isolated client test JVM.
 def m8FpsLimit = providers.gradleProperty('m8FpsLimit').orElse('60').get()
 if (!(m8FpsLimit in ['30', '60', '120'])) {
     throw new GradleException('m8FpsLimit must be 30, 60 or 120')
 }
 def clientTestFocus = providers.gradleProperty('clientTestFocus').orElse('all').get()
-if (!(clientTestFocus in ['all', 'scene', 'm8'])) {
-    throw new GradleException('clientTestFocus must be all, scene or m8')
+if (!(clientTestFocus in ['all', 'scene', 'm8', 'external'])) {
+    throw new GradleException('clientTestFocus must be all, scene, m8 or external')
+}
+def externalProfile = providers.gradleProperty('externalCompatibilityProfile').orElse('none').get()
+if (!(externalProfile in ['none', 'shader-off', 'shader-on', 'vulkan', 'packs', 'masa'])) {
+    throw new GradleException('Unknown external compatibility profile')
+}
+def externalDirectory = providers.gradleProperty('externalCompatibilityDirectory').orElse('').get()
+if ((clientTestFocus == 'external') != (externalProfile != 'none')) {
+    throw new GradleException('External compatibility profiles require clientTestFocus=external')
+}
+if (externalProfile != 'none' && externalDirectory.isBlank()) {
+    throw new GradleException('External compatibility profiles require a prepared directory')
 }
 def m8EscapeAnalysis = providers.gradleProperty('m8EscapeAnalysis').orElse('default').get()
 if (!(m8EscapeAnalysis in ['default', 'disabled'])) {
@@ -58,6 +82,25 @@ if (!(m8Compilation in ['default', 'c1', 'c2-batch'])) {
 tasks.named('runClientGameTest') {
     systemProperty 'blocklens.test.m8.fpsLimit', m8FpsLimit
     systemProperty 'blocklens.test.focus', clientTestFocus
+    systemProperty 'blocklens.test.external.profile', externalProfile
+    if (externalProfile != 'none') {
+        File prepared = rootProject.file(externalDirectory)
+        systemProperty 'blocklens.test.external.directory', prepared.absolutePath
+        if (blockLensMinecraftVersionValue != '26.1.2') {
+            args '--graphicsBackend', externalProfile == 'vulkan' ? 'VULKAN' : 'OPENGL'
+        }
+        doFirst {
+            if (externalProfile == 'vulkan' && blockLensMinecraftVersionValue == '26.1.2') {
+                throw new GradleException('The Vulkan compatibility matrix starts at Minecraft 26.2')
+            }
+            for (String folder : ['config', 'shaderpacks', 'resourcepacks']) {
+                copy {
+                    from new File(prepared, folder)
+                    into new File(workingDir, folder)
+                }
+            }
+        }
+    }
     if (m8EscapeAnalysis == 'disabled') {
         jvmArgs '-XX:-DoEscapeAnalysis'
     }
@@ -80,6 +123,16 @@ sourceSets {
         java.srcDir rootProject.file('gametest/java')
         java.srcDir rootProject.file('test-support/java')
         resources.srcDir rootProject.file('gametest/resources')
+        java.srcDir rootProject.file(externalProfile.startsWith('shader-')
+                ? 'external-compat/iris/java' : 'external-compat/base/java')
+    }
+}
+
+if (externalProfile != 'none') {
+    def externalMods = fileTree(dir: new File(rootProject.file(externalDirectory), 'mods'), include: '*.jar')
+    dependencies {
+        gametestCompileOnly externalMods
+        gametestRuntimeOnly externalMods
     }
 }
 
@@ -154,8 +207,8 @@ def verifyPackagedRuntime = providers.gradleProperty('verifyPackagedRuntime').or
 if (!(verifyPackagedRuntime in ['true', 'false'])) {
     throw new GradleException('verifyPackagedRuntime must be true or false')
 }
-if (clientTestFocus == 'm8' && verifyPackagedRuntime != 'true') {
-    throw new GradleException('M8 experiments require verifyPackagedRuntime=true')
+if (clientTestFocus in ['m8', 'external'] && verifyPackagedRuntime != 'true') {
+    throw new GradleException('M8 and external experiments require verifyPackagedRuntime=true')
 }
 if (verifyPackagedRuntime == 'true') {
     tasks.named('runClientGameTest') {
@@ -215,6 +268,16 @@ tasks.register('versionSmokeContract') {
                     'dev/blocklens/fabric/MinecraftDecorationTargetIndex.class',
                     'dev/blocklens/fabric/MinecraftDecorationModelPlugin.class',
                     'dev/blocklens/fabric/MinecraftDecorationModel.class',
+                    'dev/blocklens/fabric/BuilderAssistClient.class',
+                    'dev/blocklens/fabric/BuilderAssistScreen.class',
+                    'dev/blocklens/fabric/LitematicaStateReader.class',
+                    'dev/blocklens/fabric/MinecraftOreExtensions.class',
+                    'dev/blocklens/fabric/mixin/OreExtensionMixin.class',
+                    'dev/blocklens/api/OreHighlightExtensions.class',
+                    'dev/blocklens/core/builder/BuilderState.class',
+                    'dev/blocklens/core/builder/PatternInspector.class',
+                    'dev/blocklens/core/builder/SchematicCompatibility.class',
+                    'dev/blocklens/core/extension/OreExtensionCatalog.class',
                     'dev/blocklens/core/CapabilityId.class',
                     'dev/blocklens/core/BlockLensConfig.class',
                     'dev/blocklens/core/state/SemanticState.class',
@@ -376,7 +439,7 @@ tasks.register('verifyRuntimeJarBudget') {
         }
         if (bytes > runtimeReleaseBudgetBytes) {
             throw new GradleException(
-                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; 150 KiB release budget is ${runtimeReleaseBudgetBytes} bytes.")
+                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; 200 KiB release budget is ${runtimeReleaseBudgetBytes} bytes.")
         }
         if (bytes > runtimeBaselineBytes) {
             throw new GradleException(

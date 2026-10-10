@@ -44,7 +44,7 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 
 ## Current feature inventory
 
-- [`current/features.md`](current/features.md) — all 53 independent capabilities, English/Japanese names, behavior and defaults
+- [`current/features.md`](current/features.md) — all 57 independent capabilities, English/Japanese names, behavior and defaults
 
 - [Current three-version integration and visible UI runner](current/minecraft-26-3.md) — 26.3 adaptation, reviewed byte budget and verification status.
 
@@ -54,3 +54,8 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 - [Client scene filters](current/scene-filter.md) — independent modes/lists, reversible rendering, bounded registry compilation and verification status.
 
 - [Masa integration and standalone decision](current/masa-integration-decisions.md) — eight explicit scope exclusions, the separate read-only #36 candidate and retained ChiseTweaks differences.
+
+- [Builder Assist and Inspector](current/builder-assist.md) — four independent advisory tools, session references and exact optional Masa pairs.
+- [Bounded ore extensions](current/extension-compatibility.md) — versioned registration, synchronized tags and retained terrain-model limits.
+- [External compatibility](current/external-compatibility.md) — exact Shader/Masa/Vulkan matrix, private pack evidence and actual-backend checks.
+- [Remaining delivery and revised size contract](current/remaining-delivery.md) — user-authorized 200 KiB limit, preserved gates and evidence links.

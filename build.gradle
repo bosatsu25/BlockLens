@@ -12,6 +12,10 @@ allprojects {
         mavenCentral()
         maven { url = 'https://maven.fabricmc.net/' }
         maven { url = 'https://maven.terraformersmc.com/' }
+        maven {
+            url = 'https://api.modrinth.com/maven'
+            content { includeGroup 'maven.modrinth' }
+        }
     }
 }
 

@@ -2,7 +2,7 @@
 
 Status: **historical v0.2.1 implementation and measurement record**
 
-This document preserves the v0.2.1-era UI, two-version measurements and 100 KiB release ceiling as historical evidence. Current category-based UI is specified in [settings-ui.md](settings-ui.md); current three-version support and the reviewed 140 KiB development / 150 KiB release ceilings are in [minecraft-26-3.md](minecraft-26-3.md) and [roadmap.md](roadmap.md). Its old layout and numeric budgets are not current requirements. Diagnostic improvements were completed in #43 / PR #45; the original historical failure cause remains unknown. See [m8-diagnostics.md](m8-diagnostics.md) and [lightweight-visuals.md](lightweight-visuals.md) for the additive development scope.
+This document preserves the v0.2.1-era UI, two-version measurements and 100 KiB release ceiling as historical evidence. Current category-based UI is specified in [settings-ui.md](settings-ui.md); current three-version support and the user-authorized 200 KiB development / release ceilings are in [minecraft-26-3.md](minecraft-26-3.md) and [roadmap.md](roadmap.md). Its old layout and numeric budgets are not current requirements. Diagnostic improvements were completed in #43 / PR #45; the original historical failure cause remains unknown. See [m8-diagnostics.md](m8-diagnostics.md) and [lightweight-visuals.md](lightweight-visuals.md) for the additive development scope.
 
 This review hardens the post-v0.2.0 source tree without adding a second rendering engine, a world scan, telemetry, network access, or an external UI dependency. The frozen 37-capability source contract and the current 40-capability product contract remain unchanged.
 

@@ -17,9 +17,9 @@ final class MinecraftDecorationTargetOracle {
     static void verify() {
         TargetCapabilityIndex index = MinecraftDecorationTargetIndex.build();
         require(index.bindingCount() == 366,
-                "expected 366 current target bindings but got " + index.bindingCount());
+                "expected 366 original bindings but got " + index.bindingCount());
         require(index.mappedCount() == 328,
-                "expected 328 unique mapped Minecraft targets but got " + index.mappedCount());
+                "expected 328 original targets but got " + index.mappedCount());
 
         int checked = 0;
         for (CapabilityId capability : CapabilityId.values()) {

@@ -20,7 +20,7 @@ This follows the source model boundary: fluids, waterlogged-fluid rendering and 
 
 ## Required verification
 
-Pure mode/self/limit/normalization/preset/config/draft tests; selected coverage/mutation checks; all-three compile/build/audits with unchanged 140 KiB/150 KiB limits; real-client block/entity/block-entity OFF/blacklist/whitelist/self and unknown-ID controls; 320x240 English/Japanese draft/save/discard/invalid-input UI evidence; reload/dimension/disconnect restoration; existing visual and analyzer interactions; reproducible outer/inner JARs; independent review and exact-head CI. Source review alone establishes no third-party renderer/shader/backend compatibility; #31 remains separate.
+Pure mode/self/limit/normalization/preset/config/draft tests; selected coverage/mutation checks; all-three compile/build/audits with the current user-authorized 200 KiB size limit; real-client block/entity/block-entity OFF/blacklist/whitelist/self and unknown-ID controls; 320x240 English/Japanese draft/save/discard/invalid-input UI evidence; reload/dimension/disconnect restoration; existing visual and analyzer interactions; reproducible outer/inner JARs; independent review and exact-head CI. Source review alone establishes no third-party renderer/shader/backend compatibility; #31 remains separate.
 
 ## Work in progress evidence
 

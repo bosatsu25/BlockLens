@@ -5,6 +5,9 @@
   "name": "BlockLens Client GameTests",
   "environment": "client",
   "entrypoints": {
+    "main": [
+      "dev.blocklens.gametest.OreExtensionFixture"
+    ],
     "client": [
       "dev.blocklens.gametest.M5ActiveResourcePackFixture"
     ],

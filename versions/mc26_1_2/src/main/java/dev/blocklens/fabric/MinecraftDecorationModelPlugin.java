@@ -27,6 +27,7 @@ public final class MinecraftDecorationModelPlugin {
 
     public static void register() {
         ModelLoadingPlugin.register(pluginContext -> {
+            BuilderAssistClient.invalidate();
             TargetCapabilityIndex targetIndex = MinecraftDecorationTargetIndex.build();
             NetherTweaksOverlayModels.register(pluginContext);
             LightweightOverlayModels.register(pluginContext);

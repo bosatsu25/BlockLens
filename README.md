@@ -6,23 +6,43 @@
 
 **English** | [日本語](README_ja.md)
 
-BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It makes block orientation and state, resources, fine geometry and Nether materials easier to distinguish through 53 independently configurable visual capabilities. See the [complete current feature list](knowledge/current/features.md).
+BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It makes block orientation and state, resources, fine geometry and Nether materials easier to distinguish through 57 independently configurable visual and inspection capabilities. See the [complete current feature list](knowledge/current/features.md).
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
 > **Current stable release:** BlockLens **v0.2.2** provides **40 independently configurable capabilities** for Minecraft **26.1.2** and **26.2**, including an optional Mod Menu settings entrypoint. Current main additionally supports **26.3**; that development build has not been published as a new release.
 >
-> **Historical release:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget. Current policy uses a **150 KiB** release ceiling and a tighter **140 KiB** reviewed development guard.
+> **Historical release:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
 ## Current development: three Minecraft versions
 
-The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, five bounded analyzers and two independent scene filters. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
+The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, five bounded analyzers, two independent scene filters and four advisory Builder Assist tools. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
 
 To watch real Minecraft UI automation on Windows, with Java 25 and Gradle 9.5.1 on PATH, run `./scripts/run-ui-tests.ps1` (all three) or `./scripts/run-ui-tests.ps1 -Version 26.3`. The runner opens actual clients sequentially using the built distribution JAR, checks loaded class origins, exits after testing and stops on failure. CI requires ten settings screenshots per target and separate rendering/JAR evidence. See [current version contract, exact dependencies and verification status](knowledge/current/minecraft-26-3.md).
 
 The five analyzers find loaded ancient debris and qualifying source lava, outline beacon/rod ranges, and link actual client villager job-site memories. They default OFF and share numeric radius/marker/interval settings and the existing save/discard draft. Unloaded chunks are skipped, dense scans take multiple ticks, and unavailable villager memory never produces an inferred workstation. See [work limits and exact behavior](knowledge/current/world-analyzers.md).
 
 The two scene filters independently edit block/entity type ID blacklists and whitelists. They default OFF, retain the local player, and preserve fluids, physical state and solid occlusion. List edits share the parent save/discard draft. See [the filter contract and pending verification](knowledge/current/scene-filter.md).
+
+## Builder Assist and ore extensions
+
+Enable the four independent Builder Assist tools in Other, then **Save and apply**.
+In a world, open the panel using an Open button on those rows, or assign the initially
+unbound Builder Assist key. It displays local crosshair state, predicts supported
+main-hand block placement, compares nearby blocks with an explicit session reference,
+and optionally compares predicted placement with a loaded Litematica schematic.
+These tools inspect and explain; they never place or break blocks or send custom packets.
+
+Typed optional pairs are pinned per Minecraft release: **26.1.2: Litematica 0.27.14 /
+MaLiLib 0.28.12; 26.2: 0.28.8 / 0.29.6; 26.3: 0.29.1 / 0.30.2**. Other versions disable
+only schematic comparison. Neither mod is bundled or required. See [Builder Assist](knowledge/current/builder-assist.md).
+
+[The ore extension contract](knowledge/current/extension-compatibility.md) accepts
+explicit versioned registrations and a fixed set of synchronized conventional ore tags.
+It reuses the existing Resource controls and active base models, with bounded retained
+terrain models and no per-frame registry scan. Supported renderer/evidence boundaries,
+including the exact Shader and Vulkan test matrix, are listed in
+[external compatibility](knowledge/current/external-compatibility.md).
 
 ## Product direction
 
@@ -174,7 +194,7 @@ Runtime principles:
 
 The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 46 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is merged in PR #40. Supplied third-party pack combinations, source-screen pixel equivalence, shaders and Vulkan are not yet verified.
 
-Bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model are implemented. Historical v0.2.1 local artifacts measured **101,877 B / 101,913 B** under the then-current **102,400 B** ceiling. Current three-version gates use the reviewed **143,360 B** development baseline and **153,600 B** release ceiling. OFF/default/all-capability M8 measurements remain coarse regression guards; observed CI allocation variability is tracked in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
+Bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model are implemented. Historical v0.2.1 local artifacts measured **101,877 B / 101,913 B** under the then-current **102,400 B** ceiling. Current three-version gates use the reviewed **204,800 B** development baseline and **204,800 B** release ceiling. OFF/default/all-capability M8 measurements remain coarse regression guards; observed CI allocation variability is tracked in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
 
 ## Release
 
@@ -185,7 +205,7 @@ Bounded config reads, synchronous temporary-file writes with atomic replacement 
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). A 26.3 release artifact is not yet published. Current development budgets are **143,360 B (140 KiB)** no-growth, **153,600 B (150 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
+The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). A 26.3 release artifact is not yet published. Current development budgets are **204,800 B (200 KiB)** no-growth, **204,800 B (200 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
 
 **v0.2.0** remains historical P0 release evidence.
 
@@ -288,8 +308,8 @@ The Release job does not rebuild BlockLens. It promotes the exact verified raw C
 - P0 measured development maximum: **96,257 B**
 - P0 growth over v0.1.0 baseline: **924 B maximum**
 - historical v0.1.0 / P0 release budget: **100 KiB / 102,400 B**
-- current reviewed development no-growth guard: **140 KiB / 143,360 B**
-- current product release ceiling: **150 KiB / 153,600 B**
+- current reviewed development no-growth guard: **200 KiB / 204,800 B**
+- current product release ceiling: **200 KiB / 204,800 B**
 - source-pack `<50%` absolute hard maximum remains unchanged
 
 Size reduction is never allowed to remove functional parity, tests, compatibility evidence, or safety gates.

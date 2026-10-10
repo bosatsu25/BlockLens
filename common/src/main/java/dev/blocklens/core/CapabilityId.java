@@ -77,7 +77,12 @@ public enum CapabilityId {
     VILLAGER_JOB_SITE_LINKS("analyzer.villager_job_site_links", Category.OTHER, false),
 
     BLOCK_FILTER("scene.block_filter", Category.OTHER, false),
-    ENTITY_FILTER("scene.entity_filter", Category.OTHER, false);
+    ENTITY_FILTER("scene.entity_filter", Category.OTHER, false),
+
+    BLOCK_INSPECTOR("builder.block_inspector", Category.OTHER, false),
+    PLACEMENT_PREVIEW("builder.placement_preview", Category.OTHER, false),
+    PATTERN_CONSISTENCY("builder.pattern_consistency", Category.OTHER, false),
+    SCHEMATIC_COMPARISON("builder.schematic_comparison", Category.OTHER, false);
 
     public enum Category {
         DECORATION,

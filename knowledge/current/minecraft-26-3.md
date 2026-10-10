@@ -27,7 +27,7 @@ Settings screenshots are written under each module's build/run/clientGameTest/se
 
 For #41, the development no-growth baseline increased by exactly 1 KiB, from 112640 to 113664 bytes (111 KiB). Initial Windows artifacts measured 112628 / 113335 / 113379 bytes. The largest exceeds the former baseline by 739 bytes. Independent review confirmed that the required lighting bridges contribute 364 / 410 compressed bytes plus archive entries, alongside input/runtime-version adaptation. This bounded compatibility adjustment preserves all capabilities. The release ceiling of 153600 bytes and absolute ceiling of 1183432 bytes remain unchanged. Every build must pass the per-target size gates; these measurements are not a performance claim.
 
-The current #42 development guard is 143360 bytes (140 KiB), with the same 153600-byte release and 1183432-byte absolute ceilings. Three-version native render/UI tests and 167 common tests passed locally; current-head hosted CI and merge remain required. See [lightweight-visuals.md](lightweight-visuals.md) for final artifacts and delta evidence.
+The historical #42 development guard was 143360 bytes (140 KiB), with 153600-byte release and 1183432-byte absolute ceilings. The user authorized the current 204800-byte development/release ceiling on 2026-10-11; see [remaining-delivery.md](remaining-delivery.md). Three-version native render/UI tests and 167 common tests passed locally; current-head hosted CI and merge remain required. See [lightweight-visuals.md](lightweight-visuals.md) for final artifacts and delta evidence.
 
 ## Historical #41 verification and launch diagnosis
 
