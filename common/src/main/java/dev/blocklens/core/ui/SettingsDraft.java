@@ -3,6 +3,7 @@ package dev.blocklens.core.ui;
 import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensConfigFiles;
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.ComfortOptions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -25,8 +26,13 @@ public final class SettingsDraft {
         config = config.withEnabled(capability, !config.isEnabled(capability));
     }
 
+    public void setComfortOptions(ComfortOptions options) {
+        config = config.withComfortOptions(options);
+    }
+
     public boolean changed() {
-        return config.enabledMask() != baseline.enabledMask();
+        return config.enabledMask() != baseline.enabledMask()
+                || !config.comfortOptions().equals(baseline.comfortOptions());
     }
 
     public void discard() {

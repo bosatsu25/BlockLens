@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "dev.blocklens.fabric.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "HandheldSizeMixin",
+    "LowFireMixin",
+    "BrightChestMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

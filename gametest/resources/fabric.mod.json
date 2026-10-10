@@ -16,5 +16,8 @@
     "blocklens": "*",
     "fabric-client-gametest-api-v1": "*",
     "fabric-resource-loader-v1": "*"
-  }
+  },
+  "mixins": [
+    "blocklens-gametest.mixins.json"
+  ]
 }

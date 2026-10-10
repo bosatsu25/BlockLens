@@ -51,7 +51,7 @@ final class RepositoryContractTest {
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
         assertTrue(source.contains("implements FabricClientGameTest"));
-        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 40"));
+        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 46"));
         assertTrue(source.contains("context.worldBuilder().create()"));
         assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
         assertTrue(source.contains("MinecraftStateAdapterOracle.verify()"));
@@ -62,8 +62,8 @@ final class RepositoryContractTest {
         assertTrue(adapterOracle.contains("white_glazed_terracotta"));
         assertTrue(adapterOracle.contains("white_stained_glass_pane"));
         assertTrue(targetOracle.contains("MinecraftDecorationTargetIndex.build()"));
-        assertTrue(targetOracle.contains("bindingCount() == 328"));
-        assertTrue(targetOracle.contains("mappedCount() == 322"));
+        assertTrue(targetOracle.contains("bindingCount() == 366"));
+        assertTrue(targetOracle.contains("mappedCount() == 328"));
         assertTrue(targetOracle.contains("BlockLensTargetCatalog.targets"));
         assertTrue(targetOracle.contains("CapabilityId.NETHER_TWEAKS"));
         assertTrue(targetOracle.contains("CapabilityId.CRYING_OBSIDIAN"));
@@ -72,7 +72,7 @@ final class RepositoryContractTest {
         assertTrue(targetOracle.contains("tripwire_hook"));
         assertTrue(targetOracle.contains("polished_basalt"));
         assertTrue(targetOracle.contains("MinecraftDecorationModelPlugin.isModelPipelineReady()"));
-        assertTrue(targetOracle.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 322"));
+        assertTrue(targetOracle.contains("MinecraftDecorationModelPlugin.wrappedModelCount() >= 328"));
         assertFalse(Files.exists(retiredPlainJUnitOracle),
                 "mapped BlockState oracle must run after real client bootstrap, not in plain JUnit");
 
@@ -93,9 +93,23 @@ final class RepositoryContractTest {
     private void assertSettingsOverlayBridge(String module, String overlayApi) throws IOException {
         Path directory = SupportedVersionFixtures.testSourceRoot(root(), module);
         Path bridge = directory.resolve("java/dev/blocklens/gametest/SettingsClientAccess.java");
-        try (var paths = Files.walk(directory)) {
-            assertEquals(List.of(bridge), paths.filter(Files::isRegularFile).toList(),
-                    "All GameTest logic and fixtures remain shared except the overlay API bridge");
+        var roots = new java.util.LinkedHashSet<Path>();
+        roots.add(directory);
+        Path moduleRoot = root().resolve("versions").resolve(module);
+        roots.add(moduleRoot.resolve("src/gametest"));
+        roots.add(moduleRoot.resolve("src/compat/gametest"));
+        var allowed = java.util.Set.of("SettingsClientAccess.java", "FireTransformProbeMixin.java",
+                "HeldTransformProbeMixin.java");
+        for (Path sourceRoot : roots) {
+            if (!Files.isDirectory(sourceRoot)) continue;
+            try (var paths = Files.walk(sourceRoot)) {
+                for (Path path : paths.filter(Files::isRegularFile).toList()) {
+                    assertTrue(allowed.contains(path.getFileName().toString()),
+                            "Only narrow Minecraft UI/render API test bridges may vary");
+                    assertTrue(Files.readString(path).lines().count() <= 35,
+                            "Version-specific test bridges must not duplicate an oracle");
+                }
+            }
         }
         String source = Files.readString(bridge);
         assertTrue(source.contains("static boolean ready(Minecraft client)"));

@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "dev.blocklens.gametest.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "FireTransformProbeMixin",
+    "HeldTransformProbeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

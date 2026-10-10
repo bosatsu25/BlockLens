@@ -16,13 +16,14 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 final class CapabilityContractTest {
-    private static final Set<String> P0_ADDITIONS = Set.of(
+    private static final Set<String> REVIEWED_ADDITIONS = Set.of(
             "gaming.crying_obsidian",
             "gaming.nether_gold_ore",
-            "gaming.nether_quartz_ore");
+            "gaming.nether_quartz_ore", "outline.glass_highlight", "outline.kelp_highlight",
+            "outline.bright_concrete", "others.low_fire", "others.handheld_size", "outline.bright_chest");
 
     @Test
-    void compiledCatalogPreservesPinnedM0ContractAndAddsOnlyP0Capabilities() throws IOException {
+    void compiledCatalogPreservesPinnedM0ContractAndAddsReviewedCapabilities() throws IOException {
         Path root = Path.of(System.getProperty("blocklens.repoRoot"));
         List<String> lines = Files.readAllLines(root.resolve("knowledge/current/capability-contract.tsv"));
         assertFalse(lines.isEmpty());
@@ -36,18 +37,21 @@ final class CapabilityContractTest {
         }
 
         assertEquals(37, baseline.size());
-        assertEquals(40, CapabilityId.values().length);
+        assertEquals(46, CapabilityId.values().length);
         assertTrue(CapabilityId.bySourceKey().keySet().containsAll(baseline.keySet()));
 
         Set<String> additions = new HashSet<>(CapabilityId.bySourceKey().keySet());
         additions.removeAll(baseline.keySet());
-        assertEquals(P0_ADDITIONS, additions);
+        assertEquals(REVIEWED_ADDITIONS, additions);
 
         for (CapabilityId capability : CapabilityId.values()) {
             if (baseline.containsKey(capability.sourceKey())) {
                 assertEquals(baseline.get(capability.sourceKey()), capability.defaultEnabled(), capability.sourceKey());
-            } else {
+            } else if (capability.ordinal() < 40) {
                 assertFalse(capability.defaultEnabled(), capability.sourceKey());
+            } else {
+                assertEquals(capability == CapabilityId.BRIGHT_CONCRETE || capability == CapabilityId.BRIGHT_CHEST,
+                        capability.defaultEnabled(), capability.sourceKey());
             }
         }
     }
@@ -63,14 +67,14 @@ final class CapabilityContractTest {
 
         assertEquals(13, counts.get(CapabilityId.Category.DECORATION));
         assertEquals(21, counts.get(CapabilityId.Category.RESOURCE));
-        assertEquals(4, counts.get(CapabilityId.Category.OUTLINE));
-        assertEquals(2, counts.get(CapabilityId.Category.OTHER));
+        assertEquals(8, counts.get(CapabilityId.Category.OUTLINE));
+        assertEquals(4, counts.get(CapabilityId.Category.OTHER));
         assertEquals(Set.of(
                 "outline.blueice",
                 "outline.deadcoral",
                 "outline.powdersnow",
                 "outline.sculk_catalyst",
-                "others.stringtweaks"), enabled);
+                "others.stringtweaks", "outline.bright_concrete", "outline.bright_chest"), enabled);
     }
 
     @Test
@@ -79,7 +83,7 @@ final class CapabilityContractTest {
         assertEquals(CapabilityId.ANVIL, index.get("deco.anvil"));
         assertEquals(CapabilityId.STRING_TWEAKS, index.get("others.stringtweaks"));
         assertEquals(CapabilityId.CRYING_OBSIDIAN, index.get("gaming.crying_obsidian"));
-        assertEquals(40, index.size());
+        assertEquals(46, index.size());
         try {
             index.clear();
         } catch (UnsupportedOperationException expected) {

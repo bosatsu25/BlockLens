@@ -21,7 +21,10 @@ final class SettingsTranslationsTest {
             }
             for (String key : new String[] {"blocklens.settings.apply", "blocklens.settings.discard",
                     "blocklens.settings.unsaved", "blocklens.settings.saved_error",
-                    "blocklens.state.enabled", "blocklens.state.disabled"}) {
+                    "blocklens.state.enabled", "blocklens.state.disabled", "blocklens.settings.details",
+                    "blocklens.settings.back", "blocklens.comfort.fire.0", "blocklens.comfort.fire.1",
+                    "blocklens.comfort.fire.2", "blocklens.comfort.held.0", "blocklens.comfort.held.1",
+                    "blocklens.comfort.held.2", "blocklens.comfort.draft_hint"}) {
                 requireText(translations, key);
             }
         }

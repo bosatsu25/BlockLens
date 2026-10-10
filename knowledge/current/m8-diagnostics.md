@@ -51,3 +51,5 @@ The pre-control [CI #316](https://github.com/bosatsu25/BlockLens/actions/runs/38
 CI317's common quality gate and all three native-client/build/reproducibility/privacy/size jobs passed on the exact source head without retries. Its three M8 ZIP digests were verified directly and contain passed reload/rebuild/allocation statuses, AFK control, Linux/Java25/VSync conditions and all raw arrays. Synthetic guard-failure evidence is verified inside every client before measurement. Product runtime artifacts remain unchanged in size: locally 112,628 / 113,335 / 113,379 B for the three versions, with test diagnostics explicitly rejected by the artifact audit.
 
 No measurement limit or runtime feature has been changed by this diagnostic implementation. The original CI312 cause remains an evidence limitation, not a claimed fix.
+
+The nine controlled observations above belong to the 40-capability PR #45 workload. Issue #42 extends the configured all-on workload to 46 and adds representative glass/pane, kelp, white-concrete and regular-chest targets. Its measurements must be recorded separately; the historical observations do not establish performance for the added scope.

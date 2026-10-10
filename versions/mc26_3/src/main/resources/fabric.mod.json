@@ -19,5 +19,8 @@
     "minecraft": "=${minecraft_version}",
     "java": ">=25",
     "fabric-api": "*"
-  }
+  },
+  "mixins": [
+    "blocklens.mixins.json"
+  ]
 }

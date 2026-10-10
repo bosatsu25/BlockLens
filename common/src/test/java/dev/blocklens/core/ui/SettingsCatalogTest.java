@@ -12,7 +12,7 @@ final class SettingsCatalogTest {
     @Test
     void everyCapabilityIsReachableExactlyOnceInItsOwnCategory() {
         var all = new ArrayList<CapabilityId>();
-        int[] expected = {13, 21, 4, 2};
+        int[] expected = {13, 21, 8, 4};
         for (Category category : Category.values()) {
             var entries = SettingsCatalog.capabilities(category);
             assertEquals(expected[category.ordinal()], entries.size());
@@ -20,7 +20,7 @@ final class SettingsCatalogTest {
             all.addAll(entries);
             assertThrows(UnsupportedOperationException.class, () -> entries.clear());
         }
-        assertEquals(40, all.size());
+        assertEquals(46, all.size());
         assertEquals(new HashSet<>(Arrays.asList(CapabilityId.values())), new HashSet<>(all));
     }
 

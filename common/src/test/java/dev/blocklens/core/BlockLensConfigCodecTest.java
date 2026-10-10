@@ -20,7 +20,9 @@ final class BlockLensConfigCodecTest {
             }
         }
 
-        assertEquals(5, enabled);
+        assertEquals(7, enabled);
+        assertEquals(5, java.util.Arrays.stream(CapabilityId.values()).filter(c -> c.ordinal() < 40)
+                .filter(config::isEnabled).count());
         assertEquals(expectedMask, config.enabledMask());
         assertTrue(config.isEnabled(CapabilityId.BLUE_ICE));
         assertTrue(config.isEnabled(CapabilityId.DEAD_CORAL));
@@ -45,7 +47,7 @@ final class BlockLensConfigCodecTest {
         assertEquals(expected.asMap(), actual.asMap());
         assertEquals(expected.enabledMask(), actual.enabledMask());
         assertTrue(encoded.startsWith("# BlockLens native config v1\n"));
-        assertEquals(CapabilityId.values().length + 1L, encoded.lines().count());
+        assertEquals(CapabilityId.values().length + 5L, encoded.lines().count());
     }
 
     @Test

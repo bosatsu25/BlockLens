@@ -1,8 +1,8 @@
-# BlockLens — 現在の40機能 / Current 40 capabilities
+# BlockLens — 現在の46機能 / Current 46 capabilities
 
 Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
-The compiled catalog contains 40 independent capabilities; existing keys, ordering and defaults are preserved.
+The compiled catalog contains 46 independent capabilities; existing keys, ordering and defaults are preserved.
 
 ## 向き・状態 / Orientation and state（13）
 
@@ -48,7 +48,7 @@ The compiled catalog contains 40 independent capabilities; existing keys, orderi
 | ネザー金鉱石 | Nether Gold Ore | ネザー金鉱石を強調表示します。 | 無効 / Disabled |
 | ネザークォーツ鉱石 | Nether Quartz Ore | ネザークォーツ鉱石を強調表示します。 | 無効 / Disabled |
 
-## 見やすさ / Visibility（4）
+## 見やすさ / Visibility（8）
 
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
@@ -57,21 +57,31 @@ The compiled catalog contains 40 independent capabilities; existing keys, orderi
 | 粉雪 | Powder Snow | 粉雪を見分けやすくします。 | 有効 / Enabled |
 | スカルクカタリスト | Sculk Catalyst | スカルクカタリストを見分けやすくします。 | 有効 / Enabled |
 
-## その他 / Other（2）
+| ガラスの目印 | Glass Highlight | ガラスに水色、ガラス板に琥珀色の目印を追加します。 | 無効 / Disabled |
+| 昆布の目印 | Kelp Highlight | 昆布に動くマゼンタ・オレンジ色の目印を追加します。 | 無効 / Disabled |
+| 明るい白色コンクリート | Bright Concrete | 元のモデルを保って白色コンクリートを発光表示します。 | 有効 / Enabled |
+| 明るいチェスト | Bright Chest | 通常のチェストを明るい白色にし、形と開閉を保ちます。 | 有効 / Enabled |
+
+## その他 / Other（4）
 
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
 | ネザー表示調整 | Nether Tweaks | ネザーのブロックを見分けるための表示を調整します。 | 無効 / Disabled |
 | 糸表示調整 | String Tweaks | 糸とトリップワイヤーフックを見やすくします。 | 有効 / Enabled |
 
+| 炎の高さを抑える | Low Fire | 一人称の炎表示だけを大・中・小に調整します。 | 無効 / Disabled |
+| 手持ちアイテムの大きさ | Handheld Size | 一人称のブロック・アイテム・道具を別々に40～100%で調整します。盾は95%です。 | 無効 / Disabled |
+
 ## 設定画面 / Settings screen
 
 Bキーまたは任意のMod Menuから開きます。4カテゴリで機能を切り替え、各行に名前・説明・独立した有効/無効ボタンを表示します。「保存して適用」で保存し、「変更を破棄」またはEscでは保存せず戻ります。保存失敗時は編集内容を保持し、再試行できます。
+
+「炎の高さを抑える」と「手持ちアイテムの大きさ」の詳細画面も同じ編集内容を共有し、親画面の保存・適用まで保存しません。詳細は [追加6機能の仕様](lightweight-visuals.md) に記録しています。
 
 Open with B or the optional Mod Menu entrypoint. Save and apply persists edits; Discard changes and Esc discard them. A failed save retains the draft for retry. See [settings UI](settings-ui.md) for navigation and verification boundaries.
 
 ## 確認範囲 / Verification boundary
 
-一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能を追加した構成です。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
+一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能に、独立した6機能を追加した構成です。最初の40機能の設定キー・順序・既定値を保持します。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
 
 添付リソースパックの実ゲームでの組み合わせと読み込み順、元設定画面との画素単位の一致、シェーダーとVulkanは未確認です。This catalog is not a claim that these compatibility checks have passed or that the settings redesign has been released.

@@ -2,7 +2,7 @@
 
 Status: **M8 complete / historical original-product evidence**.
 
-The measurements, original 37-capability count and 100 KiB release budget below describe the original M8 release era. Current main has 40 capabilities and three supported Minecraft versions; current reviewed size policy is 111 KiB development / 150 KiB release / 1,183,432 B absolute. See [roadmap.md](roadmap.md) and [minecraft-26-3.md](minecraft-26-3.md). Coarse 6.0 s reload / 2.5 s rebuild / 32 MiB allocation guards remain active. Their diagnostic variability is tracked in #43 and [m8-diagnostics.md](m8-diagnostics.md); this historical record is not evidence of current measurement stability.
+The measurements, original 37-capability count and 100 KiB release budget below describe the original M8 release era. The development tree has 46 capabilities and three supported Minecraft versions; current reviewed size policy is 140 KiB development / 150 KiB release / 1,183,432 B absolute. See [roadmap.md](roadmap.md) and [minecraft-26-3.md](minecraft-26-3.md). Coarse 6.0 s reload / 2.5 s rebuild / 32 MiB allocation guards remain active. Diagnostic publication and controlled sampling were completed in #43 / PR #45; evidence and the unresolved original failure cause are in [m8-diagnostics.md](m8-diagnostics.md); this historical record is not evidence of current measurement stability.
 
 This document records what BlockLens can prove on Minecraft **26.1.2** and **26.2**. It deliberately distinguishes deterministic structural improvements from noisy whole-client timing observations; M8 does **not** claim an FPS or percentage speedup that the measurements cannot support.
 

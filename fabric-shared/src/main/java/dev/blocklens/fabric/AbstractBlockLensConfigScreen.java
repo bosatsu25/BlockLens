@@ -29,6 +29,8 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private final int[] categoryScroll = new int[CapabilityId.Category.values().length];
     private final List<Button> tabs = new ArrayList<>();
     private final List<Button> toggles = new ArrayList<>();
+    private final List<Button> details = new ArrayList<>();
+    private final List<Integer> detailRows = new ArrayList<>();
     private CapabilityId.Category category = CapabilityId.Category.DECORATION;
     private List<CapabilityId> capabilities = List.of();
     private SettingsLayout layout;
@@ -49,6 +51,8 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
         clearFocus();
         tabs.clear();
         toggles.clear();
+        details.clear();
+        detailRows.clear();
         capabilities = SettingsCatalog.capabilities(category);
         layout = SettingsLayout.create(width, height, capabilities.size(), categoryScroll[category.ordinal()]);
         int rowHeight = 48;
@@ -76,6 +80,16 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                     .tooltip(Tooltip.create(Component.translatable(SettingsCatalog.nameKey(capability))
                             .append("\n").append(Component.translatable(SettingsCatalog.descriptionKey(capability)))))
                     .bounds(0, 0, 72, 20).build()));
+        }
+        for (int index = 0; index < capabilities.size(); index++) {
+            CapabilityId capability = capabilities.get(index);
+            if (capability != CapabilityId.LOW_FIRE && capability != CapabilityId.HANDHELD_SIZE) continue;
+            details.add(addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.details"),
+                    ignored -> showParent(new ComfortOptionsScreen(this, draft, capability, this::showParent)))
+                    .createNarration(ignored -> Component.translatable(SettingsCatalog.nameKey(capability))
+                            .append(": ").append(Component.translatable("blocklens.settings.details")))
+                    .bounds(0, 0, 68, 20).build()));
+            detailRows.add(index);
         }
         int footerWidth = (layout.contentWidth() - 8) / 2;
         discardButton = addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.discard"),
@@ -110,6 +124,17 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
             toggle.visible = layout.visible(index);
             if (!toggle.visible && getFocused() == toggle) clearFocus();
         }
+        positionDetails();
+    }
+
+    private void positionDetails() {
+        for (int index = 0; index < details.size(); index++) {
+            int row = detailRows.get(index);
+            Button detail = details.get(index);
+            detail.setRectangle(68, 20, layout.left() + layout.contentWidth() - 152, layout.rowY(row) + 3);
+            detail.visible = layout.visible(row);
+            if (!detail.visible && getFocused() == detail) clearFocus();
+        }
     }
 
     private void scrollTo(int scroll) {
@@ -133,7 +158,11 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     public final boolean keyPressed(KeyEvent event) {
         if (event.key() == InputConstants.KEY_TAB) {
             List<Button> order = new ArrayList<>(tabs);
-            order.addAll(toggles);
+            for (int row = 0; row < toggles.size(); row++) {
+                order.add(toggles.get(row));
+                int detail = detailRows.indexOf(row);
+                if (detail >= 0) order.add(details.get(detail));
+            }
             order.add(discardButton);
             order.add(applyButton);
             int direction = event.hasShiftDown() ? -1 : 1;
@@ -144,6 +173,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                 Button target = order.get(cursor);
                 if (!target.active) continue;
                 int row = toggles.indexOf(target);
+                if (row < 0 && details.contains(target)) row = detailRows.get(details.indexOf(target));
                 if (row >= 0) scrollTo(layout.scrollToReveal(row));
                 clearFocus();
                 setFocused(target);
@@ -199,8 +229,9 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
             if (!layout.visible(index)) continue;
             int y = layout.rowY(index);
             String name = Component.translatable(SettingsCatalog.nameKey(capabilities.get(index))).getString();
-            String shown = font.width(name) <= layout.nameWidth() ? name
-                    : font.plainSubstrByWidth(name, layout.nameWidth() - font.width("…")) + "…";
+            int nameWidth = layout.nameWidth() - (detailRows.contains(index) ? 72 : 0);
+            String shown = font.width(name) <= nameWidth ? name
+                    : font.plainSubstrByWidth(name, nameWidth - font.width("…")) + "…";
             extractor.text(font, shown, layout.left() + 4, y + 7, 0xFFFFFFFF);
             int textY = y + 25;
             for (var line : font.split(Component.translatable(

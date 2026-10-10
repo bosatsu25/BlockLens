@@ -235,3 +235,7 @@ Before implementing each capability, capture its source behavior from the suppli
 - and screenshots/golden references where practical.
 
 Do not invent missing source behavior and call it parity.
+
+## Additive lightweight scope (#42)
+
+The current compiled catalog extends the frozen 37-source baseline and three P0 additions with six independent visual/comfort controls, for 46 capabilities. Original 40 keys, ordinals and defaults remain intact. The precise rendering, first-person transform, numeric persistence and verification contracts are in [lightweight-visuals.md](lightweight-visuals.md); the full user-facing list is [features.md](features.md). All three supported targets must traverse the same verification graph before completion.
