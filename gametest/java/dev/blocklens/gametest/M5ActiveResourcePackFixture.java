@@ -20,6 +20,11 @@ public final class M5ActiveResourcePackFixture implements ClientModInitializer {
             throw new IllegalStateException("failed to register M5 active resource-pack fixture: " + PACK_ID);
         }
         SettingsStateReloadOracle.register(container);
+        if (!ResourceLoader.registerBuiltinPack(
+                Identifier.fromNamespaceAndPath("blocklens-gametest", "kelp-static-control"),
+                container, PackActivationType.NORMAL)) {
+            throw new IllegalStateException("Kelp animation control registration failed");
+        }
         System.out.println("BLOCKLENS_M5_ACTIVE_PACK_FIXTURE registered=true id=" + PACK_ID);
     }
 }

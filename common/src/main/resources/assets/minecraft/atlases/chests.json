@@ -1,0 +1,16 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "blocklens:entity/chest/bright_single"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "blocklens:entity/chest/bright_left"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "blocklens:entity/chest/bright_right"
+    }
+  ]
+}

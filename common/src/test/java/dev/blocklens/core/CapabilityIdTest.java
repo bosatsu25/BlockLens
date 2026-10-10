@@ -20,9 +20,9 @@ final class CapabilityIdTest {
         }
         assertEquals(13L, counts.get(CapabilityId.Category.DECORATION));
         assertEquals(21L, counts.get(CapabilityId.Category.RESOURCE));
-        assertEquals(4L, counts.get(CapabilityId.Category.OUTLINE));
-        assertEquals(2L, counts.get(CapabilityId.Category.OTHER));
-        assertEquals(40, CapabilityId.values().length);
+        assertEquals(8L, counts.get(CapabilityId.Category.OUTLINE));
+        assertEquals(4L, counts.get(CapabilityId.Category.OTHER));
+        assertEquals(46, CapabilityId.values().length);
         assertTrue(CapabilityId.values().length <= Long.SIZE, "capability mask exhausted");
     }
 
@@ -39,6 +39,7 @@ final class CapabilityIdTest {
     @Test
     void catalogKeepsExactReferencePreset() {
         Set<String> enabled = java.util.Arrays.stream(CapabilityId.values())
+                .filter(capability -> capability.ordinal() < 40)
                 .filter(CapabilityId::defaultEnabled)
                 .map(CapabilityId::sourceKey)
                 .collect(Collectors.toUnmodifiableSet());

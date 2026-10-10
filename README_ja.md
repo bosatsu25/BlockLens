@@ -6,17 +6,17 @@
 
 [English](README.md) | **日本語**
 
-BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする40機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
+BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする46機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
 > **現在の安定版:** BlockLens **v0.2.2** はMinecraft **26.1.2** / **26.2**向けに**独立設定可能な40機能**と任意のMod Menu設定入口を提供します。現在のmainは**26.3**にも対応しますが、新リリースとしては未公開です。
 >
-> **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。現行の公開上限は**150 KiB**、より厳しいレビュー済み開発基準は**111 KiB**です。
+> **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。現行の公開上限は**150 KiB**、より厳しいレビュー済み開発基準は**140 KiB**です。
 
 ## 開発版の対応：Minecraft 3バージョン
 
-開発版は **26.1.2 / 26.2 / 26.3** を対象とし、40機能を維持します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。PR #40の設定画面再設計はマージ済みです。3版の検証結果はPRの最新コミットに対応するCIで確認してください。公開済みリリースに26.3対応が追加されたという意味ではありません。
+開発版は **26.1.2 / 26.2 / 26.3** を対象とし、既存40機能を維持して6機能を追加します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。PR #40の設定画面再設計はマージ済みです。3版の検証結果はPRの最新コミットに対応するCIで確認してください。公開済みリリースに26.3対応が追加されたという意味ではありません。
 
 Windowsで実際のMinecraft画面のUI自動テストを見るには、Java 25とGradle 9.5.1を用意し、`./scripts/run-ui-tests.ps1`（3版すべて）または `./scripts/run-ui-tests.ps1 -Version 26.3` を実行します。実クライアントを順番に開き、テスト後に終了し、失敗時は停止します。CIでは各版10枚の設定画面画像に加え、描画・JARの検証結果を残します。[正確な依存関係と検証状況](knowledge/current/minecraft-26-3.md)を参照してください。
 
@@ -168,9 +168,9 @@ runtime原則:
 
 ### 現在のsource hardening
 
-現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。40設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付パック同士の実ゲーム併用、元画面との画素単位の一致、シェーダー、Vulkanは未確認です。
+現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。46設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付パック同士の実ゲーム併用、元画面との画素単位の一致、シェーダー、Vulkanは未確認です。
 
-config readの上限、同期一時ファイル書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum/instructionの再利用、wrapped modelごとのdescriptor arrayの2本化は実装済みです。歴史的v0.2.1のlocal artifactは **101,877 B / 101,913 B**で、当時の上限は**102,400 B**でした。現在の3版ゲートはレビュー済み開発基準**113,664 B**と公開上限**153,600 B**を使います。OFF/default/全機能のM8測定は粗い回帰ガードであり、観測されたCI割り当て量のばらつきは[#43](https://github.com/bosatsu25/BlockLens/issues/43)で追跡します。
+config readの上限、同期一時ファイル書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum/instructionの再利用、wrapped modelごとのdescriptor arrayの2本化は実装済みです。歴史的v0.2.1のlocal artifactは **101,877 B / 101,913 B**で、当時の上限は**102,400 B**でした。現在の3版ゲートはレビュー済み開発基準**143,360 B**と公開上限**153,600 B**を使います。OFF/default/全機能のM8測定は粗い回帰ガードであり、観測されたCI割り当て量のばらつきは[#43](https://github.com/bosatsu25/BlockLens/issues/43)で追跡します。
 
 ## Release
 
@@ -181,7 +181,7 @@ config readの上限、同期一時ファイル書き込みと対応filesystem�
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。26.3用の公開リリースはまだありません。現行基準は開発時**113,664 B（111 KiB）**、公開上限**153,600 B（150 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
+カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。26.3用の公開リリースはまだありません。現行基準は開発時**143,360 B（140 KiB）**、公開上限**153,600 B（150 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
 
 **v0.2.0** はP0の歴史的リリース証拠として維持します。
 
@@ -284,7 +284,7 @@ Release jobではBlockLensを再buildせず、CIで検証したraw JARそのも�
 - P0開発実測最大: **96,257 B**
 - v0.1.0 baselineからP0の最大増加: **924 B**
 - 歴史的v0.1.0 / P0のrelease budget: **100 KiB / 102,400 B**
-- 現行のレビュー済み開発基準: **111 KiB / 113,664 B**
+- 現行のレビュー済み開発基準: **140 KiB / 143,360 B**
 - 現行の製品公開上限: **150 KiB / 153,600 B**
 - source-pack `<50%` absolute hard maximumも維持
 
@@ -370,3 +370,5 @@ flowchart LR
 - [`knowledge/current/engineering-loop.md`](knowledge/current/engineering-loop.md) — Graph Loop
 
 `knowledge/current/`を正本とし、READMEでは検証済みevidenceを超える主張をしません。
+
+追加6機能と検証条件は[軽量ビジュアル・快適性機能](knowledge/current/lightweight-visuals.md)に記載しています。公開済みv0.2.2は従来の40機能を提供します。

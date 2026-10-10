@@ -16,10 +16,10 @@ final class MinecraftDecorationTargetOracle {
 
     static void verify() {
         TargetCapabilityIndex index = MinecraftDecorationTargetIndex.build();
-        require(index.bindingCount() == 328,
-                "expected 328 current target bindings but got " + index.bindingCount());
-        require(index.mappedCount() == 322,
-                "expected 322 unique mapped Minecraft targets but got " + index.mappedCount());
+        require(index.bindingCount() == 366,
+                "expected 366 current target bindings but got " + index.bindingCount());
+        require(index.mappedCount() == 328,
+                "expected 328 unique mapped Minecraft targets but got " + index.mappedCount());
 
         int checked = 0;
         for (CapabilityId capability : CapabilityId.values()) {
@@ -31,7 +31,7 @@ final class MinecraftDecorationTargetOracle {
                 checked++;
             }
         }
-        require(checked == 328, "expected to verify 328 target bindings but got " + checked);
+        require(checked == 366, "expected to verify 366 target bindings but got " + checked);
 
         int obsidianId = BuiltInRegistries.BLOCK.getId(block("obsidian"));
         require(index.contains(obsidianId, CapabilityId.OBSIDIAN), "obsidian resource binding missing");
@@ -69,7 +69,7 @@ final class MinecraftDecorationTargetOracle {
 
         require(MinecraftDecorationModelPlugin.isModelPipelineReady(),
                 "BlockLens current model pipeline was not registered during model loading");
-        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 322,
+        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 328,
                 "expected at least one wrapped state model per unique current target; wrapped="
                         + MinecraftDecorationModelPlugin.wrappedModelCount());
     }

@@ -126,7 +126,18 @@ tasks.register('versionSmokeContract') {
                     'assets/blocklens/lang/en_us.json',
                     'assets/blocklens/lang/ja_jp.json',
                     'assets/blocklens/models/block/nether/interior_fill.json',
-                    'assets/blocklens/models/block/nether/upper_band.json']) {
+                    'assets/blocklens/models/block/nether/upper_band.json',
+                    'blocklens.mixins.json',
+                    'dev/blocklens/fabric/mixin/BrightChestMixin.class',
+                    'dev/blocklens/fabric/mixin/LowFireMixin.class',
+                    'dev/blocklens/fabric/mixin/HandheldSizeMixin.class',
+                    'assets/blocklens/models/block/lightweight/glass.json',
+                    'assets/blocklens/models/block/lightweight/pane.json',
+                    'assets/blocklens/models/block/lightweight/kelp.json',
+                    'assets/blocklens/textures/block/lightweight/kelp.png.mcmeta',
+                    'assets/blocklens/textures/entity/chest/bright_single.png',
+                    'assets/blocklens/textures/entity/chest/bright_left.png',
+                    'assets/blocklens/textures/entity/chest/bright_right.png']) {
                 if (archive.getEntry(required) == null) {
                     throw new GradleException("Runtime JAR missing required entry: ${required}")
                 }

@@ -14,10 +14,17 @@ final class FullTargetCatalogTest {
     @Test
     void everyCurrentCapabilityHasAnExactCompiledTargetContract() {
         for (CapabilityId capability : CapabilityId.values()) {
-            assertFalse(BlockLensTargetCatalog.targets(capability).isEmpty(), capability.sourceKey());
+            if (capability == CapabilityId.LOW_FIRE || capability == CapabilityId.HANDHELD_SIZE
+                    || capability == CapabilityId.BRIGHT_CHEST) {
+                assertTrue(BlockLensTargetCatalog.targets(capability).isEmpty(), capability.sourceKey());
+            } else {
+                assertFalse(BlockLensTargetCatalog.targets(capability).isEmpty(), capability.sourceKey());
+            }
         }
-        assertEquals(40, CapabilityId.values().length);
-        assertEquals(328, BlockLensTargetCatalog.totalBindingCount());
+        assertEquals(46, CapabilityId.values().length);
+        assertEquals(366, BlockLensTargetCatalog.totalBindingCount());
+        assertEquals(328, java.util.Arrays.stream(CapabilityId.values()).filter(c -> c.ordinal() < 40)
+                .mapToInt(c -> BlockLensTargetCatalog.targets(c).size()).sum());
     }
 
     @Test
@@ -57,7 +64,15 @@ final class FullTargetCatalogTest {
         for (CapabilityId capability : CapabilityId.values()) {
             uniqueTargets.addAll(BlockLensTargetCatalog.targets(capability));
         }
-        assertEquals(322, uniqueTargets.size());
+        assertEquals(328, uniqueTargets.size());
+        Set<String> originalTargets = new HashSet<>();
+        for (CapabilityId capability : CapabilityId.values()) {
+            if (capability.ordinal() < 40) originalTargets.addAll(BlockLensTargetCatalog.targets(capability));
+        }
+        assertEquals(322, originalTargets.size());
+        Set<String> additions = new HashSet<>(uniqueTargets);
+        additions.removeAll(originalTargets);
+        assertEquals(Set.of("glass", "tinted_glass", "glass_pane", "kelp", "kelp_plant", "white_concrete"), additions);
         assertTrue(BlockLensTargetCatalog.targets(CapabilityId.OBSIDIAN).contains("obsidian"));
         assertTrue(BlockLensTargetCatalog.targets(CapabilityId.NETHER_TWEAKS).contains("obsidian"));
         assertTrue(BlockLensTargetCatalog.targets(CapabilityId.CRYING_OBSIDIAN).contains("crying_obsidian"));

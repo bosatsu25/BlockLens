@@ -60,7 +60,15 @@ public enum CapabilityId {
     // P0 ChiseTweaks migration additions. Appended to preserve all original bit positions.
     CRYING_OBSIDIAN("gaming.crying_obsidian", Category.RESOURCE, false),
     NETHER_GOLD_ORE("gaming.nether_gold_ore", Category.RESOURCE, false),
-    NETHER_QUARTZ_ORE("gaming.nether_quartz_ore", Category.RESOURCE, false);
+    NETHER_QUARTZ_ORE("gaming.nether_quartz_ore", Category.RESOURCE, false),
+
+    // Lightweight visual migration: independent additions, preserving the original 40 bits.
+    GLASS_HIGHLIGHT("outline.glass_highlight", Category.OUTLINE, false),
+    KELP_HIGHLIGHT("outline.kelp_highlight", Category.OUTLINE, false),
+    BRIGHT_CONCRETE("outline.bright_concrete", Category.OUTLINE, true),
+    LOW_FIRE("others.low_fire", Category.OTHER, false),
+    HANDHELD_SIZE("others.handheld_size", Category.OTHER, false),
+    BRIGHT_CHEST("outline.bright_chest", Category.OUTLINE, true);
 
     public enum Category {
         DECORATION,

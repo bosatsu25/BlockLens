@@ -4,7 +4,7 @@ Status: current three-version development contract; not a published release.
 
 ## Supported targets
 
-The current development targets are Minecraft 26.1.2, 26.2 and 26.3, each with an exact-version client-only JAR. Java 25 and Fabric Loader 0.19.5 are required. Fabric API pins are respectively 0.155.2+26.1.2, 0.160.0+26.2 and 0.162.0+26.3. All 40 capabilities, persisted keys, bit positions and five enabled defaults remain unchanged.
+The current development targets are Minecraft 26.1.2, 26.2 and 26.3, each with an exact-version client-only JAR. Java 25 and Fabric Loader 0.19.5 are required. Fabric API pins are respectively 0.155.2+26.1.2, 0.160.0+26.2 and 0.162.0+26.3. The original 40 capabilities, persisted keys, bit positions and five enabled defaults remain unchanged. The additive #42 development scope has 46 controls and seven enabled defaults, specified in [lightweight-visuals.md](lightweight-visuals.md).
 
 The 26.3 module compiles the modern mc26_2 adapters and loading-overlay test bridge independently against its own dependencies. The complete renderer is not copied. Shared UI and test input uses InputConstants: 26.3 moved from GLFW to SDL, so raw key/button/modifier values do not preserve behavior.
 
@@ -23,13 +23,15 @@ The first command launches the three Minecraft windows sequentially. The second 
 
 Settings screenshots are written under each module's build/run/clientGameTest/settings-ui directory. CI runs the same client suite under Xvfb and requires ten settings screenshots per target: four categories at 854×480 and a compact Resources view at 320×240, in English and Japanese. The responsive oracle additionally checks 640×360 and 1920×1080; save-failure/retry behavior has separate assertions. Its three version jobs also retain rendering evidence and JAR audit/reproducibility results. Common JUnit/JaCoCo/PIT runs separately. Evidence counts only for the current head SHA.
 
-## Reviewed artifact budget
+## Historical #41 artifact budget and current additive scope
 
-The development no-growth baseline increases by exactly 1 KiB, from 112640 to 113664 bytes (111 KiB). Initial Windows artifacts measured 112628 / 113335 / 113379 bytes. The largest exceeds the former baseline by 739 bytes. Independent review confirmed that the required lighting bridges contribute 364 / 410 compressed bytes plus archive entries, alongside input/runtime-version adaptation. This bounded compatibility adjustment preserves all capabilities. The release ceiling of 153600 bytes and absolute ceiling of 1183432 bytes remain unchanged. Every build must pass the per-target size gates; these measurements are not a performance claim.
+For #41, the development no-growth baseline increased by exactly 1 KiB, from 112640 to 113664 bytes (111 KiB). Initial Windows artifacts measured 112628 / 113335 / 113379 bytes. The largest exceeds the former baseline by 739 bytes. Independent review confirmed that the required lighting bridges contribute 364 / 410 compressed bytes plus archive entries, alongside input/runtime-version adaptation. This bounded compatibility adjustment preserves all capabilities. The release ceiling of 153600 bytes and absolute ceiling of 1183432 bytes remain unchanged. Every build must pass the per-target size gates; these measurements are not a performance claim.
 
-## Verification status and limits
+The current #42 development guard is 143360 bytes (140 KiB), with the same 153600-byte release and 1183432-byte absolute ceilings. Three-version native render/UI tests and 167 common tests passed locally; current-head hosted CI and merge remain required. See [lightweight-visuals.md](lightweight-visuals.md) for final artifacts and delta evidence.
 
-Local ciGate passed: 150 common tests, selected coverage/mutation gates and all three builds, artifact smoke contracts and size budgets. Each version's real-client suite completed successfully, including ten settings screenshots and all-40 render tests. Further 26.3 launch attempts also exposed an intermittent Windows access violation 0xC0000005 during initial resource loading.
+## Historical #41 verification and launch diagnosis
+
+At #41, local ciGate passed: 150 common tests, selected coverage/mutation gates and all three builds, artifact smoke contracts and size budgets. Each version's real-client suite completed successfully, including ten settings screenshots and all-40 render tests. Further 26.3 launch attempts also exposed an intermittent Windows access violation 0xC0000005 during initial resource loading.
 
 Diagnosis found that Mojang's official 26.3 launch metadata requires -XX:StackShadowPages=32, which the generated Loom client launch omitted. The native failure phase matches the upstream report below. The 26.3 module now explicitly applies this official argument to client runs. verifyClientLaunchContract inspects the actual JVM arguments of both runClient and runClientGameTest; it failed before the fix and passed afterwards, and is required by check/build. This changes development/test launch configuration, not runtime mod behavior or JAR content. External launchers must honor Minecraft's version metadata themselves.
 

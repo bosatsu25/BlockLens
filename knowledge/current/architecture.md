@@ -63,6 +63,9 @@ Use:
 common/
 versions/mc26_1_2/
 versions/mc26_2/
+versions/mc26_3/
+fabric-shared/
+gametest/
 test-support/   (only if justified)
 ```
 
@@ -70,7 +73,7 @@ test-support/   (only if justified)
 
 Pure/testable product logic shared by all three versions:
 
-- 37-capability catalog
+- 46-capability catalog, retaining the frozen original 37 identities
 - config schema/migration policy
 - functional-parity contracts
 - stable state semantic model
@@ -95,7 +98,7 @@ Only 26.1.2-specific Fabric/Minecraft glue:
 
 Equivalent boundary for 26.2. Do not duplicate product policy merely because mapped APIs differ.
 
-The mc26_3 module reuses the modern mc26_2 adapters and test bridge, with independent dependency/metadata pins and a tiny version-specific MinecraftQuadLighting implementation. Product policy and the complete renderer are shared. See [26.3 integration](minecraft-26-3.md).
+The mc26_3 module reuses the modern mc26_2 adapters and test bridge, with independent dependency/metadata pins, version-specific lighting and first-person item submission bridges. Product policy and the complete renderer are shared. See [26.3 integration](minecraft-26-3.md).
 
 ## 4. Core module boundaries
 

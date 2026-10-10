@@ -4,8 +4,8 @@ Status: settings redesign merged in PR #40; three-version integration is the dev
 
 ## Scope
 
-The native settings screen groups all 40 current BlockLens capabilities into four categories: Decoration (13), Resources (21), Visibility (4), Other (2).
-The original 37 source keys and their bit positions stay unchanged. Crying Obsidian,
+The native settings screen groups all 46 current BlockLens capabilities into four categories: Decoration (13), Resources (21), Visibility (8), Other (4).
+The original 40 source keys, bit positions and defaults stay unchanged. Six reviewed additions are specified in [lightweight-visuals.md](lightweight-visuals.md). Crying Obsidian,
 Nether Gold Ore and Nether Quartz Ore remain independent Resource options after the original 18.
 
 The uploaded UI reference pack defines its option hierarchy in respackopts.json5; it does not
@@ -33,8 +33,8 @@ menu/world backgrounds. Framebuffer tests check the complete viewport and a boun
 | Mouse wheel / Page Up / Page Down / Home / End | Scroll the selected category |
 
 Esc discarding is an intentional change from the previous close-to-save screen.
-Settings keys, existing persisted values, the five enabled defaults and the rendered capability
-behavior are unchanged. Closing an unchanged draft performs no write or terrain invalidation.
+Settings keys, existing persisted values, the original five enabled defaults and existing rendered capability
+behavior are unchanged. Bright Concrete and Bright Chest add two enabled defaults, for seven total. Closing an unchanged draft performs no write or terrain invalidation.
 A save failure retains the screen and draft, leaves runtime settings untouched and displays a
 retry/discard message in a reserved area above the footer. No exception details or paths are displayed.
 
@@ -43,10 +43,10 @@ retry/discard message in a reserved area above the footer. No exception details 
 SettingsCatalog, SettingsDraft and SettingsLayout contain Minecraft-independent policies in common.
 The Minecraft-facing AbstractBlockLensConfigScreen is compiled from fabric-shared for all three targets.
 The version-specific BlockLensConfigScreen adapters keep the distinct 26.1.2 and modern 26.2/26.3 screen APIs.
-GameTest scenarios and fixtures remain shared. The sole version-specific test source is a small
+GameTest scenarios and fixtures remain shared. Version-specific test sources include a small
 SettingsClientAccess bridge for the loading-overlay API, which moved from Minecraft.getOverlay()
 to Minecraft.gui.overlay() in 26.2. The repository contract restricts each local GameTest tree to
-that one bridge. Screenshot evidence waits for the overlay to clear and uses actual window resizing
+the overlay bridge and named narrow render probes. Every local probe is bounded to 35 lines; complete oracles stay shared. Screenshot evidence waits for the overlay to clear and uses actual window resizing
 with GUI scale 1, checks the complete bounded viewport, and restores the original window/options.
 No new required UI dependency, telemetry, startup network call, registry scan or renderer is introduced.
 
@@ -77,3 +77,7 @@ Shared input code uses InputConstants so SDL-based 26.3 and earlier GLFW-based t
   Cloth Config's default appearance; its 2022 screenshots are not a capture of the uploaded pack.
 - [Source historical baseline](source-baseline.md)
 - [Current additive capability scope](chisetweaks-migration.md)
+
+## Numeric detail controls
+
+Low Fire and Handheld Size rows include a separate Details button. The child screen shares the parent draft. Fire offers three presets; held categories use explicit decrease/increase controls bounded to 40–100 percent. Child Back/Esc returns to the parent without writing. Parent Discard/Esc discards all edits, including numeric-only edits. Only parent Save and Apply persists and installs the complete snapshot; failed saving retains it for retry. Mouse actions revalidate focus after preset widget rebuilds, and keyboard navigation uses current widgets. The real client oracle checks numeric-only edits, compact bounds, mouse preset selection, return/Esc, discard and persistence.

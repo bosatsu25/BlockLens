@@ -2,7 +2,7 @@
 
 Status: **Issue #22 / P0 merged and published in v0.2.0 / P1-P5 planned**
 
-Current publication is v0.2.2, including optional Mod Menu delivery; current main supports 26.1.2 / 26.2 / 26.3 with 40 capabilities. P1/P2 requirements are consolidated in #42; Analyzer #34, Scene Filter #35, Builder Assist #36, extension compatibility #37 and ecosystem decisions #38 remain separate. Issue #22 is complete only for P0. The P0 100 KiB statements below are historical; current reviewed development / product release ceilings are 111 KiB / 150 KiB. See [roadmap.md](roadmap.md) for current verified evidence and unresolved #31/#43 boundaries.
+Current publication is v0.2.2, including optional Mod Menu delivery; the development tree targets 26.1.2 / 26.2 / 26.3 with 46 capabilities. P1/P2 requirements are consolidated in #42; Analyzer #34, Scene Filter #35, Builder Assist #36, extension compatibility #37 and ecosystem decisions #38 remain separate. Issue #22 is complete only for P0. The P0 100 KiB statements below are historical; current reviewed development / product release ceilings are 140 KiB / 150 KiB. See [roadmap.md](roadmap.md) for current verified evidence and unresolved #31 compatibility boundary and completed #43 diagnostic work.
 
 BlockLens is the destination product. ChiseTweaks is a source of proven capabilities and UX ideas; it is **not** a runtime dependency and its feature framework is not copied into BlockLens.
 

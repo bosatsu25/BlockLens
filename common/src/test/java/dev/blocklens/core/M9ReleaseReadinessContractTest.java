@@ -86,7 +86,7 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
         assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
 
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=113664"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=143360"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=153600"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
         assertTrue(properties.contains("user-facing product ceiling is now 150 KiB"));

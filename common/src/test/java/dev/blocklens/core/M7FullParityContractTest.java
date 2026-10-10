@@ -95,8 +95,8 @@ final class M7FullParityContractTest {
         assertTrue(convention.contains("assets/blocklens/models/block/nether/upper_band.json"));
         assertTrue(convention.contains("retired Nether Tweaks side_fill model"));
         assertTrue(ci.contains("Verify BlockLens model resources resolved"));
-        assertTrue(ci.contains("Missing block model: blocklens:block/nether/"));
-        assertTrue(ci.contains("Missing texture references in model blocklens:block/nether/"));
+        assertTrue(ci.contains("Missing block model: blocklens:block/"));
+        assertTrue(ci.contains("Missing texture references in model blocklens:block/"));
         assertTrue(ci.contains("Expected exactly five M7 visual screenshots"));
     }
 }

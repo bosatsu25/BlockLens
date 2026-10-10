@@ -29,6 +29,7 @@ public final class MinecraftDecorationModelPlugin {
         ModelLoadingPlugin.register(pluginContext -> {
             TargetCapabilityIndex targetIndex = MinecraftDecorationTargetIndex.build();
             NetherTweaksOverlayModels.register(pluginContext);
+            LightweightOverlayModels.register(pluginContext);
             WRAPPED_MODELS.set(0);
             RETAINED_CAPABILITY_SLOTS.set(0);
             MAX_CAPABILITIES_PER_MODEL.set(0);

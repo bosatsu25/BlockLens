@@ -123,7 +123,8 @@ jobs:
           find "versions/${{ matrix.module }}" -type f \
             \( -path '*/logs/latest.log' -o -path '*/m3-visual/*' \
             -o -path '*/m5-dark-visual/*' -o -path '*/m5-pack-visual/*' \
-            -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \) \
+            -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
+            -o -path '*/lightweight-visual/*' \) \
             -exec cp --parents '{}' "$target" \;
       - name: Upload failed Client GameTest diagnostics
         if: failure()
@@ -144,14 +145,14 @@ jobs:
             exit 1
           fi
           for log in "${logs[@]}"; do
-            if grep -Fq 'Missing block model: blocklens:block/nether/' "$log"; then
-              echo "BlockLens Nether Tweaks model failed to resolve in $log" >&2
-              grep -F 'Missing block model: blocklens:block/nether/' "$log" >&2
+            if grep -Fq 'Missing block model: blocklens:block/' "$log"; then
+              echo "BlockLens model failed to resolve in $log" >&2
+              grep -F 'Missing block model: blocklens:block/' "$log" >&2
               exit 1
             fi
-            if grep -Fq 'Missing texture references in model blocklens:block/nether/' "$log"; then
-              echo "BlockLens Nether Tweaks model has incomplete texture references in $log" >&2
-              grep -A2 -F 'Missing texture references in model blocklens:block/nether/' "$log" >&2
+            if grep -Fq 'Missing texture references in model blocklens:block/' "$log"; then
+              echo "BlockLens model has incomplete texture references in $log" >&2
+              grep -A2 -F 'Missing texture references in model blocklens:block/' "$log" >&2
               exit 1
             fi
           done
@@ -380,6 +381,25 @@ jobs:
           path: ${{ steps.m8perf.outputs.path }}
           if-no-files-found: error
           retention-days: 14
+      - name: Collect lightweight feature visual evidence
+        id: lightweight
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="versions/${{ matrix.module }}/build/run/clientGameTest/lightweight-visual"
+          test -f "$root/lightweight-visual-manifest.txt"
+          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 32
+          grep -q '^all46Enabled=true$' "$root/lightweight-visual-manifest.txt"
+          grep -q '^all46Reload=true$' "$root/lightweight-visual-manifest.txt"
+          grep -q '^all46FireAndBothHands=true$' "$root/lightweight-visual-manifest.txt"
+          echo "path=$root" >> "$GITHUB_OUTPUT"
+      - name: Upload lightweight feature visual evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-lightweight-visual-${{ matrix.minecraft }}
+          path: ${{ steps.lightweight.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
       - name: Resolve runtime artifact
         id: runtime
         shell: bash
@@ -409,6 +429,7 @@ jobs:
             echo "- M5 dark-area visual evidence: \`PASS\`"
             echo "- M5 active resource-pack evidence: \`PASS\`"
             echo "- M7 all-40 full parity evidence: \`PASS\`"
+            echo "- Lightweight features and all-46 reload evidence: \`PASS\`"
             echo "- M8 performance observation: \`PASS\`"
             echo "- Reproducible artifact: \`PASS\`"
             echo "- Privacy/residue audit: \`PASS\`"

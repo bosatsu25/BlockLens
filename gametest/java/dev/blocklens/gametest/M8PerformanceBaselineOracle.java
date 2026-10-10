@@ -27,7 +27,7 @@ import net.fabricmc.loader.api.FabricLoader;
  * regression guard. These limits detect large regressions; they are not evidence of a speedup.</p>
  */
 final class M8PerformanceBaselineOracle {
-    private static final int EXPECTED_CAPABILITIES = 40;
+    private static final int EXPECTED_CAPABILITIES = 46;
     private static final int EXPECTED_RESOURCE_CAPABILITIES = 21;
     private static final int RELOAD_WARMUPS = 1;
     private static final int MEASURED_SAMPLES = 3;
@@ -86,8 +86,8 @@ final class M8PerformanceBaselineOracle {
             for (int i = 0; i < MEASURED_SAMPLES; i++) {
                 reloadNanos[i] = measureReload(context);
                 ModelRetention retention = captureRetention();
-                require(retention.wrappedModels() >= 322,
-                        "M8 expected at least 322 wrapped models after reload, got " + retention.wrappedModels());
+                require(retention.wrappedModels() >= 328,
+                        "M8 expected at least 328 wrapped models after reload, got " + retention.wrappedModels());
                 require(retention.retainedCapabilitySlots() >= retention.wrappedModels(),
                         "M8 retained capability slots must cover every wrapped model");
                 require(retention.maxCapabilitiesPerModel() > 0,
@@ -358,6 +358,15 @@ final class M8PerformanceBaselineOracle {
                 }
             }
         }
+        // Include the added world-rendered families in the same bounded workload.
+        server.runCommand("setblock -9 -59 16 minecraft:glass");
+        server.runCommand("setblock -6 -59 16 minecraft:glass_pane");
+        server.runCommand("fill -3 -59 16 -3 -56 16 minecraft:white_concrete");
+        server.runCommand("setblock 0 -59 16 minecraft:chest[facing=north]");
+        server.runCommand("setblock 3 -59 16 minecraft:kelp[age=0]");
+        server.runCommand("setblock 6 -59 16 minecraft:kelp[age=0]");
+        server.runCommand("setblock 6 -58 16 minecraft:kelp[age=0]");
+        server.runCommand("setblock 6 -59 16 minecraft:kelp_plant");
         server.runCommand("tp @a 0 -51 22 180 18");
     }
 
@@ -483,8 +492,8 @@ final class M8PerformanceBaselineOracle {
 
     private static void requirePipeline(String phase) {
         require(MinecraftDecorationModelPlugin.isModelPipelineReady(), phase + ": model pipeline not ready");
-        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 322,
-                phase + ": expected at least 322 wrapped models, got "
+        require(MinecraftDecorationModelPlugin.wrappedModelCount() >= 328,
+                phase + ": expected at least 328 wrapped models, got "
                         + MinecraftDecorationModelPlugin.wrappedModelCount());
     }
 

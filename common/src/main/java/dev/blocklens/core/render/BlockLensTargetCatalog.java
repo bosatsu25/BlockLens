@@ -30,7 +30,8 @@ public final class BlockLensTargetCatalog {
         if (!resource.isEmpty()) {
             return resource;
         }
-        return NetherTweaksTargetCatalog.targets(capability);
+        List<String> nether = NetherTweaksTargetCatalog.targets(capability);
+        return nether.isEmpty() ? LightweightTargetCatalog.targets(capability) : nether;
     }
 
     /** Number of capability-to-target bindings. Overlapping targets are counted once per capability. */
@@ -38,6 +39,7 @@ public final class BlockLensTargetCatalog {
         return DecorationTargetCatalog.totalBindingCount()
                 + VisibilityTargetCatalog.totalBindingCount()
                 + ResourceTargetCatalog.totalBindingCount()
-                + NetherTweaksTargetCatalog.totalBindingCount();
+                + NetherTweaksTargetCatalog.totalBindingCount()
+                + LightweightTargetCatalog.totalBindingCount();
     }
 }

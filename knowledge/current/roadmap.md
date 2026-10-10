@@ -8,20 +8,21 @@ Latest published release: [v0.2.2](https://github.com/bosatsu25/BlockLens/releas
 
 Current main additionally contains the category-based settings redesign (PR #40) and **26.3** support (PR #41). [Main CI #313](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404) verified merge `d91226c14f07c999256fc620b722a874be99958c`: common quality and all three real-client/build/artifact jobs succeeded on the first attempt. The settings artifacts contain ten English/Japanese screenshots per version. These merged changes have not been published as a new release.
 
-Current size policy is **113,664 B (111 KiB)** reviewed development no-growth guard, **153,600 B (150 KiB)** release ceiling and **1,183,432 B** absolute ceiling. The release ceiling provides headroom; it is not a growth target. A new baseline requires review and evidence. Older 100 KiB limits and artifact measurements below are historical release evidence.
+Current size policy is **143,360 B (140 KiB)** reviewed development no-growth guard, **153,600 B (150 KiB)** release ceiling and **1,183,432 B** absolute ceiling. The release ceiling provides headroom; it is not a growth target. A new baseline requires review and evidence. Older 100 KiB limits and artifact measurements below are historical release evidence.
 
 ## Remaining implementation graph
 
 | Track | Issue | Dependency and completion boundary |
 | --- | --- | --- |
-| Lightweight visual / comfort migration | [#42](https://github.com/bosatsu25/BlockLens/issues/42) | All requirements from #32/#33 retained; both originals are superseded, not implemented. Bright Chest needs renderer-path discovery first. |
+| Lightweight visual / comfort migration | [#42](https://github.com/bosatsu25/BlockLens/issues/42) | All requirements from #32/#33 retained; both originals are superseded, not implemented. Six controls, numeric details and thin chest/first-person adapters are implemented on the work branch; all-version local UI/rendering and quality gates passed; completion still requires PR/CI and merge. |
 | Bounded Analyzer | [#34](https://github.com/bosatsu25/BlockLens/issues/34) | Loaded-world inspection engine with radius/marker/update budgets; distinct from ordinary Resource Highlight. |
 | Scene Filter | [#35](https://github.com/bosatsu25/BlockLens/issues/35) | Reversible client rendering filters; separate ownership from Analyzer and Builder Assist. |
 | Builder Assist / Inspector | [#36](https://github.com/bosatsu25/BlockLens/issues/36) | Read-only/advisory capabilities; optional Litematica boundary. |
 | Extension compatibility | [#37](https://github.com/bosatsu25/BlockLens/issues/37) | Explicit bounded registration/tags; no per-frame discovery. |
 | Masa / deprecation decisions | [#38](https://github.com/bosatsu25/BlockLens/issues/38) | Per-integration value and compatibility decisions; deprecation only after parity evidence. |
 | External compatibility | [#31](https://github.com/bosatsu25/BlockLens/issues/31) | Representative shader-ON, third-party packs and Vulkan evidence. Default OpenGL success does not close this track. |
-| M8 diagnostic stability | [#43](https://github.com/bosatsu25/BlockLens/issues/43) | Preserve failing raw samples and investigate observed CI allocation variability; thresholds stay unchanged. |
+
+Completed diagnostic work: #43 / [PR #45](https://github.com/bosatsu25/BlockLens/pull/45) merged as `d37997c5c1df8bffe34e142afb81b73d73e25aa7`; exact-head CI #318 and merged-main CI passed all four jobs. Original CI #312 allocation cause remains unknown; guard values are unchanged.
 
 Issue #22 records delivered P0 only. Planned capabilities remain unimplemented until their own contracts, all-three-version evidence and PRs are complete. [#39](https://github.com/bosatsu25/BlockLens/issues/39) synchronizes these repository-owned status documents.
 
@@ -40,7 +41,7 @@ Every future change must preserve, unless deliberately revised with evidence:
 - current JUnit / JaCoCo / PIT thresholds without silent relaxation
 - v0.1.0 historical icon-inclusive baseline: **95,333 B**
 - published v0.2.0 cross-platform baseline: **96,257 B**
-- current reviewed source no-growth baseline: **113,664 B**
+- current additive-development no-growth baseline: **143,360 B**
 - **150 KiB** release ceiling
 - source-pack **<50%** absolute requirement
 
@@ -262,7 +263,7 @@ Measured local runtime artifacts are **101,877 B (26.1.2) / 101,913 B (26.2)**. 
 
 The historical P1-P5 scope is now tracked by #42 and #34-#38; #22 is closed for delivered P0:
 
-- **P1:** Glass Highlight, Kelp Highlight, Bright Concrete; evaluate Bright Chest separately
+- **P1:** Glass Highlight, Kelp Highlight, Bright Concrete and Bright Chest (#42)
 - **P2:** Low Fire, Handheld Size
 - **P3:** bounded world-overlay/analyzer engine: Ancient Debris, Lava Source, Beacon Range, Lightning Rod Range, Villager Job Site Links
 - **P4:** Block/Entity Filter, Inspector, Placement State Preview, Pattern Consistency, selected Litematica integration
@@ -279,3 +280,5 @@ The following remain outside the verified default OpenGL support boundary and ar
 - Minecraft 26.2 / 26.3 Vulkan investigation before support is claimed
 
 Do not reinterpret those unchecked external combinations as regressions in the verified default/shader-OFF OpenGL path.
+
+The six additive controls and the measured 140 KiB development baseline are specified in [lightweight-visuals.md](lightweight-visuals.md). No new release is implied by implementation or a merged PR.

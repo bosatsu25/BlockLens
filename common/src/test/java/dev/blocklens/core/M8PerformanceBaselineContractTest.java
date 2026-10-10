@@ -25,7 +25,11 @@ final class M8PerformanceBaselineContractTest {
                 "knowledge/current/performance-strategy.md"));
 
         assertTrue(smoke.contains("M8PerformanceBaselineOracle.verify(context, singleplayer)"));
-        assertTrue(oracle.contains("EXPECTED_CAPABILITIES = 40"));
+        assertTrue(oracle.contains("EXPECTED_CAPABILITIES = 46"));
+        for (String family : new String[] {"minecraft:glass", "minecraft:glass_pane", "minecraft:white_concrete",
+                "minecraft:chest", "minecraft:kelp[", "minecraft:kelp_plant"}) {
+            assertTrue(oracle.contains(family), "M8 workload excludes added family: " + family);
+        }
         assertTrue(oracle.contains("EXPECTED_RESOURCE_CAPABILITIES = 21"));
         assertTrue(oracle.contains("RELOAD_WARMUPS = 1"));
         assertTrue(oracle.contains("MEASURED_SAMPLES = 3"));
@@ -196,7 +200,7 @@ final class M8PerformanceBaselineContractTest {
 
         assertTrue(properties.contains("runtime_jar_source_pack_bytes=2366865"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=113664"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=143360"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=153600"));
         assertTrue(properties.contains("user-facing product ceiling is now 150 KiB"));
 
