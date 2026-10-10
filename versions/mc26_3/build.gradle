@@ -17,3 +17,26 @@ sourceSets {
 dependencies {
     compileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
 }
+
+// Required by Mojang's 26.3 launch metadata, including native resource loading.
+loom.runs.configureEach {
+    if (environment == 'client') {
+        vmArg '-XX:StackShadowPages=32'
+    }
+}
+
+tasks.register('verifyClientLaunchContract') {
+    group = 'verification'
+    description = 'Checks the official 26.3 stack-shadow requirement on actual client launch tasks.'
+    doLast {
+        for (String launch : ['runClient', 'runClientGameTest']) {
+            if (!tasks.named(launch).get().allJvmArgs.contains('-XX:StackShadowPages=32')) {
+                throw new GradleException("${launch} must retain the official 26.3 StackShadowPages argument")
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'verifyClientLaunchContract'
+}

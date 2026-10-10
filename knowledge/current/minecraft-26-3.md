@@ -29,7 +29,11 @@ The development no-growth baseline increases by exactly 1 KiB, from 112640 to 11
 
 ## Verification status and limits
 
-Local ciGate passed: 150 common tests, selected coverage/mutation gates and all three builds, artifact smoke contracts and size budgets. The 26.3 real-client suite completed successfully, including ten settings screenshots and all-40 render tests. Initial 26.3 native startup opened an SDL/OpenGL window but exited with Windows access violation 0xC0000005 during resource loading. This did not reproduce on the unchanged rerun; its cause remains undetermined. A successful rerun does not establish native-startup stability. Per-version client results, current-head CI and screenshots must be checked on the pull request; an earlier SHA does not close these gates.
+Local ciGate passed: 150 common tests, selected coverage/mutation gates and all three builds, artifact smoke contracts and size budgets. Each version's real-client suite completed successfully, including ten settings screenshots and all-40 render tests. Further 26.3 launch attempts also exposed an intermittent Windows access violation 0xC0000005 during initial resource loading.
+
+Diagnosis found that Mojang's official 26.3 launch metadata requires -XX:StackShadowPages=32, which the generated Loom client launch omitted. The native failure phase matches the upstream report below. The 26.3 module now explicitly applies this official argument to client runs. verifyClientLaunchContract inspects the actual JVM arguments of both runClient and runClientGameTest; it failed before the fix and passed afterwards, and is required by check/build. This changes development/test launch configuration, not runtime mod behavior or JAR content. External launchers must honor Minecraft's version metadata themselves.
+
+Per-version client results after this fix, current-head CI and screenshots must be checked on the pull request; an earlier SHA does not close these gates. Do not infer general native-startup stability from a bounded number of successful test runs.
 
 PR #40's settings redesign was merged at ea488677cbae13ca2f80da685dd9831eace88e7f. Its two-version evidence does not validate this three-version change. Uploaded third-party pack combinations, shaders and Vulkan remain unverified. Release creation and merging are separate actions.
 
@@ -37,3 +41,5 @@ PR #40's settings redesign was merged at ea488677cbae13ca2f80da685dd9831eace88e7
 
 - [Fabric for Minecraft 26.3](https://www.fabricmc.net/2026/09/15/263.html)
 - [Fabric automated testing](https://docs.fabricmc.net/develop/automatic-testing)
+- [Official Minecraft 26.3 launch metadata](https://piston-meta.mojang.com/v1/packages/702fe59163c6ee6578607daa85811d9bc9c7cc40/26.3.json)
+- [Upstream Windows native startup report and stack-shadow argument](https://github.com/PrismLauncher/PrismLauncher/issues/6073)
