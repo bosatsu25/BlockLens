@@ -86,6 +86,8 @@ final class AnalyzerVisualOracle {
                     context.waitTicks(25);
                     require(context.computeOnClient(c->AnalyzerClient.engine().markers().isEmpty()),"erased job memory retained a line");
                     evidence.append("jobMemoryMissing=true\njobMemoryLoaded=true\njobMemoryWrongDimension=true\njobMemoryErased=true\n");
+                    VillagerJobSiteFixture.verifyReplacement(context);
+                    evidence.append("jobMemoryReplacement=true\njobMemoryFixtureClosed=true\n");
                 }
                 install(context,off);
                 require(context.computeOnClient(c->AnalyzerClient.engine().markers().isEmpty()),"OFF did not clear analyzer");
@@ -109,15 +111,17 @@ final class AnalyzerVisualOracle {
                     "previous-world beacon/rod/village markers survived dimension change"));
             server.runCommand("execute in minecraft:overworld run tp @a 0 -56 12 180 25");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.OVERWORLD),1200);
-            var returnSeed=setMemory(context,true,false);
-            context.runOnClient(c->AnalyzerReturnProbe.report(c,returnSeed,AnalyzerReturnProbe.Stage.SEEDED));
-            try {
-                context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==5,600);
-            } catch(RuntimeException | AssertionError failure) {
-                context.runOnClient(c->AnalyzerReturnProbe.report(c,returnSeed,AnalyzerReturnProbe.Stage.TIMEOUT));
-                throw failure;
+            try (var returnFixture=VillagerJobSiteFixture.open(context,1200)) {
+                var returnSeed=returnFixture.seed();
+                context.runOnClient(c->AnalyzerReturnProbe.report(c,returnSeed,AnalyzerReturnProbe.Stage.SEEDED));
+                try {
+                    context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==5,600);
+                } catch(RuntimeException | AssertionError failure) {
+                    context.runOnClient(c->AnalyzerReturnProbe.report(c,returnSeed,AnalyzerReturnProbe.Stage.TIMEOUT));
+                    throw failure;
+                }
+                verifyCombined(context,output,"all51-dimension-return",combinedOff,evidence);
             }
-            verifyCombined(context,output,"all51-dimension-return",combinedOff,evidence);
             install(context,off);
             require(context.computeOnClient(c->AnalyzerClient.engine().markers().isEmpty()),"final OFF retained markers");
             evidence.append("all51Enabled=true\nall51Reload=true\ndimensionCleanup=true\nfinalOffEmpty=true\n");

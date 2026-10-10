@@ -1,4 +1,4 @@
-"""Emit bounded public exception symbols, never raw client log text."""
+"""Emit bounded public diagnostic fields, never raw client log text."""
 import os
 from pathlib import Path
 import re
@@ -30,7 +30,33 @@ FRAME_SYMBOLS = frozenset((
     "dev.blocklens.gametest.ResponsiveSettingsScreenOracle.verifySize",
     "dev.blocklens.gametest.BlockLensSmokeClientGameTest.runTest",
     "dev.blocklens.gametest.M8PerformanceBaselineOracle.verify",
+    "dev.blocklens.gametest.AnalyzerVisualOracle.verify",
+    "dev.blocklens.gametest.SceneFilterVisualOracle.verify",
+    "dev.blocklens.gametest.VillagerJobSiteFixture.verifyReplacement",
+    "dev.blocklens.gametest.VillagerJobSiteFixture.require",
+    "net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl.waitFor",
 ))
+BOOLEAN_VALUES = frozenset(("true", "false"))
+ANALYZER_MARKER = "BLOCKLENS_ANALYZER_RETURN"
+# Fixed field order and accepted values from the test-only AnalyzerReturnProbe.
+ANALYZER_FIELDS = {
+    "stage": frozenset(("SEEDED", "TIMEOUT")),
+    "markerMask": 31, "configMask": 31, "loadedMask": 31, "physicalMask": 31,
+    "beaconBaseMask": 511,
+    "overworld": BOOLEAN_VALUES, "sameLevel": BOOLEAN_VALUES, "sameVillager": BOOLEAN_VALUES,
+    "trackedVillager": BOOLEAN_VALUES, "alive": BOOLEAN_VALUES, "entityVisible": BOOLEAN_VALUES,
+    "memoryPresent": BOOLEAN_VALUES, "memoryDimension": BOOLEAN_VALUES,
+    "memoryExpectedSite": BOOLEAN_VALUES, "eyeAnchor": BOOLEAN_VALUES,
+    "villagerInRange": BOOLEAN_VALUES, "siteInRange": BOOLEAN_VALUES,
+    "entitySectionAccessible": BOOLEAN_VALUES, "entityInSection": BOOLEAN_VALUES,
+    "flying": BOOLEAN_VALUES,
+    "cells": 512, "sections": 64, "steps": 4096, "entitySections": 125, "entities": 64,
+}
+# Native console and latest.log STDOUT envelopes only; generic prefix stripping
+# would also remove [CHAT], allowing it to masquerade as a controlled probe.
+ANALYZER_PREFIX = re.compile(r"^\[(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\] "
+                             r"\[Render thread/INFO\](?: \(Minecraft\) |: )\[STDOUT\]: ")
+COUNTER_VALUE = re.compile(r"(?:0|[1-9][0-9]{0,3})")
 FLAGS = ("available", "inputRejected", "readFailed", "byteTruncated", "lineTruncated",
          "lineLengthTruncated", "selectedTruncated", "unlistedException", "unlistedFrame")
 IDENTIFIER = r"[A-Za-z_$][A-Za-z0-9_$]{0,95}"
@@ -79,6 +105,31 @@ def _render(flags, selected=()):
                    for name in FLAGS) + "".join(line + "\n" for line in selected)
 
 
+def _analyzer_return(line):
+    prefix = ANALYZER_PREFIX.match(line)
+    if prefix is None:
+        return None
+    tokens = line[prefix.end():].split(" ")
+    if len(tokens) != len(ANALYZER_FIELDS) + 1 or tokens[0] != ANALYZER_MARKER:
+        return None
+    values = {}
+    for token in tokens[1:]:
+        key, separator, value = token.partition("=")
+        if not separator or key not in ANALYZER_FIELDS or key in values:
+            return None
+        accepted = ANALYZER_FIELDS[key]
+        if isinstance(accepted, int):
+            if COUNTER_VALUE.fullmatch(value) is None or int(value) > accepted:
+                return None
+            values[key] = str(int(value))
+        else:
+            if value not in accepted:
+                return None
+            values[key] = value
+    # Reconstruct from reviewed keys and validated values, never copy raw text.
+    return ANALYZER_MARKER + " " + " ".join(key + "=" + values[key] for key in ANALYZER_FIELDS)
+
+
 def summarize(repo, module):
     flags = {}
     if not isinstance(module, str) or module not in MODULES:
@@ -108,28 +159,36 @@ def summarize(repo, module):
     lines = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n").split(b"\n", MAX_LINES)
     flags["lineTruncated"] = len(lines) > MAX_LINES and bool(lines[-1])
     selected, seen = [], set()
-    for raw in lines[:MAX_LINES]:
+    for number, raw in enumerate(lines[:MAX_LINES]):
         if len(raw) > MAX_LINE_LENGTH:
             flags["lineLengthTruncated"] = True
             continue
-        line = PREFIX.sub("", raw.decode("utf-8", errors="replace").strip(), count=1)
-        symbol = None
-        match = FRAME.fullmatch(line)
-        if match:
-            public_class, method = match.groups()
-            if public_class + "." + method in FRAME_SYMBOLS:
-                symbol = "frame=" + public_class + "." + method
-            else:
-                flags["unlistedFrame"] = True
-        else:
-            match = EXCEPTION.match(line)
-            if match and match.group(1).endswith(("Exception", "Error", "Throwable")):
-                public_type = match.group(1)
-                if public_type in EXCEPTION_TYPES:
-                    symbol = "exceptionType=" + public_type
+        decoded = raw.decode("utf-8", errors="replace")
+        partial_tail = (flags["byteTruncated"] and number == len(lines) - 1
+                        and not data.endswith((b"\n", b"\r")))
+        # A byte cutoff can hide an extra field or the remaining counter digits.
+        symbol = None if partial_tail else _analyzer_return(decoded)
+        # A complete probe is longer than a method symbol, but remains bounded by
+        # the input line limit, fixed field count and each field's value domain.
+        selected_limit = MAX_LINE_LENGTH if symbol is not None else MAX_SYMBOL_LENGTH
+        if symbol is None:
+            line = PREFIX.sub("", decoded.strip(), count=1)
+            match = FRAME.fullmatch(line)
+            if match:
+                public_class, method = match.groups()
+                if public_class + "." + method in FRAME_SYMBOLS:
+                    symbol = "frame=" + public_class + "." + method
                 else:
-                    flags["unlistedException"] = True
-        if symbol is None or len(symbol) > MAX_SYMBOL_LENGTH or OPAQUE_ID.search(symbol):
+                    flags["unlistedFrame"] = True
+            else:
+                match = EXCEPTION.match(line)
+                if match and match.group(1).endswith(("Exception", "Error", "Throwable")):
+                    public_type = match.group(1)
+                    if public_type in EXCEPTION_TYPES:
+                        symbol = "exceptionType=" + public_type
+                    else:
+                        flags["unlistedException"] = True
+        if symbol is None or len(symbol) > selected_limit or OPAQUE_ID.search(symbol):
             continue
         if symbol in seen:
             continue

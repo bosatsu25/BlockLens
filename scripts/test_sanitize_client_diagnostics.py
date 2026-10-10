@@ -12,6 +12,31 @@ SPEC = importlib.util.spec_from_file_location("client_diagnostics", SCRIPT)
 diagnostics = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(diagnostics)
 
+# Controlled CI #336 probe values, without raw log messages or identifiers.
+ANALYZER_SEEDED = (
+    "BLOCKLENS_ANALYZER_RETURN stage=SEEDED markerMask=0 configMask=31 loadedMask=31 "
+    "physicalMask=31 beaconBaseMask=511 overworld=true sameLevel=true sameVillager=true "
+    "trackedVillager=true alive=true entityVisible=true memoryPresent=true memoryDimension=true "
+    "memoryExpectedSite=true eyeAnchor=true villagerInRange=true siteInRange=true "
+    "entitySectionAccessible=true entityInSection=true flying=true cells=512 sections=13 "
+    "steps=571 entitySections=4 entities=1"
+)
+ANALYZER_TIMEOUT = (
+    "BLOCKLENS_ANALYZER_RETURN stage=TIMEOUT markerMask=15 configMask=31 loadedMask=31 "
+    "physicalMask=31 beaconBaseMask=511 overworld=true sameLevel=true sameVillager=false "
+    "trackedVillager=true alive=true entityVisible=true memoryPresent=false memoryDimension=false "
+    "memoryExpectedSite=false eyeAnchor=true villagerInRange=true siteInRange=true "
+    "entitySectionAccessible=true entityInSection=true flying=true cells=512 sections=13 "
+    "steps=731 entitySections=4 entities=2"
+)
+ANALYZER_LOG_PREFIX = "[12:09:57] [Render thread/INFO] (Minecraft) [STDOUT]: "
+ANALYZER_FILE_PREFIX = "[12:09:57] [Render thread/INFO]: [STDOUT]: "
+
+
+def replace_probe_field(record, key, value):
+    return " ".join(key + "=" + str(value) if token.startswith(key + "=") else token
+                    for token in record.split(" "))
+
 
 class ClientDiagnosticsTest(unittest.TestCase):
     def setUp(self):
@@ -208,6 +233,154 @@ class ClientDiagnosticsTest(unittest.TestCase):
         result = self.summary("at net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:1)\n" * 256)
         self.assertEqual(1, result.count("frame="))
         self.assertIn("selectedTruncated=false\n", result)
+
+    def test_ci336_failure_retains_bounded_return_diagnosis_and_failing_oracle(self):
+        result = self.summary(
+            ANALYZER_LOG_PREFIX + ANALYZER_SEEDED + "\n"
+            + ANALYZER_FILE_PREFIX + ANALYZER_TIMEOUT + "\n"
+            + "java.lang.AssertionError: PRIVATE_TIMEOUT_MESSAGE\n"
+            + "\tat knot//net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl.waitFor(ClientGameTestContextImpl.java:199)\n"
+            + "\tat knot//dev.blocklens.gametest.AnalyzerVisualOracle.verify(AnalyzerVisualOracle.java:115)\n"
+            + "\tat knot//dev.blocklens.gametest.BlockLensSmokeClientGameTest.runTest(BlockLensSmokeClientGameTest.java:57)\n"
+        )
+        self.assertIn(ANALYZER_SEEDED + "\n", result)
+        self.assertIn(ANALYZER_TIMEOUT + "\n", result)
+        self.assertIn("exceptionType=java.lang.AssertionError\n", result)
+        self.assertIn("frame=dev.blocklens.gametest.AnalyzerVisualOracle.verify\n", result)
+        self.assertIn("frame=net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl.waitFor\n", result)
+        for private in ("PRIVATE_TIMEOUT_MESSAGE", "Render thread", "12:09:57", ".java:", "knot//"):
+            self.assertNotIn(private, result)
+
+    def test_reviewed_visual_oracle_frames_survive_without_arbitrary_methods(self):
+        for symbol in ("dev.blocklens.gametest.AnalyzerVisualOracle.verify",
+                       "dev.blocklens.gametest.SceneFilterVisualOracle.verify",
+                       "dev.blocklens.gametest.VillagerJobSiteFixture.verifyReplacement",
+                       "dev.blocklens.gametest.VillagerJobSiteFixture.require",
+                       "net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl.waitFor"):
+            with self.subTest(symbol=symbol):
+                result = self.summary("at knot//" + symbol + "(private-location)\n"
+                                      + "at knot//" + symbol + "Private(private-location)\n")
+                self.assertIn("frame=" + symbol + "\n", result)
+                self.assertIn("unlistedFrame=true\n", result)
+                self.assertNotIn("Private", result)
+                self.assertNotIn("private-location", result)
+
+    def test_return_records_are_reconstructed_in_fixed_order(self):
+        tokens = ANALYZER_SEEDED.split(" ")
+        reordered = tokens[0] + " " + " ".join(reversed(tokens[1:]))
+        result = self.summary(ANALYZER_LOG_PREFIX + reordered + "\n")
+        self.assertIn(ANALYZER_SEEDED + "\n", result)
+        self.assertNotIn(reordered, result)
+
+    def test_return_counters_accept_zero_and_their_reviewed_maxima(self):
+        bounds = {"markerMask": 31, "configMask": 31, "loadedMask": 31, "physicalMask": 31,
+                  "beaconBaseMask": 511, "cells": 512, "sections": 64, "steps": 4096,
+                  "entitySections": 125, "entities": 64}
+        for key, maximum in bounds.items():
+            for value in (0, maximum):
+                with self.subTest(key=key, value=value):
+                    record = replace_probe_field(ANALYZER_SEEDED, key, value)
+                    self.assertIn(record + "\n", self.summary(ANALYZER_LOG_PREFIX + record + "\n"))
+
+    def test_return_counters_reject_overflow_and_noncanonical_numbers(self):
+        bounds = {"markerMask": 31, "configMask": 31, "loadedMask": 31, "physicalMask": 31,
+                  "beaconBaseMask": 511, "cells": 512, "sections": 64, "steps": 4096,
+                  "entitySections": 125, "entities": 64}
+        for key, maximum in bounds.items():
+            for value in (-1, maximum + 1, "+1", "01", "1.0", "1e0", "\u0661", "private"):
+                with self.subTest(key=key, value=value):
+                    record = replace_probe_field(ANALYZER_SEEDED, key, value)
+                    result = self.summary(ANALYZER_LOG_PREFIX + record + "\n")
+                    self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+                    self.assertNotIn("private", result)
+
+    def test_return_booleans_accept_only_exact_true_and_false(self):
+        keys = [token.split("=")[0] for token in ANALYZER_SEEDED.split(" ")[1:]
+                if token.endswith("=true")]
+        for key in keys:
+            record = replace_probe_field(ANALYZER_SEEDED, key, "false")
+            with self.subTest(key=key, value="false"):
+                self.assertIn(record + "\n", self.summary(ANALYZER_FILE_PREFIX + record + "\n"))
+            for value in ("True", "FALSE", "0", "1", "private", ""):
+                with self.subTest(key=key, value=value):
+                    record = replace_probe_field(ANALYZER_SEEDED, key, value)
+                    result = self.summary(ANALYZER_LOG_PREFIX + record + "\n")
+                    self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+                    self.assertNotIn("private", result)
+
+    def test_return_records_reject_unknown_missing_duplicate_and_malformed_fields(self):
+        variants = [ANALYZER_SEEDED + " extra=private",
+                    ANALYZER_SEEDED + " entities=1",
+                    ANALYZER_SEEDED.replace(" entities=1", ""),
+                    ANALYZER_SEEDED.replace("entities=1", "unknown=1"),
+                    ANALYZER_SEEDED.replace("entities=1", "entities==1"),
+                    ANALYZER_SEEDED.replace("entities=1", "entities"),
+                    ANALYZER_SEEDED.replace(" cells=512", "\tcells=512"),
+                    ANALYZER_SEEDED + "\x00",
+                    ANALYZER_SEEDED + " private"]
+        variants.extend(replace_probe_field(ANALYZER_SEEDED, "stage", stage)
+                        for stage in ("BEFORE", "seeded", "TIMEOUT_PRIVATE", ""))
+        for record in variants:
+            with self.subTest(record=record):
+                result = self.summary(ANALYZER_LOG_PREFIX + record + "\n")
+                self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+                self.assertNotIn("private", result)
+
+    def test_chat_and_other_prefixes_cannot_become_return_records(self):
+        for prefix in ("", "[CHAT] ", "chat: ", "[12:09:57] [Render thread/INFO]: [CHAT] ",
+                       "[12:09:57] [Render thread/INFO] (Minecraft) [STDOUT]: [CHAT] ",
+                       "[12:09:57] [private/INFO]: [STDOUT]: ",
+                       "[12:09:57] [Render thread/INFO] (MinecraftPrivate) [STDOUT]: ",
+                       "https://invalid.example/", "java.lang.RuntimeException: "):
+            with self.subTest(prefix=prefix):
+                result = self.summary(prefix + ANALYZER_SEEDED + "\n")
+                self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+                self.assertNotIn("private", result)
+
+    def test_return_records_never_export_identifiers_or_free_text(self):
+        for private in ("C:\\private\\file", "203.0.113.77", "https://invalid.example/token",
+                        "12345678-1234-1234-1234-123456789abc", "PRIVATE_ACCOUNT", "NBT{private}"):
+            for record in (replace_probe_field(ANALYZER_SEEDED, "entities", private),
+                           replace_probe_field(ANALYZER_SEEDED, "sameVillager", private),
+                           ANALYZER_SEEDED + " " + private + "=true"):
+                with self.subTest(private=private, record=record):
+                    result = self.summary(ANALYZER_LOG_PREFIX + record + "\n")
+                    self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+                    self.assertNotIn(private, result)
+
+    def test_return_records_share_selection_budget_and_duplicate_suppression(self):
+        with patch.object(diagnostics, "MAX_SELECTED", 1):
+            duplicate = (ANALYZER_LOG_PREFIX + ANALYZER_SEEDED + "\n") * 2
+            result = self.summary(duplicate)
+            self.assertEqual(1, result.count("BLOCKLENS_ANALYZER_RETURN"))
+            self.assertIn("selectedTruncated=false\n", result)
+            result = self.summary(duplicate + ANALYZER_LOG_PREFIX + ANALYZER_TIMEOUT + "\n")
+            self.assertEqual(1, result.count("BLOCKLENS_ANALYZER_RETURN"))
+            self.assertIn("selectedTruncated=true\n", result)
+            self.assertNotIn("stage=TIMEOUT", result)
+
+    def test_return_records_share_input_byte_line_and_length_budgets(self):
+        record = ANALYZER_LOG_PREFIX + ANALYZER_SEEDED + "\n"
+        with patch.object(diagnostics, "MAX_LINES", 1):
+            result = self.summary("ordinary\n" + record)
+            self.assertIn("lineTruncated=true\n", result)
+            self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+        with patch.object(diagnostics, "MAX_BYTES", len(record) - 3):
+            result = self.summary(record)
+            self.assertIn("byteTruncated=true\n", result)
+            self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+        with patch.object(diagnostics, "MAX_LINE_LENGTH", len(record) - 3):
+            result = self.summary(record)
+            self.assertIn("lineLengthTruncated=true\n", result)
+            self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+
+    def test_byte_cutoff_cannot_hide_extra_fields_after_an_apparently_complete_record(self):
+        record = ANALYZER_LOG_PREFIX + ANALYZER_SEEDED
+        with patch.object(diagnostics, "MAX_BYTES", len(record)):
+            result = self.summary(record + " extra=private\n")
+            self.assertIn("byteTruncated=true\n", result)
+            self.assertNotIn("BLOCKLENS_ANALYZER_RETURN", result)
+            self.assertNotIn("private", result)
 
     def test_invalid_utf8_and_overlong_line_cannot_leak_or_block_later_type(self):
         result = self.summary(b"\xffprivate\n" + b"x" * 4096

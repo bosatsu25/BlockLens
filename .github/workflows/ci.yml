@@ -398,7 +398,7 @@ jobs:
             done
           done
           manifest="$root/analyzer-visual/analyzer-visual-manifest.txt"
-          for check in all51Enabled all51Reload dimensionCleanup finalOffEmpty jobMemoryMissing jobMemoryLoaded jobMemoryWrongDimension jobMemoryErased; do
+          for check in all51Enabled all51Reload dimensionCleanup finalOffEmpty jobMemoryMissing jobMemoryLoaded jobMemoryWrongDimension jobMemoryErased jobMemoryReplacement jobMemoryFixtureClosed; do
             grep -q "^$check=true$" "$manifest"
           done
           for kind in 0 1 2 3 4; do

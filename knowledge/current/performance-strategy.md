@@ -272,6 +272,12 @@ The current-head shared checks and all-three full native/hosted conformance gate
 remain required before closing #43. A focused pass alone does not satisfy this
 policy. Failure artifacts preserve bounded fixed-role counters and controlled
 images. Public diagnostic logs contain only a fixed set of reviewed exception
-types and method symbols. Unknown types/frames produce fixed boolean flags, even
-if they imitate a library namespace. Raw client logs, paths and arbitrary
-messages are excluded.
+types and method symbols, plus strictly parsed analyzer-return stages, masks,
+bounded work counts and booleans. Return records require the complete fixed
+field set and reject unknown, duplicate, malformed or out-of-range fields; their
+output is reconstructed rather than copied from arbitrary log text. Unknown
+types/frames produce fixed boolean flags, even if they imitate a library
+namespace. Raw client logs, paths, entity IDs, UUIDs, coordinates, memory contents
+and arbitrary messages are excluded. The analyzer timeout in CI #336 and its
+test-input repair are documented in [world-analyzers.md](world-analyzers.md#dimension-return-fixture-repair--pr-52);
+that failure happened before M8 and is not an allocation-guard failure.
