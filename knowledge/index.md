@@ -49,3 +49,5 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 - [Current three-version integration and visible UI runner](current/minecraft-26-3.md) — 26.3 adaptation, reviewed byte budget and verification status.
 
 - [Owned runtime packaging decision](current/runtime-packaging.md) — preserved compiled bytes, bounded archive audit and packaged-client verification.
+
+- [Masa integration and standalone decision](current/masa-integration-decisions.md) — eight explicit scope exclusions, the separate read-only #36 candidate and retained ChiseTweaks differences.

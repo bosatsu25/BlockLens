@@ -1,8 +1,10 @@
 # ChiseTweaks → BlockLens Migration
 
-Status: **Issue #22 / P0 merged and published in v0.2.0 / P1-P5 planned**
+Status: **P0 published / P1-P2 merged / remaining migrations tracked individually**
 
-Current publication is v0.2.2, including optional Mod Menu delivery; the development tree targets 26.1.2 / 26.2 / 26.3 with 46 capabilities. P1/P2 requirements are consolidated in #42; Analyzer #34, Scene Filter #35, Builder Assist #36, extension compatibility #37 and ecosystem decisions #38 remain separate. Issue #22 is complete only for P0. The P0 100 KiB statements below are historical; current reviewed development / product release ceilings are 140 KiB / 150 KiB. See [roadmap.md](roadmap.md) for current verified evidence and unresolved #31 compatibility boundary and completed #43 diagnostic work.
+Current publication is v0.2.2, including optional Mod Menu delivery; the development tree targets 26.1.2 / 26.2 / 26.3 with 46 capabilities. P1/P2 requirements are completed by #42 / PR #46; Analyzer #34, Scene Filter #35, Builder Assist #36 and extension compatibility #37 remain separate. Issue #22 is complete only for P0. The P0 100 KiB statements below are historical; current reviewed development / product release ceilings are 140 KiB / 150 KiB. See [roadmap.md](roadmap.md) for current verified evidence, unresolved #31 compatibility and reopened #43 allocation variability. Diagnostic implementation is merged; the allocation cause remains unconfirmed.
+
+The [Masa evaluation and standalone decision](masa-integration-decisions.md) records eight intentional external-integration exclusions and the separate read-only #36 candidate. ChiseTweaks is retained, not deprecated or archived: BlockLens does not provide complete parity and future migrations are not in a verified public release.
 
 BlockLens is the destination product. ChiseTweaks is a source of proven capabilities and UX ideas; it is **not** a runtime dependency and its feature framework is not copied into BlockLens.
 
