@@ -70,6 +70,7 @@ final class M8PerformanceBaselineContractTest {
         String commonBuild = Files.readString(root().resolve("common/build.gradle"));
         String versionBuild = Files.readString(root().resolve("gradle/version-module.gradle"))
                 .replace("\r\n", "\n");
+        String archiveAudit = Files.readString(root().resolve("gradle/runtime-container-audit.gradle"));
         int publication = oracle.indexOf("GuardedEvidence.publishBeforeChecks(() -> writeManifest(");
         int guard = oracle.indexOf("require(reloadWithinGuard,");
         assertTrue(publication >= 0, "raw-evidence publication must exist");
@@ -89,8 +90,8 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(probe.contains("MAX_TIMING_SAMPLES = 1024"));
         assertTrue(probe.contains("SAMPLES.size() < MAX_TIMING_SAMPLES"));
         assertTrue(commonBuild.contains("sourceSets.test.java.srcDir rootProject.file('test-support/java')"));
-        assertTrue(versionBuild.contains("'dev/blocklens/testing/'"));
-        assertTrue(versionBuild.contains("'dev/blocklens/gametest/'"));
+        assertTrue(archiveAudit.contains("'dev/blocklens/testing/'"));
+        assertTrue(archiveAudit.contains("'dev/blocklens/gametest/'"));
         assertTrue(versionBuild.contains("gametest {\n        java.srcDir rootProject.file('gametest/java')\n"
                 + "        java.srcDir rootProject.file('test-support/java')"));
     }

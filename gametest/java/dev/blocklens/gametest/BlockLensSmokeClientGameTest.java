@@ -21,6 +21,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
     @Override
     public void runTest(ClientGameTestContext context) {
         context.runOnClient(client -> {
+            PackagedRuntimeOracle.verify();
             verifyRuntime("initial client launch", true);
             ConfigFileReloadOracle.verify();
             verifyRuntime("native config file reload restored", false);

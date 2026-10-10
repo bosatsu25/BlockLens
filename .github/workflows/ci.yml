@@ -111,7 +111,7 @@ jobs:
           # SDL3 uses EGL for an sRGB-capable OpenGL framebuffer under Xvfb.
           SDL_VIDEO_FORCE_EGL: ${{ matrix.module == 'mc26_3' && '1' || '0' }}
         run: >-
-          xvfb-run -a gradle --stacktrace
+          xvfb-run -a gradle --stacktrace -PverifyPackagedRuntime=true
           :versions:${{ matrix.module }}:runClientGameTest
       - name: Collect failed Client GameTest diagnostics
         if: failure()

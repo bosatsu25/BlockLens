@@ -47,3 +47,5 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 - [`current/features.md`](current/features.md) — all 40 independent capabilities, English/Japanese names, behavior and defaults
 
 - [Current three-version integration and visible UI runner](current/minecraft-26-3.md) — 26.3 adaptation, reviewed byte budget and verification status.
+
+- [Owned runtime packaging decision](current/runtime-packaging.md) — preserved compiled bytes, bounded archive audit and packaged-client verification.
