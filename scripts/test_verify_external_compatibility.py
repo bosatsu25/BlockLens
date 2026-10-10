@@ -1,6 +1,7 @@
 """Regression checks against falsely accepting external rendering evidence."""
 
 from pathlib import Path
+import hashlib
 import struct
 import tempfile
 import unittest
@@ -129,6 +130,43 @@ class ExternalEvidenceTest(unittest.TestCase):
             with patch.object(evidence, "properties", return_value=self.base()):
                 with self.assertRaisesRegex(ValueError, "not acceptance evidence"):
                     evidence.verify(root, "26.3", "vulkan")
+
+    def test_failed_masa_lifecycle_trace_is_hashed_and_remains_incomplete(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "game" / "external-compatibility"
+            source.mkdir(parents=True)
+            trace = source / "external-lifecycle-diagnostics.txt"
+            trace.write_text("status=diagnostic-only\nstalledPhase=world_close\n")
+            manifest = source / "external-compatibility-manifest.properties"
+            actual = self.base("masa")
+            actual.update(backend="opengl", status="started")
+            manifest.write_text("".join(f"{key}={value}\n" for key, value in actual.items()))
+            (source / "external-lifecycle-diagnostics.tmp").write_text("partial private input")
+            destination = root / "diagnostics"
+            self.assertEqual(2, evidence.collect_failure(root / "game", destination))
+            self.assertEqual(trace.read_bytes(), (destination / trace.name).read_bytes())
+            self.assertFalse((destination / "external-lifecycle-diagnostics.tmp").exists())
+            self.assertIn(hashlib.sha256(trace.read_bytes()).hexdigest() + "  " + trace.name,
+                          (destination / "SHA256SUMS.txt").read_text())
+            with self.assertRaisesRegex(ValueError, "status.*passed"):
+                evidence.verify(destination, "26.3", "masa")
+
+    def test_failed_masa_lifecycle_trace_rejects_oversized_or_symlink_input(self):
+        for kind in ("oversized", "symlink"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                source = root / "game" / "external-compatibility"
+                source.mkdir(parents=True)
+                trace = source / "external-lifecycle-diagnostics.txt"
+                if kind == "oversized":
+                    trace.write_bytes(b"x" * 65537)
+                else:
+                    private = root / "private"
+                    private.write_text("private")
+                    trace.symlink_to(private)
+                with self.assertRaisesRegex(ValueError, "bounded|symlink"):
+                    evidence.collect_failure(root / "game", root / "diagnostics")
 
 
 if __name__ == "__main__":

@@ -149,3 +149,30 @@ with a regression against the actual parsed coordinates; it preserves the
 teleport command, native framing, complete image region and retention gate.
 The original assertion failures remain recorded, without claiming a native pass
 for that attempted background revision.
+
+At `05e782e4c399e5ae569ef542c7fc7737297b5a74`,
+[normal CI #345](https://github.com/bosatsu25/BlockLens/actions/runs/38072553708)
+passed all four jobs. Its three downloaded runtime JARs match the sizes and
+SHA-256 hashes from #343 exactly. Current M8 manifests and raw samples pass every
+guard, and all three native logs reach the final Builder, ore, analyzer and Scene
+Filter disconnect assertions. Native steps took 515 / 487 / 482 seconds.
+
+The paired [external run #5](https://github.com/bosatsu25/BlockLens/actions/runs/38072553687)
+passed ten rows. All ten successful artifacts were independently downloaded,
+digest-checked and validated. The corrected 26.1.2 Shader-ON native images retain
+1309 of 1313 base pixels, or **996/1000**, above the unchanged 950 minimum. The
+previous grass contamination is absent; all three models and original framing
+remain present. Shader-ON retention on 26.2 / 26.3 is 995 / 992; Shader-OFF and
+Vulkan retention is 1000 on their supported rows.
+
+The remaining 26.2 Masa row timed out after twelve minutes. Its typed schematic
+assertions, including missing-chunk isolation, unload cleanup and readonly
+behavior, reached the success marker at 17:40:50 UTC. No later native log appeared
+before the timeout at 17:52:26. The original log and hash-verified failure artifact
+`11677452307` retain this failed attempt. Earlier identical Masa inputs passed,
+but that does not establish the cause of this stall or turn it into a pass.
+The available evidence places the stop after schematic assertions and before
+the observed disconnect path; it cannot distinguish client restoration from
+world-close waiting. Test-only lifecycle diagnostics are required to investigate
+this uncertainty without changing the timeout, product code or acceptance
+assertions. Exact subsequent outcomes remain in PR #53 and the delivery issues.

@@ -1,6 +1,7 @@
 package dev.blocklens.gametest;
 
 import dev.blocklens.core.BlockLensRuntime;
+import dev.blocklens.testing.ExternalLifecycleDiagnostics;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -34,13 +35,14 @@ final class ExternalCompatibilityOracle {
         evidence.setProperty("fullGraph", "false");
         evidence.setProperty("captureMode", ExternalFrameCapture.required()
                 ? "completed-native-frame" : "fabric-test-capture");
-        try {
+        try (var lifecycle = ExternalLifecycleDiagnostics.open(output, profile.equals("masa"))) {
             Properties manifest = loadManifest(directory);
             require(profile.equals(manifest.getProperty("profile")), "Prepared profile differs");
             require(BlockLensRuntime.minecraftVersion().equals(manifest.getProperty("minecraft")),
                     "Prepared Minecraft version differs");
             Files.createDirectories(output);
             writeEvidence(output, evidence);
+            lifecycle.phase("runtime_verify");
             context.runOnClient(client -> {
                 PackagedRuntimeOracle.verify();
                 Backend backend = ExternalBackendProbe.read();
@@ -70,18 +72,23 @@ final class ExternalCompatibilityOracle {
                 verifyMod("litematica", manifest, evidence);
                 verifyMod("malilib", manifest, evidence);
             }
+            lifecycle.phase("world_create");
             try (var world = context.worldBuilder().create()) {
+                lifecycle.phase("world_ready");
                 context.waitTicks(30);
                 verifyShader(context, manifest, evidence);
                 if (profile.equals("masa")) {
-                    BuilderAssistOracle.verifyLitematica(context, world);
+                    lifecycle.phase("schematic_verify");
+                    BuilderAssistOracle.verifyLitematica(context, world, lifecycle);
                     evidence.setProperty("schematicRead", "true");
+                    lifecycle.phase("schematic_manifest_copy");
                     Path source = FabricLoader.getInstance().getGameDir().resolve("builder-assist")
                             .resolve("builder-schematic-manifest.txt");
                     require(Files.isRegularFile(source) && Files.size(source) <= 16384,
                             "Schematic native evidence missing or oversized");
                     Files.copy(source, output.resolve(source.getFileName()),
                             java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    lifecycle.phase("schematic_manifest_copied");
                 } else if (profile.equals("packs")) {
                     ExternalResourcePackOracle.verify(context, world, directory, manifest, output);
                     evidence.setProperty("packOrderForward", "true");
@@ -101,7 +108,9 @@ final class ExternalCompatibilityOracle {
                     copyEvidence("m3-visual", output);
                     copyEvidence("m5-pack-visual", output);
                 }
+                lifecycle.phase("world_close");
             }
+            lifecycle.phase("world_closed");
             evidence.setProperty("status", "passed");
             writeEvidence(output, evidence);
             System.out.println("BLOCKLENS_EXTERNAL_COMPATIBILITY minecraft=" + BlockLensRuntime.minecraftVersion()

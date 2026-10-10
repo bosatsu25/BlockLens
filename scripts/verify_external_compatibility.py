@@ -18,6 +18,7 @@ DEFAULT_IMAGES = (
 )
 FAILURE_FILES = (
     "external-compatibility/external-compatibility-manifest.properties",
+    "external-compatibility/external-lifecycle-diagnostics.txt",
     "m3-visual/m3-all13-on.png", "m3-visual/m3-all13-reloaded.png",
     "m3-visual/m3-all13-off-active-pack.png", "m3-visual/m3-visual-manifest.txt",
     "m5-pack-visual/m5-pack-off.png", "m5-pack-visual/m5-pack-on.png",

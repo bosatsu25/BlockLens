@@ -206,16 +206,28 @@ manifest and the two pinned loaded-mod hashes. It has no image artifact. Every p
 SHA256SUMS. Its collector copies an explicit allowlist only; original packs,
 mod JARs, configuration directories and arbitrary logs are not result artifacts.
 
-Failed public client rows also retain a bounded partial manifest and the six named M3/M5 PNGs
-and two metric manifests, when created. This explicit nine-file allowlist rejects symlinks,
+Failed public client rows also retain a bounded partial manifest and the six named M3/M5 PNGs,
+two metric manifests and the fixed external lifecycle diagnostic file, when created. This
+explicit ten-file allowlist rejects symlinks,
 limits images to 4 MiB at 640 by 360 and text to 64 KiB, and writes SHA-256 hashes plus
 `DIAGNOSTIC_STATUS.txt` with `status=failed-or-incomplete`. The acceptance verifier rejects
 that diagnostic directory even if a copied native manifest says `passed`. This artifact is
 for diagnosis and cannot turn a failed row into passing evidence.
 
+The optional Masa test records progress around schematic assertions, client restoration,
+evidence copying and world closure. A test-only daemon watchdog records one bounded thread
+snapshot if a phase remains unchanged for 60 seconds. Its fixed output is
+`external-compatibility/external-lifecycle-diagnostics.txt`, written by atomic replacement
+with at most 16 selected thread stacks, 24 frames per thread and 64 KiB of ASCII text.
+It observes the wait without interrupting the client, server or test thread. Closing the
+watchdog cancels its scheduled work without waiting for a thread to join. Existing native
+assertions, the twelve-minute step deadline and the success manifest remain authoritative.
+The watchdog is restricted to the focused Masa profile; it is not a runtime MOD feature or
+an M8 measurement condition.
+
 ## Evidence state
 
-The 18 Python provenance/isolation/false-pass regression tests pass. Normal
+Python provenance/isolation/false-pass regression tests are part of the common gate. Normal
 [CI #343](https://github.com/bosatsu25/BlockLens/actions/runs/38070878467) passed
 all four jobs at `71f6d9a5cbe1f9b9bc35ca9c3415dbf54840e05f`. Its paired
 [external run](https://github.com/bosatsu25/BlockLens/actions/runs/38070878498)
@@ -225,6 +237,19 @@ fixture correction are documented above. Final current-head acceptance requires
 every public matrix row and the normal graph; its immutable run and merge links
 are retained in PR #53 and the delivery issues. None of these observations validates
 the uploaded-pack matrix or the unsupported Sodium terrain paths.
+
+At `05e782e4c399e5ae569ef542c7fc7737297b5a74`, normal
+[CI #345](https://github.com/bosatsu25/BlockLens/actions/runs/38072553708) passed
+the complete three-version graph. [External run #5](https://github.com/bosatsu25/BlockLens/actions/runs/38072553687)
+passed all eight rendering rows and Masa on 26.1.2 / 26.3. The native 26.1.2
+Shader-ON retention was 996/1000 with the static background and unchanged 950
+minimum. All ten successful artifacts were digest-checked and strictly validated.
+The 26.2 Masa row reached all typed schematic assertions and then stalled before
+the normal disconnect logs, until the twelve-minute timeout. Its original log and
+failure artifact `11677452307` are preserved. The precise blocking operation is
+unproven; lifecycle instrumentation supplies the missing observation without
+claiming the failed attempt passed or changing product behavior. Subsequent exact
+head and merge results are recorded in PR #53 and the delivery issues.
 
 The local reference-pack attempt on 2026-10-10 reached a concrete display limitation. After
 installing the missing X11 libraries from hash-verified Ubuntu packages, the normal authenticated

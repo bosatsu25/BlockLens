@@ -1,5 +1,7 @@
 package dev.blocklens.gametest;
 
+import dev.blocklens.testing.ExternalLifecycleDiagnostics;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
@@ -297,8 +299,9 @@ final class BuilderAssistOracle {
                 "builder framebuffer viewport differs");
     }
 
-    static void verifyLitematica(ClientGameTestContext context, TestSingleplayerContext world) {
-        SchematicFixture.verify(context, world);
+    static void verifyLitematica(ClientGameTestContext context, TestSingleplayerContext world,
+                                ExternalLifecycleDiagnostics lifecycle) {
+        SchematicFixture.verify(context, world, lifecycle);
     }
 
     static void prepareDisconnect(ClientGameTestContext context, TestSingleplayerContext world) {
@@ -322,7 +325,8 @@ final class BuilderAssistOracle {
     }
 
     private static final class SchematicFixture {
-        static void verify(ClientGameTestContext context, TestSingleplayerContext world) {
+        static void verify(ClientGameTestContext context, TestSingleplayerContext world,
+                           ExternalLifecycleDiagnostics lifecycle) {
             var original = BlockLensRuntime.config();
             var stack = context.computeOnClient(c -> c.player.getMainHandItem().copy());
             try {
@@ -369,8 +373,14 @@ final class BuilderAssistOracle {
                 System.out.println("BLOCKLENS_SCHEMATIC typedRead=true match=true adjusted=true different=true missing=true readonly=true");
             } catch (IOException exception) { throw new AssertionError("schematic evidence failed", exception); }
             finally {
-                context.runOnClient(c -> { BuilderAssistClient.clear(); BlockLensRuntime.installConfig(original);
-                    if (c.player != null) c.player.setItemInHand(InteractionHand.MAIN_HAND, stack); });
+                lifecycle.phase("restore_client_queued");
+                context.runOnClient(c -> {
+                    lifecycle.phase("restore_client_entered");
+                    BuilderAssistClient.clear(); BlockLensRuntime.installConfig(original);
+                    if (c.player != null) c.player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+                    lifecycle.phase("restore_client_finished");
+                });
+                lifecycle.phase("restore_client_returned");
             }
         }
     }
