@@ -44,6 +44,40 @@ class ExternalEvidenceTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "status.*passed"):
                 evidence.verify(Path("unused"), "26.3", "vulkan")
 
+    def rendering_fixture(self, directory, isolation):
+        actual = self.base()
+        actual.update(m3Visual="true", m5ActivePackVisual="true")
+        (directory / "external-compatibility-manifest.properties").write_text(
+            "".join(f"{key}={value}\n" for key, value in actual.items()))
+        (directory / "m3-visual-manifest.txt").write_text("minecraft=26.3\n")
+        (directory / "m5-pack-visual-manifest.txt").write_text(
+            "minecraft=26.3\n" + ("" if isolation is None else f"externalSceneIsolated={isolation}\n"))
+
+        def chunk(name, payload):
+            return struct.pack(">I", len(payload)) + name + payload + struct.pack(">I", zlib.crc32(name + payload))
+
+        row = b"\0" + bytes(range(256)) * 7 + bytes(range(128))
+        png = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 640, 360, 8, 2, 0, 0, 0))
+               + chunk(b"IDAT", zlib.compress(row * 360)) + chunk(b"IEND", b""))
+        for name in evidence.DEFAULT_IMAGES:
+            (directory / name).write_bytes(png)
+
+    def test_nonisolated_or_unrecorded_m5_scene_is_rejected(self):
+        for isolation in ("false", None):
+            with self.subTest(isolation=isolation), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                self.rendering_fixture(directory, isolation)
+                with self.assertRaisesRegex(ValueError, "externalSceneIsolated.*true"):
+                    evidence.verify(directory, "26.3", "vulkan")
+
+    def test_isolated_m5_scene_acceptance_keeps_all_six_images(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            self.rendering_fixture(directory, "true")
+            files = evidence.verify(directory, "26.3", "vulkan")
+            self.assertEqual(9, len(files))
+            self.assertTrue(set(evidence.DEFAULT_IMAGES).issubset(path.name for path in files))
+
     def test_masa_metadata_without_typed_schematic_read_is_rejected(self):
         actual = self.base("masa")
         actual.update(backend="opengl", schematicRead="true")

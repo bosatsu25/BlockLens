@@ -176,3 +176,42 @@ the observed disconnect path; it cannot distinguish client restoration from
 world-close waiting. Test-only lifecycle diagnostics are required to investigate
 this uncertainty without changing the timeout, product code or acceptance
 assertions. Exact subsequent outcomes remain in PR #53 and the delivery issues.
+
+## Merge and the external scene-isolation follow-up
+
+The final PR #53 head `2120ccdb006b262eccb96fd888d7f07db5b413c3` passed
+[normal CI #346](https://github.com/bosatsu25/BlockLens/actions/runs/38074634731)
+and all eleven [external #6 jobs](https://github.com/bosatsu25/BlockLens/actions/runs/38074634660).
+All current M8/JAR artifacts and the eleven external artifacts were independently
+downloaded and hash-verified. Normal native durations were 512 / 494 / 470 seconds;
+runtime bytes remained 168534 / 168863 / 168930. All three Masa profiles completed
+restoration, evidence copy and world closure. The earlier Masa stall did not reproduce,
+and its precise cause remains unproven.
+
+PR #53 was squash-merged to signed main commit
+`9609c4dd70fb162ba8479d6e606baab2fe8eadad`, with exactly the accepted tree
+`137bedc042e470c35ab857e4ccea4a800171a92e`. The actual main
+[external #7 run](https://github.com/bosatsu25/BlockLens/actions/runs/38075582520)
+passed ten rows but failed 26.2 Shader ON at **939/1000** retention
+(1486/1581, required 950). Its original artifact `11677459914` has SHA-256
+`d21062dcb0f42965f35c21a5c9eb7655903c804dd94726c045817a8c402abbca`;
+its ten internal hashes were verified and its incomplete manifest was correctly rejected.
+Successful 26.1.2/26.3 Shader-ON retention was 967/979, and all Masa lifecycles completed.
+
+The remaining failure exposed a separate fixture-isolation defect: M5 inherited
+M3's thirteen blocks, including front-row occluders. A source-derived diagnostic
+projection places **94/95** unmatched pixels outside the three visible target probes
+with a two-pixel halo; the actual native projection matrix was not recorded.
+The probe-only 997/1000 result and controlled-image 979 positive with
+940/938/860 individual-target-removal negatives are causal analysis only;
+the original global 939 result remains a failed native run.
+
+The [external specification](external-compatibility.md#isolating-m5-from-the-preceding-m3-scene)
+now requires an external-only 52-cell clear and a native check for exactly the three
+original targets plus 49 AIR cells before capture. Strict artifact verification
+requires the resulting isolation flag. Real temporary-artifact regressions first
+reproduced acceptance of missing/false isolation flags, then passed after the verifier
+change. All **55** local Python tests and all three exact Minecraft API compilations pass.
+The runtime code, normal/M8 scene, capture path, shader settings, metric and 200 KiB
+ceilings are unchanged. Fresh follow-up PR and resulting main gates remain required;
+their immutable workflow links and final Issue states record completion.

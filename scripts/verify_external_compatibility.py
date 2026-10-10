@@ -104,6 +104,7 @@ def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
     else:
         require_value(evidence, "m3Visual", "true")
         require_value(evidence, "m5ActivePackVisual", "true")
+        require_value(properties(directory / "m5-pack-visual-manifest.txt"), "externalSceneIsolated", "true")
         images = DEFAULT_IMAGES
         files += [directory / "m3-visual-manifest.txt", directory / "m5-pack-visual-manifest.txt"]
     for name in images:
