@@ -96,7 +96,10 @@ final class VillagerJobSiteFixture implements AutoCloseable {
     private static Villager replace(ClientLevel level) {
         var previous = find(level);
         require(previous != null, "controlled replacement villager missing");
-        var replacement = new Villager(EntityType.VILLAGER, level);
+        // Preserve the controlled Villager's type without a version-specific registry constant.
+        @SuppressWarnings("unchecked")
+        var type = (EntityType<? extends Villager>) previous.getType();
+        var replacement = new Villager(type, level);
         replacement.setId(previous.getId());
         replacement.setUUID(previous.getUUID());
         replacement.snapTo(previous.getX(), previous.getY(), previous.getZ(), previous.getYRot(), previous.getXRot());
