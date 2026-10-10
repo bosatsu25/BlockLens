@@ -5,6 +5,7 @@ import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.fabric.MinecraftDecorationModelPlugin;
 import dev.blocklens.fabric.MinecraftTerrainInvalidator;
+import dev.blocklens.testing.GuardedEvidence;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -34,6 +35,7 @@ final class M8PerformanceBaselineOracle {
     private static final int REBUILD_SETTLE_TICKS = 30;
     private static final int FRAME_CAPTURE_TICKS = 80;
     private static final int MIN_FRAME_SAMPLES = 30;
+    private static final int MEASUREMENT_FPS_LIMIT = 60;
 
     // Coarse regression guards frozen only after repeated dual-version observations (#190/#192).
     private static final long MAX_RELOAD_MEDIAN_NANOS = 6_000_000_000L;
@@ -46,9 +48,16 @@ final class M8PerformanceBaselineOracle {
     static void verify(ClientGameTestContext context, TestSingleplayerContext singleplayer) {
         BlockLensConfig original = BlockLensRuntime.config();
         Path outputDir = FabricLoader.getInstance().getGameDir().resolve("m8-performance");
+        int measurementFpsLimit = Integer.getInteger("blocklens.test.m8.fpsLimit", MEASUREMENT_FPS_LIMIT);
+        require(measurementFpsLimit == 30 || measurementFpsLimit == 60 || measurementFpsLimit == 120,
+                "M8 test FPS limit must be 30, 60 or 120");
 
+        int originalFpsLimit = context.computeOnClient(client -> client.options.framerateLimit().get());
+        boolean vsyncEnabled = context.computeOnClient(client -> client.options.enableVsync().get());
         try {
             Files.createDirectories(outputDir);
+            verifyFailureEvidence(outputDir);
+            context.runOnClient(client -> client.options.framerateLimit().set(measurementFpsLimit));
             context.runOnClient(client -> M8FrameTimeProbe.install());
             buildScene(singleplayer);
             context.waitTicks(20);
@@ -106,12 +115,15 @@ final class M8PerformanceBaselineOracle {
             long[] offAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] offRelevantAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] offRebuildNanos = new long[MEASURED_SAMPLES];
+            long[] offRenderedFrames = new long[MEASURED_SAMPLES];
             long[] defaultAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] defaultRelevantAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] defaultRebuildNanos = new long[MEASURED_SAMPLES];
+            long[] defaultRenderedFrames = new long[MEASURED_SAMPLES];
             long[] onAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] onRelevantAllocatedBytes = new long[MEASURED_SAMPLES];
             long[] onRebuildNanos = new long[MEASURED_SAMPLES];
+            long[] onRenderedFrames = new long[MEASURED_SAMPLES];
 
             // Alternate OFF/default/all-on groups to reduce monotonic warmup bias.
             for (int i = 0; i < MEASURED_SAMPLES; i++) {
@@ -120,18 +132,21 @@ final class M8PerformanceBaselineOracle {
                 offAllocatedBytes[i] = off.totalAllocatedBytes();
                 offRelevantAllocatedBytes[i] = off.renderRelevantAllocatedBytes();
                 offRebuildNanos[i] = off.elapsedNanos();
+                offRenderedFrames[i] = off.renderedFrames();
 
                 install(defaultConfig);
                 RebuildMeasurement defaults = measureRebuild(context);
                 defaultAllocatedBytes[i] = defaults.totalAllocatedBytes();
                 defaultRelevantAllocatedBytes[i] = defaults.renderRelevantAllocatedBytes();
                 defaultRebuildNanos[i] = defaults.elapsedNanos();
+                defaultRenderedFrames[i] = defaults.renderedFrames();
 
                 install(allOn);
                 RebuildMeasurement on = measureRebuild(context);
                 onAllocatedBytes[i] = on.totalAllocatedBytes();
                 onRelevantAllocatedBytes[i] = on.renderRelevantAllocatedBytes();
                 onRebuildNanos[i] = on.elapsedNanos();
+                onRenderedFrames[i] = on.renderedFrames();
             }
 
             install(allOff);
@@ -164,50 +179,18 @@ final class M8PerformanceBaselineOracle {
             long rebuildMedianDelta = onRebuild.median() - offRebuild.median();
             long frameMainPassMedianDelta = onFrameMainPass.median() - offFrameMainPass.median();
 
-            require(reload.median() <= MAX_RELOAD_MEDIAN_NANOS,
-                    "M8 reload median exceeded coarse regression guard: " + reload.median());
-            require(offRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS
-                            && defaultRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS
-                            && onRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS,
-                    "M8 rebuild median exceeded coarse regression guard: off="
-                            + offRebuild.median() + " default=" + defaultRebuild.median()
-                            + " allOn=" + onRebuild.median());
-            require(offAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
-                            && defaultAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
-                            && onAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
-                            && offRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
-                            && defaultRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
-                            && onRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES,
-                    "M8 allocation median exceeded coarse regression guard: off=" + offAllocation.median()
-                            + " default=" + defaultAllocation.median() + " allOn=" + onAllocation.median()
-                            + " offRelevant=" + offRelevantAllocation.median()
-                            + " defaultRelevant=" + defaultRelevantAllocation.median()
-                            + " allOnRelevant=" + onRelevantAllocation.median());
-
-            System.out.println("BLOCKLENS_M8_BASELINE minecraft=" + BlockLensRuntime.minecraftVersion()
-                    + " measuredSamples=" + MEASURED_SAMPLES
-                    + " reloadMedianNanos=" + reload.median()
-                    + " reloadP95NearestRankNanos=" + reload.p95NearestRank()
-                    + " offAllocatedMedianBytes=" + offAllocation.median()
-                    + " defaultAllocatedMedianBytes=" + defaultAllocation.median()
-                    + " onAllocatedMedianBytes=" + onAllocation.median()
-                    + " onMinusOffAllocatedMedianBytes=" + allocationMedianDelta
-                    + " offRelevantAllocatedMedianBytes=" + offRelevantAllocation.median()
-                    + " defaultRelevantAllocatedMedianBytes=" + defaultRelevantAllocation.median()
-                    + " onRelevantAllocatedMedianBytes=" + onRelevantAllocation.median()
-                    + " onMinusOffRelevantAllocatedMedianBytes=" + relevantAllocationMedianDelta
-                    + " offRebuildMedianNanos=" + offRebuild.median()
-                    + " defaultRebuildMedianNanos=" + defaultRebuild.median()
-                    + " onRebuildMedianNanos=" + onRebuild.median()
-                    + " onMinusOffRebuildMedianNanos=" + rebuildMedianDelta
-                    + " offFrameMainPassP99Nanos=" + offFrameMainPass.p99NearestRank()
-                    + " defaultFrameMainPassP99Nanos=" + defaultFrameMainPass.p99NearestRank()
-                    + " onFrameMainPassP99Nanos=" + onFrameMainPass.p99NearestRank()
-                    + " wrappedModels=" + firstRetention.wrappedModels()
-                    + " retainedCapabilitySlots=" + firstRetention.retainedCapabilitySlots()
-                    + " maxCapabilitiesPerModel=" + firstRetention.maxCapabilitiesPerModel());
-
-            writeManifest(
+            boolean reloadWithinGuard = reload.median() <= MAX_RELOAD_MEDIAN_NANOS;
+            boolean rebuildWithinGuard = offRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS
+                    && defaultRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS
+                    && onRebuild.median() <= MAX_REBUILD_MEDIAN_NANOS;
+            boolean allocationWithinGuard = offAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
+                    && defaultAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
+                    && onAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
+                    && offRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
+                    && defaultRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES
+                    && onRelevantAllocation.median() <= MAX_ALLOCATED_MEDIAN_BYTES;
+            ModelRetention observedRetention = firstRetention;
+            GuardedEvidence.publishBeforeChecks(() -> writeManifest(
                     outputDir,
                     reloadNanos,
                     reload,
@@ -243,7 +226,51 @@ final class M8PerformanceBaselineOracle {
                     relevantAllocationMedianDelta,
                     rebuildMedianDelta,
                     frameMainPassMedianDelta,
-                    firstRetention);
+                    observedRetention,
+                    offRenderedFrames, defaultRenderedFrames, onRenderedFrames,
+                    reloadWithinGuard, rebuildWithinGuard, allocationWithinGuard,
+                    measurementFpsLimit, vsyncEnabled), () -> {
+                require(reloadWithinGuard,
+                        "M8 reload median exceeded coarse regression guard: " + reload.median());
+                require(rebuildWithinGuard,
+                        "M8 rebuild median exceeded coarse regression guard: off="
+                                + offRebuild.median() + " default=" + defaultRebuild.median()
+                                + " allOn=" + onRebuild.median());
+                require(allocationWithinGuard,
+                        "M8 allocation median exceeded coarse regression guard: off=" + offAllocation.median()
+                                + " default=" + defaultAllocation.median() + " allOn=" + onAllocation.median()
+                                + " offRelevant=" + offRelevantAllocation.median()
+                                + " defaultRelevant=" + defaultRelevantAllocation.median()
+                                + " allOnRelevant=" + onRelevantAllocation.median());
+            });
+
+            System.out.println("BLOCKLENS_M8_BASELINE minecraft=" + BlockLensRuntime.minecraftVersion()
+                    + " measuredSamples=" + MEASURED_SAMPLES
+                    + " measurementFpsLimit=" + measurementFpsLimit
+                    + " testAfkTimerReset=true"
+                    + " offRenderedFrames=" + csv(offRenderedFrames)
+                    + " defaultRenderedFrames=" + csv(defaultRenderedFrames)
+                    + " onRenderedFrames=" + csv(onRenderedFrames)
+                    + " reloadMedianNanos=" + reload.median()
+                    + " reloadP95NearestRankNanos=" + reload.p95NearestRank()
+                    + " offAllocatedMedianBytes=" + offAllocation.median()
+                    + " defaultAllocatedMedianBytes=" + defaultAllocation.median()
+                    + " onAllocatedMedianBytes=" + onAllocation.median()
+                    + " onMinusOffAllocatedMedianBytes=" + allocationMedianDelta
+                    + " offRelevantAllocatedMedianBytes=" + offRelevantAllocation.median()
+                    + " defaultRelevantAllocatedMedianBytes=" + defaultRelevantAllocation.median()
+                    + " onRelevantAllocatedMedianBytes=" + onRelevantAllocation.median()
+                    + " onMinusOffRelevantAllocatedMedianBytes=" + relevantAllocationMedianDelta
+                    + " offRebuildMedianNanos=" + offRebuild.median()
+                    + " defaultRebuildMedianNanos=" + defaultRebuild.median()
+                    + " onRebuildMedianNanos=" + onRebuild.median()
+                    + " onMinusOffRebuildMedianNanos=" + rebuildMedianDelta
+                    + " offFrameMainPassP99Nanos=" + offFrameMainPass.p99NearestRank()
+                    + " defaultFrameMainPassP99Nanos=" + defaultFrameMainPass.p99NearestRank()
+                    + " onFrameMainPassP99Nanos=" + onFrameMainPass.p99NearestRank()
+                    + " wrappedModels=" + firstRetention.wrappedModels()
+                    + " retainedCapabilitySlots=" + firstRetention.retainedCapabilitySlots()
+                    + " maxCapabilitiesPerModel=" + firstRetention.maxCapabilitiesPerModel());
 
             require(Files.isRegularFile(outputDir.resolve("m8-performance-baseline.txt")),
                     "M8 performance manifest was not written");
@@ -262,8 +289,26 @@ final class M8PerformanceBaselineOracle {
             throw new AssertionError("M8 performance observation failed", exception);
         } finally {
             M8FrameTimeProbe.endCapture();
+            context.runOnClient(client -> client.options.framerateLimit().set(originalFpsLimit));
             install(original);
             rebuild(context);
+        }
+    }
+
+    private static void verifyFailureEvidence(Path outputDir) throws IOException {
+        Path evidence = outputDir.resolve("m8-failure-order.txt");
+        AssertionError expected = new AssertionError("synthetic M8 guard exceeded");
+        try {
+            GuardedEvidence.publishBeforeChecks(
+                    () -> Files.writeString(evidence,
+                            "fixture=synthetic failure; allocationGuard=failed; allocatedBytes=33554433\n",
+                            StandardCharsets.UTF_8),
+                    () -> { throw expected; });
+            throw new AssertionError("M8 synthetic guard did not fail");
+        } catch (AssertionError failure) {
+            if (failure != expected) throw failure;
+            require(Files.readString(evidence, StandardCharsets.UTF_8).contains("33554433"),
+                    "M8 failure must preserve raw evidence before propagating");
         }
     }
 
@@ -327,7 +372,9 @@ final class M8PerformanceBaselineOracle {
     }
 
     private static RebuildMeasurement measureRebuild(ClientGameTestContext context) {
+        prepareMeasurementWindow(context);
         AllocationSnapshot before = captureAllocation();
+        long framesBefore = M8FrameTimeProbe.renderedFrames();
         long start = System.nanoTime();
         context.runOnClient(MinecraftTerrainInvalidator::invalidateAll);
         context.waitTicks(REBUILD_SETTLE_TICKS);
@@ -336,16 +383,30 @@ final class M8PerformanceBaselineOracle {
         return new RebuildMeasurement(
                 elapsed,
                 before.totalDeltaTo(after),
-                before.renderRelevantDeltaTo(after));
+                before.renderRelevantDeltaTo(after),
+                M8FrameTimeProbe.renderedFrames() - framesBefore);
     }
 
     private static long[] measureFrameMainPass(ClientGameTestContext context) {
+        prepareMeasurementWindow(context);
         M8FrameTimeProbe.beginCapture();
         context.waitTicks(FRAME_CAPTURE_TICKS);
         long[] samples = M8FrameTimeProbe.endCapture();
         require(samples.length >= MIN_FRAME_SAMPLES,
                 "M8 did not capture enough rendered main-pass frames: " + samples.length);
         return samples;
+    }
+
+    private static void prepareMeasurementWindow(ClientGameTestContext context) {
+        context.runOnClient(client -> {
+            // Test bookkeeping only: no key, mouse, interaction or world action is synthesized.
+            client.getFramerateLimitTracker().onInputReceived();
+            require(client.getFramerateLimitTracker().getThrottleReason()
+                            == com.mojang.blaze3d.platform.FramerateLimitTracker.FramerateThrottleReason.NONE
+                            && client.getFramerateLimitTracker().getFramerateLimit()
+                            == client.options.framerateLimit().get(),
+                    "M8 test window must not be AFK-throttled or minimized");
+        });
     }
 
     private static void rebuild(ClientGameTestContext context) {
@@ -471,9 +532,15 @@ final class M8PerformanceBaselineOracle {
             long relevantAllocationMedianDelta,
             long rebuildMedianDelta,
             long frameMainPassMedianDelta,
-            ModelRetention retention) throws IOException {
+            ModelRetention retention,
+            long[] offRenderedFrames, long[] defaultRenderedFrames, long[] onRenderedFrames,
+            boolean reloadWithinGuard, boolean rebuildWithinGuard, boolean allocationWithinGuard,
+            int measurementFpsLimit, boolean vsyncEnabled) throws IOException {
         String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
                 + "mode=m8-coarse-regression-guard\n"
+                + "reloadGuard=" + (reloadWithinGuard ? "passed" : "failed") + "\n"
+                + "rebuildGuard=" + (rebuildWithinGuard ? "passed" : "failed") + "\n"
+                + "allocationGuard=" + (allocationWithinGuard ? "passed" : "failed") + "\n"
                 + "resourceCapabilities=" + EXPECTED_RESOURCE_CAPABILITIES + "\n"
                 + "resourceBlocksInScene=" + (EXPECTED_RESOURCE_CAPABILITIES * 4) + "\n"
                 + "reloadWarmups=" + RELOAD_WARMUPS + "\n"
@@ -490,6 +557,17 @@ final class M8PerformanceBaselineOracle {
                 + "maxCapabilitiesPerModelAfterReload=" + csv(maxCapabilitiesPerModelAfterReload) + "\n"
                 + "netherWrappedModelsAfterReload=" + csv(netherWrappedModelsAfterReload) + "\n"
                 + "reloadRetentionStable=true\n"
+                + "measurementFpsLimit=" + measurementFpsLimit + "\n"
+                + "fpsLimitMeaning=requested upper bound; actual frames are recorded separately\n"
+                + "testAfkTimerResetBeforeEachWindow=true\n"
+                + "vsyncEnabled=" + vsyncEnabled + "\n"
+                + "osFamily=" + osFamily() + "\n"
+                + "javaMajor=" + Runtime.version().feature() + "\n"
+                + "allocationWindow=tick duration; rendered frame count varies\n"
+                + "offRenderedFrames=" + csv(offRenderedFrames) + "\n"
+                + "defaultRenderedFrames=" + csv(defaultRenderedFrames) + "\n"
+                + "onRenderedFrames=" + csv(onRenderedFrames) + "\n"
+                + "frameTimingSampleLimit=" + M8FrameTimeProbe.MAX_TIMING_SAMPLES + "\n"
                 + "rebuildSettleTicks=" + REBUILD_SETTLE_TICKS + "\n"
                 + "allocationProbe=com.sun.management.ThreadMXBean\n"
                 + "allocationScope=live-thread cumulative delta; terminated threads may be missed; scenario-level JVM evidence\n"
@@ -551,6 +629,14 @@ final class M8PerformanceBaselineOracle {
         return builder.toString();
     }
 
+    private static String osFamily() {
+        String name = System.getProperty("os.name", "");
+        if (name.startsWith("Windows")) return "windows";
+        if (name.startsWith("Linux")) return "linux";
+        if (name.startsWith("Mac")) return "macos";
+        return "other";
+    }
+
     private static String csv(int[] values) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < values.length; i++) {
@@ -581,7 +667,8 @@ final class M8PerformanceBaselineOracle {
     private record RebuildMeasurement(
             long elapsedNanos,
             long totalAllocatedBytes,
-            long renderRelevantAllocatedBytes) {
+            long renderRelevantAllocatedBytes,
+            long renderedFrames) {
     }
 
     private record AllocationSnapshot(long[] ids, long[] allocatedBytes, String[] names) {

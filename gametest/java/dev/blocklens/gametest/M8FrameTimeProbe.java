@@ -7,10 +7,12 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 /** Test-only main render-pass sampler used by the M8 real-client oracle. */
 final class M8FrameTimeProbe {
     private static final Object LOCK = new Object();
+    static final int MAX_TIMING_SAMPLES = 1024;
     private static final List<Long> SAMPLES = new ArrayList<>();
 
     private static volatile boolean capture;
     private static volatile long frameStartNanos;
+    private static volatile long renderedFrames;
     private static boolean installed;
 
     private M8FrameTimeProbe() {
@@ -27,6 +29,7 @@ final class M8FrameTimeProbe {
                 }
             });
             LevelRenderEvents.END_MAIN.register(context -> {
+                renderedFrames++;
                 if (!capture) {
                     return;
                 }
@@ -40,13 +43,17 @@ final class M8FrameTimeProbe {
                     return;
                 }
                 synchronized (LOCK) {
-                    if (capture) {
+                    if (capture && SAMPLES.size() < MAX_TIMING_SAMPLES) {
                         SAMPLES.add(elapsed);
                     }
                 }
             });
             installed = true;
         }
+    }
+
+    static long renderedFrames() {
+        return renderedFrames;
     }
 
     static void beginCapture() {

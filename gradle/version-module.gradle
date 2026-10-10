@@ -38,6 +38,15 @@ fabricApi {
     }
 }
 
+// Diagnostic variation applies only to the isolated client test JVM.
+def m8FpsLimit = providers.gradleProperty('m8FpsLimit').orElse('60').get()
+if (!(m8FpsLimit in ['30', '60', '120'])) {
+    throw new GradleException('m8FpsLimit must be 30, 60 or 120')
+}
+tasks.named('runClientGameTest') {
+    systemProperty 'blocklens.test.m8.fpsLimit', m8FpsLimit
+}
+
 sourceSets {
     // Common assets must be part of the actual BlockLens Fabric resource pack during dev/GameTest.
     // The common project is a Java library, not a standalone Fabric mod, so merely putting its JAR
@@ -48,6 +57,7 @@ sourceSets {
     }
     gametest {
         java.srcDir rootProject.file('gametest/java')
+        java.srcDir rootProject.file('test-support/java')
         resources.srcDir rootProject.file('gametest/resources')
     }
 }
@@ -148,6 +158,8 @@ tasks.register('versionSmokeContract') {
             }
 
             List<String> forbiddenNames = [
+                    'dev/blocklens/testing/',
+                    'dev/blocklens/gametest/',
                     '.DS_Store',
                     'Thumbs.db',
                     '.env',
