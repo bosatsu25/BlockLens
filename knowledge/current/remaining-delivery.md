@@ -138,3 +138,14 @@ JaCoCo/PIT, packaged-runtime audits and clean-rebuild reproducibility also passe
 This is complete normal-graph evidence for `71f6d9a5cbe1f9b9bc35ca9c3415dbf54840e05f`.
 The subsequent external-fixture correction still requires its own current-head CI;
 the successful normal run alone does not complete the external matrix or merge.
+
+The guarded external-floor attempt at `c60f57de5914304a6ec472f32a115e56825ad051`
+([External CI #4](https://github.com/bosatsu25/BlockLens/actions/runs/38071918467))
+passed Masa on all three targets but failed the eight rendering rows before M5
+capture. The added guard assumed X=0/Z=13 for the pre-existing teleport command.
+All three official client parsers actually center those absolute integer tokens
+at X=0.5/Z=13.5. The correction changes the test guard and its projection origin,
+with a regression against the actual parsed coordinates; it preserves the
+teleport command, native framing, complete image region and retention gate.
+The original assertion failures remain recorded, without claiming a native pass
+for that attempted background revision.

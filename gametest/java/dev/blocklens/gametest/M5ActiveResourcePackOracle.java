@@ -218,10 +218,14 @@ final class M5ActiveResourcePackOracle {
         if (!externalBackground()) return;
         context.runOnClient(client -> {
             var player = client.player;
-            require(Math.abs(player.getX()) < 0.001 && Math.abs(player.getZ() - 13) < 0.001
+            require(Math.abs(player.getX() - M5BackgroundFloor.CAMERA_X) < 0.001
+                            && Math.abs(player.getY() + 54) < 0.001
+                            && Math.abs(player.getZ() - M5BackgroundFloor.CAMERA_Z) < 0.001
                             && Math.abs(player.getXRot() - 18) < 0.001
                             && Math.abs(Math.IEEEremainder(player.getYRot() - 180, 360)) < 0.001,
-                    "External M5 background projection requires the fixed fixture camera");
+                    "External M5 background projection requires the fixed fixture camera; actual x="
+                            + player.getX() + " y=" + player.getY() + " z=" + player.getZ()
+                            + " pitch=" + player.getXRot() + " yaw=" + player.getYRot());
             for (var cell : M5BackgroundFloor.viewportCorners(player.getEyeY(), client.options.fov().get(),
                     WIDTH, HEIGHT, TARGET_MIN_X, TARGET_MIN_Y, TARGET_MAX_X, TARGET_MAX_Y)) {
                 require(M5BackgroundFloor.EXTERNAL.contains(cell), "External M5 ROI extends beyond static floor");

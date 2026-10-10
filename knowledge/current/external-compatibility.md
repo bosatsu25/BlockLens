@@ -100,6 +100,17 @@ The three target positions, screenshot path, original ROI, color threshold,
 two-pixel tolerance, 95% retention minimum and LOW profile are unchanged. This
 repairs a test background; it adds no product renderer adapter or support claim.
 
+The first guarded-floor attempt, at `c60f57de5914304a6ec472f32a115e56825ad051`
+([external run #4](https://github.com/bosatsu25/BlockLens/actions/runs/38071918467)),
+passed the three Masa rows but failed all eight rendering rows at the new camera
+assertion, before M5 capture. The test had incorrectly treated the existing
+`tp @a 0 -54 13 180 18` command as X=0, Z=13. Direct inspection of all three
+official clients confirms that `Vec3Argument.vec3()` centers absolute integer X/Z
+tokens, so the actual unchanged camera is **X=0.5, Z=13.5**. The guard and projection
+now use those actual coordinates. The teleport command and native camera framing
+remain unchanged, and the guard reports actual coordinates/angles on failure.
+This failed attempt provides no native acceptance of the new background.
+
 ## Native Vulkan matrix
 
 | Minecraft | Requested API | Required actual API | Third-party renderer |

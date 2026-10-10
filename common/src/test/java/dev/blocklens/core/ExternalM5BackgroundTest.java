@@ -1,6 +1,7 @@
 package dev.blocklens.core;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.blocklens.testing.M5BackgroundFloor;
@@ -25,5 +26,13 @@ final class ExternalM5BackgroundTest {
         for (var corner : corners()) {
             assertTrue(M5BackgroundFloor.EXTERNAL.contains(corner), () -> "Uncovered ROI corner: " + corner);
         }
+    }
+
+    @Test
+    void projectionUsesTheCenteredIntegerTeleportCoordinates() {
+        // The pinned Minecraft Vec3Argument parser maps "0 -54 13" to (0.5, -54, 13.5).
+        assertArrayEquals(new M5BackgroundFloor.Cell[] {
+                new M5BackgroundFloor.Cell(-19, -9), new M5BackgroundFloor.Cell(19, -9),
+                new M5BackgroundFloor.Cell(-7, 7), new M5BackgroundFloor.Cell(7, 7)}, corners());
     }
 }
