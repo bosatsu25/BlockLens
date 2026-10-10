@@ -206,6 +206,11 @@ final class M5ActiveResourcePackOracle {
         // external fixture covers that entire region with quartz; the normal/M8 scene is retained.
         server.runCommand(externalBackground() ? M5BackgroundFloor.EXTERNAL.fillCommand()
                 : "fill -8 -60 -3 8 -60 5 minecraft:smooth_quartz");
+        if (externalBackground()) {
+            // M3 ran in this world first. Its unchanged surfaces and front-row occluders must
+            // not become foreground in this three-model OFF/ON/AIR comparison.
+            server.runCommand("fill -6 -59 -1 6 -59 2 minecraft:air");
+        }
         placeTargets(singleplayer);
         server.runCommand("tp @a 0 -54 13 180 18");
     }
@@ -233,6 +238,19 @@ final class M5ActiveResourcePackOracle {
                                 .is(Blocks.SMOOTH_QUARTZ),
                         "External M5 background corner is not smooth quartz: " + cell);
             }
+            for (int x = -6; x <= 6; x++) {
+                for (int z = -1; z <= 2; z++) {
+                    var expected = z != 1 ? Blocks.AIR : switch (x) {
+                        case -4 -> Blocks.DIAMOND_ORE;
+                        case 0 -> Blocks.DEEPSLATE_REDSTONE_ORE;
+                        case 4 -> Blocks.OBSIDIAN;
+                        default -> Blocks.AIR;
+                    };
+                    require(client.level.getBlockState(new BlockPos(x, -59, z)).is(expected),
+                            "External M5 scene is not isolated at x=" + x + " z=" + z);
+                }
+            }
+            System.out.println("BLOCKLENS_M5_EXTERNAL_SCENE inspectedCells=52 targets=3 isolated=true");
         });
     }
 
@@ -446,6 +464,7 @@ final class M5ActiveResourcePackOracle {
                 + "fixtureModels=3\n"
                 + "enabledCapabilities=" + EXPECTED_ENABLED_CAPABILITIES + "\n"
                 + "externalStaticBackground=" + externalBackground() + "\n"
+                + "externalSceneIsolated=" + externalBackground() + "\n"
                 + "backgroundFloor=" + (externalBackground() ? M5BackgroundFloor.EXTERNAL : "normal") + "\n"
                 + "fixtures=diamond_ore:half-height-magenta,deepslate_redstone_ore:narrow-lime,obsidian:inset-yellow\n"
                 + "diamondResource=" + resolvedPack.diamond().resourceId() + "\n"

@@ -2,8 +2,9 @@
 
 Status: **partial external coverage** for [Issue #31](https://github.com/bosatsu25/BlockLens/issues/31).
 The pinned matrix below defines the experiments, with attempted-run evidence retained below.
-[PR #53](https://github.com/bosatsu25/BlockLens/pull/53) records the final exact-head matrix,
-archived results and merge checks. The uploaded-pack and known Sodium boundaries keep #31 open.
+[PR #53](https://github.com/bosatsu25/BlockLens/pull/53) records the initial accepted matrix and
+merge. [The delivery record](remaining-delivery.md) and #31 also retain subsequent main failures
+and follow-up verification. The uploaded-pack and known Sodium boundaries keep #31 open.
 
 ## Scope and completion boundary
 
@@ -110,6 +111,39 @@ tokens, so the actual unchanged camera is **X=0.5, Z=13.5**. The guard and proje
 now use those actual coordinates. The teleport command and native camera framing
 remain unchanged, and the guard reports actual coordinates/angles on failure.
 This failed attempt provides no native acceptance of the new background.
+
+### Isolating M5 from the preceding M3 scene
+
+The accepted PR head `2120ccdb006b262eccb96fd888d7f07db5b413c3` passed all eleven
+[external #6 jobs](https://github.com/bosatsu25/BlockLens/actions/runs/38074634660).
+Its identical merged tree at `9609c4dd70fb162ba8479d6e606baab2fe8eadad` then produced a
+26.2 Shader-ON failure in [main external #7](https://github.com/bosatsu25/BlockLens/actions/runs/38075582520):
+retention **939/1000 (1486/1581)**, required 950. Ten other rows passed. The original
+log and digest-verified failure artifact `11677459914` remain preserved.
+
+M3 and M5 share that focused test world. M3's thirteen blocks had remained in the M5
+comparison, including opaque blocks in front of its three target models. Diagnostic
+projection of the original model elements and occluders placed **94 of the 95** unmatched
+pixels outside the visible target probes, even with a two-pixel diagnostic halo. The
+probe-area result of 387/388 (**997/1000**) is localization evidence, not a replacement
+acceptance mask. This projection is inferred from source; the actual native projection
+matrix was not recorded. The temporal shader cause of individual color changes remains
+unproven. Equalizing only five known unchanged M3 surface strips in memory makes
+the original global metric 979; removing the individual target models from that control
+still fails at 940 / 938 / 860. The original native images and 939 failure are unchanged.
+
+Before placing the same three M5 targets, the external-only setup now clears exactly
+**52 cells**, X=-6..6, Z=-1..2, Y=-59. After the existing twenty-tick synchronization,
+a native guard requires the three original block types at their original positions and
+AIR in the other 49 cells. This physically isolates the fixtures and removes prior
+occlusion; it does not crop or alter screenshot pixels. Successful M5 evidence records
+`externalSceneIsolated=true`, which the public shader/Vulkan artifact verifier requires.
+The separate Masa and private-pack profiles are unchanged.
+
+The normal full graph and M8 scene, quartz floor, camera, target models, screenshot
+sequence, complete ROI, color delta 24, two-pixel tolerance, 950/1000 retention minimum,
+LOW options and deadlines remain unchanged. Acceptance requires fresh three-version
+native evidence for this scene revision; no previous successful run supplies that gate.
 
 ## Native Vulkan matrix
 
