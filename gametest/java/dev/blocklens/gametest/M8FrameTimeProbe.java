@@ -14,6 +14,10 @@ final class M8FrameTimeProbe {
     private static volatile long frameStartNanos;
     private static volatile long renderedFrames;
     private static boolean installed;
+    private static volatile boolean allocationCapture;
+    private static volatile long allocationStart=-1;
+    private static long allocatedMainPassBytes,allocatedMainPassFrames;
+    private static com.sun.management.ThreadMXBean allocationBean;
 
     private M8FrameTimeProbe() {
     }
@@ -24,12 +28,28 @@ final class M8FrameTimeProbe {
                 return;
             }
             LevelRenderEvents.START_MAIN.register(context -> {
+                if(allocationCapture) {
+                    long before=allocationBean.getCurrentThreadAllocatedBytes();
+                    synchronized(LOCK) {
+                        if(allocationCapture) allocationStart=before;
+                    }
+                }
                 if (capture) {
                     frameStartNanos = System.nanoTime();
                 }
             });
             LevelRenderEvents.END_MAIN.register(context -> {
                 renderedFrames++;
+                if(allocationCapture) {
+                    long after=allocationBean.getCurrentThreadAllocatedBytes();
+                    synchronized(LOCK) {
+                        if(allocationCapture && allocationStart>=0 && after>=allocationStart) {
+                            allocatedMainPassBytes+=after-allocationStart;
+                            allocatedMainPassFrames++;
+                        }
+                        allocationStart=-1;
+                    }
+                }
                 if (!capture) {
                     return;
                 }
@@ -75,6 +95,22 @@ final class M8FrameTimeProbe {
             SAMPLES.clear();
             frameStartNanos = 0L;
             return result;
+        }
+    }
+
+    static void beginAllocationCapture() {
+        synchronized(LOCK) {
+            allocationBean=(com.sun.management.ThreadMXBean)java.lang.management.ManagementFactory.getThreadMXBean();
+            allocatedMainPassBytes=allocatedMainPassFrames=0;
+            allocationStart=-1;
+            allocationCapture=true;
+        }
+    }
+    static long[] endAllocationCapture() {
+        synchronized(LOCK) {
+            allocationCapture=false;
+            allocationStart=-1;
+            return new long[]{allocatedMainPassBytes,allocatedMainPassFrames};
         }
     }
 }

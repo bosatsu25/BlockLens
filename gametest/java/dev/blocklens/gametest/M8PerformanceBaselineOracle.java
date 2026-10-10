@@ -6,6 +6,7 @@ import dev.blocklens.core.CapabilityId;
 import dev.blocklens.fabric.MinecraftDecorationModelPlugin;
 import dev.blocklens.fabric.MinecraftTerrainInvalidator;
 import dev.blocklens.testing.GuardedEvidence;
+import dev.blocklens.testing.AllocationDeltas;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -125,10 +126,12 @@ final class M8PerformanceBaselineOracle {
             long[] onRebuildNanos = new long[MEASURED_SAMPLES];
             long[] onRenderedFrames = new long[MEASURED_SAMPLES];
 
+            RebuildMeasurement[][] allocationBreakdowns = new RebuildMeasurement[3][MEASURED_SAMPLES];
             // Alternate OFF/default/all-on groups to reduce monotonic warmup bias.
             for (int i = 0; i < MEASURED_SAMPLES; i++) {
                 install(allOff);
                 RebuildMeasurement off = measureRebuild(context);
+                allocationBreakdowns[0][i] = off;
                 offAllocatedBytes[i] = off.totalAllocatedBytes();
                 offRelevantAllocatedBytes[i] = off.renderRelevantAllocatedBytes();
                 offRebuildNanos[i] = off.elapsedNanos();
@@ -136,6 +139,7 @@ final class M8PerformanceBaselineOracle {
 
                 install(defaultConfig);
                 RebuildMeasurement defaults = measureRebuild(context);
+                allocationBreakdowns[1][i] = defaults;
                 defaultAllocatedBytes[i] = defaults.totalAllocatedBytes();
                 defaultRelevantAllocatedBytes[i] = defaults.renderRelevantAllocatedBytes();
                 defaultRebuildNanos[i] = defaults.elapsedNanos();
@@ -143,6 +147,7 @@ final class M8PerformanceBaselineOracle {
 
                 install(allOn);
                 RebuildMeasurement on = measureRebuild(context);
+                allocationBreakdowns[2][i] = on;
                 onAllocatedBytes[i] = on.totalAllocatedBytes();
                 onRelevantAllocatedBytes[i] = on.renderRelevantAllocatedBytes();
                 onRebuildNanos[i] = on.elapsedNanos();
@@ -229,7 +234,7 @@ final class M8PerformanceBaselineOracle {
                     observedRetention,
                     offRenderedFrames, defaultRenderedFrames, onRenderedFrames,
                     reloadWithinGuard, rebuildWithinGuard, allocationWithinGuard,
-                    measurementFpsLimit, vsyncEnabled), () -> {
+                    measurementFpsLimit, vsyncEnabled, allocationBreakdowns), () -> {
                 require(reloadWithinGuard,
                         "M8 reload median exceeded coarse regression guard: " + reload.median());
                 require(rebuildWithinGuard,
@@ -288,6 +293,7 @@ final class M8PerformanceBaselineOracle {
         } catch (IOException exception) {
             throw new AssertionError("M8 performance observation failed", exception);
         } finally {
+            M8FrameTimeProbe.endAllocationCapture();
             M8FrameTimeProbe.endCapture();
             context.runOnClient(client -> client.options.framerateLimit().set(originalFpsLimit));
             install(original);
@@ -383,17 +389,20 @@ final class M8PerformanceBaselineOracle {
     private static RebuildMeasurement measureRebuild(ClientGameTestContext context) {
         prepareMeasurementWindow(context);
         AllocationSnapshot before = captureAllocation();
+        M8FrameTimeProbe.beginAllocationCapture();
         long framesBefore = M8FrameTimeProbe.renderedFrames();
         long start = System.nanoTime();
         context.runOnClient(MinecraftTerrainInvalidator::invalidateAll);
         context.waitTicks(REBUILD_SETTLE_TICKS);
         long elapsed = System.nanoTime() - start;
+        long[] mainPassAllocation = M8FrameTimeProbe.endAllocationCapture();
         AllocationSnapshot after = captureAllocation();
         return new RebuildMeasurement(
                 elapsed,
                 before.totalDeltaTo(after),
                 before.renderRelevantDeltaTo(after),
-                M8FrameTimeProbe.renderedFrames() - framesBefore);
+                M8FrameTimeProbe.renderedFrames() - framesBefore,
+                before.roleDeltasTo(after),mainPassAllocation[0],mainPassAllocation[1]);
     }
 
     private static long[] measureFrameMainPass(ClientGameTestContext context) {
@@ -441,6 +450,7 @@ final class M8PerformanceBaselineOracle {
         java.lang.management.ThreadMXBean standard = ManagementFactory.getThreadMXBean();
         com.sun.management.ThreadMXBean bean = (com.sun.management.ThreadMXBean) standard;
         long[] ids = bean.getAllThreadIds();
+        require(ids.length <= AllocationDeltas.MAX_THREADS,"M8 allocation thread budget exceeded");
         long[] allocatedBytes = new long[ids.length];
         String[] names = new String[ids.length];
         for (int i = 0; i < ids.length; i++) {
@@ -544,7 +554,7 @@ final class M8PerformanceBaselineOracle {
             ModelRetention retention,
             long[] offRenderedFrames, long[] defaultRenderedFrames, long[] onRenderedFrames,
             boolean reloadWithinGuard, boolean rebuildWithinGuard, boolean allocationWithinGuard,
-            int measurementFpsLimit, boolean vsyncEnabled) throws IOException {
+            int measurementFpsLimit, boolean vsyncEnabled, RebuildMeasurement[][] allocationBreakdowns) throws IOException {
         String manifest = "minecraft=" + BlockLensRuntime.minecraftVersion() + "\n"
                 + "mode=m8-coarse-regression-guard\n"
                 + "reloadGuard=" + (reloadWithinGuard ? "passed" : "failed") + "\n"
@@ -623,6 +633,7 @@ final class M8PerformanceBaselineOracle {
                 + "maxCapabilitiesPerWrappedModel=" + retention.maxCapabilitiesPerModel() + "\n"
                 + "netherWrappedModels=" + retention.netherWrappedModels() + "\n"
                 + "initializationNanos=" + BlockLensRuntime.initializationNanos() + "\n";
+        manifest += allocationBreakdown(allocationBreakdowns);
         Files.writeString(
                 outputDir.resolve("m8-performance-baseline.txt"),
                 manifest,
@@ -677,10 +688,13 @@ final class M8PerformanceBaselineOracle {
             long elapsedNanos,
             long totalAllocatedBytes,
             long renderRelevantAllocatedBytes,
-            long renderedFrames) {
+            long renderedFrames,long[] roleBytes,long mainPassBytes,long mainPassFrames) {
     }
 
     private record AllocationSnapshot(long[] ids, long[] allocatedBytes, String[] names) {
+        long[] roleDeltasTo(AllocationSnapshot after) {
+            return AllocationDeltas.byRole(ids,allocatedBytes,after.ids,after.allocatedBytes,after.names);
+        }
         long totalDeltaTo(AllocationSnapshot after) {
             return deltaTo(after, false);
         }
@@ -728,5 +742,27 @@ final class M8PerformanceBaselineOracle {
         private static int nearestRankIndex(int sampleCount, double percentile) {
             return Math.max(0, (int) Math.ceil(sampleCount * percentile) - 1);
         }
+    }
+
+    private static String allocationBreakdown(RebuildMeasurement[][] measurements) {
+        StringBuilder result=new StringBuilder("allocationBreakdown=live-thread fixed roles and completed main passes; not class attribution\n"
+                +"allocationBreakdownEnabled=true\nrawJfrRecording=false\n"
+                +"allocationRoleOrder=render,chunk,worker,test,other\n");
+        String[] scenarios={"off","default","on"};
+        for(int scenario=0;scenario<3;scenario++) {
+            for(int role=0;role<5;role++) {
+                long[] samples=new long[MEASURED_SAMPLES];
+                for(int i=0;i<MEASURED_SAMPLES;i++) samples[i]=measurements[scenario][i].roleBytes()[role];
+                result.append(scenarios[scenario]).append("Role").append(role).append("AllocatedBytes=").append(csv(samples)).append('\n');
+            }
+            long[] bytes=new long[MEASURED_SAMPLES],frames=new long[MEASURED_SAMPLES];
+            for(int i=0;i<MEASURED_SAMPLES;i++) {
+                bytes[i]=measurements[scenario][i].mainPassBytes();
+                frames[i]=measurements[scenario][i].mainPassFrames();
+            }
+            result.append(scenarios[scenario]).append("MainPassAllocatedBytes=").append(csv(bytes)).append('\n');
+            result.append(scenarios[scenario]).append("AllocationMainPassFrames=").append(csv(frames)).append('\n');
+        }
+        return result.toString();
     }
 }
