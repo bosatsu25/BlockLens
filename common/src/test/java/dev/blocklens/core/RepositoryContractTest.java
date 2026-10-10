@@ -99,7 +99,8 @@ final class RepositoryContractTest {
         roots.add(moduleRoot.resolve("src/gametest"));
         roots.add(moduleRoot.resolve("src/compat/gametest"));
         var allowed = java.util.Set.of("SettingsClientAccess.java", "FireTransformProbeMixin.java",
-                "HeldTransformProbeMixin.java", "SceneRenderAccess.java", "ExternalBackendProbe.java");
+                "HeldTransformProbeMixin.java", "SceneRenderAccess.java", "ExternalBackendProbe.java",
+                "ExternalCaptureTarget.java");
         for (Path sourceRoot : roots) {
             if (!Files.isDirectory(sourceRoot)) continue;
             try (var paths = Files.walk(sourceRoot)) {

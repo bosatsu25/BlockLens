@@ -32,6 +32,8 @@ final class ExternalCompatibilityOracle {
         evidence.setProperty("minecraft", BlockLensRuntime.minecraftVersion());
         evidence.setProperty("status", "started");
         evidence.setProperty("fullGraph", "false");
+        evidence.setProperty("captureMode", ExternalFrameCapture.required()
+                ? "completed-native-frame" : "fabric-test-capture");
         try {
             Properties manifest = loadManifest(directory);
             require(profile.equals(manifest.getProperty("profile")), "Prepared profile differs");

@@ -16,6 +16,13 @@ DEFAULT_IMAGES = (
     "m3-all13-on.png", "m3-all13-reloaded.png", "m3-all13-off-active-pack.png",
     "m5-pack-off.png", "m5-pack-on.png", "m5-pack-air-control.png",
 )
+FAILURE_FILES = (
+    "external-compatibility/external-compatibility-manifest.properties",
+    "m3-visual/m3-all13-on.png", "m3-visual/m3-all13-reloaded.png",
+    "m3-visual/m3-all13-off-active-pack.png", "m3-visual/m3-visual-manifest.txt",
+    "m5-pack-visual/m5-pack-off.png", "m5-pack-visual/m5-pack-on.png",
+    "m5-pack-visual/m5-pack-air-control.png", "m5-pack-visual/m5-pack-visual-manifest.txt",
+)
 
 
 def properties(path: Path) -> dict[str, str]:
@@ -52,6 +59,8 @@ def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
         "shaderInUse": str(profile == "shader-on").lower(),
     }.items():
         require_value(evidence, key, expected)
+    if (directory / "DIAGNOSTIC_STATUS.txt").exists():
+        raise ValueError("Failure diagnostics are not acceptance evidence")
     files = [manifest]
     if profile.startswith("shader-"):
         for mod in ("iris", "sodium"):
@@ -129,13 +138,61 @@ def collect(directory: Path, minecraft: str, profile: str, destination: Path) ->
     return len(files)
 
 
+def collect_failure(game_directory: Path, destination: Path) -> int:
+    """Keep partial oracle frames for diagnosis without validating or accepting the row."""
+    files = []
+    for name in FAILURE_FILES:
+        source = game_directory / name
+        if source.absolute() != source.resolve():
+            raise ValueError("Failure diagnostic input must not contain a symlink")
+        if not source.exists():
+            continue
+        limit = 4 * 1024 * 1024 if source.suffix == ".png" else 65536
+        if not source.is_file() or source.stat().st_size > limit:
+            raise ValueError("Failure diagnostic input is not a bounded regular file")
+        if source.suffix == ".png":
+            with source.open("rb") as stream:
+                header = stream.read(24)
+            if (len(header) != 24 or header[:8] != b"\x89PNG\r\n\x1a\n"
+                    or header[12:16] != b"IHDR" or struct.unpack(">II", header[16:24]) != (640, 360)):
+                raise ValueError("Failure diagnostic image is not a 640 by 360 PNG")
+        files.append(source)
+    if destination.absolute() != destination.resolve():
+        raise ValueError("Failure diagnostic destination must not contain a symlink")
+    destination.mkdir(parents=True, exist_ok=True)
+    expected_names = {path.name for path in files} | {"SHA256SUMS.txt", "DIAGNOSTIC_STATUS.txt"}
+    for path in destination.iterdir():
+        if path.name not in expected_names:
+            raise ValueError("Use a dedicated diagnostic directory; extra files must not be published")
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("Failure diagnostic destination must be regular files, not symlinks")
+    sums = []
+    for source in files:
+        target = destination / source.name
+        if source.resolve() != target.resolve():
+            shutil.copyfile(source, target)
+        sums.append(hashlib.sha256(target.read_bytes()).hexdigest() + "  " + target.name)
+    status = destination / "DIAGNOSTIC_STATUS.txt"
+    status.write_text("status=failed-or-incomplete\nPartial failure diagnostics; not acceptance evidence.\n",
+                      encoding="utf-8")
+    sums.append(hashlib.sha256(status.read_bytes()).hexdigest() + "  " + status.name)
+    (destination / "SHA256SUMS.txt").write_text("\n".join(sorted(sums)) + "\n", encoding="utf-8")
+    return len(files)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--minecraft", required=True, choices=("26.1.2", "26.2", "26.3"))
     parser.add_argument("--profile", required=True, choices=RENDER_PROFILES)
     parser.add_argument("--destination", type=Path, required=True)
+    parser.add_argument("--failed-run", action="store_true",
+                        help="Collect bounded partial frames for diagnosis; never accept this row")
     args = parser.parse_args()
+    if args.failed_run:
+        count = collect_failure(args.directory, args.destination)
+        print(f"Collected failure diagnostics minecraft={args.minecraft} profile={args.profile} files={count}")
+        return
     count = collect(args.directory, args.minecraft, args.profile, args.destination)
     print(f"Verified external row minecraft={args.minecraft} profile={args.profile} files={count}")
 

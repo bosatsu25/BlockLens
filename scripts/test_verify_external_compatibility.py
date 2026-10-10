@@ -1,9 +1,11 @@
 """Regression checks against falsely accepting external rendering evidence."""
 
 from pathlib import Path
+import struct
 import tempfile
 import unittest
 from unittest.mock import patch
+import zlib
 
 import verify_external_compatibility as evidence
 
@@ -80,6 +82,53 @@ class ExternalEvidenceTest(unittest.TestCase):
             with patch.object(evidence, "verify", return_value=[source]):
                 with self.assertRaisesRegex(ValueError, "extra files"):
                     evidence.collect(root, "26.3", "vulkan", destination)
+
+    def test_failed_render_diagnostics_preserve_frames_without_becoming_pass_evidence(self):
+        def chunk(name, payload):
+            return struct.pack(">I", len(payload)) + name + payload + struct.pack(">I", zlib.crc32(name + payload))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            game = root / "game"
+            source = game / "m5-pack-visual"
+            source.mkdir(parents=True)
+            row = b"\0" + bytes(range(256)) * 7 + bytes(range(128))
+            png = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 640, 360, 8, 2, 0, 0, 0))
+                   + chunk(b"IDAT", zlib.compress(row * 360)) + chunk(b"IEND", b""))
+            (source / "m5-pack-off.png").write_bytes(png)
+            (source / "m5-pack-visual-manifest.txt").write_text("baseRetentionPermille=862\n")
+            (source / "private-pack.zip").write_bytes(b"private")
+            manifest = game / "external-compatibility" / "external-compatibility-manifest.properties"
+            manifest.parent.mkdir()
+            actual = self.base("shader-on")
+            actual.update(backend="opengl", shaderInUse="true", status="started")
+            manifest.write_text("".join(f"{key}={value}\n" for key, value in actual.items()))
+            destination = root / "diagnostics"
+            self.assertEqual(3, evidence.collect_failure(game, destination))
+            self.assertEqual(png, (destination / "m5-pack-off.png").read_bytes())
+            self.assertFalse((destination / "private-pack.zip").exists())
+            self.assertIn("not acceptance evidence", (destination / "DIAGNOSTIC_STATUS.txt").read_text())
+            with self.assertRaisesRegex(ValueError, "status.*passed"):
+                evidence.verify(destination, "26.3", "shader-on")
+
+    def test_failed_render_diagnostics_reject_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "game" / "m3-visual"
+            source.mkdir(parents=True)
+            private = root / "private"
+            private.write_text("private")
+            (source / "m3-visual-manifest.txt").symlink_to(private)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                evidence.collect_failure(root / "game", root / "diagnostics")
+
+    def test_diagnostic_directory_cannot_supply_acceptance_even_with_passed_fields(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "DIAGNOSTIC_STATUS.txt").write_text("status=failed-or-incomplete\n")
+            with patch.object(evidence, "properties", return_value=self.base()):
+                with self.assertRaisesRegex(ValueError, "not acceptance evidence"):
+                    evidence.verify(root, "26.3", "vulkan")
 
 
 if __name__ == "__main__":

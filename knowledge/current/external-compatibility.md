@@ -62,6 +62,25 @@ Shader acceptance requires:
 The Iris probe is a compile-time selected, test-only source. The base source has no Iris dependency.
 Neither probe, nor the optional renderer JARs or shader assets, belongs to the product artifact.
 
+### 26.1.2 shader-OFF capture lifecycle exception
+
+At commit `835de37d07a3464fe2b227e7bd2afe865accf356`, external run
+[`38069788830`](https://github.com/bosatsu25/BlockLens/actions/runs/38069788830)
+reached the first M3 screenshot on 26.1.2 shader-OFF and failed with Sodium's
+`Global terrain uniforms have not been updated` exception. Fabric's 26.1.2 screenshot helper
+invokes `GameRenderer.extract/render` outside the complete native frame. Sodium 0.9.2 clears
+its terrain uniforms at frame end, while its update flag can still reject the extra update.
+The test-only exception therefore reads the framebuffer after two complete native frames,
+without issuing another direct renderer invocation. It retains 640 by 360 dimensions, the
+existing GUI/FOV options, and every original M3/M5 image and geometry assertion; it restores
+the previous window and render-target dimensions in `finally`. The evidence records
+`captureMode=completed-native-frame`. Other rows keep Fabric's screenshot path.
+
+The same run passed both shader profiles on 26.2/26.3, all three Masa profiles and both Vulkan
+profiles. The separate 26.1.2 shader-ON M5 failure measured 862/1000 base retention against the
+unchanged 950/1000 minimum. That result remains failed pending actual failure-frame diagnosis;
+the shader-OFF lifecycle exception does not establish a fix for it.
+
 ## Native Vulkan matrix
 
 | Minecraft | Requested API | Required actual API | Third-party renderer |
@@ -156,6 +175,13 @@ The separate Masa profile requires all typed read/absence/restoration assertions
 manifest and the two pinned loaded-mod hashes. It has no image artifact. Every profile writes
 SHA256SUMS. Its collector copies an explicit allowlist only; original packs,
 mod JARs, configuration directories and arbitrary logs are not result artifacts.
+
+Failed public client rows also retain a bounded partial manifest and the six named M3/M5 PNGs
+and two metric manifests, when created. This explicit nine-file allowlist rejects symlinks,
+limits images to 4 MiB at 640 by 360 and text to 64 KiB, and writes SHA-256 hashes plus
+`DIAGNOSTIC_STATUS.txt` with `status=failed-or-incomplete`. The acceptance verifier rejects
+that diagnostic directory even if a copied native manifest says `passed`. This artifact is
+for diagnosis and cannot turn a failed row into passing evidence.
 
 ## Evidence state
 

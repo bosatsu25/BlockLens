@@ -221,7 +221,9 @@ final class M3VisualParityOracle {
             ClientGameTestContext context,
             Path outputDir,
             String name) throws IOException {
-        Path image = context.takeScreenshot(
+        Path image = ExternalFrameCapture.required()
+                ? ExternalFrameCapture.capture(context, outputDir, name, WIDTH, HEIGHT)
+                : context.takeScreenshot(
                 TestScreenshotOptions.of(name)
                         .withDestinationDir(outputDir)
                         .withSize(WIDTH, HEIGHT)

@@ -82,3 +82,29 @@ directory in its task action. Preparation now targets the configured Loom run
 directory directly. Actual shader activation, dependency hashes and rendered visual
 assertions remain required. These initial failures are retained as failed evidence;
 they are not passing completion results for the full delivery.
+
+At follow-up head `835de37d07a3464fe2b227e7bd2afe865accf356`,
+[CI #342](https://github.com/bosatsu25/BlockLens/actions/runs/38069788885) again
+passed common quality and every build/artifact step. All three native clients then
+completed Builder Assist and all fourteen ore-extension images with their required
+behavioral success markers. The new oracles took 64–66 seconds after the Scene
+fixture. Ore verification finished only about 14–16 seconds before the eight-minute step
+deadline, and Actions cancelled all three jobs while the following M8 phase was
+reloading resources. No preceding native assertion or M8 measurement failure was
+reported, and no M8 completion was recorded. These runs remain failures.
+
+The previous main CI #340 full-client steps already took 404 / 434 / 402 seconds.
+The expanded graph now receives a **twelve-minute test-step execution window**
+within the existing twenty-minute job. This change accommodates the added native
+coverage; it changes none of the M8 scene, warmup, sample, allocation, timing, FPS
+or compilation requirements. Current-head completion still requires that entire
+graph and its evidence collectors to pass.
+
+[External CI #2](https://github.com/bosatsu25/BlockLens/actions/runs/38069788830)
+passed nine rows, including Shader ON/OFF on 26.2 and 26.3. The remaining 26.1.2
+Shader-OFF row failed when Fabric's extra screenshot render called Sodium after
+its per-frame terrain uniforms had been released. The 26.1.2 Shader-ON row reached
+M5 but measured 862/1000 base retention against the unchanged 950/1000 minimum.
+Its first failed run did not archive the rendered M5 frames, so bounded diagnostic
+frame collection is required to investigate that failure without accepting it or
+weakening the visual assertion.

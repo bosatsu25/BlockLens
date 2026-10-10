@@ -110,7 +110,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y libegl1 libgl1-mesa-dri
       - name: Run client GameTest Minecraft ${{ matrix.minecraft }}
-        timeout-minutes: 8
+        # CI #342 completed the added Builder/ore oracles but exhausted eight minutes in M8.
+        # Allow the full expanded test graph; individual M8 performance guards stay unchanged.
+        timeout-minutes: 12
         env:
           # SDL3 uses EGL for an sRGB-capable OpenGL framebuffer under Xvfb.
           SDL_VIDEO_FORCE_EGL: ${{ matrix.module == 'mc26_3' && '1' || '0' }}

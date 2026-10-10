@@ -276,7 +276,9 @@ final class M5ActiveResourcePackOracle {
 
     private static Path screenshot(ClientGameTestContext context, Path outputDir, String name)
             throws IOException {
-        Path path = context.takeScreenshot(
+        Path path = ExternalFrameCapture.required()
+                ? ExternalFrameCapture.capture(context, outputDir, name, WIDTH, HEIGHT)
+                : context.takeScreenshot(
                 TestScreenshotOptions.of(name)
                         .withDestinationDir(outputDir)
                         .withSize(WIDTH, HEIGHT)
