@@ -52,6 +52,8 @@ jobs:
             minecraft: '26.1.2'
           - module: mc26_2
             minecraft: '26.2'
+          - module: mc26_3
+            minecraft: '26.3'
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

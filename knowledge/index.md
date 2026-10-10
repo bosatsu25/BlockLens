@@ -11,7 +11,7 @@ Read these before implementation or review:
 5. [`current/m1-baseline.md`](current/m1-baseline.md) — verified dual-version CI, artifact-size/SHA, reproducibility, Client GameTest, and BlockLens initialization baseline
 6. [`current/product-spec.md`](current/product-spec.md) — original product goal and source-derived 37-capability baseline, supported Minecraft lines, non-goals
 7. [`current/architecture.md`](current/architecture.md) — target runtime architecture and shared rendering/state design
-8. [`current/versioning.md`](current/versioning.md) — Minecraft 26.1.2/26.2 multi-version build and adapter strategy
+8. [`current/versioning.md`](current/versioning.md) — Minecraft 26.1.2/26.2/26.3 multi-version build and adapter strategy
 9. [`current/performance-strategy.md`](current/performance-strategy.md) — startup/load, resource reload, runtime, memory, and JAR-size budgets
 10. [`current/migration-plan.md`](current/migration-plan.md) — original resource-pack-to-mod migration strategy and phases
 11. [`current/chisetweaks-migration.md`](current/chisetweaks-migration.md) — post-v0.1.0 ChiseTweaks→BlockLens consolidation direction, P0 mapping, additive capability/target contract, and architecture invariants
@@ -45,3 +45,5 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 ## Current feature inventory
 
 - [`current/features.md`](current/features.md) — all 40 independent capabilities, English/Japanese names, behavior and defaults
+
+- [Current three-version integration and visible UI runner](current/minecraft-26-3.md) — 26.3 adaptation, reviewed byte budget and verification status.

@@ -59,8 +59,8 @@ final class M8PerformanceBaselineContractTest {
 
     @Test
     void modelRetentionIsMeasuredAtBakeTimeAndLazyOverlayLookupStaysOffTheHotPath() throws IOException {
-        for (String module : new String[] {"mc26_1_2", "mc26_2"}) {
-            Path sourceRoot = root().resolve("versions").resolve(module).resolve("src/main/java/dev/blocklens/fabric");
+        for (String module : SupportedVersionFixtures.MODULES) {
+            Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), module);
             String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
             String model = Files.readString(sourceRoot.resolve("MinecraftDecorationModel.java"));
 
@@ -162,7 +162,7 @@ final class M8PerformanceBaselineContractTest {
 
         assertTrue(properties.contains("runtime_jar_source_pack_bytes=2366865"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=112640"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=113664"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=153600"));
         assertTrue(properties.contains("user-facing product ceiling is now 150 KiB"));
 

@@ -8,8 +8,9 @@ BlockLens initial supported lines are:
 
 - Minecraft Java Edition **26.1.2**
 - Minecraft Java Edition **26.2**
+- Minecraft Java Edition **26.3**
 
-Both are first-class release targets. A feature is not considered complete if it only works on one supported line unless the current specification explicitly marks it version-specific.
+All three are first-class release targets. A feature is not considered complete if it only works on one supported line unless the current specification explicitly marks it version-specific.
 
 Java baseline remains **Java 25** unless a supported Minecraft/Fabric toolchain requires a documented change.
 
@@ -22,13 +23,14 @@ Example naming:
 ```text
 blocklens-<mod-version>+mc26.1.2.jar
 blocklens-<mod-version>+mc26.2.jar
+blocklens-<mod-version>+mc26.3.jar
 ```
 
-The two artifacts should expose the same BlockLens product capability set and config schema unless Minecraft itself makes exact parity impossible. Any intentional divergence must be documented and contract-tested.
+The three artifacts should expose the same BlockLens product capability set and config schema unless Minecraft itself makes exact parity impossible. Any intentional divergence must be documented and contract-tested.
 
 ## 3. Gradle architecture
 
-Use a small multi-project layout instead of cloning the whole mod twice.
+Use a small multi-project layout instead of cloning the whole mod for each version.
 
 Target shape:
 
@@ -39,8 +41,10 @@ BlockLens/
 ├─ versions/
 │  ├─ mc26_1_2/
 │  │  └─ Fabric/Minecraft 26.1.2 glue
-│  └─ mc26_2/
-│     └─ Fabric/Minecraft 26.2 glue
+│  ├─ mc26_2/
+│  │  └─ Fabric/Minecraft 26.2 glue
+│  └─ mc26_3/
+│     └─ pinned 26.3 dependencies and thin compatibility glue
 └─ test-support/
    └─ shared fixtures/oracles when justified
 ```
@@ -58,7 +62,7 @@ Must contain as much reusable behavior as practical:
 - performance budget policy
 - artifact/version policy utilities where appropriate
 
-`common` should avoid Fabric and mapped Minecraft API imports so it can be tested quickly and identically for both targets.
+`common` should avoid Fabric and mapped Minecraft API imports so it can be tested quickly and identically for all three targets.
 
 ### `versions/mc26_1_2`
 
@@ -76,6 +80,10 @@ Own only 26.1.2-specific concerns such as:
 Own the equivalent 26.2-specific boundary.
 
 Do not copy product policy into this project merely because an API signature differs.
+
+### `versions/mc26_3`
+
+Own pinned Minecraft 26.3 / Fabric API 0.162.0+26.3 metadata and the small lighting compatibility boundary. Compile the modern adapters and loading-overlay test bridge from mc26_2 against 26.3 independently. Shared input code uses Minecraft InputConstants rather than GLFW numeric values because 26.3 uses SDL. Java 25 and Loader 0.19.5 are the current baseline. See [26.3 integration](minecraft-26-3.md).
 
 ## 4. Adapter boundary
 
@@ -102,11 +110,11 @@ The adapter may translate mapped Minecraft state into stable BlockLens values su
 - connection mask
 - powered/attached/open state
 
-The common layer should not need to know whether a mapped class or method name changed between 26.1.2 and 26.2.
+The common layer should not need to know whether a mapped class or method name changed between 26.1.2, 26.2 and 26.3.
 
 ## 5. Version parity contract
 
-CI must compare both supported targets and fail if one target accidentally loses:
+CI must compare all three supported targets and fail if one target accidentally loses:
 
 - a BlockLens capability
 - config key/default
@@ -139,11 +147,11 @@ When minimal runtime assets are required:
 
 - keep common assets in one shared source where compatible
 - isolate version-specific metadata/models only when required
-- contract-test that both release artifacts contain only the intended assets
+- contract-test that all three release artifacts contain only the intended assets
 
 ## 8. Adding future versions
 
-A third Minecraft line should be added by:
+An additional Minecraft line should be added by:
 
 1. creating a new version adapter project,
 2. compiling the unchanged common contracts against it,

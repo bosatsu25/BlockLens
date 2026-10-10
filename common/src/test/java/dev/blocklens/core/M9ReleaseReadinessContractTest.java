@@ -26,7 +26,7 @@ final class M9ReleaseReadinessContractTest {
                 new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a},
                 java.util.Arrays.copyOf(bytes, 8));
 
-        for (String module : new String[] {"mc26_1_2", "mc26_2"}) {
+        for (String module : SupportedVersionFixtures.MODULES) {
             String metadata = Files.readString(root().resolve(
                     "versions/" + module + "/src/main/resources/fabric.mod.json"));
             assertTrue(metadata.contains("\"icon\": \"assets/blocklens/icon.png\""));
@@ -86,7 +86,7 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
         assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
 
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=112640"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=113664"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=153600"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
         assertTrue(properties.contains("user-facing product ceiling is now 150 KiB"));

@@ -69,9 +69,8 @@ final class M7FullParityContractTest {
 
     @Test
     void bothVersionPipelinesRegisterAndComposeNetherOverlays() throws IOException {
-        for (String version : new String[]{"mc26_1_2", "mc26_2"}) {
-            Path sourceRoot = root().resolve("versions").resolve(version)
-                    .resolve("src/main/java/dev/blocklens/fabric");
+        for (String version : SupportedVersionFixtures.MODULES) {
+            Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), version);
             String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
             String model = Files.readString(sourceRoot.resolve("MinecraftDecorationModel.java"));
             String overlays = Files.readString(sourceRoot.resolve("NetherTweaksOverlayModels.java"));

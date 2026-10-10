@@ -32,18 +32,21 @@ subprojects {
 
 tasks.register('qualityGate') {
     group = 'verification'
-    description = 'Runs the shared semantic/configuration quality gates and both version contract tests.'
+    description = 'Runs the shared semantic/configuration quality gates and all three version contract tests.'
     dependsOn ':common:qualityGate'
     dependsOn ':versions:mc26_1_2:test'
     dependsOn ':versions:mc26_2:test'
+    dependsOn ':versions:mc26_3:test'
 }
 
 tasks.register('ciGate') {
     group = 'verification'
-    description = 'Strict BlockLens CI entry point for common quality plus both supported runtime artifacts.'
+    description = 'Strict BlockLens CI entry point for common quality plus all three supported runtime artifacts.'
     dependsOn 'qualityGate'
     dependsOn ':versions:mc26_1_2:build'
     dependsOn ':versions:mc26_1_2:verifyRuntimeJarBudget'
     dependsOn ':versions:mc26_2:build'
     dependsOn ':versions:mc26_2:verifyRuntimeJarBudget'
+    dependsOn ':versions:mc26_3:build'
+    dependsOn ':versions:mc26_3:verifyRuntimeJarBudget'
 }

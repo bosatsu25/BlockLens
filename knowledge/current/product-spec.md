@@ -12,10 +12,11 @@ The initial product is a clean reimplementation of the user value represented by
 
 ## 2. Supported platform targets
 
-BlockLens launches with two first-class Minecraft targets:
+BlockLens launches with three first-class Minecraft targets:
 
 - Minecraft Java Edition: **26.1.2**
 - Minecraft Java Edition: **26.2**
+- Minecraft Java Edition: **26.3**
 - Mod loader: **Fabric**
 - Java baseline: **25**
 - Side: **client only**
@@ -27,7 +28,7 @@ The multi-version implementation rules are defined in `knowledge/current/version
 
 ## 3. Functional-parity baseline
 
-The source RPO exposes **37 independently addressable capabilities**. BlockLens must preserve the ability to represent every one of them on both supported Minecraft targets.
+The source RPO exposes **37 independently addressable capabilities**. BlockLens must preserve the ability to represent every one of them on all three supported Minecraft targets.
 
 ### 3.1 Decoration / orientation — 13
 
@@ -123,7 +124,7 @@ Shared highlight renderer
 
 Internal reuse must not force unrelated capabilities behind one switch.
 
-The same config schema and defaults should be shared across 26.1.2 and 26.2 unless a documented Minecraft-native difference requires an exception.
+The same config schema and defaults should be shared across 26.1.2, 26.2 and 26.3 unless a documented Minecraft-native difference requires an exception.
 
 ## 6. Rendering principle
 
@@ -176,7 +177,7 @@ The stretch target is subordinate to functional parity, correctness, compatibili
 - Orientation/shape indicators must not report a false state.
 - Per-feature configuration must persist correctly.
 - Features must tolerate simultaneous enablement.
-- 26.1.2 and 26.2 must preserve the same BlockLens capability contract unless an explicit version exception exists.
+- 26.1.2, 26.2 and 26.3 must preserve the same BlockLens capability contract unless an explicit version exception exists.
 
 ### Compatibility
 
@@ -204,7 +205,7 @@ Detailed performance rules live in `knowledge/current/performance-strategy.md`.
 - Source capability count and keys must be contract-tested.
 - Functional-parity checks must detect accidental deletion/renaming.
 - Render/state logic should be separated from Minecraft glue where possible so it can be unit-tested.
-- The same common contracts must be executed for 26.1.2 and 26.2.
+- The same common contracts must be executed for 26.1.2, 26.2 and 26.3.
 - Minecraft-dependent smoke/GameTests must run against each supported line.
 
 ## 9. Explicit non-goals

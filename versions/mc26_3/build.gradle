@@ -1,0 +1,19 @@
+plugins {
+    id 'net.fabricmc.fabric-loom'
+    id 'java'
+}
+
+ext.blockLensMinecraftVersion = rootProject.minecraft_26_3
+ext.blockLensFabricApiVersion = rootProject.fabric_api_26_3
+
+apply from: rootProject.file('gradle/version-module.gradle')
+
+// Compile the compatible modern adapters against this version; do not duplicate them.
+sourceSets {
+    main.java.srcDir rootProject.file('versions/mc26_2/src/main/java')
+    gametest.java.srcDir rootProject.file('versions/mc26_2/src/gametest/java')
+}
+
+dependencies {
+    compileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+}

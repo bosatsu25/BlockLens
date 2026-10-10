@@ -4,7 +4,7 @@ Status: **authoritative current quality strategy**
 
 ## 1. Quality objective
 
-BlockLens must become smaller and faster to load than the source resource-pack approach **without losing or silently changing the visual capabilities being migrated**, and must preserve that contract on both **Minecraft 26.1.2 and 26.2**.
+BlockLens must become smaller and faster to load than the source resource-pack approach **without losing or silently changing the visual capabilities being migrated**, and must preserve that contract on all three targets: **Minecraft 26.1.2, 26.2 and 26.3**.
 
 Priority:
 
@@ -32,7 +32,7 @@ CI must detect accidental changes to:
 - Fabric entrypoints
 - optional compatibility boundaries
 
-The same contract must pass for 26.1.2 and 26.2.
+The same contract must pass for 26.1.2, 26.2 and 26.3.
 
 A smaller or faster artifact with a missing capability is a failed build.
 
@@ -64,8 +64,8 @@ Verify:
 - no duplicate IDs
 - every capability has translations/config representation
 - reference preset contains exactly the expected five enabled keys
-- client-only metadata on both version artifacts
-- both version projects exist and are wired into CI
+- client-only metadata on all three version artifacts
+- all three version projects exist and are wired into CI
 - config schema is identical across versions unless an explicit exception fixture exists
 - no accidental startup networking/telemetry contract
 
@@ -109,7 +109,7 @@ Do not dilute mutation scores with mapping glue, rendering coordinates, or Fabri
 
 ### Layer F — Minecraft client GameTest / smoke tests
 
-Run against **both** supported Minecraft lines.
+Run against **all three** supported Minecraft lines.
 
 At minimum verify:
 
@@ -186,11 +186,11 @@ ciGate
 `ciGate` should add:
 
 - reproducible builds
-- both version runtime artifacts
+- all three version runtime artifacts
 - source artifact where retained
 - per-version artifact audit
 
-GitHub Actions should run isolated version matrix jobs or equivalent per-version tasks so failures are attributable to 26.1.2 vs 26.2.
+GitHub Actions should run isolated version matrix jobs or equivalent per-version tasks so failures are attributable to 26.1.2, 26.2 or 26.3.
 
 ## 5. Fast CI without weakening gates
 
@@ -263,7 +263,7 @@ Test:
 - unknown/missing keys
 - corrupt fallback
 - schema upgrades
-- same persisted semantics on both Minecraft versions
+- same persisted semantics on all three Minecraft versions
 
 Configuration failure must not corrupt the game instance.
 
@@ -303,7 +303,7 @@ A capability is done only after applicable:
 spec
  -> implementation in common/version adapter
  -> unit/contracts
- -> both-version build
+ -> three-version build
  -> integration/render regression
  -> compatibility/performance sanity
  -> artifact audit

@@ -11,6 +11,8 @@ rootProject.name = 'BlockLens'
 include 'common'
 include 'versions:mc26_1_2'
 include 'versions:mc26_2'
+include 'versions:mc26_3'
 
 project(':versions:mc26_1_2').projectDir = file('versions/mc26_1_2')
 project(':versions:mc26_2').projectDir = file('versions/mc26_2')
+project(':versions:mc26_3').projectDir = file('versions/mc26_3')
