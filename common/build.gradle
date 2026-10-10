@@ -10,6 +10,8 @@ java {
     }
 }
 
+sourceSets.test.java.srcDir rootProject.file('test-support/java')
+
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.14.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'

@@ -58,6 +58,38 @@ final class M8PerformanceBaselineContractTest {
     }
 
     @Test
+    void failureEvidenceAndMeasurementConditionsStayTestOnly() throws IOException {
+        String oracle = Files.readString(root().resolve(
+                "gametest/java/dev/blocklens/gametest/M8PerformanceBaselineOracle.java"));
+        String probe = Files.readString(root().resolve(
+                "gametest/java/dev/blocklens/gametest/M8FrameTimeProbe.java"));
+        String commonBuild = Files.readString(root().resolve("common/build.gradle"));
+        String versionBuild = Files.readString(root().resolve("gradle/version-module.gradle"))
+                .replace("\r\n", "\n");
+        int publication = oracle.indexOf("GuardedEvidence.publishBeforeChecks(() -> writeManifest(");
+        int guard = oracle.indexOf("require(reloadWithinGuard,");
+        assertTrue(publication >= 0, "raw-evidence publication must exist");
+        assertTrue(guard >= 0, "regression guard must exist");
+        assertTrue(publication < guard, "publication must precede the guard");
+        assertTrue(oracle.contains("verifyFailureEvidence(outputDir)"));
+        assertTrue(oracle.contains("m8-failure-order.txt"));
+        assertTrue(oracle.contains("MEASUREMENT_FPS_LIMIT = 60"));
+        assertTrue(oracle.contains("framerateLimit().set(originalFpsLimit)"));
+        assertFalse(oracle.contains("options.save()"));
+        assertTrue(oracle.contains("M8FrameTimeProbe.renderedFrames() - framesBefore"));
+        assertTrue(oracle.contains("offRenderedFrames="));
+        assertTrue(oracle.contains("defaultRenderedFrames="));
+        assertTrue(oracle.contains("onRenderedFrames="));
+        assertTrue(probe.contains("MAX_TIMING_SAMPLES = 1024"));
+        assertTrue(probe.contains("SAMPLES.size() < MAX_TIMING_SAMPLES"));
+        assertTrue(commonBuild.contains("sourceSets.test.java.srcDir rootProject.file('test-support/java')"));
+        assertTrue(versionBuild.contains("'dev/blocklens/testing/'"));
+        assertTrue(versionBuild.contains("'dev/blocklens/gametest/'"));
+        assertTrue(versionBuild.contains("gametest {\n        java.srcDir rootProject.file('gametest/java')\n"
+                + "        java.srcDir rootProject.file('test-support/java')"));
+    }
+
+    @Test
     void modelRetentionIsMeasuredAtBakeTimeAndLazyOverlayLookupStaysOffTheHotPath() throws IOException {
         for (String module : SupportedVersionFixtures.MODULES) {
             Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), module);
