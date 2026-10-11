@@ -104,6 +104,93 @@ final class PatternInspectorTest {
         assertNull(engine.snapshot().reference());
     }
 
+    @Test void boundaryCoordinatesAtExtremeLimitsAreValidAndRejectJustOutside() {
+        var world = new World(); var engine = new PatternInspector();
+        // Exact on-boundary points (valid): MIN_VALUE + radius, MAX_VALUE - radius
+        world.put(Integer.MIN_VALUE + 8, 0, 0, NORTH);
+        assertTrue(engine.select(world, world, Integer.MIN_VALUE + 8, 0, 0));
+        world.put(Integer.MAX_VALUE - 8, 0, 0, NORTH);
+        assertTrue(engine.select(world, world, Integer.MAX_VALUE - 8, 0, 0));
+        world.put(0, Integer.MIN_VALUE + 4, 0, NORTH);
+        assertTrue(engine.select(world, world, 0, Integer.MIN_VALUE + 4, 0));
+        world.put(0, Integer.MAX_VALUE - 4, 0, NORTH);
+        assertTrue(engine.select(world, world, 0, Integer.MAX_VALUE - 4, 0));
+
+        // Just outside boundary points (invalid by 1 coordinate)
+        assertFalse(engine.select(world, world, Integer.MIN_VALUE + 7, 0, 0));
+        assertFalse(engine.select(world, world, Integer.MAX_VALUE - 7, 0, 0));
+        assertFalse(engine.select(world, world, 0, Integer.MIN_VALUE + 3, 0));
+        assertFalse(engine.select(world, world, 0, Integer.MAX_VALUE - 3, 0));
+        assertFalse(engine.select(world, world, 0, 0, Integer.MIN_VALUE + 7));
+        assertFalse(engine.select(world, world, 0, 0, Integer.MAX_VALUE - 7));
+    }
+
+    @Test void completeStateTransitionCycleFromSelectToCooldownAndRescan() {
+        var world = new World();
+        world.put(0, 0, 0, NORTH);
+        world.put(1, 0, 0, SOUTH);
+        var engine = new PatternInspector();
+
+        // 1. Initial / Unselected State
+        assertNull(engine.snapshot().reference());
+        assertFalse(engine.snapshot().complete());
+        assertEquals(0, engine.snapshot().scanned());
+
+        // 2. Select State
+        assertTrue(engine.select(world, world, 0, 0, 0));
+        assertEquals(NORTH, engine.snapshot().reference());
+        assertEquals(0, engine.snapshot().scanned());
+        assertFalse(engine.snapshot().complete());
+
+        // 3. Progressive scanning
+        int ops = engine.tick(world, world, true);
+        assertEquals(256, ops);
+        assertTrue(engine.snapshot().scanned() > 0);
+        assertFalse(engine.snapshot().complete());
+
+        // 4. Scan completion
+        finish(engine, world);
+        assertTrue(engine.snapshot().complete());
+        assertEquals(PatternInspector.DOMAIN_SIZE, engine.snapshot().scanned());
+        assertEquals(1, engine.snapshot().compared());
+        assertEquals(1, engine.snapshot().mismatches());
+
+        // 5. Cooldown period (20 ticks)
+        for (int i = 0; i < PatternInspector.RESCAN_TICKS; i++) {
+            assertEquals(1, engine.tick(world, world, true));
+            assertTrue(engine.snapshot().complete());
+            assertEquals(PatternInspector.DOMAIN_SIZE, engine.snapshot().scanned());
+        }
+
+        // 6. Rescan trigger after cooldown expires
+        int rescanOps = engine.tick(world, world, true);
+        assertTrue(rescanOps > 1);
+        assertFalse(engine.snapshot().complete());
+
+        // 7. Clear transition
+        engine.clear();
+        assertNull(engine.snapshot().reference());
+        assertEquals(0, engine.snapshot().scanned());
+    }
+
+    @Test void propertyMismatchMergeHandlesCandidatesWithDifferentPropertiesSafely() {
+        var world = new World();
+        world.put(0, 0, 0, NORTH); // properties: facing=north, half=bottom
+        // Candidate with missing "half" property and extra "shape" property
+        world.put(1, 0, 0, new BuilderState("minecraft:oak_stairs", Map.of("facing", "south", "shape", "straight")));
+        var engine = new PatternInspector();
+        assertTrue(engine.select(world, world, 0, 0, 0));
+        finish(engine, world);
+        var snapshot = engine.snapshot();
+        assertEquals(1, snapshot.compared());
+        assertEquals(1, snapshot.mismatches());
+        // facing is mismatch (south != north) -> count=1
+        assertEquals(1, snapshot.propertyMismatches().get("facing"));
+        // half is mismatch (null != bottom) -> count=1
+        assertEquals(1, snapshot.propertyMismatches().get("half"));
+    }
+
+
     private static void finish(PatternInspector engine, World world) {
         for (int i = 0; i < 12 && !engine.snapshot().complete(); i++) {
             world.calls = 0;
