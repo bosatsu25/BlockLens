@@ -86,8 +86,8 @@ public final class BuilderAssistScreen extends Screen {
                     content.add(text("mismatch", mismatch.getKey(), mismatch.getValue()));
             }
         }
-        section(content, "schematic", CapabilityId.SCHEMATIC_COMPARISON);
-        if (config.isEnabled(CapabilityId.SCHEMATIC_COMPARISON)) {
+        // Schematic comparison is retired; native inspector and preview remain available.
+        if (false) {
             if (target.expected() == null) content.add(text("schematic_unavailable"));
             else {
                 content.add(text("expected")); state(content, target.expected());
