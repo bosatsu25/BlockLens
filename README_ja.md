@@ -10,9 +10,9 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現在の安定版:** BlockLens **v0.2.2** はMinecraft **26.1.2** / **26.2**向けに**独立設定可能な40機能**と任意のMod Menu設定入口を提供します。現在のmainは**26.3**にも対応しますが、新リリースとしては未公開です。
+> **現在の安定版:** BlockLens **v0.3.0** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な57機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
 >
-> **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
+> **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
 ## 開発版の対応：Minecraft 3バージョン
 
@@ -324,7 +324,7 @@ Release jobではBlockLensを再buildせず、CIで検証したraw JARそのも�
 1. 対象Minecraft版のFabric Loaderを導入します。
 2. 対応するFabric APIを導入します。
 3. Java 25以上を使用します。
-4. [GitHub Releasesの`v0.2.2`](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2)から26.1.2または26.2用JARを取得します。26.3用の安定版はまだ公開されていません。
+4. [GitHub Releasesの`v0.3.0`](https://github.com/bosatsu25/BlockLens/releases/tag/v0.3.0)から26.1.2、26.2または26.3用JARを取得します。
 5. JARをMinecraftの`mods`フォルダへ入れます。
 6. clientを起動します。
 
@@ -358,8 +358,7 @@ gradle :versions:mc26_3:build :versions:mc26_3:versionSmokeContract :versions:mc
 - Minecraft 26.2 / 26.3 Vulkan（記録したMesaソフトウェアドライバー）: **M3/M5の指定表示を検証済み**。実機GPUの性能を示す測定ではありません
 - Sodiumでの拡張鉱石と地形ブロックフィルター: **指定した3組だけで有効になる任意連携**。Shader OFF/ONの6構成で専用のモデル出力・画像試験を行います
 
-最終開発コミットの通常CIと外部試験の結果は[実装記録](knowledge/current/remaining-delivery.md)と関連PR・Issueに記録します。
-添付された非公開パックの実クライアント試験は#31で継続しています。
+最終開発コミットの通常CIと外部試験の結果は[実装記録](knowledge/current/remaining-delivery.md)と関連PR・Issueに記録します。提供された私有リソースパックの実クライアント試験はIssue #31で完了・検証済みです。
 
 ## Release / Redistribution Audit
 

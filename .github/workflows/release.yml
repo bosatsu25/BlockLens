@@ -202,12 +202,18 @@ jobs:
           cat > dist/RELEASE_NOTES.md <<EOF
           # BlockLens v${version}
 
-          Client-side Fabric visual inspection for Minecraft Java Edition with **40 independently configurable capabilities**, preserving the frozen 37-capability source baseline and adding the verified ChiseTweaks-overlap P0 capabilities.
+          Client-side Fabric visual inspection for Minecraft Java Edition with **57 independently configurable capabilities** (expanded from the 40 independently configurable capabilities in v0.2.2), preserving the frozen 37-capability source baseline and adding the verified ChiseTweaks-overlap P0 capabilities, lightweight visuals, world analyzers, scene filters, builder assist, and ore extensions.
 
-          ## P0 additions
+          ## Highlights & Additions
+          - 57 independently configurable capabilities across Orientation, Visibility, Resource, Analyzers, Scene Filter, and Builder Assist
           - Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore as independent Resource capabilities
           - Tripwire Hook coverage in String Tweaks
           - Polished Basalt coverage in Nether Tweaks
+          - 5 Bounded World Analyzers (Ancient Debris, Lava Source, Beacon Range, Lightning Rod Range, Villager Job Site Links)
+          - 2 Bounded Scene Filters (Block & Entity Filters with blacklist/whitelist)
+          - 4 Builder Assist tools (Block Inspector, Placement Preview, Pattern Consistency, Litematica Comparison)
+          - Bounded Ore Extensions API & synchronized conventional ore tags
+          - Optional Sodium 0.9.2 terrain integration
           - executable raw-source parity regression protection for the original source contract
 
           ## Supported
