@@ -17,7 +17,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 
-/** Bounded configured-ID compilation on the client tick; immutable membership queries in renderers. */
+/** Bounded rule publication on client ticks and before terrain rebuilds; immutable renderer queries. */
 public final class SceneFilterClient {
     private record CompiledRule<T>(SceneFilterOptions.Mode mode, Set<T> blacklist, Set<T> whitelist) {
         boolean hidden(T value) {
@@ -54,13 +54,20 @@ public final class SceneFilterClient {
                 && snapshot.options() == BlockLensRuntime.config().sceneFilterOptions());
     }
     private static void tick(Minecraft client) {
+        synchronize(client, true);
+    }
+    /** Publish configured rules before workers are scheduled; the caller owns invalidation. */
+    public static void synchronizeBeforeTerrainRebuild(Minecraft client) {
+        synchronize(client, false);
+    }
+    private static void synchronize(Minecraft client, boolean invalidate) {
         int current = mask();
         if (client.level == null || client.player == null || current == 0) {
             boolean previouslyFiltering = snapshot.mask() != 0;
             boolean previouslyFilteringBlocks = (snapshot.mask() & 1) != 0;
             clear();
             if (previouslyFiltering) AnalyzerClient.clear();
-            if (previouslyFilteringBlocks && client.level != null) {
+            if (invalidate && previouslyFilteringBlocks && client.level != null) {
                 MinecraftTerrainInvalidator.invalidateAll(client);
             }
             return;
@@ -85,7 +92,7 @@ public final class SceneFilterClient {
         snapshot = new Snapshot(options,current,blocks,entities,lookups);
         worldIdentity = client.level;
         AnalyzerClient.clear();
-        if (blocksChanged && ((current | previous.mask()) & 1) != 0) MinecraftTerrainInvalidator.invalidateAll(client);
+        if (invalidate && blocksChanged && ((current | previous.mask()) & 1) != 0) MinecraftTerrainInvalidator.invalidateAll(client);
     }
     private static <T> CompiledRule<T> compile(SceneFilterOptions.Rule rule, Registry<T> registry) {
         return new CompiledRule<>(rule.mode(),resolve(rule.blacklist(),registry),resolve(rule.whitelist(),registry));

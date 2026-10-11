@@ -73,6 +73,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             OreBorderVisualOracle.verify(context, singleplayer);
             PaleOakPaletteOracle.verify(context, singleplayer);
             AnalyzerVisualOracle.verify(context, singleplayer);
+            SceneFilterRebuildOrderOracle.verify(context);
             SceneFilterVisualOracle.verify(context, singleplayer);
             BuilderAssistOracle.verify(context, singleplayer);
             OreExtensionVisualOracle.verify(context, singleplayer);
@@ -115,6 +116,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         var original=BlockLensRuntime.config();
         try(TestSingleplayerContext world=context.worldBuilder().create()) {
             context.waitTicks(20);
+            SceneFilterRebuildOrderOracle.verify(context);
             SceneFilterVisualOracle.verify(context,world);
             AnalyzerVisualOracle.prepareDisconnect(context,world);
             SceneFilterVisualOracle.prepareDisconnect(context);
