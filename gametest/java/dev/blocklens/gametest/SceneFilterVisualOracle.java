@@ -3,6 +3,7 @@ package dev.blocklens.gametest;
 import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.scene.EaterClearPreset;
 import dev.blocklens.core.analyzer.AnalyzerCatalog;
 import dev.blocklens.core.scene.SceneFilterOptions;
 import dev.blocklens.fabric.AnalyzerClient;
@@ -67,6 +68,21 @@ final class SceneFilterVisualOracle {
                 require(SceneFilterClient.compiledLookupCount()==2,"configured-ID compilation count differs");
                 require(!SceneFilterClient.hiddenBlock(Blocks.CHEST),"blacklist hid unrelated block");
             });
+            // Exercise the Eater source preset through the exact native visibility renderer.
+            var eaterRules=SceneFilterOptions.defaults().withEaterClearPreset(
+                    EaterClearPreset.available(id->SceneFilterClient.registered(0,id)));
+            install(context,off.withEnabled(CapabilityId.BLOCK_FILTER,true)
+                    .withSceneFilterOptions(eaterRules));
+            context.runOnClient(c->{
+                require(SceneFilterClient.hiddenBlock(Blocks.STONE)
+                        && SceneFilterClient.hiddenBlock(Blocks.DIRT)
+                        && !SceneFilterClient.hiddenBlock(Blocks.CHEST),
+                        "Eater Clear preset did not preserve the compiled world block boundaries");
+                require(c.level.getBlockState(TARGET).isSolidRender(),
+                        "Eater Clear must not alter physical occlusion");
+            });
+            distinct(stone,read(capture(context,output,"eater-clear-preset")),evidence,"eaterClear");
+            install(context,blocks);
             // An entity-only edit and equivalent decoded options must not expose a published block rule
             // between config publication / terrain invalidation and the next client tick.
             var entityEdit=blocks.withEnabled(CapabilityId.ENTITY_FILTER,true)
