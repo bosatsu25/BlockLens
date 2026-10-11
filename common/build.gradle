@@ -137,6 +137,7 @@ pitest {
             'dev.blocklens.core.analyzer.AnalyzerConfigurationTest',
             'dev.blocklens.core.analyzer.AnalyzerOptionsContractTest',
             'dev.blocklens.core.scene.SceneFilterOptionsTest',
+            'dev.blocklens.core.scene.SceneFilterPolicyTest',
             'dev.blocklens.core.scene.SceneFilterConfigurationTest',
             'dev.blocklens.core.BuilderCapabilitiesTest',
             'dev.blocklens.core.builder.BuilderStateTest',
