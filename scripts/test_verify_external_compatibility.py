@@ -49,12 +49,15 @@ class ExternalEvidenceTest(unittest.TestCase):
 
     def rendering_fixture(self, directory, isolation):
         actual = self.base()
-        actual.update(m3Visual="true", m5ActivePackVisual="true")
+        actual.update(m3Visual="true", m5ActivePackVisual="true", paleOakPalette="true")
         (directory / "external-compatibility-manifest.properties").write_text(
             "".join(f"{key}={value}\n" for key, value in actual.items()))
         (directory / "m3-visual-manifest.txt").write_text("minecraft=26.3\n")
         (directory / "m5-pack-visual-manifest.txt").write_text(
             "minecraft=26.3\n" + ("" if isolation is None else f"externalSceneIsolated={isolation}\n"))
+
+        (directory / "palette-manifest.txt").write_text(
+            "minecraft=26.3\nchangedPixels=100\n" + "".join(key + "=true\n" for key in evidence.PALETTE_CHECKS))
 
         def chunk(name, payload):
             return struct.pack(">I", len(payload)) + name + payload + struct.pack(">I", zlib.crc32(name + payload))
@@ -73,13 +76,49 @@ class ExternalEvidenceTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "externalSceneIsolated.*true"):
                     evidence.verify(directory, "26.3", "vulkan")
 
-    def test_isolated_m5_scene_acceptance_keeps_all_six_images(self):
+    def test_isolated_m5_and_palette_acceptance_keep_all_twelve_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
             self.rendering_fixture(directory, "true")
             files = evidence.verify(directory, "26.3", "vulkan")
-            self.assertEqual(9, len(files))
+            self.assertEqual(16, len(files))
             self.assertTrue(set(evidence.DEFAULT_IMAGES).issubset(path.name for path in files))
+
+    def test_palette_missing_or_failed_native_proof_cannot_pass_a_backend_row(self):
+        for state in (None, "false"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                self.rendering_fixture(directory, "true")
+                manifest = directory / "external-compatibility-manifest.properties"
+                text = manifest.read_text().replace("paleOakPalette=true\n", "")
+                if state is not None:
+                    text += "paleOakPalette=" + state + "\n"
+                manifest.write_text(text)
+                with self.assertRaises(ValueError):
+                    evidence.verify(directory, "26.3", "vulkan")
+
+    def test_palette_declared_success_without_native_metrics_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            self.rendering_fixture(directory, "true")
+            manifest = directory / "external-compatibility-manifest.properties"
+            manifest.write_text(manifest.read_text().replace("paleOakPalette=true\n", "") + "paleOakPalette=true\n")
+            (directory / "palette-manifest.txt").write_text("minecraft=26.3\nchangedPixels=0\n")
+            with self.assertRaises(ValueError):
+                evidence.verify(directory, "26.3", "vulkan")
+
+    def test_palette_false_controls_and_invalid_roi_metrics_are_rejected(self):
+        for line in ("uiSave=false", "failedSave=false", "allFeatures=false", "externalPriority=false",
+                     "changedPixels=80", "changedPixels=14251", "changedPixels=-1", "changedPixels=0100"):
+            with self.subTest(line=line), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                self.rendering_fixture(directory, "true")
+                manifest = directory / "palette-manifest.txt"
+                key, value = line.split("=")
+                old = manifest.read_text()
+                manifest.write_text("\n".join(line if row.startswith(key + "=") else row for row in old.splitlines()) + "\n")
+                with self.assertRaises(ValueError):
+                    evidence.verify(directory, "26.3", "vulkan")
 
     def pack_order_fixture(self, directory, order="forward"):
         lock = evidence.read_lock()
@@ -294,7 +333,7 @@ class ExternalEvidenceTest(unittest.TestCase):
         self.rendering_fixture(directory, "true")
         actual = self.base("shader-on")
         actual.update(backend="opengl", shaderInUse="true", shaderOptionsVerified="true",
-                      m3Visual="true", m5ActivePackVisual="true", sodiumTerrain="true")
+                      m3Visual="true", m5ActivePackVisual="true", sodiumTerrain="true", paleOakPalette="true")
         lock = evidence.read_lock()
         actual.update(shaderPackSha256=lock["shader"]["sha256"], shaderPack=lock["shader"]["filename"],
                       shaderProfile=lock["shader"]["profile"])
@@ -365,7 +404,7 @@ class ExternalEvidenceTest(unittest.TestCase):
             directory = Path(tmp)
             self.sodium_fixture(directory)
             files = evidence.verify(directory, "26.3", "shader-on")
-            self.assertEqual(25, len(files))
+            self.assertEqual(32, len(files))
             self.assertEqual(15, sum(path.name.startswith("sodium-") and path.suffix == ".png" for path in files))
             self.assertIn(directory / "sodium-terrain-manifest.properties", files)
 

@@ -420,6 +420,35 @@ jobs:
           path: ${{ steps.ore-borders.outputs.path }}
           if-no-files-found: error
           retention-days: 14
+      - name: Collect native pale-oak palette evidence
+        id: pale-oak
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="versions/${{ matrix.module }}/build/run/clientGameTest/pale-oak-visual"
+          target="build/ci/pale-oak-${{ matrix.minecraft }}"
+          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 6
+          for frame in palette-off palette-on palette-on-reloaded palette-off-restored palette-all-features palette-external-priority; do
+            test -s "$root/$frame.png"
+          done
+          manifest="$root/palette-manifest.txt"
+          grep -Fqx "minecraft=${{ matrix.minecraft }}" "$manifest"
+          for check in actualAtlas standaloneDecode uiSave uiDiscard failedSave allFeatures reload offRestored externalPriority; do
+            grep -Fqx "$check=true" "$manifest"
+          done
+          pixels="$(sed -n 's/^changedPixels=//p' "$manifest")"
+          [[ "$pixels" =~ ^[0-9]+$ ]] && test "$pixels" -gt 80
+          mkdir -p "$target"
+          cp "$root"/*.png "$manifest" "$target/"
+          (cd "$target" && sha256sum *.png palette-manifest.txt > SHA256SUMS.txt)
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+      - name: Upload native pale-oak palette evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-pale-oak-${{ matrix.minecraft }}
+          path: ${{ steps.pale-oak.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
       - name: Collect analyzer UI and rendered evidence
         id: analyzers
         shell: bash
@@ -609,7 +638,7 @@ jobs:
             -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
             -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \
             -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \
-            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' \) \
+            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' -o -path '*/pale-oak-visual/*' \) \
             -exec cp --parents '{}' "$target" \;
       - name: Upload failed Client GameTest diagnostics
         if: failure()

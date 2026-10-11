@@ -8,19 +8,19 @@
 
 [English](README.md) | **日本語**
 
-BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする55機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
+BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする56機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現在の安定版:** BlockLens **v0.4.0** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な55機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
+> **現在の安定版:** BlockLens **v0.4.1** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な55機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
-> **v0.3.0公開後の開発版:** 現行55機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
+> **v0.3.0公開後の開発版:** 現行56機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
 
 ## 開発版 v0.4.1：Minecraft 3バージョン
 
-v0.4.1候補は、26.3／BBE 1.3.9+mc26.3／Sodium 0.9.2+mc26.3の組み合わせで、閉じた通常チェストが保存・適用だけで白くなるよう修正します。最適化は有効なままです。trapped／ender／copper／Christmasの素材は置換しません。検証したCele構成にはIris 1.11.7とContinuity 3.0.1（シェーダーOFF）を含みます。BBEとシェーダーONの併用は未確認です。更新時は対応するBlockLens JARを1個だけ入れ、設定を保持してください。公開には同一コミットの通常3版・シェーダー／バックエンド・BBE／Celeの全CI成功を要求します。[正確な対応範囲](knowledge/current/cele-bbe-compatibility.md)を参照してください。
+公開済みv0.4.1は、26.3／BBE 1.3.9+mc26.3／Sodium 0.9.2+mc26.3の組み合わせで、閉じた通常チェストが保存・適用だけで白くなるよう修正します。最適化は有効なままです。trapped／ender／copper／Christmasの素材は置換しません。検証したCele構成にはIris 1.11.7とContinuity 3.0.1（シェーダーOFF）を含みます。BBEとシェーダーONの併用は未確認です。更新時は対応するBlockLens JARを1個だけ入れ、設定を保持してください。公開には同一コミットの通常3版・シェーダー／バックエンド・BBE／Celeの全CI成功を要求します。[正確な対応範囲](knowledge/current/cele-bbe-compatibility.md)を参照してください。
 
 開発版は **26.1.2 / 26.2 / 26.3** を対象とし、既存40機能を維持して、表示・快適性の6機能、4つの解析機能、2つの独立した表示フィルター、3つの建築支援を追加します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。PR #40の設定画面再設計はマージ済みです。3版の検証結果はPRの最新コミットに対応するCIで確認してください。公開済みv0.4.0も3版に対応しています。
 
@@ -29,6 +29,8 @@ Windowsで実際のMinecraft画面のUI自動テストを見るには、Java 25�
 解析機能は、条件を満たす読み込み済みの溶岩源・ビーコンや避雷針の範囲・実際に届いた村人の職業場所メモリを表示します。4機能とも初期設定は無効です。半径・マーカー数・最小更新間隔を調整でき、保存・破棄の編集内容を共有します。未読み込みチャンクは走査せず、密集時は複数tickかかり、職業場所メモリが届かない場合は線を推測しません。[正確な動作と処理上限](knowledge/current/world-analyzers.md)を参照してください。
 
 2つの表示フィルターはブロックとエンティティの種類IDを独立した許可・除外リストで指定します。初期設定は無効で、自分のプレイヤー、流体、物理状態、固体の遮蔽を維持します。リスト編集も親画面の保存・破棄を共有します。[仕様と未完了の検証条件](knowledge/current/scene-filter.md)を参照してください。
+
+新しい「ペールオークを白灰色に」は初期状態で無効です。バニラの木目と色付き金具を保ち、保存時に素材を再読み込みします。外部パックの素材を優先し、26.2／26.3の新しい看板素材にも対応します。[パレット仕様](knowledge/current/native-pack-palette-plan.md)を参照してください。
 
 ## 建築支援と鉱石拡張
 
@@ -48,7 +50,7 @@ Masa系MODの直接連携や必須依存はありません。[建築支援の詳
 [任意の連携処理](knowledge/current/sodium-terrain-compatibility.md)もあります。
 対象外の版ではこの連携を無効にします。固定したM3/M5のShader試験に加え、
 鉱石とフィルター専用の実クライアント試験で表示・復元・実際のモデル出力を検証します。
-この結果は指定した描画経路の証拠であり、55開発版機能すべてのShader対応を示すものではありません。
+この結果は指定した描画経路の証拠であり、56開発版機能すべてのShader対応を示すものではありません。
 
 ## 製品方針
 
@@ -210,7 +212,7 @@ runtime原則:
 
 ## 現在のsource hardening
 
-現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。55設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付パック同士の実ゲーム併用と元画面との画素単位の一致は未確認です。Shader・Vulkanの正確な試験結果は[今回の実装記録](knowledge/current/remaining-delivery.md)に記載します。
+現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。56設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付6パックの2順序でのリソース解決と基本描画は3版の実クライアントで確認しています。各パックの全表示効果と元画面との画素単位の一致は未確認です。Shader・Vulkanの正確な試験結果は[今回の実装記録](knowledge/current/remaining-delivery.md)に記載します。
 
 config readの上限、同期一時ファイル書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum/instructionの再利用、wrapped modelごとのdescriptor arrayの2本化は実装済みです。歴史的v0.2.1のlocal artifactは **101,877 B / 101,913 B**で、当時の上限は**102,400 B**でした。現在の3版ゲートはレビュー済み開発基準**204,800 B**と公開上限**204,800 B**を使います。OFF/default/全機能のM8測定は粗い回帰ガードであり、観測されたCI割り当て量のばらつきは[#43](https://github.com/bosatsu25/BlockLens/issues/43)で追跡します。
 
@@ -223,7 +225,7 @@ config readの上限、同期一時ファイル書き込みと対応filesystem�
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。公開済みv0.4.0は3版に対応し、v0.4.1は必須CIと公開条件を満たすまで候補として扱います。現行基準は開発時**204,800 B（200 KiB）**、公開上限**204,800 B（200 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
+カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。公開済みv0.4.0は3版に対応し、v0.4.1は必須CIを通過して公開済みです。現行基準は開発時**204,800 B（200 KiB）**、公開上限**204,800 B（200 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
 
 **v0.2.0** はP0の歴史的リリース証拠として維持します。
 

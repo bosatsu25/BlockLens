@@ -9,7 +9,8 @@
     "SectionCompileAllocationProbeMixin",
     "SodiumTerrainProbeMixin",
     "SodiumTerrainVisitProbeMixin",
-    "BBETerrainProbeMixin"
+    "BBETerrainProbeMixin",
+    "PaletteSpriteAccess"
   ],
   "injectors": {
     "defaultRequire": 1

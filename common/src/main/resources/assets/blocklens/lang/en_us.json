@@ -185,5 +185,7 @@
   "blocklens.builder.predicted": "Predicted state",
   "blocklens.builder.match": "States match",
   "blocklens.builder.adjusted": "Same block, different state",
-  "blocklens.builder.different": "Different block types"
+  "blocklens.builder.different": "Different block types",
+  "blocklens.capability.pale_oak_neutral": "Neutral pale oak",
+  "blocklens.capability.pale_oak_neutral.description": "Uses white-gray wood while keeping grain and colored hardware. Reloads vanilla textures on save; external pack textures take priority."
 }

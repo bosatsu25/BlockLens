@@ -250,9 +250,11 @@ python scripts/verify_external_compatibility.py --directory versions/mc26_3/buil
 ```
 
 The result verifier rejects wrong-version, partial, fallback-backend and inactive-shader manifests.
-Rendering profiles retain the six original M3/M5 PNGs. Each Shader OFF/ON row also requires
-the fifteen Sodium PNGs and its native manifest: 21 PNGs and 25 result files before
-SHA256SUMS. Vulkan and private-pack rows keep their six-image boundary. The verifier
+Rendering profiles retain the six original M3/M5 PNGs and now require six native palette PNGs
+plus their manifest. Each Shader OFF/ON row also requires the fifteen Sodium PNGs and its
+native manifest: 27 PNGs and 32 result files before SHA256SUMS. Vulkan rows require 12 PNGs
+and 16 result files; private-pack rows preserve their six-image/private-input boundary.
+The new palette rows remain pending current-head hosted evidence. The verifier
 checks every required PNG header, dimensions and named result file.
 Every current profile writes
 SHA256SUMS. Its collector copies an explicit allowlist only; original packs,

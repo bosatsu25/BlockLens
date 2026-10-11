@@ -185,5 +185,7 @@
   "blocklens.builder.predicted": "予測した状態",
   "blocklens.builder.match": "状態が一致",
   "blocklens.builder.adjusted": "同じブロックですが状態が異なります",
-  "blocklens.builder.different": "ブロックの種類が異なります"
+  "blocklens.builder.different": "ブロックの種類が異なります",
+  "blocklens.capability.pale_oak_neutral": "ペールオークを白灰色に",
+  "blocklens.capability.pale_oak_neutral.description": "木目と色付き金具を保って木材を白灰色にします。保存時にバニラ素材を再読み込みし、外部パックの素材を優先します。"
 }

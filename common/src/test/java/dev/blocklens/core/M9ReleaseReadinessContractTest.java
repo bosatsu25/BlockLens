@@ -82,7 +82,7 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(release.contains("no duplicate release"));
 
         assertTrue(release.contains("40 independently configurable capabilities"));
-        assertTrue(release.contains("55 independently configurable capabilities"));
+        assertTrue(release.contains("56 independently configurable capabilities"));
         assertTrue(release.contains("3 native, read-only Builder Assist tools"));
         assertFalse(release.contains("5 Bounded World Analyzers"));
         assertFalse(release.contains("Litematica Comparison"));

@@ -89,6 +89,10 @@ final class ExternalCompatibilityOracle {
                     M5ActiveResourcePackOracle.verify(context, world);
                     evidence.setProperty("m5ActivePackVisual", "true");
                     verifyShader(context, manifest, evidence);
+                    PaleOakPaletteOracle.verify(context, world);
+                    evidence.setProperty("paleOakPalette", "true");
+                    verifyShader(context, manifest, evidence);
+                    copyEvidence("pale-oak-visual", output);
                     copyEvidence("m3-visual", output);
                     copyEvidence("m5-pack-visual", output);
                     if (profile.startsWith("shader-")) {

@@ -73,7 +73,7 @@ test-support/   (only if justified)
 
 Pure/testable product logic shared by all three versions:
 
-- 55-capability catalog, retaining the frozen original 37 identities
+- 56-capability catalog, retaining the frozen original 37 identities
 - config schema/migration policy
 - functional-parity contracts
 - stable state semantic model

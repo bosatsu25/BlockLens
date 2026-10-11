@@ -13,10 +13,14 @@ import zipfile
 from prepare_external_compatibility import read_lock, validate_pack
 
 RENDER_PROFILES = ("shader-off", "shader-on", "vulkan", "packs")
+PALETTE_IMAGES = tuple("palette-" + name + ".png" for name in (
+    "off", "on", "on-reloaded", "off-restored", "all-features", "external-priority"))
+PALETTE_CHECKS = ("actualAtlas", "standaloneDecode", "uiSave", "uiDiscard", "failedSave",
+                  "allFeatures", "reload", "offRestored", "externalPriority")
 DEFAULT_IMAGES = (
     "m3-all13-on.png", "m3-all13-reloaded.png", "m3-all13-off-active-pack.png",
     "m5-pack-off.png", "m5-pack-on.png", "m5-pack-air-control.png",
-)
+) + PALETTE_IMAGES
 SODIUM_STAGES = (
     "air-control", "explicit-off", "explicit-on", "explicit-restored", "unsupported-off",
     "unsupported-on", "tagged-off", "tagged-on", "tag-removed", "tagged-filtered",
@@ -41,6 +45,7 @@ FAILURE_FILES = (
     "m3-visual/m3-all13-off-active-pack.png", "m3-visual/m3-visual-manifest.txt",
     "m5-pack-visual/m5-pack-off.png", "m5-pack-visual/m5-pack-on.png",
     "m5-pack-visual/m5-pack-air-control.png", "m5-pack-visual/m5-pack-visual-manifest.txt",
+    *(f"pale-oak-visual/{name}" for name in (*PALETTE_IMAGES, "palette-manifest.txt")),
     *(f"sodium-terrain/{name}" for name in (*SODIUM_IMAGES, SODIUM_MANIFEST)),
 )
 
@@ -256,8 +261,16 @@ def verify(directory: Path, minecraft: str, profile: str, pack_input: Path | Non
         require_value(evidence, "m3Visual", "true")
         require_value(evidence, "m5ActivePackVisual", "true")
         require_value(properties(directory / "m5-pack-visual-manifest.txt"), "externalSceneIsolated", "true")
+        require_value(evidence, "paleOakPalette", "true")
+        palette_file = directory / "palette-manifest.txt"
+        palette = properties(palette_file, 16384)
+        require_value(palette, "minecraft", minecraft)
+        for check in PALETTE_CHECKS:
+            require_value(palette, check, "true")
+        if bounded_number(palette, "changedPixels", 14250) <= 80:
+            raise ValueError("Palette native wood ROI lacks a rendered difference")
         images = DEFAULT_IMAGES
-        files += [directory / "m3-visual-manifest.txt", directory / "m5-pack-visual-manifest.txt"]
+        files += [directory / "m3-visual-manifest.txt", directory / "m5-pack-visual-manifest.txt", palette_file]
         if profile.startswith("shader-"):
             files.append(verify_sodium(directory, minecraft, profile))
             images += SODIUM_IMAGES

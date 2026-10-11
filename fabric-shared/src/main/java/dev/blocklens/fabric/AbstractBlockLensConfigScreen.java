@@ -292,8 +292,11 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private void saveAndClose() {
         try {
             if (draft.save(configDirectory)) {
+                boolean paletteChanged = dev.blocklens.core.render.PaleOakPalette.requiresReload(
+                        BlockLensRuntime.config(), draft.config());
                 BlockLensRuntime.installConfig(draft.config());
                 MinecraftTerrainInvalidator.invalidateAll(minecraft);
+                if (paletteChanged) minecraft.reloadResourcePacks();
             }
             showParent(parent);
         } catch (IOException | SecurityException exception) {
