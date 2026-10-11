@@ -1,0 +1,1 @@
+{"parent":"minecraft:builtin/generated","display":{"firstperson_righthand":{"rotation":[0,-90,25],"translation":[1,2,1],"scale":[0.83,0.83,0.83]},"thirdperson_righthand":{"rotation":[0,0,0],"translation":[0,3,1],"scale":[0.79,0.79,0.79]},"gui":{"scale":[0.67,0.67,0.67]},"ground":{"scale":[0.73,0.73,0.73]},"head":{"scale":[0.61,0.61,0.61]},"fixed":{"scale":[0.51,0.51,0.51]}}}

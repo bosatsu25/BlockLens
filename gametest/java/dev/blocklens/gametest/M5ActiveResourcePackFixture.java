@@ -21,6 +21,10 @@ public final class M5ActiveResourcePackFixture implements ClientModInitializer {
         }
         SettingsStateReloadOracle.register(container);
         if (!ResourceLoader.registerBuiltinPack(Identifier.fromNamespaceAndPath(
+                "blocklens-gametest", "compact-external"), container, PackActivationType.NORMAL)) {
+            throw new IllegalStateException("Compact external fixture registration failed");
+        }
+        if (!ResourceLoader.registerBuiltinPack(Identifier.fromNamespaceAndPath(
                 "blocklens-gametest", "palette-external"), container, PackActivationType.NORMAL)) {
             throw new IllegalStateException("Palette external fixture registration failed");
         }

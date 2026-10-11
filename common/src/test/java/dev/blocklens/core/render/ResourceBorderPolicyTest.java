@@ -48,6 +48,6 @@ final class ResourceBorderPolicyTest {
                 assertEquals(selected == other, restored.isEnabled(other), other.sourceKey());
             }
         }
-        assertEquals(56, CapabilityId.values().length);
+        assertEquals(59, CapabilityId.values().length);
     }
 }

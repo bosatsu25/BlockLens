@@ -1,8 +1,8 @@
-# BlockLens — 現在の56機能 / Current 56 capabilities
+# BlockLens — 現在の59機能 / Current 59 capabilities
 
 Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
-The compiled catalog contains 56 independent capabilities; existing keys, ordering and defaults are preserved.
+The compiled catalog contains 59 independent capabilities; existing keys, ordering and defaults are preserved.
 
 **削除済み:** `analyzer.debris_analyzer` と `builder.schematic_comparison`。既存設定のこれらのキーは無視されます。通常の古代の残骸ハイライト `gaming.ancient_debris` は引き続き利用できます。
 
@@ -67,7 +67,7 @@ The compiled catalog contains 56 independent capabilities; existing keys, orderi
 | 明るいチェスト | Bright Chest | 通常のチェストを明るい白色にし、形と開閉を保ちます。 | 有効 / Enabled |
 | ペールオークを白灰色に | Neutral Pale Oak | バニラの木材を木目と色付き金具を保って白灰色にします。保存時に再読み込みし、外部パック素材を優先します。 | 無効 / Disabled |
 
-## その他 / Other（13）
+## その他 / Other（16）
 
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
@@ -75,6 +75,9 @@ The compiled catalog contains 56 independent capabilities; existing keys, orderi
 | 糸表示調整 | String Tweaks | 糸とトリップワイヤーフックを見やすくします。 | 有効 / Enabled |
 | 炎の高さを抑える | Low Fire | 一人称の炎表示だけを大・中・小に調整します。 | 無効 / Disabled |
 | 手持ちアイテムの大きさ | Handheld Size | 一人称のブロック・アイテム・道具を別々に40～100%で調整します。盾は95%です。 | 無効 / Disabled |
+| コンパクトなブロック表示 | Compact blocks | ブロックの両手・三人称・GUIなどの姿勢を調整します。ベッドなどの個別形状を保持します。 | 無効 / Disabled |
+| コンパクトなアイテム表示 | Compact items | 棒・旗・頭などに合わせて表示姿勢を調整します。 | 無効 / Disabled |
+| コンパクトな武器・道具表示 | Compact weapons and tools | 武器・道具と、防御中の盾・使用中のトライデントなどの姿勢を調整します。 | 無効 / Disabled |
 | 溶岩源の解析 | Lava source analyzer | 既知の非源ブロックが隣接する、読み込み済みの溶岩源を表示します。 | 無効 / Disabled |
 | ビーコンの範囲 | Beacon range | 完成済みの土台段数から水平の正方形を表示します。光の遮断や実際の効果は推測しません。 | 無効 / Disabled |
 | 避雷針の範囲 | Lightning rod range | 避雷針と半径128ブロックの水平な正方形を表示します。落雷予測は行いません。 | 無効 / Disabled |
@@ -95,9 +98,11 @@ Bキーまたは任意のMod Menuから開きます。4カテゴリで機能を�
 
 Open with B or the optional Mod Menu entrypoint. Save and apply persists edits; Discard changes and Esc discard them. A failed save retains the draft for retry. See [settings UI](settings-ui.md) for navigation and verification boundaries.
 
+コンパクト表示3機能とペールオークの白灰色化は、保存が成功したときに必要なリソース再読み込みを行います。無効化で標準のモデルへ戻り、外部パックが所有する定義を直接変更しません。既存の一人称の大きさ設定は独立して適用できます。[コンパクト表示の仕様と検証範囲](native-compact-model-plan.md)を参照してください。
+
 ## 確認範囲 / Verification boundary
 
-一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援とペールオークの白灰色化を追加した構成です。既存機能の設定キー・ビット位置・既定値は維持します。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
+一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援とペールオークの白灰色化、3つのコンパクト表示を追加した構成です。既存機能の設定キー・ビット位置・既定値は維持します。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
 
 建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。3機能を有効にして「保存して適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
 

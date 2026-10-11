@@ -10,7 +10,10 @@
     "SodiumTerrainProbeMixin",
     "SodiumTerrainVisitProbeMixin",
     "BBETerrainProbeMixin",
-    "PaletteSpriteAccess"
+    "PaletteSpriteAccess",
+    "CompactModelProbeMixin",
+    "CompactDisplayProbeMixin",
+    "CompactSubmissionProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

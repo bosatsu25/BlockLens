@@ -202,10 +202,10 @@ jobs:
           cat > dist/RELEASE_NOTES.md <<EOF
           # BlockLens v${version}
 
-          Client-side Fabric visual inspection for Minecraft Java Edition with **56 independently configurable capabilities** (from 40 independently configurable capabilities in v0.2.2), preserving the frozen 37-capability source baseline and adding the verified ChiseTweaks-overlap P0 capabilities, lightweight visuals, world analyzers, scene filters, builder assist, and ore extensions.
+          Client-side Fabric visual inspection for Minecraft Java Edition with **59 independently configurable capabilities** (from 40 independently configurable capabilities in v0.2.2), preserving the frozen 37-capability source baseline and adding the verified ChiseTweaks-overlap P0 capabilities, lightweight visuals, world analyzers, scene filters, builder assist, and ore extensions.
 
           ## Highlights & Additions
-          - 56 independently configurable capabilities across Orientation, Visibility, Resource, Analyzers, Scene Filter, and Builder Assist
+          - 59 independently configurable capabilities across Orientation, Visibility, Resource, Analyzers, Scene Filter, and Builder Assist
           - Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore as independent Resource capabilities
           - Tripwire Hook coverage in String Tweaks
           - Polished Basalt coverage in Nether Tweaks
@@ -218,6 +218,7 @@ jobs:
           - To upgrade, replace the old BlockLens JAR with the matching ${version} artifact, keep one BlockLens JAR, and retain configuration plus BBE optimization. The Cele profile includes Iris 1.11.7+mc26.3 and Continuity 3.0.1+26.3 with shaders OFF; BBE plus shaders ON is not verified.
           - Opt-in Glow Ores shortcut for 19 vanilla ore accents, Small Handhelds-style 40/40/50% first-person profile and registered Eater Clear block filter preset based on 196 pure-clear source blockstates; no copyrighted textures or OptiFine CTM assets bundled
           - Default-OFF native pale-oak palette with bounded vanilla-owned texture paths, retained alpha/grain, external-pack priority and real-client Save/Apply/reload verification
+          - Three independent default-OFF compact block/item/tool displays, preserving model geometry, texture and active external-pack ownership; both hands, third person, GUI and use-state verification on all supported versions
           - executable raw-source parity regression protection for the original source contract
 
           ## Supported
