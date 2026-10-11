@@ -12,6 +12,16 @@ BlockLens initial supported lines are:
 
 All three are first-class release targets. A feature is not considered complete if it only works on one supported line unless the current specification explicitly marks it version-specific.
 
+### Planned version rotation (v0.4.0)
+
+Per the 2026-10-11 roadmap decision (Plan A adoption), BlockLens maintains a rolling 3-version support model. When Minecraft 26.4 reaches official general availability (scheduled Winter 2026; currently in development snapshot phase `26.4-snapshot-3`), Minecraft 26.1.2 will be retired, transitioning the supported target matrix to:
+
+- Minecraft Java Edition **26.2**
+- Minecraft Java Edition **26.3**
+- Minecraft Java Edition **26.4**
+
+Until the official 26.4 release is made available by Mojang, 26.1.2, 26.2, and 26.3 remain the authoritative supported release targets.
+
 Java baseline remains **Java 25** unless a supported Minecraft/Fabric toolchain requires a documented change.
 
 ## 2. Release model
