@@ -91,6 +91,7 @@ final class ExternalCompatibilityOracle {
                     verifyShader(context, manifest, evidence);
                     PaleOakPaletteOracle.verify(context, world);
                     evidence.setProperty("paleOakPalette", "true");
+                    evidence.setProperty("paletteObjects", "true");
                     verifyShader(context, manifest, evidence);
                     CompactModelsOracle.verify(context, world);
                     evidence.setProperty("compactModels", "true");
@@ -101,6 +102,7 @@ final class ExternalCompatibilityOracle {
                     copyEvidence("simplified-visual", output);
                     copyEvidence("compact-model-visual", output);
                     copyEvidence("pale-oak-visual", output);
+                    copyEvidence("pale-oak-objects", output);
                     copyEvidence("m3-visual", output);
                     copyEvidence("m5-pack-visual", output);
                     if (profile.startsWith("shader-")) {

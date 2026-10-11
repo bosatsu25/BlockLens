@@ -8,6 +8,7 @@ import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.PaleOakPalette;
 import dev.blocklens.testing.PaleOakFrameMetrics;
+import dev.blocklens.testing.ExternalLifecycleDiagnostics;
 import dev.blocklens.fabric.BlockLensConfigScreen;
 import dev.blocklens.gametest.mixin.PaletteSpriteAccess;
 import java.awt.image.BufferedImage;
@@ -116,6 +117,9 @@ final class PaleOakPaletteOracle {
             reload(context);
             verifyPixels(context, true, true);
             capture(context, output, "palette-external-priority");
+            // Keep the original controlled wood frames intact before auxiliary scenes mutate the world.
+            context.runOnClient(c -> c.getResourcePackRepository().setSelected(packs));
+            PaleOakRenderedScenes.verify(context, world, output, offConfig);
             Files.writeString(output.resolve("palette-manifest.txt"),
                     "minecraft=" + BlockLensRuntime.minecraftVersion()
                     + "\nchangedPixels=" + changed
@@ -125,14 +129,19 @@ final class PaleOakPaletteOracle {
         } catch (IOException failure) {
             throw new AssertionError("Palette evidence failed", failure);
         } finally {
-            context.runOnClient(c -> {
-                BlockLensConfigScreen.show(c, null);
-                c.getResourcePackRepository().setSelected(packs);
-                BlockLensRuntime.installConfig(original);
-            });
-            try { Files.write(directory.resolve(BlockLensConfigFiles.FILE_NAME), originalFile); }
-            catch (IOException failure) { throw new AssertionError("Palette baseline restore failed", failure); }
-            reload(context);
+            // Observe only the previously stalled Vulkan restoration, not healthy scene work.
+            boolean observe = "vulkan".equals(System.getProperty("blocklens.test.external.profile"));
+            try (var diagnostics = ExternalLifecycleDiagnostics.open(output.resolveSibling("external-compatibility"), observe)) {
+                diagnostics.phase("palette_restore");
+                context.runOnClient(c -> {
+                    BlockLensConfigScreen.show(c, null);
+                    c.getResourcePackRepository().setSelected(packs);
+                    BlockLensRuntime.installConfig(original);
+                });
+                try { Files.write(directory.resolve(BlockLensConfigFiles.FILE_NAME), originalFile); }
+                catch (IOException failure) { throw new AssertionError("Palette baseline restore failed", failure); }
+                reload(context);
+            }
         }
     }
 
@@ -149,7 +158,7 @@ final class PaleOakPaletteOracle {
         require(context.computeOnClient(PaleOakPaletteOracle::planks) == contents, "Discard reloaded textures");
     }
 
-    private static void saveUiToggle(ClientGameTestContext context) {
+    static void saveUiToggle(ClientGameTestContext context) {
         var before = context.computeOnClient(PaleOakPaletteOracle::planks);
         context.runOnClient(c -> {
             var screen = new BlockLensConfigScreen(null); BlockLensConfigScreen.show(c, screen);
@@ -259,13 +268,13 @@ final class PaleOakPaletteOracle {
         });
     }
 
-    private static void reload(ClientGameTestContext context) {
+    static void reload(ClientGameTestContext context) {
         var future = context.computeOnClient(c -> c.reloadResourcePacks());
         context.waitFor(c -> future.isDone(), 1200); future.join();
         context.waitFor(SettingsClientAccess::ready, 1200); context.waitTicks(10);
     }
 
-    private static BufferedImage capture(ClientGameTestContext context, Path output, String name) throws IOException {
+    static BufferedImage capture(ClientGameTestContext context, Path output, String name) throws IOException {
         Path image = ExternalFrameCapture.required()
                 ? ExternalFrameCapture.capture(context, output, name, 640, 360)
                 : context.takeScreenshot(TestScreenshotOptions.of(name).withDestinationDir(output)
