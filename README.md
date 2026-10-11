@@ -10,9 +10,9 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Current stable release:** BlockLens **v0.2.2** provides **40 independently configurable capabilities** for Minecraft **26.1.2** and **26.2**, including an optional Mod Menu settings entrypoint. Current main additionally supports **26.3**; that development build has not been published as a new release.
+> **Current stable release:** BlockLens **v0.3.0** provides **57 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
 >
-> **Historical release:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
+> **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
 ## Current development: three Minecraft versions
 
@@ -328,7 +328,7 @@ For the stable release:
 1. Install Fabric Loader for the target Minecraft version.
 2. Install the matching Fabric API.
 3. Use Java 25 or later.
-4. Download the matching 26.1.2 or 26.2 JAR from the [`v0.2.2` GitHub Release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2). A 26.3 stable release is not yet published.
+4. Download the matching 26.1.2, 26.2, or 26.3 JAR from the [`v0.3.0` GitHub Release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.3.0).
 5. Put the JAR in the Minecraft `mods` directory.
 6. Launch the client.
 
@@ -363,7 +363,7 @@ Verified support is intentionally evidence-bounded:
 - Sodium ore extensions and terrain block filtering: **exact-version optional adapter**, with dedicated native emission/image controls in the six pinned Shader OFF/ON rows
 
 The exact final development commit, full normal gate and public matrix results are recorded in
-[the delivery record](knowledge/current/remaining-delivery.md) and linked PRs/issues. Uploaded private-pack execution remains open in #31.
+[the delivery record](knowledge/current/remaining-delivery.md) and linked PRs/issues. Uploaded private reference-pack verification is complete for Issue #31.
 
 ## Release / redistribution audit
 

@@ -2,16 +2,24 @@
 
 Status: **current publication boundary plus immutable historical release evidence**
 
-## Current published stable release: v0.2.2
+## Current release: v0.3.0
 
-[v0.2.2](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2) is published at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`, with 40 capabilities and optional Mod Menu integration delivered by #27 / PR #30. GitHub release assets were verified on 2026-10-10:
+BlockLens **v0.3.0** expands product coverage to **57 independently configurable capabilities** across **Minecraft 26.1.2, 26.2, and 26.3**, completing P1-P5 migration, bounded world analyzers, scene filters, builder assist, ore extension APIs, synchronized conventional tags, pinned Sodium terrain integration, private reference-pack validation (#31), and comprehensive codebase hardening (#57).
+
+| Minecraft | Target | Capabilities | Release ceiling |
+| --- | --- | ---: | ---: |
+| 26.1.2 | `BlockLens-26.1.2-v0.3.0.jar` | 57 | 204,800 B (<= 200 KiB) |
+| 26.2 | `BlockLens-26.2-v0.3.0.jar` | 57 | 204,800 B (<= 200 KiB) |
+| 26.3 | `BlockLens-26.3-v0.3.0.jar` | 57 | 204,800 B (<= 200 KiB) |
+
+## Historical published stable release: v0.2.2
+
+[v0.2.2](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2) was published at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`, with 40 capabilities and optional Mod Menu integration delivered by #27 / PR #30. GitHub release assets were verified on 2026-10-10:
 
 | Minecraft | Release asset | Bytes | SHA-256 |
 | --- | --- | ---: | --- |
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
-
-Current main adds merged PR #40 settings and PR #41 three-version support. [Main CI #313](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404) passed common and all three real-client/artifact jobs on merge `d91226c14f07c999256fc620b722a874be99958c`. No new release version or 26.3 release asset was published; the existing-version guard skipped publication.
 
 Current gates are the user-authorized **204,800 B (200 KiB)** development and product release ceiling, and **1,183,432 B** absolute ceiling. Historical 100 KiB statements below describe v0.1.0/v0.2.0, not current policy. External shader/pack/Vulkan combinations remain #31; M8 diagnostic implementation is merged through PR #45/#47, while #43 completed its measured test-environment exception, retaining the unproven historical cause. See [roadmap.md](roadmap.md).
 

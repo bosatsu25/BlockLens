@@ -82,9 +82,10 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        assertTrue(properties.contains("mod_version=0.2.2"));
+        assertTrue(properties.contains("mod_version=0.3.0"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
         assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
+        assertTrue(properties.contains("v0.3.0 ships 57 capabilities across Minecraft 26.1.2, 26.2 and 26.3"));
 
         assertTrue(properties.contains("runtime_jar_baseline_bytes=204800"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=204800"));
