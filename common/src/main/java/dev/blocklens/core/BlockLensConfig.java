@@ -23,7 +23,7 @@ public final class BlockLensConfig {
         this.sceneFilterOptions = Objects.requireNonNull(sceneFilterOptions, "sceneFilterOptions");
         long mask = 0L;
         for (CapabilityId capability : CapabilityId.values()) {
-            if (Boolean.TRUE.equals(enabled.get(capability))) {
+            if (capability.available() && Boolean.TRUE.equals(enabled.get(capability))) {
                 mask |= bit(capability);
             }
         }
@@ -63,7 +63,7 @@ public final class BlockLensConfig {
     public BlockLensConfig withEnabled(CapabilityId capability, boolean value) {
         Objects.requireNonNull(capability, "capability");
         EnumMap<CapabilityId, Boolean> copy = new EnumMap<>(enabled);
-        copy.put(capability, value);
+        copy.put(capability, capability.available() && value);
         return new BlockLensConfig(copy, comfortOptions, analyzerOptions, sceneFilterOptions);
     }
 
