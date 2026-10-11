@@ -64,15 +64,14 @@ final class ComfortSettingsOracle {
                     }
                     ResponsiveSettingsScreenOracle.buttons(child).get(1)
                             .onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
+                    press(child, "blocklens.comfort.preset.small_handhelds");
                     press(child, "blocklens.settings.back");
                     require(BlockLensRuntime.config().comfortOptions().equals(original.comfortOptions()),
                             "numeric draft applied before save");
                     require(Arrays.equals(baseline, Files.readAllBytes(file)), "numeric draft wrote before save");
                     if (save) {
                         press(parent, "blocklens.settings.apply");
-                        var old = original.comfortOptions();
-                        var expected = new ComfortOptions(2, Math.min(100, old.blocksPercent() + 5),
-                                old.itemsPercent(), old.toolsPercent());
+                        var expected = new ComfortOptions(2, 40, 40, 50);
                         require(BlockLensRuntime.config().comfortOptions().equals(expected), "save lost numeric edits");
                         require(BlockLensConfigFiles.loadOrCreate(directory).comfortOptions().equals(expected),
                                 "numeric disk configuration differs from UI");
