@@ -13,7 +13,7 @@ final class BuilderCapabilitiesTest {
             "builder.pattern_consistency");
 
     @Test
-    void fourBuilderControlsAppendInOtherAndDefaultOff() {
+    void threeBuilderControlsAppendInOtherAndDefaultOff() {
         var defaults = BlockLensConfig.defaults();
         for (int index = 0; index < KEYS.size(); index++) {
             CapabilityId capability = CapabilityId.bySourceKey().get(KEYS.get(index));

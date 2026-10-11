@@ -16,7 +16,7 @@ import urllib.request
 import zipfile
 
 LOCK_PATH = Path(__file__).with_name("external_compatibility_dependencies.json")
-PROFILES = ("shader-off", "shader-on", "vulkan", "packs", "masa")
+PROFILES = ("shader-off", "shader-on", "vulkan", "packs")
 MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024
 MAX_PACK_EXPANDED_BYTES = 64 * 1024 * 1024
 
@@ -113,9 +113,7 @@ def prepare(minecraft: str, profile: str, destination: Path,
         "shaderExpected": str(profile == "shader-on").lower(),
         "resourceFormat": lock["resource_format"][minecraft],
     }
-    selected_mods = ("iris", "sodium") if profile.startswith("shader-") else (
-        ("litematica", "malilib") if profile == "masa" else ()
-    )
+    selected_mods = ("iris", "sodium") if profile.startswith("shader-") else ()
     mods_dir = destination / "mods"
     mods_dir.mkdir(exist_ok=True)
     expected_names = {lock["targets"][minecraft][key]["filename"] for key in selected_mods}

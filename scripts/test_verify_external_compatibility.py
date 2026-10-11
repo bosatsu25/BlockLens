@@ -78,27 +78,6 @@ class ExternalEvidenceTest(unittest.TestCase):
             self.assertEqual(9, len(files))
             self.assertTrue(set(evidence.DEFAULT_IMAGES).issubset(path.name for path in files))
 
-    def test_masa_metadata_without_typed_schematic_read_is_rejected(self):
-        actual = self.base("masa")
-        actual.update(backend="opengl", schematicRead="true")
-        lock = evidence.read_lock()
-        for mod in ("litematica", "malilib"):
-            actual[f"mod.{mod}.sha256"] = lock["targets"]["26.3"][mod]["sha256"]
-        schematic = {"minecraft": "26.3", "pinnedVersions": "true", "typedRead": "false"}
-        with patch.object(evidence, "properties", side_effect=[actual, schematic]):
-            with self.assertRaisesRegex(ValueError, "typedRead.*true"):
-                evidence.verify(Path("unused"), "26.3", "masa")
-
-    def test_masa_wrong_release_bytes_are_rejected(self):
-        actual = self.base("masa")
-        actual.update(backend="opengl", schematicRead="true")
-        lock = evidence.read_lock()
-        for mod in ("litematica", "malilib"):
-            actual[f"mod.{mod}.sha256"] = lock["targets"]["26.2"][mod]["sha256"]
-        with patch.object(evidence, "properties", return_value=actual):
-            with self.assertRaisesRegex(ValueError, "mod.litematica.sha256"):
-                evidence.verify(Path("unused"), "26.3", "masa")
-
     def test_duplicate_fields_are_not_last_write_wins(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "manifest"
@@ -165,7 +144,7 @@ class ExternalEvidenceTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "not acceptance evidence"):
                     evidence.verify(root, "26.3", "vulkan")
 
-    def test_failed_masa_lifecycle_trace_is_hashed_and_remains_incomplete(self):
+    def test_failed_external_lifecycle_trace_is_hashed_and_remains_incomplete(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             source = root / "game" / "external-compatibility"
@@ -173,7 +152,7 @@ class ExternalEvidenceTest(unittest.TestCase):
             trace = source / "external-lifecycle-diagnostics.txt"
             trace.write_text("status=diagnostic-only\nstalledPhase=world_close\n")
             manifest = source / "external-compatibility-manifest.properties"
-            actual = self.base("masa")
+            actual = self.base("shader-off")
             actual.update(backend="opengl", status="started")
             manifest.write_text("".join(f"{key}={value}\n" for key, value in actual.items()))
             (source / "external-lifecycle-diagnostics.tmp").write_text("partial private input")
@@ -184,9 +163,9 @@ class ExternalEvidenceTest(unittest.TestCase):
             self.assertIn(hashlib.sha256(trace.read_bytes()).hexdigest() + "  " + trace.name,
                           (destination / "SHA256SUMS.txt").read_text())
             with self.assertRaisesRegex(ValueError, "status.*passed"):
-                evidence.verify(destination, "26.3", "masa")
+                evidence.verify(destination, "26.3", "shader-off")
 
-    def test_failed_masa_lifecycle_trace_rejects_oversized_or_symlink_input(self):
+    def test_failed_external_lifecycle_trace_rejects_oversized_or_symlink_input(self):
         for kind in ("oversized", "symlink"):
             with self.subTest(kind=kind), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
