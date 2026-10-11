@@ -2,14 +2,14 @@ package dev.blocklens.fabric;
 
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
-import dev.blocklens.core.render.DecorationQuadCuePolicy;
 import dev.blocklens.core.render.DecorationQuadFace;
 import dev.blocklens.core.render.DecorationQuadInstruction;
 import dev.blocklens.core.render.DecorationRenderDescriptor;
 import dev.blocklens.core.render.NetherTweaksVisualCue;
 import dev.blocklens.core.render.ResourceHighlightCue;
+import dev.blocklens.core.render.ResourceBorderPolicy;
+import dev.blocklens.core.render.FaceInstructionTable;
 import dev.blocklens.core.render.RetainedValue;
-import dev.blocklens.core.render.VisibilityRenderDescriptor;
 import dev.blocklens.core.render.VisibilityRenderPolicy;
 import dev.blocklens.core.state.DecorationStateKind;
 import dev.blocklens.core.state.SemanticState;
@@ -34,11 +34,14 @@ import org.jspecify.annotations.Nullable;
 
 /** Minecraft 26.1.2 baked-model wrapper shared by the M3-M7 rendering families. */
 final class MinecraftDecorationModel extends WrapperBlockStateModel {
-    private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.ordinal();
+    private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.bitPosition();
 
-    private static final long LIGHTWEIGHT_OVERLAY_MASK = (1L << CapabilityId.GLASS_HIGHLIGHT.ordinal())
-            | (1L << CapabilityId.KELP_HIGHLIGHT.ordinal());
+    private static final long LIGHTWEIGHT_OVERLAY_MASK = (1L << CapabilityId.GLASS_HIGHLIGHT.bitPosition())
+            | (1L << CapabilityId.KELP_HIGHLIGHT.bitPosition());
     private final @Nullable RetainedValue<BlockStateModel> lightweightOverlay;
+    private final @Nullable RetainedValue<BlockStateModel> oreBorderOverlay;
+    private final long oreBorderMask;
+    private final int oreBorderTint;
 
     private final Object[] descriptors;
     private final long[] descriptorBits;
@@ -67,13 +70,15 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         this.descriptors = new Object[count];
         this.descriptorBits = new long[count];
         long represented = 0L;
+        long borders = 0L;
+        int borderTint = 0;
         boolean foundNether = false;
         SemanticState capturedNetherState = SemanticState.empty();
 
         for (int i = 0; i < count; i++) {
             CapabilityId capability = Objects.requireNonNull(capabilities[i], "capability");
             SemanticState state = Objects.requireNonNull(semanticStates[i], "semanticState");
-            long bit = 1L << capability.ordinal();
+            long bit = 1L << capability.bitPosition();
 
             if (capability == CapabilityId.NETHER_TWEAKS) {
                 if (netherCue == null) {
@@ -90,11 +95,16 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             } else if (capability == CapabilityId.BRIGHT_CONCRETE) {
                 descriptors[i] = DecorationQuadInstruction.emissiveTint(0xFFFFFFFF);
             } else if (DecorationStateKind.isDecorationCapability(capability)) {
-                descriptors[i] = DecorationRenderDescriptor.of(capability, state);
+                descriptors[i] = FaceInstructionTable.compile(DecorationRenderDescriptor.of(capability, state));
             } else if (VisibilityStateKind.isVisibilityCapability(capability)) {
-                descriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state);
+                descriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state).cue().instruction();
             } else if (capability.category() == CapabilityId.Category.RESOURCE) {
-                descriptors[i] = ResourceHighlightCue.forCapability(capability);
+                var cue = ResourceHighlightCue.forCapability(capability);
+                descriptors[i] = cue.instruction();
+                if (ResourceBorderPolicy.supports(capability)) {
+                    borders |= bit;
+                    borderTint = cue.accentArgb();
+                }
             } else {
                 continue;
             }
@@ -108,6 +118,9 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         this.netherState = capturedNetherState;
         this.representedRenderableMask = represented;
         this.lightweightOverlay = (represented & LIGHTWEIGHT_OVERLAY_MASK) == 0L ? null : new RetainedValue<>();
+        this.oreBorderOverlay = borders == 0L ? null : new RetainedValue<>();
+        this.oreBorderMask = borders;
+        this.oreBorderTint = borderTint;
     }
 
     boolean wraps(BlockStateModel model) {
@@ -147,6 +160,9 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
         if ((enabledCapabilities & LIGHTWEIGHT_OVERLAY_MASK) != 0L) {
             emitLightweightOverlay(emitter, level, pos, state, random, cullTest, enabledCapabilities);
+        }
+        if ((enabledCapabilities & oreBorderMask) != 0L) {
+            emitOreBorder(emitter, level, pos, state, random, cullTest);
         }
     }
 
@@ -211,6 +227,27 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
     }
 
+    /** Clean-room emissive edge model; baked once, emitted only for enabled ore highlights. */
+    private void emitOreBorder(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos,
+            BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest) {
+        BlockStateModel overlay = oreBorderOverlay == null ? null
+                : oreBorderOverlay.get(LightweightOverlayModels.ORE_BORDER, MinecraftDecorationModel::lookup);
+        if (overlay == null) return;
+        emitter.pushTransform(quad -> {
+            quad.chunkLayer(ChunkSectionLayer.CUTOUT);
+            quad.multiplyColor(oreBorderTint);
+            quad.emissive(true);
+            quad.diffuseShade(false);
+            quad.ambientOcclusion(TriState.FALSE);
+            return true;
+        });
+        try {
+            overlay.emitQuads(emitter, level, pos, state, random, cullTest);
+        } finally {
+            emitter.popTransform();
+        }
+    }
+
     private @Nullable BlockStateModel lookupLightweightOverlay(ExtraModelKey<BlockStateModel> key) {
         return lightweightOverlay == null ? null : lightweightOverlay.get(key, MinecraftDecorationModel::lookup);
     }
@@ -243,14 +280,10 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
 
             DecorationQuadInstruction instruction;
             Object descriptor = descriptors[i];
-            if (descriptor instanceof DecorationRenderDescriptor decoration) {
-                instruction = DecorationQuadCuePolicy.instruction(decoration, face);
-            } else if (descriptor instanceof VisibilityRenderDescriptor visibility) {
-                instruction = visibility.cue().instruction();
-            } else if (descriptor instanceof DecorationQuadInstruction direct) {
-                instruction = direct;
+            if (descriptor instanceof FaceInstructionTable table) {
+                instruction = table.instruction(face);
             } else {
-                instruction = ((ResourceHighlightCue) descriptor).instruction();
+                instruction = (DecorationQuadInstruction) descriptor;
             }
             applyInstruction(quad, instruction);
         }

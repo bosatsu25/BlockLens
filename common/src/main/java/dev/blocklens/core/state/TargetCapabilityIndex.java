@@ -59,7 +59,7 @@ public final class TargetCapabilityIndex {
     }
 
     private static long bit(CapabilityId capability) {
-        int ordinal = capability.ordinal();
+        int ordinal = capability.bitPosition();
         if (ordinal >= Long.SIZE) {
             throw new IllegalStateException("CapabilityId count exceeds 64-bit target index capacity");
         }

@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /** Zero-scan model-bake integration for the 26.2 all-capability BlockLens pipeline. */
 public final class MinecraftDecorationModelPlugin {
     private static final CapabilityId[] CAPABILITIES = CapabilityId.values();
-    private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.ordinal();
+    private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.bitPosition();
     private static final AtomicInteger WRAPPED_MODELS = new AtomicInteger();
     private static final AtomicInteger RETAINED_CAPABILITY_SLOTS = new AtomicInteger();
     private static final AtomicInteger MAX_CAPABILITIES_PER_MODEL = new AtomicInteger();
@@ -80,7 +80,7 @@ public final class MinecraftDecorationModelPlugin {
         SemanticState[] semanticStates = new SemanticState[count];
         int cursor = 0;
         for (CapabilityId capability : CAPABILITIES) {
-            long bit = 1L << capability.ordinal();
+            long bit = 1L << capability.bitPosition();
             if ((targetMask & bit) == 0L) {
                 continue;
             }
