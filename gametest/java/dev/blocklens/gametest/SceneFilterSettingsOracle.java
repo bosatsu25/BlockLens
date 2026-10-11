@@ -5,6 +5,7 @@ import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensConfigFiles;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.analyzer.AnalyzerCatalog;
 import dev.blocklens.core.scene.SceneFilterOptions;
 import dev.blocklens.fabric.BlockLensConfigScreen;
 import dev.blocklens.fabric.SceneFilterOptionsScreen;
@@ -196,7 +197,7 @@ final class SceneFilterSettingsOracle {
     private static void details(Screen parent,int kind) {
         String label=Component.translatable("blocklens.settings.details").getString();
         ResponsiveSettingsScreenOracle.buttons(parent).stream().filter(b->b.getMessage().getString().equals(label))
-                .toList().get(kind+7).onPress(new KeyEvent(InputConstants.KEY_RETURN,0,0));
+                .toList().get(2 + AnalyzerCatalog.CAPABILITIES.size() + kind).onPress(new KeyEvent(InputConstants.KEY_RETURN,0,0));
     }
     private static EditBox input(Screen screen) {
         return screen.children().stream().filter(EditBox.class::isInstance).map(EditBox.class::cast).findFirst().orElseThrow();
