@@ -25,9 +25,11 @@ if (bbeEnabled == 'true') {
         args '--graphicsBackend', 'OPENGL'
         doFirst {
             File gameDirectory = launchDirectory.get().asFile
-            copy {
-                from new File(prepared, 'config')
-                into new File(gameDirectory, 'config')
+            for (String folder : ['config', 'resourcepacks']) {
+                copy {
+                    from new File(prepared, folder)
+                    into new File(gameDirectory, folder)
+                }
             }
         }
     }

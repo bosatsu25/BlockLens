@@ -38,8 +38,8 @@ jobs:
         with:
           gradle-version: '9.5.1'
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-      - name: Test exact dependency validation
-        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_prepare_bbe_compatibility.py' -v
+      - name: Test exact dependency validation and authored water control
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_*bbe*.py' -v
       - name: Prepare inspected public dependencies and synthetic settings
         run: python3 scripts/prepare_bbe_compatibility.py build/bbe-input --stack '${{ matrix.stack }}'
       - name: Install EGL runtime
@@ -64,7 +64,7 @@ jobs:
           metrics="$root/bbe-compatibility/metrics.properties"
           grep -Eq '^optimizedRegularOn=[1-9][0-9]*$' "$metrics"
           grep -Eq '^optimizedRegularOff=[1-9][0-9]*$' "$metrics"
-          for key in closedChestUi glassKelpRegression oreBorders optimizationsRetained; do
+          for key in closedChestUi glassKelpRegression oreBorders optimizationsRetained staticWaterControl; do
             grep -q "^$key=true$" "$metrics"
           done
           manifest="$root/lightweight-visual/lightweight-visual-manifest.txt"

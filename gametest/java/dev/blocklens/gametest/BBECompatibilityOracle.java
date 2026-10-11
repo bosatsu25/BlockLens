@@ -26,13 +26,15 @@ final class BBECompatibilityOracle {
         require(Boolean.getBoolean("blocklens.test.packagedRuntime"), "BBE regression requires the built distribution JAR");
         context.runOnClient(c -> PackagedRuntimeOracle.verify());
         BBEPathProbe.reset();
-        try {
+        try (var water = StaticWaterControlFixture.open(context)) {
             verifyConfiguration();
             try (var world = context.worldBuilder().create()) {
                 context.waitTicks(20);
-                // Includes closed single/left/right UI Save/Apply, OFF restoration, reload,
-                // trapped/ender negatives, lid animation, working glass/kelp and comfort transforms.
+                // Freeze only the water background in both kelp samples. The real kelp renderer,
+                // animated/static kelp pair, pixel thresholds and motion checks are unchanged.
+                water.verify();
                 LightweightVisualOracle.verify(context, world);
+                water.verify();
                 OreBorderVisualOracle.verify(context, world);
                 require(BBEPathProbe.enabled() > 0 && BBEPathProbe.disabled() > 0,
                         "chest verification bypassed BBE optimized terrain emission");
@@ -42,7 +44,7 @@ final class BBECompatibilityOracle {
                 Files.writeString(output.resolve("metrics.properties"),
                         "minecraft=26.3\nstack=" + stack + "\noptimizedRegularOn=" + BBEPathProbe.enabled()
                         + "\noptimizedRegularOff=" + BBEPathProbe.disabled()
-                        + "\nclosedChestUi=true\nglassKelpRegression=true\noreBorders=true\noptimizationsRetained=true\n",
+                        + "\nclosedChestUi=true\nglassKelpRegression=true\noreBorders=true\noptimizationsRetained=true\nstaticWaterControl=true\n",
                         StandardCharsets.UTF_8);
                 System.out.println("BLOCKLENS_BBE_COMPATIBILITY stack=" + stack
                         + " optimizedRegularOn=" + BBEPathProbe.enabled() + " optimizedRegularOff=" + BBEPathProbe.disabled());

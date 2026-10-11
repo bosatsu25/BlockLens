@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+from bbe_water_control import write_water_control
 
 LOCK = Path(__file__).with_name("bbe_compatibility_dependencies.json")
 
@@ -70,8 +71,9 @@ def prepare(destination: Path, stack: str, read=read_public) -> dict:
     (config / "BBEConfig.json").write_text(json.dumps(bbe, indent=2) + "\n", encoding="utf-8")
     (config / "iris.properties").write_text("enableShaders=false\n", encoding="utf-8")
     (config / "continuity.json").write_text('{"connected_textures":true,"emissive_textures":true}\n', encoding="utf-8")
+    water = write_water_control(destination / "resourcepacks" / "blocklens-static-water-control")
     manifest = {"schema": 1, "minecraft": "26.3", "stack": stack, "mods": records,
-                "private_modpack_uploaded": False, "shaders_enabled": False}
+                "private_modpack_uploaded": False, "shaders_enabled": False, "water_control_sha256": water}
     (destination / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return manifest
 
