@@ -60,4 +60,31 @@ final class ComfortConfigTest {
                 "others.low_fire.size=0\nothers.low_fire.size=99999999999999999999\n"));
         assertTrue(duplicate.contains("others.low_fire.size=0\n"));
     }
+
+    @Test
+    void threePointBoundaryValuesAreStrictlyValidatedAgainstConstants() {
+        assertEquals(0, ComfortOptions.MIN_FIRE_SIZE);
+        assertEquals(2, ComfortOptions.MAX_FIRE_SIZE);
+        assertEquals(40, ComfortOptions.MIN_PERCENT);
+        assertEquals(100, ComfortOptions.MAX_PERCENT);
+
+        // 3-point BVA for fireSize: -1 (invalid), 0 (min valid), 1 (nominal valid), 2 (max valid), 3 (invalid)
+        assertThrows(IllegalArgumentException.class, () -> new ComfortOptions(-1, 70, 60, 75));
+        assertDoesNotThrow(() -> new ComfortOptions(0, 70, 60, 75));
+        assertDoesNotThrow(() -> new ComfortOptions(1, 70, 60, 75));
+        assertDoesNotThrow(() -> new ComfortOptions(2, 70, 60, 75));
+        assertThrows(IllegalArgumentException.class, () -> new ComfortOptions(3, 70, 60, 75));
+
+        // 3-point BVA for percent: 39 (invalid), 40 (min valid), 41 (nominal valid), 99 (nominal valid), 100 (max valid), 101 (invalid)
+        for (int validPercent : new int[] {40, 41, 99, 100}) {
+            assertDoesNotThrow(() -> new ComfortOptions(1, validPercent, 60, 75));
+            assertDoesNotThrow(() -> new ComfortOptions(1, 70, validPercent, 75));
+            assertDoesNotThrow(() -> new ComfortOptions(1, 70, 60, validPercent));
+        }
+        for (int invalidPercent : new int[] {39, 101}) {
+            assertThrows(IllegalArgumentException.class, () -> new ComfortOptions(1, invalidPercent, 60, 75));
+            assertThrows(IllegalArgumentException.class, () -> new ComfortOptions(1, 70, invalidPercent, 75));
+            assertThrows(IllegalArgumentException.class, () -> new ComfortOptions(1, 70, 60, invalidPercent));
+        }
+    }
 }

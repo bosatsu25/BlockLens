@@ -66,7 +66,7 @@ public final class PatternInspector {
             boolean mismatch = false;
             for (var property : reference.properties().entrySet()) {
                 if (!Objects.equals(property.getValue(), candidate.properties().get(property.getKey()))) {
-                    counts.put(property.getKey(), counts.get(property.getKey()) + 1);
+                    counts.merge(property.getKey(), 1, Integer::sum);
                     mismatch = true;
                 }
             }

@@ -87,6 +87,25 @@ public final class BlockLensConfig {
         return new BlockLensConfig(new EnumMap<>(enabled), comfortOptions, analyzerOptions, options);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof BlockLensConfig other)) {
+            return false;
+        }
+        return this.enabledMask == other.enabledMask
+                && this.comfortOptions.equals(other.comfortOptions)
+                && this.analyzerOptions.equals(other.analyzerOptions)
+                && this.sceneFilterOptions.equals(other.sceneFilterOptions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(enabledMask, comfortOptions, analyzerOptions, sceneFilterOptions);
+    }
+
     public Map<CapabilityId, Boolean> asMap() {
         return Collections.unmodifiableMap(enabled);
     }
@@ -99,3 +118,4 @@ public final class BlockLensConfig {
         return 1L << ordinal;
     }
 }
+

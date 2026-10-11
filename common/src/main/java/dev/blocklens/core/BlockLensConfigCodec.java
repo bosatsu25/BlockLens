@@ -95,10 +95,10 @@ public final class BlockLensConfigCodec {
                     }
                 }
                 switch (key) {
-                    case "others.low_fire.size" -> fireSize = bounded(value, 0, 2, fireSize);
-                    case "others.handheld_size.blocks_percent" -> blocksPercent = bounded(value, 40, 100, blocksPercent);
-                    case "others.handheld_size.items_percent" -> itemsPercent = bounded(value, 40, 100, itemsPercent);
-                    case "others.handheld_size.tools_percent" -> toolsPercent = bounded(value, 40, 100, toolsPercent);
+                    case "others.low_fire.size" -> fireSize = bounded(value, ComfortOptions.MIN_FIRE_SIZE, ComfortOptions.MAX_FIRE_SIZE, fireSize);
+                    case "others.handheld_size.blocks_percent" -> blocksPercent = bounded(value, ComfortOptions.MIN_PERCENT, ComfortOptions.MAX_PERCENT, blocksPercent);
+                    case "others.handheld_size.items_percent" -> itemsPercent = bounded(value, ComfortOptions.MIN_PERCENT, ComfortOptions.MAX_PERCENT, itemsPercent);
+                    case "others.handheld_size.tools_percent" -> toolsPercent = bounded(value, ComfortOptions.MIN_PERCENT, ComfortOptions.MAX_PERCENT, toolsPercent);
                     default -> { }
                 }
                 continue;
