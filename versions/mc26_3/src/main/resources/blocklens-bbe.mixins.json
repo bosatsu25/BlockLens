@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "dev.blocklens.fabric.mixin",
+  "plugin": "dev.blocklens.fabric.BlockLensMixinPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "BBEBrightChestSpriteMixin",
+    "BBEBrightChestEmitterMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
