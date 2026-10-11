@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 final class BuilderCapabilitiesTest {
     private static final List<String> KEYS = List.of(
             "builder.block_inspector", "builder.placement_preview",
-            "builder.pattern_consistency", "builder.schematic_comparison");
+            "builder.pattern_consistency");
 
     @Test
     void fourBuilderControlsAppendInOtherAndDefaultOff() {
@@ -18,7 +18,7 @@ final class BuilderCapabilitiesTest {
         for (int index = 0; index < KEYS.size(); index++) {
             CapabilityId capability = CapabilityId.bySourceKey().get(KEYS.get(index));
             assertNotNull(capability, "Missing independently selectable builder tool: " + KEYS.get(index));
-            assertEquals(53 + index, capability.ordinal());
+            assertEquals(53 + index, capability.bitPosition());
             assertEquals(CapabilityId.Category.OTHER, capability.category());
             assertFalse(defaults.isEnabled(capability));
             assertTrue(SettingsCatalog.capabilities(CapabilityId.Category.OTHER).contains(capability));

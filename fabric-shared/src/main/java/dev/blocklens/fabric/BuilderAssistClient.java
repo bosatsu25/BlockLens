@@ -85,7 +85,7 @@ public final class BuilderAssistClient {
                 }
             } else if (inspector && client.hitResult instanceof EntityHitResult hit && hit.getEntity().isAlive()) {
                 next = new Snapshot(2, new BuilderState(BuiltInRegistries.ENTITY_TYPE.getKey(hit.getEntity().getType()).toString(),
-                        Map.of()), null, "", false, null);
+                        Map.of()), null, "", false);
             }
             if (!next.equals(snapshot)) snapshot = next;
         } catch (RuntimeException | LinkageError unavailable) { clear(); }
