@@ -36,12 +36,12 @@ jobs:
         with:
           gradle-version: '9.5.1'
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-      - name: Test bounded failure-log sanitizer
-        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p test_sanitize_client_diagnostics.py -v
-      - name: Test external preparation and evidence validation
-        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p '*external_compatibility.py' -v
-      - name: Verify resource-pack audit utility
-        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_audit_resource_packs.py' -v
+      # The discovery suite covers sanitizer, external compatibility, source-pack audit,
+      # and clean-room render asset helper regressions without duplicated invocations.
+      - name: Verify clean-room generated render assets
+        run: PYTHONDONTWRITEBYTECODE=1 python3 scripts/verify_cleanroom_render_assets.py
+      - name: Test CI helper contracts (discovery)
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_*.py' -v
       - name: Run shared quality gate
         run: gradle --stacktrace :common:qualityGate
 
@@ -390,6 +390,34 @@ jobs:
         with:
           name: blocklens-lightweight-visual-${{ matrix.minecraft }}
           path: ${{ steps.lightweight.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Collect clean-room ore border evidence
+        id: ore-borders
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="versions/${{ matrix.module }}/build/run/clientGameTest/ore-border-visual"
+          target="build/ci/ore-borders-${{ matrix.minecraft }}"
+          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 6
+          for frame in all-off diamond_ore-on gold_ore-on nether_gold_ore-on nether-gold-reloaded restored-off; do
+            test -s "$root/$frame.png"
+          done
+          manifest="$root/ore-border-visual-manifest.txt"
+          grep -Fqx "minecraft=${{ matrix.minecraft }}" "$manifest"
+          for check in isolatedSwitches activeTexture reloadRetained offRestored cleanRoom; do
+            grep -Fqx "$check=true" "$manifest"
+          done
+          grep -Fqx "oreVariants=3" "$manifest"
+          mkdir -p "$target"
+          cp "$root"/*.png "$manifest" "$target/"
+          (cd "$target" && sha256sum *.png ore-border-visual-manifest.txt > SHA256SUMS.txt)
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+      - name: Upload clean-room ore border evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-ore-borders-${{ matrix.minecraft }}
+          path: ${{ steps.ore-borders.outputs.path }}
           if-no-files-found: error
           retention-days: 14
       - name: Collect analyzer UI and rendered evidence

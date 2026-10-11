@@ -58,6 +58,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             M5DarkAreaVisualOracle.verify(context, singleplayer);
             M5ActiveResourcePackOracle.verify(context, singleplayer);
             LightweightVisualOracle.verify(context, singleplayer);
+            OreBorderVisualOracle.verify(context, singleplayer);
             AnalyzerVisualOracle.verify(context, singleplayer);
             SceneFilterVisualOracle.verify(context, singleplayer);
             BuilderAssistOracle.verify(context, singleplayer);

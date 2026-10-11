@@ -1,5 +1,7 @@
 # BlockLens
 
+Clean-room glowing ore edges use a generated six-face, translucent-border overlay for the 18 supported vanilla ores, following each ore's existing independent highlight switch. The original third-party art/OptiFine CTM tiles are not redistributed. CTM connected seams, modded ores and full eater-pack parity remain tracked in issue #64. Every enabled model uses precompiled immutable face instructions; neither startup nor a chunk render scans ZIP files.
+
 <p align="center">
   <img src="common/src/main/resources/assets/blocklens/icon.png" alt="BlockLens icon" width="192">
 </p>

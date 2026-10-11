@@ -26,6 +26,9 @@ The compiled catalog contains 55 independent capabilities; existing keys, orderi
 
 ## 資源 / Resources（21）
 
+添付NewGlowingOresの対象に相当する18種類のバニラ鉱石について、既存の鉱石ハイライトを有効にするとBlockLens独自の発光境界を描画します。鉱石ごとの独立ON/OFFは従来どおりです。元の画像・OptiFine CTMは配布せず、露出面の透明モデルを使用します。隣接ブロック間のCTM連結や外部MOD鉱石までの完全互換は未実装です。
+
+
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
 | 黒曜石 | Obsidian | 黒曜石を強調表示します。 | 無効 / Disabled |

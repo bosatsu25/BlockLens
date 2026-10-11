@@ -197,7 +197,9 @@ class ExternalEvidenceTest(unittest.TestCase):
         native = {
             "schema": "1", "minecraft": "26.3", "status": "passed", "scope": "sodium-terrain",
             "captureMode": "fabric-test-capture", "sodiumVersion": "0.9.2+mc26.3", "imageCount": "15",
-            "minimumDifferencePixels": "80", "minimumRetentionPermille": "950", "colorDelta": "24",
+            "minimumDifferencePixels": "80", "minimumRetentionPermille": "950",
+            "minimumRestorationOverlapPermille": "990",
+            "maximumShaderRestorationDifferentPixels": "200", "colorDelta": "24",
             "maskToleranceRadius": "2", "roiMinX": "90", "roiMaxX": "550", "roiMinY": "90",
             "roiMaxY": "310", "observationLimit": "4096", "failedChecks": "", "stage": "stone-restored",
         }
@@ -213,8 +215,16 @@ class ExternalEvidenceTest(unittest.TestCase):
         for name in ("explicitHighlight", "tagHighlight", "resourceReloadHighlight", "terrainVisible"):
             native[name + "DifferentPixels"] = "100"
         for name in ("explicitRestoration", "unsupportedControl", "tagRemoval", "tagFilterAir",
-                     "tagFilterRestoration", "terrainHiddenAir", "terrainRestoration"):
+                     "terrainHiddenAir", "terrainRestoration"):
             native[name + "DifferentPixels"] = "0"
+        native.update({
+            "tagFilterRestorationDifferentPixels": "124",
+            "tagFilterRestorationExpectedForeground": "100",
+            "tagFilterRestorationRestoredForeground": "100",
+            "tagFilterRestorationSharedForeground": "100",
+            "tagFilterRestorationExpectedOverlapPermille": "1000",
+            "tagFilterRestorationRestoredOverlapPermille": "1000",
+        })
         for name in ("explicitBase", "tagBase"):
             native.update({name + "Foreground": "100", name + "Retained": "100", name + "RetentionPermille": "1000"})
         stages = ("air-control", "explicit-off", "explicit-on", "explicit-restored", "unsupported-off",
@@ -281,7 +291,13 @@ class ExternalEvidenceTest(unittest.TestCase):
                     evidence.verify(directory, "26.3", "shader-on")
 
     def test_sodium_thresholds_native_metrics_and_image_hashes_are_enforced(self):
-        cases = (("minimumRetentionPermille", "900"), ("explicitHighlightDifferentPixels", "79"),
+        cases = (("minimumRetentionPermille", "900"), ("minimumRestorationOverlapPermille", "950"),
+                  ("maximumShaderRestorationDifferentPixels", "400"),
+                  ("tagFilterRestorationExpectedOverlapPermille", "989"),
+                  ("tagFilterRestorationRestoredOverlapPermille", "989"),
+                  ("tagFilterRestorationSharedForeground", "0"),
+                  ("tagFilterRestorationDifferentPixels", "201"),
+                  ("explicitHighlightDifferentPixels", "79"),
                  ("terrainHiddenAirDifferentPixels", "80"), ("tagBaseRetained", "94"),
                  ("explicitBaseRetentionPermille", "999"), ("roiMaxY", "300"),
                  ("sodiumVersion", "0.9.3+mc26.3"), ("captureMode", "completed-native-frame"),

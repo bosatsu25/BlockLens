@@ -29,6 +29,17 @@ final class TargetCapabilityIndexTest {
     }
 
     @Test
+    void everyRenderTargetBitMatchesPersistedConfigBits() {
+        for (CapabilityId capability : CapabilityId.values()) {
+            var index = TargetCapabilityIndex.builder(1).bind(0, capability).build();
+            long bit = 1L << capability.bitPosition();
+            assertEquals(bit, index.mask(0), capability.sourceKey());
+            var config = dev.blocklens.core.BlockLensConfig.defaults().withEnabled(capability, true);
+            assertEquals(bit, index.mask(0) & config.enabledMask(), capability.sourceKey());
+        }
+    }
+
+    @Test
     void overlappingCapabilitiesComposeOnOneTarget() {
         TargetCapabilityIndex index = TargetCapabilityIndex.builder(3)
                 .bind(1, CapabilityId.OBSIDIAN)

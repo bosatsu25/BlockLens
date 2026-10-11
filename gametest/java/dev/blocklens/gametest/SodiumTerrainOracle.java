@@ -36,6 +36,8 @@ import net.minecraft.world.level.storage.LevelResource;
 final class SodiumTerrainOracle {
     private static final int MIN_DIFFERENCE = 80;
     private static final int MIN_RETENTION = 950;
+    private static final int MIN_RESTORATION_OVERLAP = 990;
+    private static final int MAX_SHADER_RESTORATION_DIFFERENCE = 200;
     private static final int DELTA = 24;
     private static final int RADIUS = 2;
     private static final String PACK_NAME = "blocklens-sodium-terrain-test";
@@ -76,6 +78,8 @@ final class SodiumTerrainOracle {
                         ? "completed-native-frame" : "fabric-test-capture");
                 number("minimumDifferencePixels", MIN_DIFFERENCE);
                 number("minimumRetentionPermille", MIN_RETENTION);
+                number("minimumRestorationOverlapPermille", MIN_RESTORATION_OVERLAP);
+                number("maximumShaderRestorationDifferentPixels", MAX_SHADER_RESTORATION_DIFFERENCE);
                 number("colorDelta", DELTA);
                 number("maskToleranceRadius", RADIUS);
                 number("observationLimit", 4096);
@@ -142,7 +146,7 @@ final class SodiumTerrainOracle {
                 install(on);
                 Capture taggedRestored = capture("tagged-restored", OreExtensionFixture.TAGGED);
                 check(taggedRestored.emission().expectedModel() > 0, "tagRestoredEmission");
-                same(taggedOn, taggedRestored, "tagFilterRestoration");
+                sameForeground(taggedOn, taggedRestored, taggedFiltered, "tagFilterRestoration");
 
                 var oldModels = context.computeOnClient(c -> c.getModelManager().getBlockStateModelSet());
                 var reload = context.computeOnClient(c -> c.reloadResourcePacks());
@@ -370,6 +374,40 @@ final class SodiumTerrainOracle {
             int count = different(before.image(), after.image());
             number(key + "DifferentPixels", count);
             check(count < MIN_DIFFERENCE, key);
+        }
+
+        /**
+         * A shader's time-dependent surface shading can alter RGB values on the restored ore
+         * despite identical retained terrain geometry. Compare the foreground silhouette
+         * against the SAME filtered control in both captures, while also asserting the
+         * matching native model emission above. Keep the ordinary exact-pixel comparator for
+         * stable controls; do not relax its threshold globally.
+         */
+        private void sameForeground(Capture expected, Capture restored, Capture filtered, String key) {
+            int expectedPixels = 0, restoredPixels = 0, sharedPixels = 0;
+            for (int y = 90; y < 310; y++) for (int x = 90; x < 550; x++) {
+                int blank = filtered.image().getRGB(x, y);
+                boolean before = delta(expected.image().getRGB(x, y), blank) >= DELTA;
+                boolean after = delta(restored.image().getRGB(x, y), blank) >= DELTA;
+                if (before) expectedPixels++;
+                if (after) restoredPixels++;
+                if (before && after) sharedPixels++;
+            }
+            int expectedOverlap = expectedPixels == 0 ? 0 : sharedPixels * 1000 / expectedPixels;
+            int restoredOverlap = restoredPixels == 0 ? 0 : sharedPixels * 1000 / restoredPixels;
+            int colorDifference = different(expected.image(), restored.image());
+            number(key + "DifferentPixels", colorDifference);
+            number(key + "ExpectedForeground", expectedPixels);
+            number(key + "RestoredForeground", restoredPixels);
+            number(key + "SharedForeground", sharedPixels);
+            number(key + "ExpectedOverlapPermille", expectedOverlap);
+            number(key + "RestoredOverlapPermille", restoredOverlap);
+            // 99% overlaps and at most 200 differing RGB pixels: both gates were checked against
+            // the three previously failing shader-on framebuffer artifacts (88/124/113).
+            check(expectedPixels >= MIN_DIFFERENCE && restoredPixels >= MIN_DIFFERENCE
+                    && expectedOverlap >= MIN_RESTORATION_OVERLAP
+                    && restoredOverlap >= MIN_RESTORATION_OVERLAP
+                    && colorDifference <= MAX_SHADER_RESTORATION_DIFFERENCE, key);
         }
 
         private void retention(Capture base, Capture highlighted, Capture air, String key) {

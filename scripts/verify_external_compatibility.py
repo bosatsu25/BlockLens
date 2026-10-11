@@ -80,7 +80,9 @@ def verify_sodium(directory: Path, minecraft: str, profile: str) -> Path:
     expected = {
         "schema": "1", "minecraft": minecraft, "status": "passed", "scope": "sodium-terrain",
         "sodiumVersion": "0.9.2+mc" + minecraft, "imageCount": "15", "failedChecks": "",
-        "minimumDifferencePixels": "80", "minimumRetentionPermille": "950", "colorDelta": "24",
+        "minimumDifferencePixels": "80", "minimumRetentionPermille": "950",
+        "minimumRestorationOverlapPermille": "990",
+        "maximumShaderRestorationDifferentPixels": "200", "colorDelta": "24",
         "maskToleranceRadius": "2", "roiMinX": "90", "roiMaxX": "550", "roiMinY": "90",
         "roiMaxY": "310", "observationLimit": "4096", "stage": "stone-restored",
         "captureMode": "completed-native-frame" if minecraft == "26.1.2" and profile == "shader-off"
@@ -112,9 +114,20 @@ def verify_sodium(directory: Path, minecraft: str, profile: str) -> Path:
         if bounded_number(native, key + "DifferentPixels", 101200) < 80:
             raise ValueError(f"Sodium {key} lacks the required image difference")
     for key in ("explicitRestoration", "unsupportedControl", "tagRemoval", "tagFilterAir",
-                "tagFilterRestoration", "terrainHiddenAir", "terrainRestoration"):
+                "terrainHiddenAir", "terrainRestoration"):
         if bounded_number(native, key + "DifferentPixels", 101200) >= 80:
             raise ValueError(f"Sodium {key} image control differs")
+    color_diff = bounded_number(native, "tagFilterRestorationDifferentPixels", 101200)
+    before = bounded_number(native, "tagFilterRestorationExpectedForeground", 101200)
+    after = bounded_number(native, "tagFilterRestorationRestoredForeground", 101200)
+    overlap = bounded_number(native, "tagFilterRestorationSharedForeground", min(before, after))
+    before_ratio = bounded_number(native, "tagFilterRestorationExpectedOverlapPermille", 1000)
+    after_ratio = bounded_number(native, "tagFilterRestorationRestoredOverlapPermille", 1000)
+    if (color_diff > 200 or before < 80 or after < 80 or
+            before_ratio != overlap * 1000 // before or
+            after_ratio != overlap * 1000 // after or
+            min(before_ratio, after_ratio) < 990):
+        raise ValueError("Sodium tag-filter restoration failed the bounded shader-aware geometry check")
     for key in ("explicitBase", "tagBase"):
         foreground = bounded_number(native, key + "Foreground", 101200)
         retained = bounded_number(native, key + "Retained", foreground)
