@@ -118,6 +118,9 @@ final class SimplifiedTerrainOracle {
                 saveUiToggle(context);
                 var restored=capture(context,output,ROLES[role]+"-restored");
                 require(difference(enabled,restored)>20,"Simplification did not visibly restore: "+ROLES[role]);
+                // Same frozen state and fixed backdrop as OFF; use the unchanged-reload bound.
+                require(difference(baseline,restored)<200,"Restored terrain differs from OFF baseline: "+ROLES[role]);
+                require(difference(restored,empty)>20,"Restoration removed visible terrain: "+ROLES[role]);
                 context.runOnClient(c->require(c.level.getBlockState(TARGET)==state,"Restoration changed world state"));
             }
             server.runCommand("fill 0 -59 4 0 -57 4 minecraft:air");server.runCommand("setblock 0 -59 4 minecraft:stone");
