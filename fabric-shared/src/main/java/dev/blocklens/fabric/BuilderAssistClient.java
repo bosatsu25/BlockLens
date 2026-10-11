@@ -70,7 +70,7 @@ public final class BuilderAssistClient {
         boolean inspector = config.isEnabled(CapabilityId.BLOCK_INSPECTOR);
         boolean preview = config.isEnabled(CapabilityId.PLACEMENT_PREVIEW);
         boolean pattern = config.isEnabled(CapabilityId.PATTERN_CONSISTENCY);
-        boolean schematic = config.isEnabled(CapabilityId.SCHEMATIC_COMPARISON);
+        boolean schematic = false;
         if ((!inspector && !preview && !pattern && !schematic) || client.level == null || client.player == null) {
             clear(); return;
         }
