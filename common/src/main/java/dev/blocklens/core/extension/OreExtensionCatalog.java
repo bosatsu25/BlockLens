@@ -46,7 +46,9 @@ public final class OreExtensionCatalog {
 
     /** Null values are conflict tombstones: tag fallback must not reactivate an explicit conflict. */
     public synchronized Map<String, CapabilityId> freeze() {
-        if (frozen == null) frozen = Collections.unmodifiableMap(registrations);
+        if (frozen == null) {
+            frozen = Collections.unmodifiableMap(new TreeMap<>(registrations));
+        }
         return frozen;
     }
 
