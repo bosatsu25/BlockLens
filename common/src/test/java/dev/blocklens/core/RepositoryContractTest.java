@@ -51,7 +51,7 @@ final class RepositoryContractTest {
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
         assertTrue(source.contains("implements FabricClientGameTest"));
-        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 55"));
+        assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 56"));
         assertTrue(source.contains("context.worldBuilder().create()"));
         assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
         assertTrue(source.contains("MinecraftStateAdapterOracle.verify()"));

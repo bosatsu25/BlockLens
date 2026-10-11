@@ -16,7 +16,7 @@ import net.fabricmc.loader.api.FabricLoader;
 
 /** Shared client smoke and integration oracle executed against every supported Minecraft version. */
 public final class BlockLensSmokeClientGameTest implements FabricClientGameTest {
-    private static final int EXPECTED_CAPABILITY_COUNT = 55;
+    private static final int EXPECTED_CAPABILITY_COUNT = 56;
 
     @Override
     public void runTest(ClientGameTestContext context) {
@@ -30,6 +30,14 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         }
         if ("m8".equals(System.getProperty("blocklens.test.focus", "all"))) {
             verifyM8Only(context);
+            return;
+        }
+        if ("palette".equals(System.getProperty("blocklens.test.focus", "all"))) {
+            context.runOnClient(c -> PackagedRuntimeOracle.verify());
+            try (TestSingleplayerContext world = context.worldBuilder().create()) {
+                context.waitTicks(20);
+                PaleOakPaletteOracle.verify(context, world);
+            }
             return;
         }
         if ("scene".equals(System.getProperty("blocklens.test.focus","all"))) {
@@ -63,6 +71,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             M5ActiveResourcePackOracle.verify(context, singleplayer);
             LightweightVisualOracle.verify(context, singleplayer);
             OreBorderVisualOracle.verify(context, singleplayer);
+            PaleOakPaletteOracle.verify(context, singleplayer);
             AnalyzerVisualOracle.verify(context, singleplayer);
             SceneFilterVisualOracle.verify(context, singleplayer);
             BuilderAssistOracle.verify(context, singleplayer);
@@ -120,7 +129,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
 
     private static void verifyRuntime(String phase, boolean reportBaseline) {
         require(CapabilityId.values().length == EXPECTED_CAPABILITY_COUNT,
-                phase + ": expected 55 capabilities");
+                phase + ": expected 56 capabilities");
 
         String minecraftVersion = FabricLoader.getInstance()
                 .getModContainer("minecraft")

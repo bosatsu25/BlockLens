@@ -1,8 +1,8 @@
-# BlockLens — 現在の55機能 / Current 55 capabilities
+# BlockLens — 現在の56機能 / Current 56 capabilities
 
 Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
-The compiled catalog contains 55 independent capabilities; existing keys, ordering and defaults are preserved.
+The compiled catalog contains 56 independent capabilities; existing keys, ordering and defaults are preserved.
 
 **削除済み:** `analyzer.debris_analyzer` と `builder.schematic_comparison`。既存設定のこれらのキーは無視されます。通常の古代の残骸ハイライト `gaming.ancient_debris` は引き続き利用できます。
 
@@ -53,7 +53,7 @@ The compiled catalog contains 55 independent capabilities; existing keys, orderi
 | ネザー金鉱石 | Nether Gold Ore | ネザー金鉱石を強調表示します。 | 無効 / Disabled |
 | ネザークォーツ鉱石 | Nether Quartz Ore | ネザークォーツ鉱石を強調表示します。 | 無効 / Disabled |
 
-## 見やすさ / Visibility（8）
+## 見やすさ / Visibility（9）
 
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
@@ -65,6 +65,7 @@ The compiled catalog contains 55 independent capabilities; existing keys, orderi
 | 昆布の目印 | Kelp Highlight | 昆布に動くマゼンタ・オレンジ色の目印を追加します。 | 無効 / Disabled |
 | 明るい白色コンクリート | Bright Concrete | 元のモデルを保って白色コンクリートを発光表示します。 | 有効 / Enabled |
 | 明るいチェスト | Bright Chest | 通常のチェストを明るい白色にし、形と開閉を保ちます。 | 有効 / Enabled |
+| ペールオークを白灰色に | Neutral Pale Oak | バニラの木材を木目と色付き金具を保って白灰色にします。保存時に再読み込みし、外部パック素材を優先します。 | 無効 / Disabled |
 
 ## その他 / Other（13）
 
@@ -96,7 +97,7 @@ Open with B or the optional Mod Menu entrypoint. Save and apply persists edits; 
 
 ## 確認範囲 / Verification boundary
 
-一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援を追加した構成です。既存機能の設定キー・ビット位置・既定値は維持します。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
+一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援とペールオークの白灰色化を追加した構成です。既存機能の設定キー・ビット位置・既定値は維持します。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
 
 建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。3機能を有効にして「保存して適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
 

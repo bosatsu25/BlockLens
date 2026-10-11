@@ -47,8 +47,8 @@ if (!(m8FpsLimit in ['30', '60', '120'])) {
     throw new GradleException('m8FpsLimit must be 30, 60 or 120')
 }
 def clientTestFocus = providers.gradleProperty('clientTestFocus').orElse('all').get()
-if (!(clientTestFocus in ['all', 'scene', 'm8', 'external'])) {
-    throw new GradleException('clientTestFocus must be all, scene, m8 or external')
+if (!(clientTestFocus in ['all', 'scene', 'm8', 'external', 'palette'])) {
+    throw new GradleException('clientTestFocus must be all, scene, m8, external or palette')
 }
 def externalProfile = providers.gradleProperty('externalCompatibilityProfile').orElse('none').get()
 if (!(externalProfile in ['none', 'shader-off', 'shader-on', 'vulkan', 'packs'])) {
@@ -201,7 +201,7 @@ def verifyPackagedRuntime = providers.gradleProperty('verifyPackagedRuntime').or
 if (!(verifyPackagedRuntime in ['true', 'false'])) {
     throw new GradleException('verifyPackagedRuntime must be true or false')
 }
-if (clientTestFocus in ['m8', 'external'] && verifyPackagedRuntime != 'true') {
+if (clientTestFocus in ['m8', 'external', 'palette'] && verifyPackagedRuntime != 'true') {
     throw new GradleException('M8 and external experiments require verifyPackagedRuntime=true')
 }
 if (verifyPackagedRuntime == 'true') {

@@ -15,7 +15,9 @@
     "SceneBlockEntityMixin",
     "SceneEntityMixin",
     "OreExtensionMixin",
-    "SodiumTerrainMixin"
+    "SodiumTerrainMixin",
+    "PaleOakSpriteMixin",
+    "PaleOakTextureMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -80,7 +80,9 @@ public enum CapabilityId {
 
     BLOCK_INSPECTOR("builder.block_inspector", Category.OTHER, false),
     PLACEMENT_PREVIEW("builder.placement_preview", Category.OTHER, false),
-    PATTERN_CONSISTENCY("builder.pattern_consistency", Category.OTHER, false);
+    PATTERN_CONSISTENCY("builder.pattern_consistency", Category.OTHER, false),
+
+    PALE_OAK_NEUTRAL("outline.pale_oak_neutral", Category.OUTLINE, false);
 
     public enum Category {
         DECORATION,
@@ -112,10 +114,10 @@ public enum CapabilityId {
         this.defaultEnabled = defaultEnabled;
     }
 
-    /** Historical bit 46 stays reserved for the removed debris analyzer. */
+    /** Historical bits 46 and 56 remain reserved for the two retired controls. */
     public int bitPosition() {
         int position = ordinal();
-        return position < 46 ? position : position + 1;
+        return position < 46 ? position : position < 55 ? position + 1 : position + 2;
     }
 
     public String sourceKey() {
