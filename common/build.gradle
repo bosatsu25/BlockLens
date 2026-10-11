@@ -131,6 +131,7 @@ pitest {
     targetTests = [
             'dev.blocklens.core.ui.SettingsDraftTest',
             'dev.blocklens.core.CapabilityIdTest',
+            'dev.blocklens.core.BlockLensConfigTest',
             'dev.blocklens.core.BlockLensConfigCodecTest',
             'dev.blocklens.core.ComfortConfigTest',
             'dev.blocklens.core.analyzer.AnalyzerConfigurationTest',
