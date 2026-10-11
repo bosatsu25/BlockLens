@@ -3,6 +3,13 @@ package dev.blocklens.gametest;
 import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.BlockLensConfigFiles;
+import dev.blocklens.core.ui.SettingsCatalog;
+import dev.blocklens.fabric.BlockLensConfigScreen;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
 import dev.blocklens.core.ComfortOptions;
 import dev.blocklens.core.render.ComfortRenderPolicy;
 import dev.blocklens.fabric.MinecraftTerrainInvalidator;
@@ -267,6 +274,7 @@ final class LightweightVisualOracle {
                             == brightPixels(disabled, bounds[0], bounds[1], 208, 240),
                     "trapped/ender chest incorrectly received a white cue");
         }
+        verifyChestGuiToggle(context, output, off, disabled, evidence);
         int[] positions = {-6, -1, 0};
         install(context, off);
         context.runOnClient(client -> {
@@ -291,6 +299,83 @@ final class LightweightVisualOracle {
         assertChestLids(context, positions, false);
         evidence.append("nonRegularChestsUnchanged=true\nchestLidAnimation=true\n");
     }
+    /**
+     * Exercise the exact Settings -> Save and Apply flow while three regular chest
+     * variants are CLOSED. The toggle must not depend on any lid update, forced pack
+     * reload, world mutation or reconnect; unrelated chest materials stay unchanged.
+     */
+    private static void verifyChestGuiToggle(ClientGameTestContext context, Path output,
+            BlockLensConfig off, BufferedImage offImage, StringBuilder evidence) throws IOException {
+        Path configFile = FabricLoader.getInstance().getConfigDir().resolve(BlockLensConfigFiles.FILE_NAME);
+        byte[] savedConfig = Files.readAllBytes(configFile);
+        int[] positions = {-6, -1, 0};
+        try {
+            install(context, off);
+            assertChestLids(context, positions, false);
+            applyChestSettingViaScreen(context, true);
+            assertChestLids(context, positions, false);
+            require(BlockLensConfigFiles.loadOrCreate(FabricLoader.getInstance().getConfigDir())
+                    .isEnabled(CapabilityId.BRIGHT_CHEST), "chest UI save was not persisted");
+            BufferedImage on = read(capture(context, output, "bright-chest-ui-closed-on"));
+            int[][] regular = {{210, 243}, {290, 312}, {312, 335}};
+            for (int index = 0; index < regular.length; index++) {
+                int[] region = regular[index];
+                int gain = brightPixels(on, region[0], region[1], 208, 240)
+                        - brightPixels(offImage, region[0], region[1], 208, 240);
+                require(gain >= 20, "closed chest UI toggle did not update variant " + index + ": " + gain);
+            }
+            for (int[] region : new int[][] {{384, 416}, {417, 449}}) {
+                require(brightPixels(on, region[0], region[1], 208, 240)
+                                == brightPixels(offImage, region[0], region[1], 208, 240),
+                        "closed chest UI toggle changed a trapped/ender chest");
+            }
+
+            applyChestSettingViaScreen(context, false);
+            assertChestLids(context, positions, false);
+            require(!BlockLensConfigFiles.loadOrCreate(FabricLoader.getInstance().getConfigDir())
+                    .isEnabled(CapabilityId.BRIGHT_CHEST), "chest UI disable was not persisted");
+            BufferedImage restored = read(capture(context, output, "bright-chest-ui-closed-off"));
+            require(difference(offImage, restored) < 80,
+                    "closed chest did not restore its vanilla material after disabling");
+            evidence.append("chestClosedUiOnWithoutOpening=true\nchestClosedUiOffWithoutOpening=true\n");
+        } finally {
+            Files.write(configFile, savedConfig);
+            install(context, off);
+        }
+    }
+
+    private static void applyChestSettingViaScreen(ClientGameTestContext context, boolean enabled) {
+        context.runOnClient(client -> {
+            var previous = BlockLensConfigScreen.current(client);
+            var screen = new BlockLensConfigScreen(previous);
+            BlockLensConfigScreen.show(client, screen);
+            ResponsiveSettingsScreenOracle.select(screen, CapabilityId.Category.OUTLINE);
+            int index = SettingsCatalog.capabilities(CapabilityId.Category.OUTLINE)
+                    .indexOf(CapabilityId.BRIGHT_CHEST);
+            require(index >= 0, "bright chest is absent from the visibility catalog");
+            List<Button> controls = ResponsiveSettingsScreenOracle.buttons(screen);
+            Button toggle = controls.get(4 + index);
+            for (int attempt = 0; attempt < controls.size() * 2 && !toggle.visible; attempt++) {
+                screen.keyPressed(new KeyEvent(InputConstants.KEY_TAB, 0, 0));
+            }
+            require(toggle.visible && toggle.active, "bright chest toggle is not keyboard reachable");
+            require(BlockLensRuntime.config().isEnabled(CapabilityId.BRIGHT_CHEST) != enabled,
+                    "closed chest GUI fixture did not start from the opposite state");
+            toggle.onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
+            require(BlockLensRuntime.config().isEnabled(CapabilityId.BRIGHT_CHEST) != enabled,
+                    "unsaved bright chest edit reached the render runtime");
+            String apply = Component.translatable("blocklens.settings.apply").getString();
+            Button save = controls.stream().filter(b -> b.getMessage().getString().equals(apply))
+                    .findFirst().orElseThrow(() -> new AssertionError("Save and Apply action missing"));
+            save.onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
+            require(BlockLensRuntime.config().isEnabled(CapabilityId.BRIGHT_CHEST) == enabled,
+                    "Save and Apply failed to publish bright chest switch");
+            require(BlockLensConfigScreen.current(client) == previous,
+                    "Save and Apply did not close the settings screen");
+        });
+        context.waitTicks(8);
+    }
+
     private static void assertChestLids(ClientGameTestContext context, int[] positions, boolean open) {
         context.runOnClient(client -> {
             for (int x : positions) {
