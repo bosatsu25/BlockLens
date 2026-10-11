@@ -95,7 +95,7 @@ final class SceneFilterSettingsOracle {
                                 var activeIds=SceneFilterOptions.parseList(input(child).getValue());
                                 require(activeIds.size()>100 && activeIds.contains("minecraft:stone")
                                         && activeIds.contains("minecraft:oak_planks"),
-                                        "Eater Clear did not resolve the registered transparent model set");
+                                        "Eater Clear did not resolve the registered source hide inventory");
                                 require(!activeIds.contains("minecraft:blockofamethyst"),
                                         "Eater Clear kept an unregistered source alias");
                                 expected=expected.withEaterClearPreset(activeIds);

@@ -15,6 +15,10 @@ final class SupportedVersionFixtures {
         return root.resolve("versions").resolve(adapter).resolve("src/main/java/dev/blocklens/fabric");
     }
 
+    static Path rendererSource(Path root) {
+        return root.resolve("fabric-shared/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java");
+    }
+
     static Path testSourceRoot(Path root, String module) {
         String adapter = module.equals("mc26_3") ? "mc26_2" : module;
         return root.resolve("versions").resolve(adapter).resolve("src/gametest");

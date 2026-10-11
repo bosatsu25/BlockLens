@@ -8,8 +8,9 @@ import hashlib
 from pathlib import Path
 import shutil
 import struct
+import zipfile
 
-from prepare_external_compatibility import read_lock
+from prepare_external_compatibility import read_lock, validate_pack
 
 RENDER_PROFILES = ("shader-off", "shader-on", "vulkan", "packs")
 DEFAULT_IMAGES = (
@@ -142,7 +143,70 @@ def verify_sodium(directory: Path, minecraft: str, profile: str) -> Path:
     return manifest
 
 
-def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
+def private_pack_probe_hashes(pack_input: Path | None, lock: dict) -> dict:
+    """Read expected asset hashes locally; never add them to the public dependency lock."""
+    if pack_input is None:
+        raise ValueError("Pack evidence requires the private prepared pack input")
+    if pack_input.absolute() != pack_input.resolve() or not pack_input.is_dir():
+        raise ValueError("Private pack input must be a regular directory without symlinks")
+    result = {path: {} for path in lock["pack_probes"]}
+    for alias, expected in lock["packs"].items():
+        archive = pack_input / "packs" / expected["filename"]
+        if archive.absolute() != archive.resolve() or not archive.is_file():
+            raise ValueError("Private pack input is missing or contains a symlink")
+        validate_pack(archive, expected)
+        with zipfile.ZipFile(archive) as source:
+            for path, candidates in lock["pack_probes"].items():
+                if alias not in candidates:
+                    continue
+                entry = source.getinfo("assets/minecraft/" + path)
+                if entry.file_size > 4 * 1024 * 1024:
+                    raise ValueError("Private pack resource exceeds the inspection bound")
+                with source.open(entry) as stream:
+                    data = stream.read(4 * 1024 * 1024 + 1)
+                if len(data) != entry.file_size:
+                    raise ValueError("Private pack resource size differs")
+                result[path][alias] = hashlib.sha256(data).hexdigest()
+    return result
+
+
+def verify_pack_order(directory: Path, order: str, lock: dict, expected_probes: dict) -> list[Path]:
+    """Require the byte-pinned complete resource set and actual native geometry metrics."""
+    if order not in ("forward", "reverse"):
+        raise ValueError("Unknown pack resource order")
+    resource_file = directory / f"external-packs-{order}-resources.tsv"
+    if resource_file.is_symlink() or not resource_file.is_file() or resource_file.stat().st_size > 16384:
+        raise ValueError("The bounded pack resource evidence is missing")
+    rows = {}
+    for line in resource_file.read_text(encoding="utf-8").splitlines():
+        fields = line.split("\t")
+        if len(fields) != 3 or fields[0] in rows:
+            raise ValueError("Malformed or duplicate pack resource evidence")
+        rows[fields[0]] = fields[1:]
+    if set(rows) != set(lock["pack_probes"]):
+        raise ValueError("Incomplete pack resource evidence")
+    aliases = list(lock["packs"])
+    if order == "reverse":
+        aliases.reverse()
+    for path, candidates in lock["pack_probes"].items():
+        winner = next(alias for alias in reversed(aliases) if alias in candidates)
+        if rows[path] != [winner, expected_probes[path][winner]]:
+            raise ValueError("The pack resource bytes or priority differ")
+    visual_file = directory / f"external-packs-{order}-visual.txt"
+    visual = properties(visual_file)
+    for key, expected in {"maskThreshold": "24", "maskToleranceRadius": "2",
+                          "minimumRetentionPermille": "950"}.items():
+        require_value(visual, key, expected)
+    foreground = bounded_number(visual, "baseForeground", 60200)
+    retained = bounded_number(visual, "baseRetained", foreground)
+    changed = bounded_number(visual, "changedPixels", 60200)
+    ratio = bounded_number(visual, "retentionPermille", 1000)
+    if foreground < 120 or changed < 80 or ratio < 950 or ratio != retained * 1000 // foreground:
+        raise ValueError("The pack visual evidence fails geometry retention")
+    return [resource_file, visual_file]
+
+
+def verify(directory: Path, minecraft: str, profile: str, pack_input: Path | None = None) -> list[Path]:
     lock = read_lock()
     if minecraft not in lock["targets"] or profile not in RENDER_PROFILES:
         raise ValueError("Unknown rendering evidence matrix row")
@@ -170,6 +234,7 @@ def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
         require_value(evidence, "shaderPack", lock["shader"]["filename"])
         require_value(evidence, "shaderProfile", lock["shader"]["profile"])
     if profile == "packs":
+        expected_probes = private_pack_probe_hashes(pack_input, lock)
         for order in ("Forward", "Reverse"):
             require_value(evidence, "packOrder" + order, "true")
         for alias, pack in lock["packs"].items():
@@ -179,11 +244,11 @@ def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
                           str(pack["min_format"] <= major <= pack["max_format"]).lower())
         images = [f"external-packs-{order}-{state}.png" for order in ("forward", "reverse")
                   for state in ("off", "on", "air")]
-        files += [directory / f"external-packs-{order}-{kind}" for order in ("forward", "reverse")
-                  for kind in ("resources.tsv", "visual.txt")]
+        for order in ("forward", "reverse"):
+            files += verify_pack_order(directory, order, lock, expected_probes)
         restoration = directory / "external-packs-restoration.txt"
         restored = properties(restoration)
-        for key, expected in {"packCount": "5", "probesPerOrder": "8", "priorityChangedSources": "2",
+        for key, expected in {"packCount": "6", "probesPerOrder": "29", "priorityChangedSources": "6",
                               "selectedPacksRestored": "true", "configRestored": "true"}.items():
             require_value(restored, key, expected)
         files.append(restoration)
@@ -211,8 +276,9 @@ def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
     return files
 
 
-def collect(directory: Path, minecraft: str, profile: str, destination: Path) -> int:
-    files = verify(directory, minecraft, profile)
+def collect(directory: Path, minecraft: str, profile: str, destination: Path,
+            pack_input: Path | None = None) -> int:
+    files = verify(directory, minecraft, profile, pack_input)
     destination.mkdir(parents=True, exist_ok=True)
     expected_names = {path.name for path in files} | {"SHA256SUMS.txt"}
     if any(path.name not in expected_names for path in destination.iterdir()):
@@ -222,7 +288,13 @@ def collect(directory: Path, minecraft: str, profile: str, destination: Path) ->
         target = destination / source.name
         if target.is_symlink():
             raise ValueError("Result destination must not be a symlink")
-        if source.resolve() != target.resolve():
+        if profile == "packs" and source.name.endswith("-resources.tsv"):
+            if source.resolve() == target.resolve():
+                raise ValueError("Private pack proof and collected result must be separate directories")
+            rows = source.read_text(encoding="utf-8").splitlines()
+            target.write_text("".join("\t".join(row.split("\t")[:2]) + "\n" for row in rows),
+                              encoding="utf-8")
+        elif source.resolve() != target.resolve():
             shutil.copyfile(source, target)
         sums.append(hashlib.sha256(target.read_bytes()).hexdigest() + "  " + target.name)
     (destination / "SHA256SUMS.txt").write_text("\n".join(sorted(sums)) + "\n", encoding="utf-8")
@@ -278,6 +350,8 @@ def main() -> None:
     parser.add_argument("--minecraft", required=True, choices=("26.1.2", "26.2", "26.3"))
     parser.add_argument("--profile", required=True, choices=RENDER_PROFILES)
     parser.add_argument("--destination", type=Path, required=True)
+    parser.add_argument("--pack-input", type=Path,
+                        help="Private prepared pack input; required only for packs acceptance")
     parser.add_argument("--failed-run", action="store_true",
                         help="Collect bounded partial frames for diagnosis; never accept this row")
     args = parser.parse_args()
@@ -285,7 +359,7 @@ def main() -> None:
         count = collect_failure(args.directory, args.destination)
         print(f"Collected failure diagnostics minecraft={args.minecraft} profile={args.profile} files={count}")
         return
-    count = collect(args.directory, args.minecraft, args.profile, args.destination)
+    count = collect(args.directory, args.minecraft, args.profile, args.destination, args.pack_input)
     print(f"Verified external row minecraft={args.minecraft} profile={args.profile} files={count}")
 
 

@@ -73,7 +73,7 @@ test-support/   (only if justified)
 
 Pure/testable product logic shared by all three versions:
 
-- 57-capability catalog, retaining the frozen original 37 identities
+- 55-capability catalog, retaining the frozen original 37 identities
 - config schema/migration policy
 - functional-parity contracts
 - stable state semantic model
@@ -268,8 +268,8 @@ Never trade away diagnostics, correctness, or capability parity for byte count.
 
 BuilderAssistClient owns a separate client-local read model and an explicit session reference.
 Its fixed-domain PatternInspector processes at most 256 operations per tick. The nonpausing
-panel reads saved runtime controls and never receives the settings draft. Typed optional
-Litematica access is isolated behind an exact-version predicate and a narrow loaded-chunk reader.
+panel reads saved runtime controls and never receives the settings draft. Masa/Litematica
+integration was retired by PR #60; no optional schematic runtime adapter remains.
 
 OreHighlightExtensions exposes a versioned bounded declaration API. MinecraftOreExtensions
 freezes declarations at model loading, resolves a fixed set of synchronized ore tags, and
@@ -278,3 +278,13 @@ with base-model identity validation; extension discovery never runs per frame. A
 uses the existing Resource cue and Scene Filter composition. Details and compatibility
 boundaries are authoritative in [builder-assist.md](builder-assist.md) and
 [extension-compatibility.md](extension-compatibility.md).
+
+## Shared terrain implementation (2026-10-12 refactor)
+
+`fabric-shared/.../MinecraftDecorationModel.java` is compiled independently against all three
+Minecraft/Fabric targets. It composes decoration, visibility, resource, glass/kelp and Nether cues
+on the current active model, retaining existing OFF/reload/geometry-key semantics. Only
+`MinecraftQuadLighting` is version-specific: 26.1.2 and 26.2 disable diffuse shade; 26.3 uses its
+existing UP shade-direction override. There are no copied full renderer implementations in version
+trees. Existing 55 identities/defaults and historical reserved bits are unchanged. This refactor
+makes no performance improvement claim; all-three native/CI gates still govern acceptance.

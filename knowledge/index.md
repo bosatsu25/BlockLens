@@ -44,7 +44,7 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 
 ## Current feature inventory
 
-- [`current/features.md`](current/features.md) — all 57 independent capabilities, English/Japanese names, behavior and defaults
+- [`current/features.md`](current/features.md) — all 55 independent capabilities, English/Japanese names, behavior and defaults
 
 - [Current three-version integration and visible UI runner](current/minecraft-26-3.md) — 26.3 adaptation, reviewed byte budget and verification status.
 
@@ -53,10 +53,12 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 - [Bounded world analyzers](current/world-analyzers.md) — loaded-client work limits, numeric editing, memory/lifecycle boundaries and verification.
 - [Client scene filters](current/scene-filter.md) — independent modes/lists, reversible rendering, bounded registry compilation and verification status.
 
-- [Masa integration and standalone decision](current/masa-integration-decisions.md) — eight explicit scope exclusions, the separate read-only #36 candidate and retained ChiseTweaks differences.
+- [Masa integration and standalone decision](current/masa-integration-decisions.md) — eight explicit scope exclusions, the historical read-only #36 candidate (retired by PR #60) and retained ChiseTweaks differences.
 
-- [Builder Assist and Inspector](current/builder-assist.md) — four independent advisory tools, session references and exact optional Masa pairs.
+- [Builder Assist and Inspector](current/builder-assist.md) — three independent advisory tools and session references; retired Masa evidence is historical.
 - [Bounded ore extensions](current/extension-compatibility.md) — versioned registration, synchronized tags and retained terrain-model limits.
-- [External compatibility](current/external-compatibility.md) — exact Shader/Masa/Vulkan matrix, private pack evidence and actual-backend checks.
+- [External compatibility](current/external-compatibility.md) — exact Shader/Vulkan matrix and retired historical Masa evidence, private pack evidence and actual-backend checks.
 - [Optional Sodium terrain adapter](current/sodium-terrain-compatibility.md) — exact version gating, retained ore models, block-filter precedence and native emission/image controls.
 - [Remaining delivery and revised size contract](current/remaining-delivery.md) — user-authorized 200 KiB limit, preserved gates and evidence links.
+
+- [Supplied-pack parity reassessment](current/supplied-pack-parity-reassessment.md) — six-input audit, shared renderer, fail-closed evidence and remaining native behavior gaps.

@@ -192,7 +192,7 @@ final class RepositoryContractTest {
             Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), module);
             String client = Files.readString(sourceRoot.resolve("BlockLensClient.java"));
             String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
-            String model = Files.readString(sourceRoot.resolve("MinecraftDecorationModel.java"));
+            String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
 
             assertTrue(client.contains("MinecraftDecorationModelPlugin.register()"));
             assertTrue(plugin.contains("ModelModifier.WRAP_PHASE"));

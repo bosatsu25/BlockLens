@@ -16,7 +16,7 @@ The core design goal is **source/function parity, not byte-for-byte asset bundli
 >
 > **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
-> **Post-v0.3.0 development:** 55 current capabilities. The ancient-debris analyzer and optional Masa/Litematica schematic comparison are retired; the original 37 AMATERAS source controls remain intact. The published v0.3.0 artifact is unchanged.
+> **Post-v0.3.0 development:** 55 current capabilities. The ancient-debris analyzer and optional Masa/Litematica schematic comparison are retired; the original 37 source controls remain intact. The published v0.3.0 artifact is unchanged.
 
 
 ## Native profiles from the six supplied resource packs

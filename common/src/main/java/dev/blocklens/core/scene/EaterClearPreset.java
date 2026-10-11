@@ -6,9 +6,9 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
- * Eater Clear source inventory: 196 blockstate files mapped to the transparent
- * clear model in eater-texture v1.2. Eleven specialized plant/foliage models are
- * intentionally excluded; they are not equivalent to invisible block meshes.
+ * Eater Clear source inventory: 196 blockstate files mapped to the opaque dark
+ * clear model in eater-texture v1.2. The existing opt-in preset hides those meshes; it does not reproduce
+ * the source appearance. Eleven specialized plant/foliage models are excluded.
  *
  * <p>This compact, resource-free inventory is only resolved when the user selects
  * the opt-in preset. Unknown/non-block source filenames are ignored by the

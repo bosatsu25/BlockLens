@@ -22,6 +22,16 @@ class ExternalPreparationTest(unittest.TestCase):
         self.assertEqual("LOW", lock["shader"]["profile"])
         self.assertEqual(14, len(lock["shader"]["options"]))
 
+    def test_all_six_supplied_pack_inputs_are_byte_pinned(self):
+        packs = compatibility.read_lock()["packs"]
+        self.assertEqual({"reference-ui", "chise", "chise-server", "lowfire", "glowing", "small"}, set(packs))
+        self.assertEqual("53d456fa9396a362d8f408a7f17f70372ef8df15e4fc9e2439db31fbd23f1109",
+                         packs["chise-server"]["sha256"])
+        self.assertEqual(71634, packs["chise-server"]["size"])
+        self.assertEqual(84, packs["chise-server"]["min_format"])
+        self.assertEqual(84, packs["chise-server"]["max_format"])
+        self.assertEqual(len(packs), len({entry["filename"] for entry in packs.values()}))
+
     def test_existing_same_size_tampered_dependency_is_rejected_without_redownload(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "fixture.jar"
@@ -66,8 +76,8 @@ class ExternalPreparationTest(unittest.TestCase):
     def test_wrong_pack_bytes_cannot_be_selected_by_filename(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "amateras.zip").write_bytes(b"not the expected pack")
-            with self.assertRaisesRegex(ValueError, "amateras.*unavailable"):
+            (root / "reference-ui.zip").write_bytes(b"not the expected pack")
+            with self.assertRaisesRegex(ValueError, "reference-ui.*unavailable"):
                 compatibility.locate_packs(root, compatibility.read_lock())
 
     def test_native_vulkan_cannot_be_silently_claimed_for_26_1_2(self):

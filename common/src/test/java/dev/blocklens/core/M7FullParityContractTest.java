@@ -72,7 +72,7 @@ final class M7FullParityContractTest {
         for (String version : SupportedVersionFixtures.MODULES) {
             Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), version);
             String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
-            String model = Files.readString(sourceRoot.resolve("MinecraftDecorationModel.java"));
+            String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
             String overlays = Files.readString(sourceRoot.resolve("NetherTweaksOverlayModels.java"));
 
             assertTrue(plugin.contains("NetherTweaksOverlayModels.register(pluginContext)"));

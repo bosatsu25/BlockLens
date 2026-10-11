@@ -101,7 +101,7 @@ final class M8PerformanceBaselineContractTest {
         for (String module : SupportedVersionFixtures.MODULES) {
             Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), module);
             String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
-            String model = Files.readString(sourceRoot.resolve("MinecraftDecorationModel.java"));
+            String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
 
             assertTrue(plugin.contains("RETAINED_CAPABILITY_SLOTS.addAndGet(count)"));
             assertTrue(plugin.contains("MAX_CAPABILITIES_PER_MODEL.accumulateAndGet(count, Math::max)"));
@@ -133,9 +133,9 @@ final class M8PerformanceBaselineContractTest {
         String cue = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/ResourceHighlightCue.java"));
         String model2612 = Files.readString(root().resolve(
-                "versions/mc26_1_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
+                "fabric-shared/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
         String model262 = Files.readString(root().resolve(
-                "versions/mc26_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
+                "fabric-shared/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
 
         assertTrue(cue.contains("private final DecorationQuadInstruction instruction;"));
         assertTrue(cue.contains("this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);"));
@@ -172,9 +172,9 @@ final class M8PerformanceBaselineContractTest {
         String cue = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/render/VisibilityVisualCue.java"));
         String model2612 = Files.readString(root().resolve(
-                "versions/mc26_1_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
+                "fabric-shared/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
         String model262 = Files.readString(root().resolve(
-                "versions/mc26_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
+                "fabric-shared/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java"));
 
         assertTrue(cue.contains("private final DecorationQuadInstruction instruction;"));
         assertTrue(cue.contains("this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);"));

@@ -97,8 +97,8 @@
     }
   },
   "packs": {
-    "amateras": {
-      "filename": "amateras.zip",
+    "reference-ui": {
+      "filename": "reference-ui.zip",
       "sha256": "070bc338936f89320408e7b78bb6f74856917f5944deecc1a1b52390f5363616",
       "size": 3527738,
       "min_format": 64,
@@ -108,6 +108,13 @@
       "filename": "chise.zip",
       "sha256": "4d68bc024c8e92d2cca56815c9fab3509d7a21bfbbd580ec70458b23a0887d60",
       "size": 24556,
+      "min_format": 84,
+      "max_format": 84
+    },
+    "chise-server": {
+      "filename": "chise-server.zip",
+      "sha256": "53d456fa9396a362d8f408a7f17f70372ef8df15e4fc9e2439db31fbd23f1109",
+      "size": 71634,
       "min_format": 84,
       "max_format": 84
     },
@@ -137,5 +144,100 @@
     "26.1.2": "84.0",
     "26.2": "88.0",
     "26.3": "97.1"
+  },
+  "pack_probes": {
+    "blockstates/diamond_ore.json": [
+      "reference-ui"
+    ],
+    "models/block/anvil/anvil.json": [
+      "reference-ui"
+    ],
+    "textures/block/white_concrete.png": [
+      "chise",
+      "chise-server"
+    ],
+    "models/block/fire_floor1.json": [
+      "lowfire"
+    ],
+    "textures/block/diamond_ore.png": [
+      "glowing"
+    ],
+    "models/block/block.json": [
+      "small"
+    ],
+    "textures/block/nether_gold_ore.png": [
+      "reference-ui",
+      "glowing"
+    ],
+    "textures/block/nether_quartz_ore.png": [
+      "reference-ui",
+      "glowing"
+    ],
+    "textures/block/pale_oak_door_bottom.png": [
+      "chise-server"
+    ],
+    "textures/block/pale_oak_door_top.png": [
+      "chise-server"
+    ],
+    "textures/block/pale_oak_log_top.png": [
+      "chise-server"
+    ],
+    "textures/block/pale_oak_planks.png": [
+      "chise-server"
+    ],
+    "textures/block/pale_oak_shelf.png": [
+      "chise-server"
+    ],
+    "textures/block/pale_oak_trapdoor.png": [
+      "chise-server"
+    ],
+    "textures/block/stripped_pale_oak_log.png": [
+      "chise-server"
+    ],
+    "textures/block/stripped_pale_oak_log_top.png": [
+      "chise-server"
+    ],
+    "textures/entity/boat/pale_oak.png": [
+      "chise-server"
+    ],
+    "textures/entity/chest/normal.png": [
+      "chise",
+      "chise-server"
+    ],
+    "textures/entity/chest/normal_left.png": [
+      "chise",
+      "chise-server"
+    ],
+    "textures/entity/chest/normal_right.png": [
+      "chise",
+      "chise-server"
+    ],
+    "textures/entity/chest_boat/pale_oak.png": [
+      "chise-server"
+    ],
+    "textures/entity/signs/hanging/pale_oak.png": [
+      "chise-server"
+    ],
+    "textures/entity/signs/pale_oak.png": [
+      "chise-server"
+    ],
+    "textures/gui/hanging_signs/pale_oak.png": [
+      "chise-server"
+    ],
+    "textures/item/pale_oak_boat.png": [
+      "chise-server"
+    ],
+    "textures/item/pale_oak_chest_boat.png": [
+      "chise-server"
+    ],
+    "textures/item/pale_oak_door.png": [
+      "chise-server"
+    ],
+    "textures/item/pale_oak_hanging_sign.png": [
+      "chise-server"
+    ],
+    "textures/item/pale_oak_sign.png": [
+      "chise-server"
+    ]
   }
 }
