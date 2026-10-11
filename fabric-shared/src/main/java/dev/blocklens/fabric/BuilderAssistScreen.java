@@ -87,19 +87,6 @@ public final class BuilderAssistScreen extends Screen {
             }
         }
         // Schematic comparison is retired; native inspector and preview remain available.
-        if (false) {
-            if (target.expected() == null) content.add(text("schematic_unavailable"));
-            else {
-                content.add(text("expected")); state(content, target.expected());
-                content.add(text("predicted")); state(content, target.prediction());
-                content.add(text(switch (BuilderState.compare(target.expected(), target.prediction())) {
-                    case BuilderState.MATCH -> "match";
-                    case BuilderState.ADJUSTED -> "adjusted";
-                    case BuilderState.DIFFERENT -> "different";
-                    default -> "unavailable";
-                }));
-            }
-        }
         var formatted = new ArrayList<FormattedCharSequence>();
         for (Component line : content) formatted.addAll(font.split(line, contentWidth() - 16));
         lines = List.copyOf(formatted);
