@@ -83,14 +83,14 @@ final class VillagerJobSiteFixture implements AutoCloseable {
                 replacement = replace(client.level);
                 require(hasSite(replacement, client.level), "second replacement did not receive controlled JOB_SITE input");
             });
-            context.waitFor(client -> AnalyzerClient.engine().markers().stream().anyMatch(marker -> marker.kind() == 4), 600);
+            context.waitFor(client -> AnalyzerClient.engine().markers().stream().anyMatch(marker -> marker.kind() == dev.blocklens.core.analyzer.AnalyzerCatalog.index(dev.blocklens.core.CapabilityId.VILLAGER_JOB_SITE_LINKS)), 600);
         }
         context.runOnClient(client -> {
             var replacement = replace(client.level);
             require(replacement.getBrain().getMemory(MemoryModuleType.JOB_SITE).isEmpty(),
                     "closed fixture retained its entity-load input hook");
         });
-        context.waitFor(client -> AnalyzerClient.engine().markers().stream().noneMatch(marker -> marker.kind() == 4), 600);
+        context.waitFor(client -> AnalyzerClient.engine().markers().stream().noneMatch(marker -> marker.kind() == dev.blocklens.core.analyzer.AnalyzerCatalog.index(dev.blocklens.core.CapabilityId.VILLAGER_JOB_SITE_LINKS)), 600);
     }
 
     private static Villager replace(ClientLevel level) {
