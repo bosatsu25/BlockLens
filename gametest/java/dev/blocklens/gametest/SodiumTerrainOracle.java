@@ -36,6 +36,8 @@ import net.minecraft.world.level.storage.LevelResource;
 final class SodiumTerrainOracle {
     private static final int MIN_DIFFERENCE = 80;
     private static final int MIN_RETENTION = 950;
+    private static final int MIN_RESTORATION_OVERLAP = 990;
+    private static final int MAX_SHADER_RESTORATION_DIFFERENCE = 200;
     private static final int DELTA = 24;
     private static final int RADIUS = 2;
     private static final String PACK_NAME = "blocklens-sodium-terrain-test";
@@ -76,6 +78,8 @@ final class SodiumTerrainOracle {
                         ? "completed-native-frame" : "fabric-test-capture");
                 number("minimumDifferencePixels", MIN_DIFFERENCE);
                 number("minimumRetentionPermille", MIN_RETENTION);
+                number("minimumRestorationOverlapPermille", MIN_RESTORATION_OVERLAP);
+                number("maximumShaderRestorationDifferentPixels", MAX_SHADER_RESTORATION_DIFFERENCE);
                 number("colorDelta", DELTA);
                 number("maskToleranceRadius", RADIUS);
                 number("observationLimit", 4096);
@@ -391,15 +395,19 @@ final class SodiumTerrainOracle {
             }
             int expectedOverlap = expectedPixels == 0 ? 0 : sharedPixels * 1000 / expectedPixels;
             int restoredOverlap = restoredPixels == 0 ? 0 : sharedPixels * 1000 / restoredPixels;
-            number(key + "DifferentPixels", different(expected.image(), restored.image()));
+            int colorDifference = different(expected.image(), restored.image());
+            number(key + "DifferentPixels", colorDifference);
             number(key + "ExpectedForeground", expectedPixels);
             number(key + "RestoredForeground", restoredPixels);
             number(key + "SharedForeground", sharedPixels);
             number(key + "ExpectedOverlapPermille", expectedOverlap);
             number(key + "RestoredOverlapPermille", restoredOverlap);
-            // 99% is stricter than the 95% general base-geometry retention threshold.
+            // 99% overlaps and at most 200 differing RGB pixels: both gates were checked against
+            // the three previously failing shader-on framebuffer artifacts (88/124/113).
             check(expectedPixels >= MIN_DIFFERENCE && restoredPixels >= MIN_DIFFERENCE
-                    && expectedOverlap >= 990 && restoredOverlap >= 990, key);
+                    && expectedOverlap >= MIN_RESTORATION_OVERLAP
+                    && restoredOverlap >= MIN_RESTORATION_OVERLAP
+                    && colorDifference <= MAX_SHADER_RESTORATION_DIFFERENCE, key);
         }
 
         private void retention(Capture base, Capture highlighted, Capture air, String key) {
