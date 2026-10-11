@@ -34,8 +34,8 @@ final class AnalyzerOptionsContractTest {
         assertEquals(8, lavaRadius.value(0, 0));
         assertEquals(3, lavaRadius.value(0, 1));
         var beaconMarkers = original.with(1, 2, 16);
-        assertEquals(8, beaconMarkers.value(1, 2));
-        assertEquals(16, original.value(1, 2));
+        assertEquals(16, beaconMarkers.value(1, 2));
+        assertEquals(8, original.value(1, 2));
         assertEquals(original, AnalyzerOptions.defaults());
         assertEquals(original.hashCode(), AnalyzerOptions.defaults().hashCode());
         assertNotEquals(original, lavaRadius);
