@@ -187,5 +187,11 @@
   "blocklens.builder.adjusted": "Same block, different state",
   "blocklens.builder.different": "Different block types",
   "blocklens.capability.pale_oak_neutral": "Neutral pale oak",
-  "blocklens.capability.pale_oak_neutral.description": "Uses white-gray wood while keeping grain and colored hardware. Reloads vanilla textures on save; external pack textures take priority."
+  "blocklens.capability.pale_oak_neutral.description": "Uses white-gray wood while keeping grain and colored hardware. Reloads vanilla textures on save; external pack textures take priority.",
+  "blocklens.capability.compact_blocks": "Compact blocks",
+  "blocklens.capability.compact_blocks.description": "Use compact block display poses in both hands, third person and other model contexts.",
+  "blocklens.capability.compact_items": "Compact items",
+  "blocklens.capability.compact_items.description": "Use item-specific display poses, including rods, horns, banners and heads.",
+  "blocklens.capability.compact_tools": "Compact weapons and tools",
+  "blocklens.capability.compact_tools.description": "Use compact tool poses, including bow, crossbow, blocking shield, mace, spear and trident states."
 }

@@ -17,10 +17,17 @@ PALETTE_IMAGES = tuple("palette-" + name + ".png" for name in (
     "off", "on", "on-reloaded", "off-restored", "all-features", "external-priority"))
 PALETTE_CHECKS = ("actualAtlas", "standaloneDecode", "uiSave", "uiDiscard", "failedSave",
                   "allFeatures", "reload", "offRestored", "externalPriority", "stableWoodChroma")
+COMPACT_ITEMS = ("white_concrete", "apple", "shield", "white_bed", "white_banner", "trident")
+COMPACT_IMAGES = tuple(f"{item}-{stage}.png" for item in COMPACT_ITEMS for stage in ("off", "on", "restored")) + (
+    "shield-using.png", "trident-using.png", "white_concrete-third-person.png", "white_concrete-gui.png",
+    "apple-third-person.png", "apple-gui.png", "all-features.png", "all-features-reloaded.png",
+    "external-priority.png", "inherited-external-ground.png")
+COMPACT_CHECKS = ("actualModelParser", "bothHands", "thirdPerson", "gui", "inheritedExternal", "independentGroups",
+                  "stateExceptions", "uiSave", "uiDiscard", "failedSave", "allFeatures", "reload", "offRestored", "externalPriority")
 DEFAULT_IMAGES = (
     "m3-all13-on.png", "m3-all13-reloaded.png", "m3-all13-off-active-pack.png",
     "m5-pack-off.png", "m5-pack-on.png", "m5-pack-air-control.png",
-) + PALETTE_IMAGES
+) + PALETTE_IMAGES + COMPACT_IMAGES
 SODIUM_STAGES = (
     "air-control", "explicit-off", "explicit-on", "explicit-restored", "unsupported-off",
     "unsupported-on", "tagged-off", "tagged-on", "tag-removed", "tagged-filtered",
@@ -46,6 +53,7 @@ FAILURE_FILES = (
     "m5-pack-visual/m5-pack-off.png", "m5-pack-visual/m5-pack-on.png",
     "m5-pack-visual/m5-pack-air-control.png", "m5-pack-visual/m5-pack-visual-manifest.txt",
     *(f"pale-oak-visual/{name}" for name in (*PALETTE_IMAGES, "palette-manifest.txt")),
+    *(f"compact-model-visual/{name}" for name in (*COMPACT_IMAGES, "compact-manifest.txt")),
     *(f"sodium-terrain/{name}" for name in (*SODIUM_IMAGES, SODIUM_MANIFEST)),
 )
 
@@ -211,7 +219,38 @@ def verify_pack_order(directory: Path, order: str, lock: dict, expected_probes: 
     return [resource_file, visual_file]
 
 
+def verify_compact(directory: Path, minecraft: str) -> list[Path]:
+    if (directory / "DIAGNOSTIC_STATUS.txt").exists():
+        raise ValueError("Failure diagnostics are not acceptance evidence")
+    if minecraft not in ("26.1.2", "26.2", "26.3") or directory.absolute() != directory.resolve() or not directory.is_dir():
+        raise ValueError("Compact evidence requires a supported version and regular directory")
+    manifest = directory / "compact-manifest.txt"
+    native = properties(manifest, 16384)
+    if set(native) != set(COMPACT_CHECKS) | {"minecraft", "modelRoles", "changedPixels"}:
+        raise ValueError("Compact evidence fields differ from the approved bounded schema")
+    require_value(native, "minecraft", minecraft)
+    require_value(native, "modelRoles", "40" if minecraft == "26.1.2" else "41")
+    for key in COMPACT_CHECKS:
+        require_value(native, key, "true")
+    if bounded_number(native, "changedPixels", 1075200) < 186:
+        raise ValueError("Compact held frames lack the required rendered difference")
+    files = [manifest]
+    for name in COMPACT_IMAGES:
+        path = directory / name
+        if path.is_symlink() or not path.is_file() or not 1000 < path.stat().st_size <= 4 * 1024 * 1024:
+            raise ValueError("Compact rendered image is missing or exceeds bounds")
+        with path.open("rb") as stream:
+            header = stream.read(24)
+        if (len(header) != 24 or header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR"
+                or struct.unpack(">II", header[16:24]) != (640, 360)):
+            raise ValueError("Compact image is not a 640 by 360 PNG")
+        files.append(path)
+    return files
+
+
 def verify(directory: Path, minecraft: str, profile: str, pack_input: Path | None = None) -> list[Path]:
+    if profile == "compact":
+        return verify_compact(directory, minecraft)
     lock = read_lock()
     if minecraft not in lock["targets"] or profile not in RENDER_PROFILES:
         raise ValueError("Unknown rendering evidence matrix row")
@@ -269,7 +308,10 @@ def verify(directory: Path, minecraft: str, profile: str, pack_input: Path | Non
             require_value(palette, check, "true")
         if bounded_number(palette, "changedPixels", 14250) <= 80:
             raise ValueError("Palette native wood ROI lacks a rendered difference")
+        require_value(evidence, "compactModels", "true")
+        compact_files = verify_compact(directory, minecraft)
         images = DEFAULT_IMAGES
+        files.append(compact_files[0])
         files += [directory / "m3-visual-manifest.txt", directory / "m5-pack-visual-manifest.txt", palette_file]
         if profile.startswith("shader-"):
             files.append(verify_sodium(directory, minecraft, profile))
@@ -361,7 +403,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--minecraft", required=True, choices=("26.1.2", "26.2", "26.3"))
-    parser.add_argument("--profile", required=True, choices=RENDER_PROFILES)
+    parser.add_argument("--profile", required=True, choices=(*RENDER_PROFILES, "compact"))
     parser.add_argument("--destination", type=Path, required=True)
     parser.add_argument("--pack-input", type=Path,
                         help="Private prepared pack input; required only for packs acceptance")

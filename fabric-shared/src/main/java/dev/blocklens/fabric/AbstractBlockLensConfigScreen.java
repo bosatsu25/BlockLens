@@ -292,11 +292,11 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private void saveAndClose() {
         try {
             if (draft.save(configDirectory)) {
-                boolean paletteChanged = dev.blocklens.core.render.PaleOakPalette.requiresReload(
+                boolean resourcesChanged = dev.blocklens.core.render.VisualResourceReloadPolicy.requiresReload(
                         BlockLensRuntime.config(), draft.config());
                 BlockLensRuntime.installConfig(draft.config());
                 MinecraftTerrainInvalidator.invalidateAll(minecraft);
-                if (paletteChanged) minecraft.reloadResourcePacks();
+                if (resourcesChanged) minecraft.reloadResourcePacks();
             }
             showParent(parent);
         } catch (IOException | SecurityException exception) {

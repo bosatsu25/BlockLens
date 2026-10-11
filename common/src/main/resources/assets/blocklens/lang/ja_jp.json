@@ -187,5 +187,11 @@
   "blocklens.builder.adjusted": "同じブロックですが状態が異なります",
   "blocklens.builder.different": "ブロックの種類が異なります",
   "blocklens.capability.pale_oak_neutral": "ペールオークを白灰色に",
-  "blocklens.capability.pale_oak_neutral.description": "木目と色付き金具を保って木材を白灰色にします。保存時にバニラ素材を再読み込みし、外部パックの素材を優先します。"
+  "blocklens.capability.pale_oak_neutral.description": "木目と色付き金具を保って木材を白灰色にします。保存時にバニラ素材を再読み込みし、外部パックの素材を優先します。",
+  "blocklens.capability.compact_blocks": "コンパクトなブロック表示",
+  "blocklens.capability.compact_blocks.description": "両手・三人称などのブロック表示を小さく調整します。",
+  "blocklens.capability.compact_items": "コンパクトなアイテム表示",
+  "blocklens.capability.compact_items.description": "棒・角笛・旗・頭などに合わせた表示姿勢に調整します。",
+  "blocklens.capability.compact_tools": "コンパクトな武器・道具表示",
+  "blocklens.capability.compact_tools.description": "弓・クロスボウ・防御中の盾・メイス・槍・トライデントの状態に合わせて調整します。"
 }

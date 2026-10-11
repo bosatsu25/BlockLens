@@ -82,7 +82,11 @@ public enum CapabilityId {
     PLACEMENT_PREVIEW("builder.placement_preview", Category.OTHER, false),
     PATTERN_CONSISTENCY("builder.pattern_consistency", Category.OTHER, false),
 
-    PALE_OAK_NEUTRAL("outline.pale_oak_neutral", Category.OUTLINE, false);
+    PALE_OAK_NEUTRAL("outline.pale_oak_neutral", Category.OUTLINE, false),
+
+    COMPACT_BLOCKS("others.compact_blocks", Category.OTHER, false),
+    COMPACT_ITEMS("others.compact_items", Category.OTHER, false),
+    COMPACT_TOOLS("others.compact_tools", Category.OTHER, false);
 
     public enum Category {
         DECORATION,

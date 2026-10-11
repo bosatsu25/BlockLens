@@ -16,9 +16,9 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
-> **v0.3.0公開後の開発版:** 現行56機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
+> **v0.3.0公開後の開発版:** 現行59機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
 
-## 開発版 v0.4.2：ペールオークの配色とMinecraft 3バージョン
+## 開発版 v0.4.3：コンパクト表示とMinecraft 3バージョン
 
 公開済みv0.4.1は、26.3／BBE 1.3.9+mc26.3／Sodium 0.9.2+mc26.3の組み合わせで、閉じた通常チェストが保存・適用だけで白くなるよう修正します。最適化は有効なままです。trapped／ender／copper／Christmasの素材は置換しません。検証したCele構成にはIris 1.11.7とContinuity 3.0.1（シェーダーOFF）を含みます。BBEとシェーダーONの併用は未確認です。更新時は対応するBlockLens JARを1個だけ入れ、設定を保持してください。公開には同一コミットの通常3版・シェーダー／バックエンド・BBE／Celeの全CI成功を要求します。[正確な対応範囲](knowledge/current/cele-bbe-compatibility.md)を参照してください。
 
@@ -50,7 +50,7 @@ Masa系MODの直接連携や必須依存はありません。[建築支援の詳
 [任意の連携処理](knowledge/current/sodium-terrain-compatibility.md)もあります。
 対象外の版ではこの連携を無効にします。固定したM3/M5のShader試験に加え、
 鉱石とフィルター専用の実クライアント試験で表示・復元・実際のモデル出力を検証します。
-この結果は指定した描画経路の証拠であり、56開発版機能すべてのShader対応を示すものではありません。
+この結果は指定した描画経路の証拠であり、59開発版機能すべてのShader対応を示すものではありません。
 
 ## 製品方針
 

@@ -17,7 +17,8 @@
     "OreExtensionMixin",
     "SodiumTerrainMixin",
     "PaleOakSpriteMixin",
-    "PaleOakTextureMixin"
+    "PaleOakTextureMixin",
+    "CompactModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

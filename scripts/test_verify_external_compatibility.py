@@ -49,7 +49,7 @@ class ExternalEvidenceTest(unittest.TestCase):
 
     def rendering_fixture(self, directory, isolation):
         actual = self.base()
-        actual.update(m3Visual="true", m5ActivePackVisual="true", paleOakPalette="true")
+        actual.update(m3Visual="true", m5ActivePackVisual="true", paleOakPalette="true", compactModels="true")
         (directory / "external-compatibility-manifest.properties").write_text(
             "".join(f"{key}={value}\n" for key, value in actual.items()))
         (directory / "m3-visual-manifest.txt").write_text("minecraft=26.3\n")
@@ -65,6 +65,7 @@ class ExternalEvidenceTest(unittest.TestCase):
         row = b"\0" + bytes(range(256)) * 7 + bytes(range(128))
         png = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 640, 360, 8, 2, 0, 0, 0))
                + chunk(b"IDAT", zlib.compress(row * 360)) + chunk(b"IEND", b""))
+        (directory / "compact-manifest.txt").write_text("minecraft=26.3\nmodelRoles=41\nchangedPixels=186\n" + "".join(key + "=true\n" for key in evidence.COMPACT_CHECKS))
         for name in evidence.DEFAULT_IMAGES:
             (directory / name).write_bytes(png)
 
@@ -81,7 +82,7 @@ class ExternalEvidenceTest(unittest.TestCase):
             directory = Path(tmp)
             self.rendering_fixture(directory, "true")
             files = evidence.verify(directory, "26.3", "vulkan")
-            self.assertEqual(16, len(files))
+            self.assertEqual(45, len(files))
             self.assertTrue(set(evidence.DEFAULT_IMAGES).issubset(path.name for path in files))
 
     def test_palette_missing_or_failed_native_proof_cannot_pass_a_backend_row(self):
@@ -333,7 +334,7 @@ class ExternalEvidenceTest(unittest.TestCase):
         self.rendering_fixture(directory, "true")
         actual = self.base("shader-on")
         actual.update(backend="opengl", shaderInUse="true", shaderOptionsVerified="true",
-                      m3Visual="true", m5ActivePackVisual="true", sodiumTerrain="true", paleOakPalette="true")
+                      m3Visual="true", m5ActivePackVisual="true", sodiumTerrain="true", paleOakPalette="true", compactModels="true")
         lock = evidence.read_lock()
         actual.update(shaderPackSha256=lock["shader"]["sha256"], shaderPack=lock["shader"]["filename"],
                       shaderProfile=lock["shader"]["profile"])
@@ -404,7 +405,7 @@ class ExternalEvidenceTest(unittest.TestCase):
             directory = Path(tmp)
             self.sodium_fixture(directory)
             files = evidence.verify(directory, "26.3", "shader-on")
-            self.assertEqual(32, len(files))
+            self.assertEqual(61, len(files))
             self.assertEqual(15, sum(path.name.startswith("sodium-") and path.suffix == ".png" for path in files))
             self.assertIn(directory / "sodium-terrain-manifest.properties", files)
 
