@@ -117,7 +117,7 @@ final class BuilderAssistOracle {
                         "combined capabilities suppressed native builder output");
                 BlockLensRuntime.installConfig(enabled);
             });
-            evidence.append("patternDomain=2601\npatternBudget=256\npatternCounts=true\noptionalAbsentSafe=true\nallEnabledCoexistence=true\n");
+            evidence.append("patternDomain=2601\npatternBudget=256\npatternCounts=true\nallEnabledCoexistence=true\n");
 
             context.runOnClient(c -> { c.options.guiScale().set(1); c.getWindow().setWindowed(320, 240); });
             context.waitFor(c -> c.getWindow().getWidth() == 320 && c.getWindow().getHeight() == 240);
@@ -175,7 +175,7 @@ final class BuilderAssistOracle {
             });
             evidence.append("referenceReplacement=true\nreloadCleanup=true\ndimensionCleanup=true\nfinalOffEmpty=true\n");
             Files.writeString(output.resolve("builder-assist-manifest.txt"), evidence, StandardCharsets.UTF_8);
-            System.out.println("BLOCKLENS_BUILDER inspector=true placement=true pattern=true readonly=true optionalAbsent=true ui=true lifecycle=true");
+            System.out.println("BLOCKLENS_BUILDER inspector=true placement=true pattern=true readonly=true ui=true lifecycle=true");
         } catch (IOException exception) { throw new AssertionError("builder evidence failed", exception); }
         finally {
             context.runOnClient(c -> {

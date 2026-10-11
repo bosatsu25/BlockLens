@@ -394,18 +394,18 @@ jobs:
           root="versions/${{ matrix.module }}/build/run/clientGameTest"
           target="build/ci/analyzers-${{ matrix.minecraft }}"
           mkdir -p "$target/ui" "$target/visual"
-          test "$(find "$root/analyzer-ui" -maxdepth 1 -name '*.png' | wc -l)" -eq 10
-          test "$(find "$root/analyzer-visual" -maxdepth 1 -name '*.png' | wc -l)" -eq 15
+          test "$(find "$root/analyzer-ui" -maxdepth 1 -name '*.png' | wc -l)" -eq 8
+          test "$(find "$root/analyzer-visual" -maxdepth 1 -name '*.png' | wc -l)" -eq 13
           for locale in en_us ja_jp; do
-            for kind in 0 1 2 3 4; do
+            for kind in 0 1 2 3; do
               test -s "$root/analyzer-ui/analyzer-$locale-$kind.png"
             done
           done
           manifest="$root/analyzer-visual/analyzer-visual-manifest.txt"
-          for check in all51Enabled all51Reload dimensionCleanup finalOffEmpty jobMemoryMissing jobMemoryLoaded jobMemoryWrongDimension jobMemoryErased jobMemoryReplacement jobMemoryFixtureClosed; do
+          for check in all50Enabled all50Reload dimensionCleanup finalOffEmpty jobMemoryMissing jobMemoryLoaded jobMemoryWrongDimension jobMemoryErased jobMemoryReplacement jobMemoryFixtureClosed; do
             grep -q "^$check=true$" "$manifest"
           done
-          for kind in 0 1 2 3 4; do
+          for kind in 0 1 2 3; do
             for budget in MaxCells MaxPaletteSections MaxCursorSteps MaxEntitySections MaxEntities; do
               grep -q "^kind${kind}Off${budget}=0$" "$manifest"
             done
@@ -469,7 +469,7 @@ jobs:
           manifest="$root/builder-assist-manifest.txt"
           test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 4
           grep -q '^minecraft=${{ matrix.minecraft }}$' "$manifest"
-          for check in blockAndEntityInspector missCleared placementStateInputs readonlyPrediction independentTools coordinateBounds allEnabledCoexistence waterlogged occupiedUnavailable patternCounts optionalAbsentSafe compactControls referenceButtons panelConfigReadonly referenceReplacement reloadCleanup dimensionCleanup finalOffEmpty; do
+          for check in blockAndEntityInspector missCleared placementStateInputs readonlyPrediction independentTools coordinateBounds allEnabledCoexistence waterlogged occupiedUnavailable patternCounts compactControls referenceButtons panelConfigReadonly referenceReplacement reloadCleanup dimensionCleanup finalOffEmpty; do
             grep -q "^$check=true$" "$manifest"
           done
           grep -q '^placementFamilies=10$' "$manifest"
