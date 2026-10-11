@@ -1,4 +1,6 @@
-# Masa integration and standalone migration decision
+# Masa integration and standalone migration decision (historical)
+
+**Current status:** PR #60 removes the optional Litematica/MaLiLib adapter and all runtime Masa-family integration. The decisions and links below preserve the earlier #38 evaluation, not a promise of current integration.
 
 Status: #38 evaluation completed by PR #49; exact-head CI #326 passed all four jobs on the first attempt, and the decision is merged.
 

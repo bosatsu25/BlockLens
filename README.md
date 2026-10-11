@@ -6,7 +6,7 @@
 
 **English** | [日本語](README_ja.md)
 
-BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It makes block orientation and state, resources, fine geometry and Nether materials easier to distinguish through 57 independently configurable visual and inspection capabilities. See the [complete current feature list](knowledge/current/features.md).
+BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It makes block orientation and state, resources, fine geometry and Nether materials easier to distinguish through 55 independently configurable visual and inspection capabilities. See the [complete current feature list](knowledge/current/features.md).
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
@@ -14,28 +14,27 @@ The core design goal is **source/function parity, not byte-for-byte asset bundli
 >
 > **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
+> **Post-v0.3.0 development:** 55 current capabilities. The ancient-debris analyzer and optional Masa/Litematica schematic comparison are retired; the original 37 AMATERAS source controls remain intact. The published v0.3.0 artifact is unchanged.
+
 ## Current development: three Minecraft versions
 
-The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, five bounded analyzers, two independent scene filters and four advisory Builder Assist tools. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
+The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, four bounded analyzers, two independent scene filters and three advisory Builder Assist tools. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
 
 To watch real Minecraft UI automation on Windows, with Java 25 and Gradle 9.5.1 on PATH, run `./scripts/run-ui-tests.ps1` (all three) or `./scripts/run-ui-tests.ps1 -Version 26.3`. The runner opens actual clients sequentially using the built distribution JAR, checks loaded class origins, exits after testing and stops on failure. CI requires ten settings screenshots per target and separate rendering/JAR evidence. See [current version contract, exact dependencies and verification status](knowledge/current/minecraft-26-3.md).
 
-The five analyzers find loaded ancient debris and qualifying source lava, outline beacon/rod ranges, and link actual client villager job-site memories. They default OFF and share numeric radius/marker/interval settings and the existing save/discard draft. Unloaded chunks are skipped, dense scans take multiple ticks, and unavailable villager memory never produces an inferred workstation. See [work limits and exact behavior](knowledge/current/world-analyzers.md).
+The four analyzers find qualifying loaded source lava, outline beacon/rod ranges, and link actual client villager job-site memories. They default OFF and share numeric radius/marker/interval settings and the existing save/discard draft. Unloaded chunks are skipped, dense scans take multiple ticks, and unavailable villager memory never produces an inferred workstation. See [work limits and exact behavior](knowledge/current/world-analyzers.md).
 
 The two scene filters independently edit block/entity type ID blacklists and whitelists. They default OFF, retain the local player, and preserve fluids, physical state and solid occlusion. List edits share the parent save/discard draft. See [the filter contract and pending verification](knowledge/current/scene-filter.md).
 
 ## Builder Assist and ore extensions
 
-Enable the four independent Builder Assist tools in Other, then **Save and apply**.
+Enable the three independent Builder Assist tools in Other, then **Save and apply**.
 In a world, open the panel using an Open button on those rows, or assign the initially
 unbound Builder Assist key. It displays local crosshair state, predicts supported
-main-hand block placement, compares nearby blocks with an explicit session reference,
-and optionally compares predicted placement with a loaded Litematica schematic.
+main-hand block placement, and compares nearby blocks with an explicit session reference.
 These tools inspect and explain; they never place or break blocks or send custom packets.
 
-Typed optional pairs are pinned per Minecraft release: **26.1.2: Litematica 0.27.14 /
-MaLiLib 0.28.12; 26.2: 0.28.8 / 0.29.6; 26.3: 0.29.1 / 0.30.2**. Other versions disable
-only schematic comparison. Neither mod is bundled or required. See [Builder Assist](knowledge/current/builder-assist.md).
+No Masa-family mod is required or integrated. See [Builder Assist](knowledge/current/builder-assist.md).
 
 [The ore extension contract](knowledge/current/extension-compatibility.md) accepts
 explicit versioned registrations and a fixed set of synchronized conventional ore tags.
@@ -49,7 +48,7 @@ Ore extensions and terrain block filtering also have an
 **0.9.2+mc26.1.2 / 0.9.2+mc26.2 / 0.9.2+mc26.3**, matched to the corresponding
 Minecraft version. Other versions skip this adapter. Dedicated native ore/filter
 probes supplement the pinned M3/M5 shader tests; the evidence covers these named
-paths and does not establish all 57 capabilities under shaders.
+paths and does not establish all 55 development capabilities under shaders.
 
 ## Product direction
 
@@ -199,7 +198,7 @@ Runtime principles:
 
 ### Current source hardening
 
-The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 57 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is merged in PR #40. Supplied third-party pack combinations and source-screen pixel equivalence remain unverified; exact Shader and Vulkan results are tracked in [the delivery record](knowledge/current/remaining-delivery.md).
+The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 55 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is merged in PR #40. Supplied third-party pack combinations and source-screen pixel equivalence remain unverified; exact Shader and Vulkan results are tracked in [the delivery record](knowledge/current/remaining-delivery.md).
 
 Bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model are implemented. Historical v0.2.1 local artifacts measured **101,877 B / 101,913 B** under the then-current **102,400 B** ceiling. Current three-version gates use the reviewed **204,800 B** development baseline and **204,800 B** release ceiling. OFF/default/all-capability M8 measurements remain coarse regression guards; observed CI allocation variability is tracked in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
 
