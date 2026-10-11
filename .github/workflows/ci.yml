@@ -374,7 +374,11 @@ jobs:
           set -euo pipefail
           root="versions/${{ matrix.module }}/build/run/clientGameTest/lightweight-visual"
           test -f "$root/lightweight-visual-manifest.txt"
-          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 32
+          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 34
+          grep -q '^chestClosedUiOnWithoutOpening=true$' "$root/lightweight-visual-manifest.txt"
+          grep -q '^chestClosedUiOffWithoutOpening=true$' "$root/lightweight-visual-manifest.txt"
+          test -s "$root/bright-chest-ui-closed-on.png"
+          test -s "$root/bright-chest-ui-closed-off.png"
           grep -q '^all46Enabled=true$' "$root/lightweight-visual-manifest.txt"
           grep -q '^all46Reload=true$' "$root/lightweight-visual-manifest.txt"
           grep -q '^all46FireAndBothHands=true$' "$root/lightweight-visual-manifest.txt"
