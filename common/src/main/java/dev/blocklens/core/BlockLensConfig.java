@@ -111,7 +111,7 @@ public final class BlockLensConfig {
     }
 
     private static long bit(CapabilityId capability) {
-        int ordinal = capability.ordinal();
+        int ordinal = capability.bitPosition();
         if (ordinal >= Long.SIZE) {
             throw new IllegalStateException("BlockLens capability count exceeds 64-bit config mask capacity");
         }
