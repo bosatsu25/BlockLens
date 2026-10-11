@@ -433,7 +433,7 @@ jobs:
           done
           manifest="$root/palette-manifest.txt"
           grep -Fqx "minecraft=${{ matrix.minecraft }}" "$manifest"
-          for check in actualAtlas standaloneDecode uiSave uiDiscard failedSave allFeatures reload offRestored externalPriority; do
+          for check in actualAtlas standaloneDecode uiSave uiDiscard failedSave allFeatures reload offRestored externalPriority stableWoodChroma; do
             grep -Fqx "$check=true" "$manifest"
           done
           pixels="$(sed -n 's/^changedPixels=//p' "$manifest")"

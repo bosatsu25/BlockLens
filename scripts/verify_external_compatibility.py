@@ -16,7 +16,7 @@ RENDER_PROFILES = ("shader-off", "shader-on", "vulkan", "packs")
 PALETTE_IMAGES = tuple("palette-" + name + ".png" for name in (
     "off", "on", "on-reloaded", "off-restored", "all-features", "external-priority"))
 PALETTE_CHECKS = ("actualAtlas", "standaloneDecode", "uiSave", "uiDiscard", "failedSave",
-                  "allFeatures", "reload", "offRestored", "externalPriority")
+                  "allFeatures", "reload", "offRestored", "externalPriority", "stableWoodChroma")
 DEFAULT_IMAGES = (
     "m3-all13-on.png", "m3-all13-reloaded.png", "m3-all13-off-active-pack.png",
     "m5-pack-off.png", "m5-pack-on.png", "m5-pack-air-control.png",

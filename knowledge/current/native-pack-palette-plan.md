@@ -46,3 +46,33 @@ measurements, not a performance-improvement claim. The Python evidence suite has
 collector. Independent review reproduced acceptance of malformed pixel fields; the regression
 first failed seven cases, then passed after separating required canonical-integer and ROI bounds.
 Hosted current-head Shader/Vulkan, normal and BBE gates remain required before merge.
+
+## Hosted framebuffer diagnosis
+
+The first PR #69 run passes five shader-OFF/Vulkan rows and both BBE rows, but rejects three
+shader-ON unchanged-reload frames and two normal restored frames. Exact atlas/decode restoration
+passes. Actual 26.3 normal OFF/restored frames differ at 67 RGB-threshold pixels; interior red-blue
+wood chroma differs only 0.023/0.000. A shader-ON unchanged reload differs at 1114 RGB-threshold
+pixels including temporally varying floor shadows; interior chroma differs only 0.042/0.012.
+
+Retain the positive ON pixel-difference threshold and add a positive warm-to-neutral chroma
+change of at least 2 in each of two interior wood faces. Compare unchanged/restored chroma in
+those same faces with a strict mean tolerance below 0.5, excluding sky/floor/silhouette noise.
+Exact alpha and visible atlas/standalone pixels remain required. A test-only JDK helper, outside
+the runtime JAR, reproduces the old false rejection under neutral brightness drift, then verifies
+restoration, missing/reversed/one-role-only palette changes and invalid dimensions. This is an
+oracle repair tied to actual failing frames; it does not weaken texture restoration or skip shaders.
+
+Independent review identified that mean chroma alone could accept a blank or reshuffled neutral
+wood region. Both comparisons now also require each region's three-pixel-cell luminance pattern
+variance (standard deviation at least 8 in summed RGB units), variance ratio 0.5..2 and centered
+correlation at least 0.9. Observed normal-frame correlations are above 0.999; the failed 26.3 shader
+frames retain correlations 0.959/0.995 across ON and 0.961/0.994 across reload. No sky or floor
+pixel can replace wood presence. Additional negatives reject black/solid frames, reshuffling and
+one-region disappearance. The color and structure guards both apply to positive ON and restoration.
+
+The strengthened metric passes all 329 shared tests, selected JaCoCo/PIT, three build/audit/budget
+and native-compilation gates. The same compiled helper accepts the three preserved CI image sets
+and rejects their OFF/ON substitution. Actual Windows 26.3 with the pinned active Iris/Sodium shader
+profile passes and exits cleanly; its strict independent collector accepts 32 files. Final hosted
+current-head all-three/all-eight/BBE evidence is still required before merge.

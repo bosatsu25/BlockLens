@@ -7,6 +7,7 @@ import dev.blocklens.core.BlockLensConfigFiles;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.PaleOakPalette;
+import dev.blocklens.testing.PaleOakFrameMetrics;
 import dev.blocklens.fabric.BlockLensConfigScreen;
 import dev.blocklens.gametest.mixin.PaletteSpriteAccess;
 import java.awt.image.BufferedImage;
@@ -85,15 +86,16 @@ final class PaleOakPaletteOracle {
             verifyPixels(context, true, false);
             BufferedImage onFrame = capture(context, output, "palette-on");
             int changed = changed(offFrame, onFrame);
-            require(changed > 80, "Palette UI save produced no visible wood change");
+            require(changed > 80 && PaleOakFrameMetrics.visibleChange(offFrame, onFrame),
+                    "Palette UI save produced no visible change in both wood roles");
             reload(context);
             verifyPixels(context, true, false);
             var reloaded = capture(context, output, "palette-on-reloaded");
-            require(changed(onFrame, reloaded) < 40, "Palette appearance changed across an unchanged reload");
+            require(PaleOakFrameMetrics.stable(onFrame, reloaded), "Palette appearance changed across an unchanged reload");
             saveUiToggle(context);
             verifyPixels(context, false, false);
             var restored = capture(context, output, "palette-off-restored");
-            require(changed(offFrame, restored) < 40, "Palette disable did not restore ordinary wood");
+            require(PaleOakFrameMetrics.stable(offFrame, restored), "Palette disable did not restore ordinary wood");
             var allEnabled = offConfig;
             for (var capability : CapabilityId.values()) allEnabled = allEnabled.withEnabled(capability, true);
             var combined = allEnabled;
@@ -118,7 +120,7 @@ final class PaleOakPaletteOracle {
                     "minecraft=" + BlockLensRuntime.minecraftVersion()
                     + "\nchangedPixels=" + changed
                     + "\nactualAtlas=true\nstandaloneDecode=true\nuiSave=true\nuiDiscard=true\nfailedSave=true\nallFeatures=true"
-                    + "\nreload=true\noffRestored=true\nexternalPriority=true\n");
+                    + "\nreload=true\noffRestored=true\nexternalPriority=true\nstableWoodChroma=true\n");
             System.out.println("BLOCKLENS_PALE_OAK atlas=true standalone=true save=true discard=true failedSave=true allFeatures=true reload=true off=true external=true changed=" + changed);
         } catch (IOException failure) {
             throw new AssertionError("Palette evidence failed", failure);
