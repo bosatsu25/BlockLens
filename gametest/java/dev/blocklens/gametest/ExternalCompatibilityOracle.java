@@ -24,7 +24,7 @@ final class ExternalCompatibilityOracle {
         require(Boolean.getBoolean("blocklens.test.packagedRuntime"), "External tests require packaged runtime");
         Path directory = Path.of(System.getProperty("blocklens.test.external.directory"));
         String profile = System.getProperty("blocklens.test.external.profile");
-        require(List.of("shader-off", "shader-on", "vulkan", "packs", "masa").contains(profile),
+        require(List.of("shader-off", "shader-on", "vulkan", "packs").contains(profile),
                 "Unexpected external rendering profile");
         Path output = FabricLoader.getInstance().getGameDir().resolve("external-compatibility");
         Properties evidence = new Properties();
@@ -35,7 +35,7 @@ final class ExternalCompatibilityOracle {
         evidence.setProperty("fullGraph", "false");
         evidence.setProperty("captureMode", ExternalFrameCapture.required()
                 ? "completed-native-frame" : "fabric-test-capture");
-        try (var lifecycle = ExternalLifecycleDiagnostics.open(output, profile.equals("masa"))) {
+        try (var lifecycle = ExternalLifecycleDiagnostics.open(output, false)) {
             Properties manifest = loadManifest(directory);
             require(profile.equals(manifest.getProperty("profile")), "Prepared profile differs");
             require(BlockLensRuntime.minecraftVersion().equals(manifest.getProperty("minecraft")),
@@ -68,28 +68,12 @@ final class ExternalCompatibilityOracle {
                         "Installed shader pack bytes differ");
                 evidence.setProperty("shaderPackSha256", manifest.getProperty("shaderSha256"));
             }
-            if (profile.equals("masa")) {
-                verifyMod("litematica", manifest, evidence);
-                verifyMod("malilib", manifest, evidence);
-            }
             lifecycle.phase("world_create");
             try (var world = context.worldBuilder().create()) {
                 lifecycle.phase("world_ready");
                 context.waitTicks(30);
                 verifyShader(context, manifest, evidence);
-                if (profile.equals("masa")) {
-                    lifecycle.phase("schematic_verify");
-                    BuilderAssistOracle.verifyLitematica(context, world, lifecycle);
-                    evidence.setProperty("schematicRead", "true");
-                    lifecycle.phase("schematic_manifest_copy");
-                    Path source = FabricLoader.getInstance().getGameDir().resolve("builder-assist")
-                            .resolve("builder-schematic-manifest.txt");
-                    require(Files.isRegularFile(source) && Files.size(source) <= 16384,
-                            "Schematic native evidence missing or oversized");
-                    Files.copy(source, output.resolve(source.getFileName()),
-                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    lifecycle.phase("schematic_manifest_copied");
-                } else if (profile.equals("packs")) {
+                if (profile.equals("packs")) {
                     ExternalResourcePackOracle.verify(context, world, directory, manifest, output);
                     evidence.setProperty("packOrderForward", "true");
                     evidence.setProperty("packOrderReverse", "true");

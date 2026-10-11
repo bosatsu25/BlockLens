@@ -22,7 +22,7 @@ final class CapabilityContractTest {
             "gaming.nether_quartz_ore", "outline.glass_highlight", "outline.kelp_highlight",
             "outline.bright_concrete", "others.low_fire", "others.handheld_size", "outline.bright_chest", "analyzer.lava_analyzer",
             "analyzer.beacon_range", "analyzer.lightning_rod_range", "analyzer.villager_job_site_links", "scene.block_filter", "scene.entity_filter",
-            "builder.block_inspector", "builder.placement_preview", "builder.pattern_consistency",);
+            "builder.block_inspector", "builder.placement_preview", "builder.pattern_consistency");
 
     @Test
     void compiledCatalogPreservesPinnedM0ContractAndAddsReviewedCapabilities() throws IOException {

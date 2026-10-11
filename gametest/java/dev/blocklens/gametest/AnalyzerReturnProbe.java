@@ -23,8 +23,8 @@ final class AnalyzerReturnProbe {
     record Seed(ClientLevel level, Villager villager) { }
     private static final BlockPos SITE = new BlockPos(2, -59, 6);
     private static final BlockPos[] FIXTURES = {
-            new BlockPos(-3, -59, 4), new BlockPos(0, -59, 4),
-            new BlockPos(3, -59, 4), new BlockPos(-6, -59, 4), SITE
+            new BlockPos(0, -59, 4), new BlockPos(3, -59, 4),
+            new BlockPos(-6, -59, 4), SITE
     };
 
     private AnalyzerReturnProbe() { }
@@ -33,7 +33,7 @@ final class AnalyzerReturnProbe {
     static void report(Minecraft client, Seed seed, Stage stage) {
         int markerMask = 0;
         for (var marker : AnalyzerClient.engine().markers()) {
-            if (marker.kind() >= 0 && marker.kind() < 5) markerMask |= 1 << marker.kind();
+            if (marker.kind() >= 0 && marker.kind() < 4) markerMask |= 1 << marker.kind();
         }
         ClientLevel level = client.level;
         boolean context = level != null && client.player != null;
@@ -44,11 +44,10 @@ final class AnalyzerReturnProbe {
                 if (state == null) continue;
                 loadedMask |= 1 << kind;
                 boolean expected = switch (kind) {
-                    case 0 -> state.is(Blocks.ANCIENT_DEBRIS);
-                    case 1 -> state.is(Blocks.LAVA) && state.getFluidState().isSource();
-                    case 2 -> state.is(Blocks.BEACON);
-                    case 3 -> state.getBlock() instanceof net.minecraft.world.level.block.LightningRodBlock;
-                    case 4 -> state.is(Blocks.BARREL);
+                    case 0 -> state.is(Blocks.LAVA) && state.getFluidState().isSource();
+                    case 1 -> state.is(Blocks.BEACON);
+                    case 2 -> state.getBlock() instanceof net.minecraft.world.level.block.LightningRodBlock;
+                    case 3 -> state.is(Blocks.BARREL);
                     default -> false;
                 };
                 if (expected && !SceneFilterClient.hiddenBlock(state.getBlock())) physicalMask |= 1 << kind;
@@ -69,7 +68,7 @@ final class AnalyzerReturnProbe {
             var eye = client.player.getEyePosition();
             eyeAnchor = Math.floor(eye.x) == 0 && Math.floor(eye.y) == -55 && Math.floor(eye.z) == 12;
             var options = BlockLensRuntime.config().analyzerOptions();
-            int h = options.value(4, 0), v = options.value(4, 1);
+            int h = options.value(3, 0), v = options.value(3, 1);
             siteInRange = Math.abs(SITE.getX() - Math.floor(eye.x)) <= h
                     && Math.abs(SITE.getY() - Math.floor(eye.y)) <= v
                     && Math.abs(SITE.getZ() - Math.floor(eye.z)) <= h;

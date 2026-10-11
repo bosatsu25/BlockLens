@@ -25,14 +25,11 @@ jobs:
         include:
           - {module: mc26_1_2, minecraft: '26.1.2', profile: shader-off}
           - {module: mc26_1_2, minecraft: '26.1.2', profile: shader-on}
-          - {module: mc26_1_2, minecraft: '26.1.2', profile: masa}
           - {module: mc26_2, minecraft: '26.2', profile: shader-off}
           - {module: mc26_2, minecraft: '26.2', profile: shader-on}
-          - {module: mc26_2, minecraft: '26.2', profile: masa}
           - {module: mc26_2, minecraft: '26.2', profile: vulkan}
           - {module: mc26_3, minecraft: '26.3', profile: shader-off}
           - {module: mc26_3, minecraft: '26.3', profile: shader-on}
-          - {module: mc26_3, minecraft: '26.3', profile: masa}
           - {module: mc26_3, minecraft: '26.3', profile: vulkan}
     env:
       PYTHONDONTWRITEBYTECODE: '1'

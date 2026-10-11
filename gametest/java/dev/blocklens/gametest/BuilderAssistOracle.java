@@ -1,6 +1,5 @@
 package dev.blocklens.gametest;
 
-import dev.blocklens.testing.ExternalLifecycleDiagnostics;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.blocklens.core.BlockLensConfig;
@@ -114,8 +113,6 @@ final class BuilderAssistOracle {
                 require(pattern.complete() && pattern.compared() == 2 && pattern.matches() == 1
                         && pattern.mismatches() == 1, "controlled pattern counts differ");
                 require(pattern.propertyMismatches().get("facing") == 1, "direction mismatch missing");
-                require(!FabricLoader.getInstance().isModLoaded("litematica"), "base oracle must prove absent optional integration");
-                require(BuilderAssistClient.schematicState(PLACED) == null, "absent Litematica produced state");
                 require(BuilderAssistClient.snapshot().target() != null && BuilderAssistClient.snapshot().prediction() != null,
                         "combined capabilities suppressed native builder output");
                 BlockLensRuntime.installConfig(enabled);
@@ -242,13 +239,13 @@ final class BuilderAssistOracle {
     private static void independentTools(net.minecraft.client.Minecraft client, BlockLensConfig enabled) {
         client.player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Blocks.OAK_STAIRS));
         for (var tool : new CapabilityId[] {CapabilityId.BLOCK_INSPECTOR, CapabilityId.PLACEMENT_PREVIEW,
-                CapabilityId.PATTERN_CONSISTENCY, CapabilityId.SCHEMATIC_COMPARISON}) {
+                CapabilityId.PATTERN_CONSISTENCY}) {
             BlockLensRuntime.installConfig(tools(enabled, false).withEnabled(tool, true));
             BuilderAssistClient.clear(); client.hitResult = hit(.75, Direction.SOUTH); BuilderAssistClient.tick(client);
             var snapshot = BuilderAssistClient.snapshot();
             require((snapshot.target() != null) == (tool == CapabilityId.BLOCK_INSPECTOR), "inspector toggle was coupled");
             require((snapshot.prediction() != null) == (tool == CapabilityId.PLACEMENT_PREVIEW
-                    || tool == CapabilityId.SCHEMATIC_COMPARISON), "prediction inputs were coupled");
+                   ), "prediction inputs were coupled");
             require(BuilderAssistClient.selectReference(client) == (tool == CapabilityId.PATTERN_CONSISTENCY),
                     "reference selection was coupled");
         }
@@ -275,7 +272,7 @@ final class BuilderAssistOracle {
 
     private static BlockLensConfig tools(BlockLensConfig config, boolean enabled) {
         for (var capability : new CapabilityId[] {CapabilityId.BLOCK_INSPECTOR, CapabilityId.PLACEMENT_PREVIEW,
-                CapabilityId.PATTERN_CONSISTENCY, CapabilityId.SCHEMATIC_COMPARISON}) config = config.withEnabled(capability, enabled);
+                CapabilityId.PATTERN_CONSISTENCY}) config = config.withEnabled(capability, enabled);
         return config;
     }
 
@@ -299,10 +296,7 @@ final class BuilderAssistOracle {
                 "builder framebuffer viewport differs");
     }
 
-    static void verifyLitematica(ClientGameTestContext context, TestSingleplayerContext world,
-                                ExternalLifecycleDiagnostics lifecycle) {
-        SchematicFixture.verify(context, world, lifecycle);
-    }
+
 
     static void prepareDisconnect(ClientGameTestContext context, TestSingleplayerContext world) {
         world.getServer().runCommand("setblock 0 -58 0 minecraft:stone");
@@ -322,67 +316,6 @@ final class BuilderAssistOracle {
                 && BuilderAssistClient.pattern().reference() == null && BuilderAssistClient.patternOperations() == 0,
                 "disconnect retained builder state"));
         System.out.println("BLOCKLENS_BUILDER_DISCONNECT cleared=true");
-    }
-
-    private static final class SchematicFixture {
-        static void verify(ClientGameTestContext context, TestSingleplayerContext world,
-                           ExternalLifecycleDiagnostics lifecycle) {
-            var original = BlockLensRuntime.config();
-            var stack = context.computeOnClient(c -> c.player.getMainHandItem().copy());
-            try {
-                prepare(context, world);
-                context.waitFor(c -> fi.dy.masa.litematica.world.SchematicWorldHandler.getSchematicWorld() != null, 600);
-                context.runOnClient(c -> {
-                    BlockLensRuntime.installConfig(tools(original, true));
-                    require(BuilderAssistClient.schematicSupported(), "pinned optional versions rejected");
-                    c.player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Blocks.OAK_STAIRS));
-                    c.hitResult = hit(.75, Direction.SOUTH);
-                    var schematic = fi.dy.masa.litematica.world.SchematicWorldHandler.getSchematicWorld();
-                    var chunks = schematic.getChunkSource();
-                    require(chunks.getChunkIfExists(0, 0) == null, "schematic fixture requires a fresh chunk");
-                    int count = chunks.getLoadedChunksCount();
-                    require(BuilderAssistClient.schematicState(PLACED) == null && chunks.getLoadedChunksCount() == count,
-                            "missing schematic read loaded a chunk");
-                    chunks.loadChunk(0, 0);
-                    var predicted = BuilderAssistClient.predict(c, hit(.75, Direction.SOUTH)).state();
-                    try {
-                        schematic.setBlock(PLACED, predicted, 2);
-                        BuilderAssistClient.tick(c);
-                        require(BuilderState.compare(BuilderAssistClient.snapshot().expected(), BuilderAssistClient.snapshot().prediction())
-                                == BuilderState.MATCH, "typed schematic match failed");
-                        schematic.setBlock(PLACED, predicted.cycle(BlockStateProperties.HORIZONTAL_FACING), 2);
-                        BuilderAssistClient.tick(c);
-                        require(BuilderState.compare(BuilderAssistClient.snapshot().expected(), BuilderAssistClient.snapshot().prediction())
-                                == BuilderState.ADJUSTED, "typed schematic state difference failed");
-                        schematic.setBlock(PLACED, Blocks.STONE.defaultBlockState(), 2);
-                        BuilderAssistClient.tick(c);
-                        require(BuilderState.compare(BuilderAssistClient.snapshot().expected(), BuilderAssistClient.snapshot().prediction())
-                                == BuilderState.DIFFERENT, "typed schematic block difference failed");
-                        schematic.setBlock(PLACED, Blocks.AIR.defaultBlockState(), 2);
-                        require(BuilderAssistClient.schematicState(PLACED) == null, "schematic air was treated as a requirement");
-                        require(c.level.getBlockState(PLACED).isAir() && c.player.getMainHandItem().getCount() == 1,
-                                "schematic comparison mutated client world or inventory");
-                    } finally { chunks.unloadChunk(0, 0); }
-                    require(chunks.getLoadedChunksCount() == count && BuilderAssistClient.schematicState(PLACED) == null,
-                            "schematic unload retained state");
-                });
-                var output = FabricLoader.getInstance().getGameDir().resolve("builder-assist");
-                Files.createDirectories(output);
-                Files.writeString(output.resolve("builder-schematic-manifest.txt"), "minecraft=" + BlockLensRuntime.minecraftVersion()
-                        + "\npinnedVersions=true\ntypedRead=true\nmatch=true\nstateDifference=true\nblockDifference=true\nairUnavailable=true\nmissingChunk=true\nunloadCleanup=true\nreadonly=true\n", StandardCharsets.UTF_8);
-                System.out.println("BLOCKLENS_SCHEMATIC typedRead=true match=true adjusted=true different=true missing=true readonly=true");
-            } catch (IOException exception) { throw new AssertionError("schematic evidence failed", exception); }
-            finally {
-                lifecycle.phase("restore_client_queued");
-                context.runOnClient(c -> {
-                    lifecycle.phase("restore_client_entered");
-                    BuilderAssistClient.clear(); BlockLensRuntime.installConfig(original);
-                    if (c.player != null) c.player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-                    lifecycle.phase("restore_client_finished");
-                });
-                lifecycle.phase("restore_client_returned");
-            }
-        }
     }
 
     private static void require(boolean value, String message) { if (!value) throw new AssertionError(message); }
