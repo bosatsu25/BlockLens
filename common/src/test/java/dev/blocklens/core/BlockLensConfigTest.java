@@ -34,6 +34,7 @@ final class BlockLensConfigTest {
 
         // 1. Capability enabledMask dimension
         for (CapabilityId capability : CapabilityId.values()) {
+            if (!capability.available()) continue;
             boolean current = baseline.isEnabled(capability);
             var mutated = baseline.withEnabled(capability, !current);
             assertNotEquals(baseline, mutated, "Config must not equal when " + capability + " is toggled");
@@ -72,6 +73,17 @@ final class BlockLensConfigTest {
         assertEquals(defaults.comfortOptions(), fromOverrides.comfortOptions());
         assertEquals(defaults.analyzerOptions(), fromOverrides.analyzerOptions());
         assertEquals(defaults.sceneFilterOptions(), fromOverrides.sceneFilterOptions());
+    }
+
+    @Test
+    void retiredFeaturesRemainDisabledEvenWhenOldConfigsEnableThem() {
+        var defaults = BlockLensConfig.defaults();
+        for (var retired : new CapabilityId[] {CapabilityId.DEBRIS_ANALYZER, CapabilityId.SCHEMATIC_COMPARISON}) {
+            assertFalse(defaults.withEnabled(retired, true).isEnabled(retired));
+            assertEquals(defaults.enabledMask(), defaults.withEnabled(retired, true).enabledMask());
+            assertFalse(BlockLensConfigCodec.decode(retired.sourceKey() + "=true\\n").isEnabled(retired));
+            assertFalse(BlockLensConfigCodec.encode(defaults).contains(retired.sourceKey() + "="));
+        }
     }
 
     @Test
