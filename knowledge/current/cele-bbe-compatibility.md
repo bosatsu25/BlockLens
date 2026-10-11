@@ -36,3 +36,8 @@ Tests cover actual optimized emission, closed chest UI Save/Apply and OFF restor
 Replace the old BlockLens JAR with the verified 0.4.1 artifact matching the Minecraft version; keep only one BlockLens JAR. Preserve existing configuration and BBE optimization. Ore highlighting and first-person fire/handheld controls retain their existing independent switches and profile options.
 
 The Chise reference's pale-oak item/entity/GUI palette and LowOnFire's placed-world fire models are not implemented by this chest compatibility patch. Existing orientation cues or first-person low-fire transforms are not equivalent to those additional visual assets. Original source resource packs and third-party artwork are not redistributed by this change.
+
+
+## Publication gate
+
+Normal CI requires the eight-profile External compatibility workflow and both Cele rendering compatibility profiles as reusable jobs. The release workflow listens only to the completion of that combined same-commit CI run. Standalone workflow_dispatch compatibility observations cannot authorize publishing. All required jobs must succeed; continue-on-error and conditional profile skips are absent. No public artifact is inferred from the source version alone.

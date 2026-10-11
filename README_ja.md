@@ -12,15 +12,17 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現在の安定版:** BlockLens **v0.3.0** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な57機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
+> **現在の安定版:** BlockLens **v0.4.0** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な55機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
 > **v0.3.0公開後の開発版:** 現行55機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。AMATERAS由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
 
-## 開発版の対応：Minecraft 3バージョン
+## 開発版 v0.4.1：Minecraft 3バージョン
 
-開発版は **26.1.2 / 26.2 / 26.3** を対象とし、既存40機能を維持して、表示・快適性の6機能、4つの解析機能、2つの独立した表示フィルター、3つの建築支援を追加します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。PR #40の設定画面再設計はマージ済みです。3版の検証結果はPRの最新コミットに対応するCIで確認してください。公開済みリリースに26.3対応が追加されたという意味ではありません。
+v0.4.1候補は、26.3／BBE 1.3.9+mc26.3／Sodium 0.9.2+mc26.3の組み合わせで、閉じた通常チェストが保存・適用だけで白くなるよう修正します。最適化は有効なままです。trapped／ender／copper／Christmasの素材は置換しません。検証したCele構成にはIris 1.11.7とContinuity 3.0.1（シェーダーOFF）を含みます。BBEとシェーダーONの併用は未確認です。更新時は対応するBlockLens JARを1個だけ入れ、設定を保持してください。公開には同一コミットの通常3版・シェーダー／バックエンド・BBE／Celeの全CI成功を要求します。[正確な対応範囲](knowledge/current/cele-bbe-compatibility.md)を参照してください。
+
+開発版は **26.1.2 / 26.2 / 26.3** を対象とし、既存40機能を維持して、表示・快適性の6機能、4つの解析機能、2つの独立した表示フィルター、3つの建築支援を追加します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。PR #40の設定画面再設計はマージ済みです。3版の検証結果はPRの最新コミットに対応するCIで確認してください。公開済みv0.4.0も3版に対応しています。
 
 Windowsで実際のMinecraft画面のUI自動テストを見るには、Java 25とGradle 9.5.1を用意し、`./scripts/run-ui-tests.ps1`（3版すべて）または `./scripts/run-ui-tests.ps1 -Version 26.3` を実行します。ビルドした配布用JARで実クライアントを順番に開き、クラスのロード元を確認してテスト後に終了し、失敗時は停止します。CIでは各版10枚の設定画面画像に加え、描画・JARの検証結果を残します。[正確な依存関係と検証状況](knowledge/current/minecraft-26-3.md)を参照してください。
 
@@ -214,14 +216,14 @@ config readの上限、同期一時ファイル書き込みと対応filesystem�
 
 ## Release
 
-**v0.2.2** が最新の公開済み安定版です。対象コミットは`46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`です。
+**v0.2.2** は歴史的な公開済み安定版です。対象コミットは`46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`です。
 
 | Minecraft | 公開JAR | サイズ | SHA-256 |
 | --- | --- | ---: | --- |
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。26.3用の公開リリースはまだありません。現行基準は開発時**204,800 B（200 KiB）**、公開上限**204,800 B（200 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
+カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。公開済みv0.4.0は3版に対応し、v0.4.1は必須CIと公開条件を満たすまで候補として扱います。現行基準は開発時**204,800 B（200 KiB）**、公開上限**204,800 B（200 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
 
 **v0.2.0** はP0の歴史的リリース証拠として維持します。
 
@@ -274,7 +276,7 @@ BlockLensのruntime自体は小さく保ちますが、開発・QA基盤は厳�
 | PIT JUnit adapter | **pitest-junit5-plugin 1.2.3** | JUnit 5 mutation execution |
 | 実Client integration | **Fabric Client GameTest** | 実Minecraft起動/reload/render検証 |
 | Headless graphics | **Xvfb / Ubuntu 24.04** | GitHub Actions上のframebuffer test |
-| CI/CD | **GitHub Actions** | dual-version quality/release pipeline |
+| CI/CD | **GitHub Actions** | three-version quality/release pipeline |
 | Artifact integrity | **SHA-256** | reproducibility、CI/Release byte identity |
 
 Java compileでは`-Xlint:deprecation`、`-Xlint:unchecked`、**`-Werror`**を使用します。
@@ -288,7 +290,7 @@ Java compileでは`-Xlint:deprecation`、`-Xlint:unchecked`、**`-Werror`**を�
 
 ## 実Client検証
 
-両Minecraft versionで **Fabric Client GameTest** をXvfb上で実行します。config round-trip、resource reload、Overworld/Nether遷移、target/state mapping、全機能ON/OFF復元、rendered visual evidence、resource-pack preservation fixture、M8 performance/retention、model resolution、reproducible artifactまで検証対象です。
+3つのMinecraft versionで **Fabric Client GameTest** をXvfb上で実行します。config round-trip、resource reload、Overworld/Nether遷移、target/state mapping、全機能ON/OFF復元、rendered visual evidence、resource-pack preservation fixture、M8 performance/retention、model resolution、reproducible artifactまで検証対象です。
 
 開発runtimeが37機能を超えても、元の参照パック 37機能は歴史的regression contractとして残します。
 
@@ -337,7 +339,7 @@ Release jobではBlockLensを再buildせず、CIで検証したraw JARそのも�
 1. 対象Minecraft版のFabric Loaderを導入します。
 2. 対応するFabric APIを導入します。
 3. Java 25以上を使用します。
-4. [GitHub Releasesの`v0.3.0`](https://github.com/bosatsu25/BlockLens/releases/tag/v0.3.0)から26.1.2、26.2または26.3用JARを取得します。
+4. [GitHub Releasesの`v0.4.0`](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.0)から26.1.2、26.2または26.3用JARを取得します。
 5. JARをMinecraftの`mods`フォルダへ入れます。
 6. clientを起動します。
 

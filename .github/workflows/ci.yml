@@ -619,3 +619,12 @@ jobs:
           path: build/ci/client-gametest-failure-${{ matrix.minecraft }}
           if-no-files-found: warn
           retention-days: 14
+
+  # Release listens to this workflow: a failed/unfinished matrix cannot authorize publication.
+  external-compatibility:
+    needs: common-quality
+    uses: ./.github/workflows/external-compatibility.yml
+
+  bbe-compatibility:
+    needs: common-quality
+    uses: ./.github/workflows/bbe-compatibility.yml

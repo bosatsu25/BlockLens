@@ -43,6 +43,19 @@ final class M9ReleaseReadinessContractTest {
         String release = Files.readString(root().resolve(".github/workflows/release.yml"));
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
+        // An independent successful workflow is insufficient: both compatibility
+        // matrices must be required jobs in the same release-authorizing CI run.
+        assertTrue(ci.contains("uses: ./.github/workflows/bbe-compatibility.yml"),
+                "publishing CI omits the optimized chest rendering paths");
+        assertTrue(ci.contains("uses: ./.github/workflows/external-compatibility.yml"),
+                "publishing CI omits the advertised shader/backend profiles");
+        assertFalse(ci.contains("continue-on-error:"), "required CI failures must block release");
+        for (String workflow : new String[] {"bbe-compatibility.yml", "external-compatibility.yml"}) {
+            String required = Files.readString(root().resolve(".github/workflows/" + workflow));
+            assertTrue(required.contains("workflow_call:"), "matrix must run inside authorizing CI");
+            assertFalse(required.contains("continue-on-error:"));
+        }
+
         assertTrue(release.contains("workflow_run:"));
         assertTrue(release.contains("- CI"));
         assertTrue(release.contains("github.event.workflow_run.conclusion == 'success'"));
