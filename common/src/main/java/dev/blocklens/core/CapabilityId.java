@@ -126,6 +126,11 @@ public enum CapabilityId {
         return defaultEnabled;
     }
 
+    /** Retired IDs keep their persisted bit positions but are no longer user features. */
+    public boolean available() {
+        return this != DEBRIS_ANALYZER && this != SCHEMATIC_COMPARISON;
+    }
+
     public static Map<String, CapabilityId> bySourceKey() {
         return BY_SOURCE_KEY;
     }
