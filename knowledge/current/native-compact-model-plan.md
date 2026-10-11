@@ -6,7 +6,7 @@ Append three independent default-off controls at bits 58..60: compact blocks, it
 They replace the relevant vanilla-owned model display transforms using a static compiled policy,
 while the existing configurable first-person percentage multiplier remains independent.
 
-The supplied Small Handhelds input has 44 model definitions and 30 explicit display groups.
+The compact display reference includes independent block, item and tool behaviors.
 The behavioral reference includes both hands, third person, GUI/ground/head/fixed/shelf contexts,
 shield blocking, bow/crossbow, spear, trident and item-specific exceptions. Numeric transforms
 are functional reference facts; original model geometry, textures, JSON and RPO metadata are not
