@@ -95,6 +95,10 @@ final class ExternalCompatibilityOracle {
                     CompactModelsOracle.verify(context, world);
                     evidence.setProperty("compactModels", "true");
                     verifyShader(context, manifest, evidence);
+                    SimplifiedTerrainOracle.verify(context, world);
+                    evidence.setProperty("simplifiedTerrain", "true");
+                    verifyShader(context, manifest, evidence);
+                    copyEvidence("simplified-visual", output);
                     copyEvidence("compact-model-visual", output);
                     copyEvidence("pale-oak-visual", output);
                     copyEvidence("m3-visual", output);

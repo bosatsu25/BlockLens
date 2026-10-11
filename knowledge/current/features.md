@@ -1,8 +1,8 @@
-# BlockLens — 現在の59機能 / Current 59 capabilities
+# BlockLens — 現在の60機能 / Current 60 capabilities
 
 Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
-The compiled catalog contains 59 independent capabilities; existing keys, ordering and defaults are preserved.
+The compiled catalog contains 60 independent capabilities; existing keys, ordering and defaults are preserved.
 
 **削除済み:** `analyzer.debris_analyzer` と `builder.schematic_comparison`。既存設定のこれらのキーは無視されます。通常の古代の残骸ハイライト `gaming.ancient_debris` は引き続き利用できます。
 
@@ -67,7 +67,7 @@ The compiled catalog contains 59 independent capabilities; existing keys, orderi
 | 明るいチェスト | Bright Chest | 通常のチェストを明るい白色にし、形と開閉を保ちます。 | 有効 / Enabled |
 | ペールオークを白灰色に | Neutral Pale Oak | バニラの木材を木目と色付き金具を保って白灰色にします。保存時に再読み込みし、外部パック素材を優先します。 | 無効 / Disabled |
 
-## その他 / Other（16）
+## その他 / Other（17）
 
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |

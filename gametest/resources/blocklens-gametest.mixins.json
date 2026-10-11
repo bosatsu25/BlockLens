@@ -13,7 +13,8 @@
     "PaletteSpriteAccess",
     "CompactModelProbeMixin",
     "CompactDisplayProbeMixin",
-    "CompactSubmissionProbeMixin"
+    "CompactSubmissionProbeMixin",
+    "SimplifiedTerrainProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

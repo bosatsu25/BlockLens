@@ -193,5 +193,7 @@
   "blocklens.capability.compact_items": "コンパクトなアイテム表示",
   "blocklens.capability.compact_items.description": "棒・角笛・旗・頭などに合わせた表示姿勢に調整します。",
   "blocklens.capability.compact_tools": "コンパクトな武器・道具表示",
-  "blocklens.capability.compact_tools.description": "弓・クロスボウ・防御中の盾・メイス・槍・トライデントの状態に合わせて調整します。"
+  "blocklens.capability.compact_tools.description": "弓・クロスボウ・防御中の盾・メイス・槍・トライデントの状態に合わせて調整します。",
+  "blocklens.capability.simplified_terrain": "地形の簡略表示",
+  "blocklens.capability.simplified_terrain.description": "対象の標準地形を暗い不透明面と疎な植物に置き換えます。非表示フィルターとは独立した設定です。"
 }

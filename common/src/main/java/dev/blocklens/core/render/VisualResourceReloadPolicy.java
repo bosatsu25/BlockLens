@@ -9,7 +9,8 @@ public final class VisualResourceReloadPolicy {
     private static final long MASK = (1L << CapabilityId.PALE_OAK_NEUTRAL.bitPosition())
             | (1L << CapabilityId.COMPACT_BLOCKS.bitPosition())
             | (1L << CapabilityId.COMPACT_ITEMS.bitPosition())
-            | (1L << CapabilityId.COMPACT_TOOLS.bitPosition());
+            | (1L << CapabilityId.COMPACT_TOOLS.bitPosition())
+            | (1L << CapabilityId.SIMPLIFIED_TERRAIN.bitPosition());
     public static boolean requiresReload(BlockLensConfig before, BlockLensConfig after) {
         return ((before.enabledMask() ^ after.enabledMask()) & MASK) != 0;
     }

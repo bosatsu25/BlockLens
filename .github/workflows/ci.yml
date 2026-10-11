@@ -39,7 +39,9 @@ jobs:
       # The discovery suite covers sanitizer, external compatibility, source-pack audit,
       # and clean-room render asset helper regressions without duplicated invocations.
       - name: Verify clean-room generated render assets
-        run: PYTHONDONTWRITEBYTECODE=1 python3 scripts/verify_cleanroom_render_assets.py
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/verify_cleanroom_render_assets.py
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/verify_simplified_assets.py
       - name: Test CI helper contracts (discovery)
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_*.py' -v
       - name: Run shared quality gate
@@ -49,7 +51,7 @@ jobs:
     name: ${{ matrix.minecraft }} / build + client smoke + budget
     needs: common-quality
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -420,6 +422,21 @@ jobs:
           path: ${{ steps.ore-borders.outputs.path }}
           if-no-files-found: error
           retention-days: 14
+      - name: Collect native simplified terrain evidence
+        id: simplified-terrain
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="build/ci/simplified-terrain-${{ matrix.minecraft }}"
+          python scripts/verify_simplified_evidence.py --directory "versions/${{ matrix.module }}/build/run/clientGameTest/simplified-visual" --minecraft '${{ matrix.minecraft }}' --destination "$target"
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+      - name: Upload native simplified terrain evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-simplified-terrain-${{ matrix.minecraft }}
+          path: ${{ steps.simplified-terrain.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
       - name: Collect native compact model evidence
         id: compact-models
         shell: bash
@@ -655,7 +672,7 @@ jobs:
             -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
             -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \
             -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \
-            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' -o -path '*/pale-oak-visual/*' -o -path '*/compact-model-visual/*' \) \
+            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' -o -path '*/pale-oak-visual/*' -o -path '*/compact-model-visual/*' -o -path '*/simplified-visual/*' \) \
             -exec cp --parents '{}' "$target" \;
       - name: Upload failed Client GameTest diagnostics
         if: failure()

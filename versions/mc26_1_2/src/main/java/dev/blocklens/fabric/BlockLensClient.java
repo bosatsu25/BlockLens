@@ -35,6 +35,7 @@ public final class BlockLensClient implements ClientModInitializer {
         long initializationNanos = System.nanoTime() - startedNanos;
         BlockLensRuntime.initialize("26.1.2", config, initializationNanos);
         MinecraftDecorationModelPlugin.register();
+        MinecraftSimplifiedTerrain.register();
         SceneFilterClient.register();
         AnalyzerClient.register();
         BuilderAssistClient.register();

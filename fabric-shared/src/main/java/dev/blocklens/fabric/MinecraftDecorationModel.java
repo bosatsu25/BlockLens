@@ -2,6 +2,7 @@ package dev.blocklens.fabric;
 
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.render.VisualGeometryKey;
 import dev.blocklens.core.render.DecorationQuadFace;
 import dev.blocklens.core.render.DecorationQuadInstruction;
 import dev.blocklens.core.render.DecorationRenderDescriptor;
@@ -356,7 +357,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         if (enabledCapabilities == 0L) {
             return wrappedKey;
         }
-        return new GeometryKey(wrappedKey, enabledCapabilities);
+        return new VisualGeometryKey(wrappedKey, enabledCapabilities);
     }
 
     private static DecorationQuadFace face(@Nullable Direction direction) {
@@ -373,6 +374,4 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         };
     }
 
-    private record GeometryKey(Object wrappedKey, long enabledCapabilities) {
-    }
 }
