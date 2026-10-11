@@ -11,6 +11,7 @@ public final class MinecraftTerrainInvalidator {
     /** Marks all retained terrain geometry dirty so config-dependent model output is recompiled. */
     public static void invalidateAll(Minecraft client) {
         Objects.requireNonNull(client, "client");
+        SceneFilterClient.synchronizeBeforeTerrainRebuild(client);
         client.levelRenderer.allChanged();
     }
 }
