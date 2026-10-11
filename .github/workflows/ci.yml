@@ -38,10 +38,8 @@ jobs:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
       - name: Verify clean-room generated render assets
         run: PYTHONDONTWRITEBYTECODE=1 python3 scripts/verify_cleanroom_render_assets.py
-      - name: Test bounded failure-log sanitizer
-        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p test_sanitize_client_diagnostics.py -v
-      - name: Test external preparation and evidence validation
-        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p '*external_compatibility.py' -v
+      - name: Test CI helper contracts (discovery)
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_*.py' -v
       - name: Run shared quality gate
         run: gradle --stacktrace :common:qualityGate
 

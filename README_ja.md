@@ -1,5 +1,7 @@
 # BlockLens
 
+今回の独自発光境界（NewGlowingOres参考）は、18種のバニラ鉱石の個別強調表示と連動します。オリジナル画像・OptiFine CTMは同梱せず、透過PNGと6面カリングモデルを独自生成します。隣接CTM、外部MOD鉱石、eaterパックの全ブロック状態は今後の対象です。仕様・未対応範囲はIssue #64を参照してください。
+
 <p align="center">
   <img src="common/src/main/resources/assets/blocklens/icon.png" alt="BlockLens icon" width="192">
 </p>
