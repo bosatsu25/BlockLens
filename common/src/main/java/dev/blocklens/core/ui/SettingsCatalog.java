@@ -14,7 +14,7 @@ public final class SettingsCatalog {
     static {
         for (CapabilityId.Category category : CapabilityId.Category.values()) {
             CATEGORIES.put(category, Arrays.stream(CapabilityId.values())
-                    .filter(capability -> capability.category() == category).toList());
+                    .filter(capability -> capability.available() && capability.category() == category).toList());
         }
     }
 
