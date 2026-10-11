@@ -42,5 +42,7 @@ The full packaged 26.3 graph also passes and exits normally (8m21s), including b
 all categories, compact layout, analyzers, scene filters, builder tools, extensions and cleanup.
 Its palette ON frame changes 412 pixels in the fixed ROI. The full test clears the previous
 dark-fixture ceiling before observing wood. Allocation/reload observations are retained as
-measurements, not a performance-improvement claim. The Python evidence suite has 84 passing tests.
+measurements, not a performance-improvement claim. The Python evidence suite has 86 passing tests, including execution of the actual CI Bash
+collector. Independent review reproduced acceptance of malformed pixel fields; the regression
+first failed seven cases, then passed after separating required canonical-integer and ROI bounds.
 Hosted current-head Shader/Vulkan, normal and BBE gates remain required before merge.
