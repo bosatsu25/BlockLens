@@ -108,4 +108,43 @@ final class BlockLensConfigCodecTest {
         }
         throw new AssertionError("Config map must be unmodifiable");
     }
+
+    @Test
+    void comfortOptionsBoundaryValuesDecodeAccuratelyOrRetainDefaults() {
+        String boundaryMin = """
+                others.low_fire.size=0
+                others.handheld_size.blocks_percent=40
+                others.handheld_size.items_percent=40
+                others.handheld_size.tools_percent=40
+                """;
+        BlockLensConfig decodedMin = BlockLensConfigCodec.decode(boundaryMin);
+        assertEquals(0, decodedMin.comfortOptions().fireSize());
+        assertEquals(40, decodedMin.comfortOptions().blocksPercent());
+        assertEquals(40, decodedMin.comfortOptions().itemsPercent());
+        assertEquals(40, decodedMin.comfortOptions().toolsPercent());
+
+        String boundaryMax = """
+                others.low_fire.size=2
+                others.handheld_size.blocks_percent=100
+                others.handheld_size.items_percent=100
+                others.handheld_size.tools_percent=100
+                """;
+        BlockLensConfig decodedMax = BlockLensConfigCodec.decode(boundaryMax);
+        assertEquals(2, decodedMax.comfortOptions().fireSize());
+        assertEquals(100, decodedMax.comfortOptions().blocksPercent());
+        assertEquals(100, decodedMax.comfortOptions().itemsPercent());
+        assertEquals(100, decodedMax.comfortOptions().toolsPercent());
+
+        String outOfBounds = """
+                others.low_fire.size=3
+                others.handheld_size.blocks_percent=39
+                others.handheld_size.items_percent=101
+                others.handheld_size.tools_percent=0
+                """;
+        BlockLensConfig decodedOut = BlockLensConfigCodec.decode(outOfBounds);
+        assertEquals(ComfortOptions.defaults().fireSize(), decodedOut.comfortOptions().fireSize());
+        assertEquals(ComfortOptions.defaults().blocksPercent(), decodedOut.comfortOptions().blocksPercent());
+        assertEquals(ComfortOptions.defaults().itemsPercent(), decodedOut.comfortOptions().itemsPercent());
+        assertEquals(ComfortOptions.defaults().toolsPercent(), decodedOut.comfortOptions().toolsPercent());
+    }
 }
