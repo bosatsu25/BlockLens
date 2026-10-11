@@ -3,6 +3,7 @@ package dev.blocklens.gametest;
 import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.analyzer.AnalyzerCatalog;
 import dev.blocklens.core.scene.SceneFilterOptions;
 import dev.blocklens.fabric.AnalyzerClient;
 import dev.blocklens.fabric.SceneFilterClient;
@@ -27,6 +28,8 @@ import net.minecraft.world.level.block.RenderShape;
 /** Real world meshes, block entities, entity extraction, analyzer visibility and reload restoration. */
 final class SceneFilterVisualOracle {
     private static final BlockPos TARGET=new BlockPos(0,-58,4);
+    private static final int JOB_SITE_KIND = AnalyzerCatalog.index(CapabilityId.VILLAGER_JOB_SITE_LINKS);
+    private static final int ROD_KIND = AnalyzerCatalog.index(CapabilityId.LIGHTNING_ROD_RANGE);
     private SceneFilterVisualOracle() { }
     static void verify(ClientGameTestContext context,TestSingleplayerContext world) {
         var original=BlockLensRuntime.config();
@@ -163,9 +166,9 @@ final class SceneFilterVisualOracle {
             context.runOnClient(c->findVillager(c.level).getBrain().setMemory(MemoryModuleType.JOB_SITE,
                     GlobalPos.of(c.level.dimension(),new BlockPos(2,-59,6))));
             var analyzer=off.withEnabled(CapabilityId.VILLAGER_JOB_SITE_LINKS,true)
-                    .withAnalyzerOptions(original.analyzerOptions().with(4,0,16).with(4,1,8).with(4,3,5));
+                    .withAnalyzerOptions(original.analyzerOptions().with(JOB_SITE_KIND,0,16).with(JOB_SITE_KIND,1,8).with(JOB_SITE_KIND,3,5));
             install(context,analyzer);
-            context.waitFor(c->AnalyzerClient.engine().markers().stream().anyMatch(m->m.kind()==4),600);
+            context.waitFor(c->AnalyzerClient.engine().markers().stream().anyMatch(m->m.kind()==JOB_SITE_KIND),600);
             capture(context,output,"job-site-visible");
             install(context,analyzer.withEnabled(CapabilityId.BLOCK_FILTER,true).withSceneFilterOptions(SceneFilterOptions.defaults()
                     .withMode(0,SceneFilterOptions.Mode.BLACKLIST).withList(0,false,"minecraft:barrel")));
@@ -183,17 +186,20 @@ final class SceneFilterVisualOracle {
             server.runCommand("fill 2 -60 3 4 -60 5 minecraft:iron_block");
             server.runCommand("setblock 3 -59 4 minecraft:beacon");
             server.runCommand("setblock -6 -59 4 minecraft:lightning_rod");
-            var options=original.analyzerOptions().with(0,0,16);
-            for(int kind=1;kind<5;kind++) options=options.with(kind,0,8).with(kind,1,5).with(kind,3,5);
+            var options=original.analyzerOptions();
+            for(int kind=0;kind<AnalyzerCatalog.CAPABILITIES.size();kind++) {
+                options=options.with(kind,0,8).with(kind,1,5).with(kind,3,5);
+            }
             server.runCommand("tp @a 0 -56 12 180 25");
             install(context,off);
-            var allOff=read(capture(context,output,"all57-off"));
+            var allOff=read(capture(context,output,"all55-off"));
             var combined=all(original,true).withAnalyzerOptions(options).withSceneFilterOptions(SceneFilterOptions.defaults().withEntityPreset(0)
                     .withMode(0,SceneFilterOptions.Mode.BLACKLIST).withList(0,false,"minecraft:stone"));
-            require(Long.bitCount(combined.enabledMask())==57,"all57 fixture incomplete");
+            require(Long.bitCount(combined.enabledMask())==CapabilityId.values().length,
+                    "all-capability scene filter fixture incomplete");
             install(context,combined);
-            combined(context,output,"all57-on",allOff);
-            reload(context);combined(context,output,"all57-reloaded",allOff);
+            combined(context,output,"all55-on",allOff);
+            reload(context);combined(context,output,"all55-reloaded",allOff);
             require(context.computeOnClient(c->SceneFilterClient.hiddenBlock(Blocks.STONE) && !SceneFilterClient.hiddenEntity(c.player)),"reload lost scene rules");
             server.runCommand("execute in minecraft:the_nether run tp @a 0 80 0");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.NETHER),1200);
@@ -202,14 +208,14 @@ final class SceneFilterVisualOracle {
             server.runCommand("execute in minecraft:overworld run tp @a 0 -56 12 180 25");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.OVERWORLD),1200);
             try (var returnFixture=VillagerJobSiteFixture.open(context,600)) {
-                combined(context,output,"all57-dimension-return",allOff);
+                combined(context,output,"all55-dimension-return",allOff);
             }
             install(context,off);
             require(context.computeOnClient(c->!SceneFilterClient.blockFilterActive() && SceneFilterClient.compiledLookupCount()==0
                     && !SceneFilterClient.hiddenBlock(Blocks.STONE)),"OFF retained compiled filter state");
-            evidence.append("blockModes=true\nentityModes=true\nblockEntityExtraction=true\nselfPreserved=true\nphysicalStatePreserved=true\nfluidPreserved=true\nmodelGroupsPreserved=true\njobSiteHidden=true\nall57Enabled=true\nall57Reload=true\ndimensionCleanup=true\nfinalOffEmpty=true\n");
+            evidence.append("blockModes=true\nentityModes=true\nblockEntityExtraction=true\nselfPreserved=true\nphysicalStatePreserved=true\nfluidPreserved=true\nmodelGroupsPreserved=true\njobSiteHidden=true\nall55Enabled=true\nall55Reload=true\ndimensionCleanup=true\nfinalOffEmpty=true\n");
             Files.writeString(output.resolve("scene-filter-visual-manifest.txt"),evidence,StandardCharsets.UTF_8);
-            System.out.println("BLOCKLENS_SCENE_VISUAL blocks=true blockEntities=true entities=true self=true fluids=true modelGroupRestore=true hiddenJobSites=true all57Reload=true dimensionCleanup=true");
+            System.out.println("BLOCKLENS_SCENE_VISUAL blocks=true blockEntities=true entities=true self=true fluids=true modelGroupRestore=true hiddenJobSites=true all55Reload=true dimensionCleanup=true");
         } catch(IOException e) { throw new AssertionError("scene filter framebuffer evidence failed",e); }
         finally {
             BlockLensRuntime.installConfig(original);
@@ -269,7 +275,7 @@ final class SceneFilterVisualOracle {
     }
     private static void combined(ClientGameTestContext context,Path output,String name,BufferedImage baseline) throws IOException {
         try {
-            context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==5,600);
+            context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==AnalyzerCatalog.CAPABILITIES.size(),600);
         } catch(AssertionError failure) {
             context.runOnClient(c->{
                 int kinds=0;
@@ -279,13 +285,13 @@ final class SceneFilterVisualOracle {
             throw failure;
         }
         var frame=read(capture(context,output,name));
-        for(int color:new int[]{0xFF8A24,0xFFDB45,0x62FF87,0x56DFFF,0xFF6DEA}) {
+        for(int color:new int[]{0xFFDB45,0x62FF87,0x56DFFF,0xFF6DEA}) {
             int before=0,after=0;
             for(int y=40;y<320;y++) for(int x=30;x<610;x++) {
                 if(dev.blocklens.testing.CueColorEvidence.matches(baseline.getRGB(x,y),color)) before++;
                 if(dev.blocklens.testing.CueColorEvidence.matches(frame.getRGB(x,y),color)) after++;
             }
-            require(after-before>=12,"all57 filter interaction lost an analyzer cue: "+name);
+            require(after-before>=12,"all55 filter interaction lost an analyzer cue: "+name);
         }
     }
     static void prepareDisconnect(ClientGameTestContext context) {
@@ -294,7 +300,7 @@ final class SceneFilterVisualOracle {
         install(context,BlockLensRuntime.config().withEnabled(CapabilityId.BLOCK_FILTER,true)
                 .withEnabled(CapabilityId.ENTITY_FILTER,true).withSceneFilterOptions(options));
         require(context.computeOnClient(c->SceneFilterClient.compiledLookupCount()==2),"disconnect needs nonempty compiled filter state");
-        context.waitFor(c->AnalyzerClient.engine().markers().stream().anyMatch(m->m.kind()==3),600);
+        context.waitFor(c->AnalyzerClient.engine().markers().stream().anyMatch(m->m.kind()==ROD_KIND),600);
     }
     private static int orange(BufferedImage image) {
         int count=0;

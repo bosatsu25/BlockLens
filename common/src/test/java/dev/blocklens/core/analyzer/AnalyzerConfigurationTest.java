@@ -18,9 +18,8 @@ final class AnalyzerConfigurationTest {
     @Test void everyNumericLimitRoundTripsWhileLegacyBitsAndComfortRemainIntact() {
         for (boolean maximum : new boolean[]{false,true}) {
             var options=AnalyzerOptions.defaults();
-            for(int kind=0;kind<5;kind++) for(int field=0;field<4;field++) {
-                if(kind==0 && field==1) continue;
-                options=options.with(kind,field,maximum?AnalyzerOptions.maximum(kind,field):AnalyzerOptions.minimum(kind,field));
+            for(int kind=0;kind<4;kind++) for(int field=0;field<4;field++) {
+                    options=options.with(kind,field,maximum?AnalyzerOptions.maximum(kind,field):AnalyzerOptions.minimum(kind,field));
             }
             var config=BlockLensConfig.defaults().withEnabled(CapabilityId.ANVIL,true).withAnalyzerOptions(options);
             var encoded=BlockLensConfigCodec.encode(config);
@@ -28,14 +27,13 @@ final class AnalyzerConfigurationTest {
             assertEquals(config.enabledMask(),decoded.enabledMask());
             assertEquals(config.comfortOptions(),decoded.comfortOptions());
             assertEquals(options,decoded.analyzerOptions());
-            assertFalse(encoded.contains("analyzer.debris_analyzer.vertical_radius="));
+            assertFalse(encoded.contains("analyzer.debris_analyzer."));
         }
     }
 
     @Test void MalformedOrOutOfRangeValuesPreserveTheLastValidField() {
         StringBuilder encoded=new StringBuilder();
-        for(int kind=0;kind<5;kind++) for(int field=0;field<4;field++) {
-            if(kind==0 && field==1) continue;
+        for(int kind=0;kind<4;kind++) for(int field=0;field<4;field++) {
             String key=AnalyzerCatalog.optionKey(kind,field);
             encoded.append(key).append('=').append(AnalyzerOptions.minimum(kind,field)).append('\n');
             for(String invalid:new String[]{"bad","2147483648",Integer.toString(AnalyzerOptions.minimum(kind,field)-1),
@@ -44,7 +42,7 @@ final class AnalyzerConfigurationTest {
             }
         }
         var decoded=BlockLensConfigCodec.decode(encoded.toString());
-        for(int kind=0;kind<5;kind++) for(int field=0;field<4;field++) {
+        for(int kind=0;kind<4;kind++) for(int field=0;field<4;field++) {
             assertEquals(AnalyzerOptions.minimum(kind,field),decoded.analyzerOptions().value(kind,field));
         }
         assertEquals(BlockLensConfig.defaults().enabledMask(),decoded.enabledMask());
@@ -54,7 +52,7 @@ final class AnalyzerConfigurationTest {
 
     @Test void NumericOnlyEditsDiscardAndPersistThroughTheExistingDraft() throws IOException {
         var draft=new SettingsDraft(BlockLensConfig.defaults());
-        var options=draft.config().analyzerOptions().with(0,0,16).with(4,2,24);
+        var options=draft.config().analyzerOptions().with(0,0,8).with(3,2,24);
         draft.setAnalyzerOptions(options);
         assertTrue(draft.changed());
         draft.discard();
@@ -70,7 +68,7 @@ final class AnalyzerConfigurationTest {
 
     @Test void FailedSavingKeepsTheWholeNumericDraftForRetry() throws IOException {
         var draft=new SettingsDraft(BlockLensConfig.defaults());
-        var options=AnalyzerOptions.defaults().with(1,0,8).with(2,2,16);
+        var options=AnalyzerOptions.defaults().with(0,0,8).with(1,2,16);
         draft.setAnalyzerOptions(options);
         draft.toggle(CapabilityId.LAVA_ANALYZER);
         var expectedMask=draft.config().enabledMask();

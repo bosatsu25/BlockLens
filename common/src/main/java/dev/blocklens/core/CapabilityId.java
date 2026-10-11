@@ -70,7 +70,6 @@ public enum CapabilityId {
     HANDHELD_SIZE("others.handheld_size", Category.OTHER, false),
     BRIGHT_CHEST("outline.bright_chest", Category.OUTLINE, true),
 
-    DEBRIS_ANALYZER("analyzer.debris_analyzer", Category.OTHER, false),
     LAVA_ANALYZER("analyzer.lava_analyzer", Category.OTHER, false),
     BEACON_RANGE("analyzer.beacon_range", Category.OTHER, false),
     LIGHTNING_ROD_RANGE("analyzer.lightning_rod_range", Category.OTHER, false),
@@ -81,8 +80,7 @@ public enum CapabilityId {
 
     BLOCK_INSPECTOR("builder.block_inspector", Category.OTHER, false),
     PLACEMENT_PREVIEW("builder.placement_preview", Category.OTHER, false),
-    PATTERN_CONSISTENCY("builder.pattern_consistency", Category.OTHER, false),
-    SCHEMATIC_COMPARISON("builder.schematic_comparison", Category.OTHER, false);
+    PATTERN_CONSISTENCY("builder.pattern_consistency", Category.OTHER, false);
 
     public enum Category {
         DECORATION,
@@ -112,6 +110,12 @@ public enum CapabilityId {
         this.sourceKey = sourceKey;
         this.category = category;
         this.defaultEnabled = defaultEnabled;
+    }
+
+    /** Historical bit 46 stays reserved for the removed debris analyzer. */
+    public int bitPosition() {
+        int position = ordinal();
+        return position < 46 ? position : position + 1;
     }
 
     public String sourceKey() {

@@ -13,6 +13,25 @@ import org.junit.jupiter.api.Test;
 
 final class CapabilityIdTest {
     @Test
+    void removedOptionsAreIgnoredAndHistoricalBitsAreNotReassigned() {
+        assertEquals(45, CapabilityId.BRIGHT_CHEST.bitPosition());
+        assertEquals(47, CapabilityId.LAVA_ANALYZER.bitPosition());
+        assertEquals(55, CapabilityId.PATTERN_CONSISTENCY.bitPosition());
+        assertFalse(CapabilityId.bySourceKey().containsKey("analyzer.debris_analyzer"));
+        assertFalse(CapabilityId.bySourceKey().containsKey("builder.schematic_comparison"));
+        var config = BlockLensConfigCodec.decode(
+                "analyzer.debris_analyzer=true\nbuilder.schematic_comparison=true\n"
+                + "analyzer.lava_analyzer=true\nbuilder.pattern_consistency=true\n");
+        assertTrue(config.isEnabled(CapabilityId.LAVA_ANALYZER));
+        assertTrue(config.isEnabled(CapabilityId.PATTERN_CONSISTENCY));
+        assertTrue((config.enabledMask() & (1L << 46)) == 0L, "removed debris analyzer bit was reused");
+        assertTrue((config.enabledMask() & (1L << 56)) == 0L, "removed schematic bit was reused");
+        assertEquals(47, Long.numberOfTrailingZeros(
+                BlockLensConfig.defaults().withEnabled(CapabilityId.LAVA_ANALYZER, true).enabledMask()
+                & (1L << 47)));
+    }
+
+    @Test
     void catalogContainsCurrentCategoryCounts() {
         EnumMap<CapabilityId.Category, Long> counts = new EnumMap<>(CapabilityId.Category.class);
         for (CapabilityId capability : CapabilityId.values()) {
@@ -21,8 +40,8 @@ final class CapabilityIdTest {
         assertEquals(13L, counts.get(CapabilityId.Category.DECORATION));
         assertEquals(21L, counts.get(CapabilityId.Category.RESOURCE));
         assertEquals(8L, counts.get(CapabilityId.Category.OUTLINE));
-        assertEquals(15L, counts.get(CapabilityId.Category.OTHER));
-        assertEquals(57, CapabilityId.values().length);
+        assertEquals(13L, counts.get(CapabilityId.Category.OTHER));
+        assertEquals(55, CapabilityId.values().length);
         assertTrue(CapabilityId.values().length <= Long.SIZE, "capability mask exhausted");
     }
 

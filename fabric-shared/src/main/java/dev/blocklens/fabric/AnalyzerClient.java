@@ -28,7 +28,7 @@ import net.minecraft.world.phys.Vec3;
 /** Loaded client inspection occurs on ticks; rendering consumes only immutable marker values. */
 public final class AnalyzerClient {
     private static final AnalyzerEngine ENGINE=new AnalyzerEngine();
-    private static final int[] COLORS={0xFFFF8A24,0xFFFFDB45,0xFF62FF87,0xFF56DFFF,0xFFFF6DEA};
+    private static final int[] COLORS={0xFFFFDB45,0xFF62FF87,0xFF56DFFF,0xFFFF6DEA};
     private AnalyzerClient() { }
     public static AnalyzerEngine engine() { return ENGINE; }
     public static void clear() { ENGINE.clear(); }
@@ -49,7 +49,7 @@ public final class AnalyzerClient {
             for(var marker:markers) {
                 if((mask&(1<<marker.kind()))==0) continue;
                 int color=COLORS[marker.kind()];
-                if(marker.kind()==4) {
+                if(marker.kind()==3) {
                     Gizmos.line(vec(marker.from()),vec(marker.to()),color,2).setAlwaysOnTop();
                     continue;
                 }
@@ -79,20 +79,11 @@ public final class AnalyzerClient {
             var state=chunk.getBlockState(position.set(x,y,z));
             int value;
             var fluid=state.getFluidState();
-            if(state.is(Blocks.ANCIENT_DEBRIS)) value=AnalyzerEngine.DEBRIS;
-            else if(state.is(Blocks.BEACON)) value=AnalyzerEngine.BEACON;
+            if(state.is(Blocks.BEACON)) value=AnalyzerEngine.BEACON;
             else if(state.getBlock() instanceof net.minecraft.world.level.block.LightningRodBlock) value=AnalyzerEngine.ROD;
             else if(fluid.is(FluidTags.LAVA) && fluid.isSource()) value=AnalyzerEngine.LAVA;
             else value=state.is(BlockTags.BEACON_BASE_BLOCKS)?AnalyzerEngine.BASE:AnalyzerEngine.OTHER;
             return SceneFilterClient.hiddenBlock(state.getBlock())?value | AnalyzerEngine.HIDDEN:value;
-        }
-        @Override public boolean debrisSection(int x,int y,int z) {
-            var chunk=level.getChunkSource().getChunk(x,z,ChunkStatus.FULL,false);
-            if(chunk==null) return false;
-            int index=chunk.getSectionIndexFromSectionY(y);
-            if(index<0 || index>=chunk.getSectionsCount()) return false;
-            var section=chunk.getSection(index);
-            return !section.hasOnlyAir() && section.maybeHas(state->state.is(Blocks.ANCIENT_DEBRIS));
         }
         @Override public AnalyzerEngine.VillageSample villagers(AnalyzerEngine.Point eye,int h,int v,
                 int sectionLimit,int entityLimit,int candidateLimit) {

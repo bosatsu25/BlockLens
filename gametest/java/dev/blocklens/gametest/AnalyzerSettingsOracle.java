@@ -17,7 +17,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 
-/** Real numeric-only edits for all five analyzers; the parent remains the sole persistence action. */
+/** Real numeric-only edits for all four analyzers; the parent remains the sole persistence action. */
 final class AnalyzerSettingsOracle {
     private AnalyzerSettingsOracle() { }
     static void verify(ClientGameTestContext context) {
@@ -43,18 +43,17 @@ final class AnalyzerSettingsOracle {
                         parent.resize(320,240);
                         ResponsiveSettingsScreenOracle.select(parent,CapabilityId.Category.OTHER);
                         var expected=original.analyzerOptions();
-                        for(int kind=0;kind<5;kind++) {
+                        for(int kind=0;kind<4;kind++) {
                             details(parent,kind);
                             Screen child=BlockLensConfigScreen.current(client);
                             require(child instanceof AnalyzerOptionsScreen,"analyzer detail screen missing");
                             child.resize(320,240);
                             var buttons=ResponsiveSettingsScreenOracle.buttons(child);
-                            require(buttons.size()==(kind==0?7:9),"unexpected numeric controls");
+                            require(buttons.size()==9,"unexpected numeric controls");
                             for(var button:buttons) require(button.getX()>=0 && button.getRight()<=320
                                     && button.getY()>=0 && button.getBottom()<=240,"numeric control outside compact bounds");
                             int row=0;
                             for(int field=0;field<4;field++) {
-                                if(kind==0 && field==1) continue;
                                 buttons.get(row*2).onPress(new KeyEvent(InputConstants.KEY_RETURN,0,0));
                                 buttons.get(row*2+1).onPress(new KeyEvent(InputConstants.KEY_RETURN,0,0));
                                 buttons.get(row*2+1).onPress(new KeyEvent(InputConstants.KEY_RETURN,0,0));
@@ -86,7 +85,7 @@ final class AnalyzerSettingsOracle {
             for(String locale:new String[]{"en_us","ja_jp"}) {
                 context.runOnClient(c->{c.getLanguageManager().setSelected(locale);c.options.languageCode=locale;});
                 reload(context);
-                for(int kind=0;kind<5;kind++) {
+                for(int kind=0;kind<4;kind++) {
                     int index=kind;
                     context.runOnClient(c->{
                         var parent=new BlockLensConfigScreen(previous);
@@ -131,7 +130,7 @@ final class AnalyzerSettingsOracle {
                 reload(context);
             }
         }
-        System.out.println("BLOCKLENS_ANALYZER_SETTINGS analyzers=5 numericDraft=true escape=true discard=true save=true locales=en_us,ja_jp");
+        System.out.println("BLOCKLENS_ANALYZER_SETTINGS analyzers=4 numericDraft=true escape=true discard=true save=true locales=en_us,ja_jp");
     }
     private static void reload(ClientGameTestContext context) {
         var future=context.computeOnClient(c->c.reloadResourcePacks());

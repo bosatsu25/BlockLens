@@ -16,7 +16,7 @@ final class BlockLensConfigCodecTest {
         for (CapabilityId capability : CapabilityId.values()) {
             if (config.isEnabled(capability)) {
                 enabled++;
-                expectedMask |= 1L << capability.ordinal();
+                expectedMask |= 1L << capability.bitPosition();
             }
         }
 
@@ -47,8 +47,8 @@ final class BlockLensConfigCodecTest {
         assertEquals(expected.asMap(), actual.asMap());
         assertEquals(expected.enabledMask(), actual.enabledMask());
         assertTrue(encoded.startsWith("# BlockLens native config v1\n"));
-        // Header + four comfort fields + nineteen analyzer fields + six scene rule fields.
-        assertEquals(CapabilityId.values().length + 30L, encoded.lines().count());
+        // Header + four comfort fields + sixteen analyzer fields + six scene rule fields.
+        assertEquals(CapabilityId.values().length + 27L, encoded.lines().count());
     }
 
     @Test

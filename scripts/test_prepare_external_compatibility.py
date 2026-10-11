@@ -14,7 +14,7 @@ class ExternalPreparationTest(unittest.TestCase):
         lock = compatibility.read_lock()
         self.assertEqual({"26.1.2", "26.2", "26.3"}, set(lock["targets"]))
         for target in lock["targets"].values():
-            self.assertEqual({"iris", "sodium", "litematica", "malilib"}, set(target))
+            self.assertEqual({"iris", "sodium"}, set(target))
             for artifact in target.values():
                 self.assertIn("/versions/" + artifact["version_id"] + "/", artifact["url"])
                 self.assertEqual(128, len(bytes.fromhex(artifact["sha512"]).hex()))

@@ -49,10 +49,10 @@ final class BlockLensConfigTest {
         assertEquals(mutatedComfort.hashCode(), baseline.withComfortOptions(new ComfortOptions(2, 40, 40, 40)).hashCode());
 
         // 3. AnalyzerOptions dimension
-        var mutatedAnalyzer = baseline.withAnalyzerOptions(AnalyzerOptions.defaults().with(0, 0, 32));
+        var mutatedAnalyzer = baseline.withAnalyzerOptions(AnalyzerOptions.defaults().with(0, 0, 8));
         assertNotEquals(baseline, mutatedAnalyzer);
-        assertEquals(mutatedAnalyzer, baseline.withAnalyzerOptions(AnalyzerOptions.defaults().with(0, 0, 32)));
-        assertEquals(mutatedAnalyzer.hashCode(), baseline.withAnalyzerOptions(AnalyzerOptions.defaults().with(0, 0, 32)).hashCode());
+        assertEquals(mutatedAnalyzer, baseline.withAnalyzerOptions(AnalyzerOptions.defaults().with(0, 0, 8)));
+        assertEquals(mutatedAnalyzer.hashCode(), baseline.withAnalyzerOptions(AnalyzerOptions.defaults().with(0, 0, 8)).hashCode());
 
         // 4. SceneFilterOptions dimension
         var mutatedScene = baseline.withSceneFilterOptions(SceneFilterOptions.defaults().withEntityPreset(1));

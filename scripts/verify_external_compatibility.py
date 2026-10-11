@@ -11,7 +11,7 @@ import struct
 
 from prepare_external_compatibility import read_lock
 
-RENDER_PROFILES = ("shader-off", "shader-on", "vulkan", "packs", "masa")
+RENDER_PROFILES = ("shader-off", "shader-on", "vulkan", "packs")
 DEFAULT_IMAGES = (
     "m3-all13-on.png", "m3-all13-reloaded.png", "m3-all13-off-active-pack.png",
     "m5-pack-off.png", "m5-pack-on.png", "m5-pack-air-control.png",
@@ -156,19 +156,7 @@ def verify(directory: Path, minecraft: str, profile: str) -> list[Path]:
         require_value(evidence, "shaderOptionsVerified", "true")
         require_value(evidence, "shaderPack", lock["shader"]["filename"])
         require_value(evidence, "shaderProfile", lock["shader"]["profile"])
-    if profile == "masa":
-        for mod in ("litematica", "malilib"):
-            require_value(evidence, f"mod.{mod}.sha256", lock["targets"][minecraft][mod]["sha256"])
-        require_value(evidence, "schematicRead", "true")
-        schematic_path = directory / "builder-schematic-manifest.txt"
-        schematic = properties(schematic_path)
-        require_value(schematic, "minecraft", minecraft)
-        for key in ("pinnedVersions", "typedRead", "match", "stateDifference", "blockDifference",
-                    "airUnavailable", "missingChunk", "unloadCleanup", "readonly"):
-            require_value(schematic, key, "true")
-        files.append(schematic_path)
-        images = ()
-    elif profile == "packs":
+    if profile == "packs":
         for order in ("Forward", "Reverse"):
             require_value(evidence, "packOrder" + order, "true")
         for alias, pack in lock["packs"].items():

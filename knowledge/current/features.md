@@ -1,8 +1,10 @@
-# BlockLens — 現在の57機能 / Current 57 capabilities
+# BlockLens — 現在の55機能 / Current 55 capabilities
 
 Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
-The compiled catalog contains 57 independent capabilities; existing keys, ordering and defaults are preserved.
+The compiled catalog contains 55 independent capabilities; existing keys, ordering and defaults are preserved.
+
+**削除済み:** `analyzer.debris_analyzer` と `builder.schematic_comparison`。既存設定のこれらのキーは無視されます。通常の古代の残骸ハイライト `gaming.ancient_debris` は引き続き利用できます。
 
 ## 向き・状態 / Orientation and state（13）
 
@@ -61,7 +63,7 @@ The compiled catalog contains 57 independent capabilities; existing keys, orderi
 | 明るい白色コンクリート | Bright Concrete | 元のモデルを保って白色コンクリートを発光表示します。 | 有効 / Enabled |
 | 明るいチェスト | Bright Chest | 通常のチェストを明るい白色にし、形と開閉を保ちます。 | 有効 / Enabled |
 
-## その他 / Other（15）
+## その他 / Other（13）
 
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
@@ -69,7 +71,6 @@ The compiled catalog contains 57 independent capabilities; existing keys, orderi
 | 糸表示調整 | String Tweaks | 糸とトリップワイヤーフックを見やすくします。 | 有効 / Enabled |
 | 炎の高さを抑える | Low Fire | 一人称の炎表示だけを大・中・小に調整します。 | 無効 / Disabled |
 | 手持ちアイテムの大きさ | Handheld Size | 一人称のブロック・アイテム・道具を別々に40～100%で調整します。盾は95%です。 | 無効 / Disabled |
-| 古代の残骸の解析 | Ancient debris analyzer | 読み込み済みの球状範囲にある残骸を遮蔽物越しに表示します。密集時は走査に複数tickかかります。 | 無効 / Disabled |
 | 溶岩源の解析 | Lava source analyzer | 既知の非源ブロックが隣接する、読み込み済みの溶岩源を表示します。 | 無効 / Disabled |
 | ビーコンの範囲 | Beacon range | 完成済みの土台段数から水平の正方形を表示します。光の遮断や実際の効果は推測しません。 | 無効 / Disabled |
 | 避雷針の範囲 | Lightning rod range | 避雷針と半径128ブロックの水平な正方形を表示します。落雷予測は行いません。 | 無効 / Disabled |
@@ -79,7 +80,6 @@ The compiled catalog contains 57 independent capabilities; existing keys, orderi
 | 照準先の情報 | Crosshair Inspector | 照準先のブロックID・状態、またはエンティティの種類を表示します。 | 無効 / Disabled |
 | 配置状態プレビュー | Placement State Preview | メインハンドに持った対応ブロックの予測配置状態を表示します。 | 無効 / Disabled |
 | パターン比較 | Pattern Consistency | 選択した基準と、水平8・垂直4ブロック以内の同種ブロックの状態を比較します。 | 無効 / Disabled |
-| 設計図との比較 | Schematic Comparison | 予測配置位置の状態を、対応するLitematicaの読み込み済み設計図と比較します。 | 無効 / Disabled |
 
 ## 設定画面 / Settings screen
 
@@ -87,14 +87,14 @@ The compiled catalog contains 57 independent capabilities; existing keys, orderi
 
 Bキーまたは任意のMod Menuから開きます。4カテゴリで機能を切り替え、各行に名前・説明・独立した有効/無効ボタンを表示します。「保存して適用」で保存し、「変更を破棄」またはEscでは保存せず戻ります。保存失敗時は編集内容を保持し、再試行できます。
 
-「炎の高さを抑える」と「手持ちアイテムの大きさ」の詳細画面も同じ編集内容を共有し、親画面の保存・適用まで保存しません。詳細は [追加6機能の仕様](lightweight-visuals.md) に記録しています。5つの解析機能にも半径・マーカー数・最小更新間隔の詳細設定があり、同じ保存・破棄の編集内容を共有します。走査上限と利用可能なクライアント情報の制限は [解析機能の仕様](world-analyzers.md) を参照してください。
+「炎の高さを抑える」と「手持ちアイテムの大きさ」の詳細画面も同じ編集内容を共有し、親画面の保存・適用まで保存しません。詳細は [追加6機能の仕様](lightweight-visuals.md) に記録しています。4つの解析機能にも半径・マーカー数・最小更新間隔の詳細設定があり、同じ保存・破棄の編集内容を共有します。走査上限と利用可能なクライアント情報の制限は [解析機能の仕様](world-analyzers.md) を参照してください。
 
 Open with B or the optional Mod Menu entrypoint. Save and apply persists edits; Discard changes and Esc discard them. A failed save retains the draft for retry. See [settings UI](settings-ui.md) for navigation and verification boundaries.
 
 ## 確認範囲 / Verification boundary
 
-一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、5つの解析機能、2つの表示フィルター、4つの建築支援を追加した構成です。最初の53機能の設定キー・順序・既定値を保持します。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
+一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援を追加した構成です。既存機能の設定キー・ビット位置・既定値は維持します。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
 
-建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。4機能を有効にして「保存して適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
+建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。3機能を有効にして「保存して適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
 
-外部Shader・Vulkan・Litematicaの正確な版と実測条件は[外部互換性](external-compatibility.md)で管理します。アップロード済みの非公開リソースパックの組み合わせと読み込み順は、実クライアントを動かせる非公開環境での確認が必要です。This catalog does not claim blanket shader/pack/backend compatibility or a new published release.
+外部Shader・Vulkanの正確な版と実測条件は[外部互換性](external-compatibility.md)で管理します。アップロード済みの非公開リソースパックの組み合わせと読み込み順は、実クライアントを動かせる非公開環境での確認が必要です。This catalog does not claim blanket shader/pack/backend compatibility or a new published release.

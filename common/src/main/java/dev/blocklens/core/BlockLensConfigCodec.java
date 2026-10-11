@@ -30,8 +30,7 @@ public final class BlockLensConfigCodec {
         output.append("others.handheld_size.blocks_percent=").append(options.blocksPercent()).append('\n');
         output.append("others.handheld_size.items_percent=").append(options.itemsPercent()).append('\n');
         output.append("others.handheld_size.tools_percent=").append(options.toolsPercent()).append('\n');
-        for(int kind=0;kind<5;kind++) for(int field=0;field<4;field++) {
-            if(kind==0 && field==1) continue;
+        for(int kind=0;kind<AnalyzerCatalog.CAPABILITIES.size();kind++) for(int field=0;field<AnalyzerCatalog.FIELDS.size();field++) {
             output.append(AnalyzerCatalog.optionKey(kind,field)).append('=')
                     .append(config.analyzerOptions().value(kind,field)).append('\n');
         }
@@ -86,8 +85,7 @@ public final class BlockLensConfigCodec {
                         // Malformed/oversized replacement retains the last valid bounded draft.
                     }
                 }
-                for(int kind=0;kind<5;kind++) for(int field=0;field<4;field++) {
-                    if(kind==0 && field==1) continue;
+                for(int kind=0;kind<AnalyzerCatalog.CAPABILITIES.size();kind++) for(int field=0;field<AnalyzerCatalog.FIELDS.size();field++) {
                     if(key.equals(AnalyzerCatalog.optionKey(kind,field))) {
                         int parsed=bounded(value,AnalyzerOptions.minimum(kind,field),AnalyzerOptions.maximum(kind,field),
                                 analyzers.value(kind,field));

@@ -24,7 +24,7 @@ import net.minecraft.world.level.Level;
 
 /** Real loaded-client discovery, gizmo framebuffer controls, lifecycle and all-capability reload. */
 final class AnalyzerVisualOracle {
-    private static final int[] COLORS={0xFF8A24,0xFFDB45,0x62FF87,0x56DFFF,0xFF6DEA};
+    private static final int[] COLORS={0xFFDB45,0x62FF87,0x56DFFF,0xFF6DEA};
     private AnalyzerVisualOracle() { }
     static void verify(ClientGameTestContext context,TestSingleplayerContext world) {
         var original=BlockLensRuntime.config();
@@ -44,10 +44,10 @@ final class AnalyzerVisualOracle {
             server.runCommand("kill @e[type=minecraft:villager]");
             server.runCommand("fill -12 -61 -8 12 -49 20 minecraft:black_concrete hollow");
             server.runCommand("tp @a 0 -56 12 180 25");
-            var options=AnalyzerOptions.defaults().with(0,0,16);
-            for(int kind=1;kind<5;kind++) options=options.with(kind,0,8).with(kind,1,5);
+            var options=AnalyzerOptions.defaults().with(0,0,8).with(0,1,5);
+            for(int kind=1;kind<4;kind++) options=options.with(kind,0,8).with(kind,1,5);
             var off=all(original,false).withAnalyzerOptions(options);
-            for(int kind=0;kind<5;kind++) {
+            for(int kind=0;kind<4;kind++) {
                 scene(world,kind);
                 install(context,off);
                 require(context.computeOnClient(c->AnalyzerClient.engine().markers().isEmpty()),"OFF retained markers");
@@ -56,7 +56,7 @@ final class AnalyzerVisualOracle {
                 var on=off.withEnabled(AnalyzerCatalog.CAPABILITIES.get(kind),true);
                 install(context,on);
                 int selected=kind;
-                if(kind==4) {
+                if(kind==3) {
                     require(context.computeOnClient(c->villager(c.level).getBrain().getMemory(MemoryModuleType.JOB_SITE).isEmpty()),
                             "missing-memory control already has a site");
                     context.waitTicks(40);
@@ -68,8 +68,8 @@ final class AnalyzerVisualOracle {
                 context.runOnClient(c->{
                     for(var marker:AnalyzerClient.engine().markers()) {
                         require(marker.kind()==selected,"independent analyzer enabled another feature");
-                        if(selected==2) require(marker.radius()==20,"one beacon layer radius changed");
-                        if(selected==3) require(marker.radius()==128,"rod radius changed");
+                        if(selected==1) require(marker.radius()==20,"one beacon layer radius changed");
+                        if(selected==2) require(marker.radius()==128,"rod radius changed");
                     }
                 });
                 sample(context,evidence,"kind"+kind+"On",false);
@@ -78,7 +78,7 @@ final class AnalyzerVisualOracle {
                 int delta=colored(enabled,COLORS[kind])-colored(baseline,COLORS[kind]);
                 require(delta>=12,"actual analyzer cue is not visible for kind "+kind+": "+delta);
                 evidence.append("kind").append(kind).append("CuePixelDelta=").append(delta).append('\n');
-                if(kind==4) {
+                if(kind==3) {
                     setMemory(context,true,true);
                     context.waitTicks(25);
                     require(context.computeOnClient(c->AnalyzerClient.engine().markers().isEmpty()),"cross-dimension job memory produced a line");
@@ -95,19 +95,19 @@ final class AnalyzerVisualOracle {
             scene(world,-1);
             context.waitTicks(25);
             setMemory(context,true,false);
-            var combinedOff=read(capture(context,output,"all51-off"));
+            var combinedOff=read(capture(context,output,"all50-off"));
             var all=all(original,true).withAnalyzerOptions(options);
-            require(Long.bitCount(all.enabledMask())==51,"all-capability fixture incomplete");
+            require(Long.bitCount(all.enabledMask())==50,"all-capability fixture incomplete");
             install(context,all);
-            context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==5,600);
-            sample(context,evidence,"all51",false);
-            verifyCombined(context,output,"all51-on",combinedOff,evidence);
+            context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==4,600);
+            sample(context,evidence,"all50",false);
+            verifyCombined(context,output,"all50-on",combinedOff,evidence);
             reload(context);
-            context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==5,600);
-            verifyCombined(context,output,"all51-reloaded",combinedOff,evidence);
+            context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==4,600);
+            verifyCombined(context,output,"all50-reloaded",combinedOff,evidence);
             server.runCommand("execute in minecraft:the_nether run tp @a 0 80 0");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.NETHER),1200);
-            context.runOnClient(c->require(AnalyzerClient.engine().markers().stream().noneMatch(m->m.kind()==2 || m.kind()==3 || m.kind()==4),
+            context.runOnClient(c->require(AnalyzerClient.engine().markers().stream().noneMatch(m->m.kind()==1 || m.kind()==2 || m.kind()==3),
                     "previous-world beacon/rod/village markers survived dimension change"));
             server.runCommand("execute in minecraft:overworld run tp @a 0 -56 12 180 25");
             context.waitFor(c->c.level!=null && c.level.dimension().equals(Level.OVERWORLD),1200);
@@ -115,18 +115,18 @@ final class AnalyzerVisualOracle {
                 var returnSeed=returnFixture.seed();
                 context.runOnClient(c->AnalyzerReturnProbe.report(c,returnSeed,AnalyzerReturnProbe.Stage.SEEDED));
                 try {
-                    context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==5,600);
+                    context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==4,600);
                 } catch(RuntimeException | AssertionError failure) {
                     context.runOnClient(c->AnalyzerReturnProbe.report(c,returnSeed,AnalyzerReturnProbe.Stage.TIMEOUT));
                     throw failure;
                 }
-                verifyCombined(context,output,"all51-dimension-return",combinedOff,evidence);
+                verifyCombined(context,output,"all50-dimension-return",combinedOff,evidence);
             }
             install(context,off);
             require(context.computeOnClient(c->AnalyzerClient.engine().markers().isEmpty()),"final OFF retained markers");
-            evidence.append("all51Enabled=true\nall51Reload=true\ndimensionCleanup=true\nfinalOffEmpty=true\n");
+            evidence.append("all50Enabled=true\nall50Reload=true\ndimensionCleanup=true\nfinalOffEmpty=true\n");
             Files.writeString(output.resolve("analyzer-visual-manifest.txt"),evidence,StandardCharsets.UTF_8);
-            System.out.println("BLOCKLENS_ANALYZER_VISUAL independent=5 actualGizmoPixels=true memoryControls=true all51Reload=true dimensionCleanup=true");
+            System.out.println("BLOCKLENS_ANALYZER_VISUAL independent=4 actualGizmoPixels=true memoryControls=true all50Reload=true dimensionCleanup=true");
         } catch(IOException e) { throw new AssertionError("analyzer framebuffer evidence failed",e); }
         finally {
             AnalyzerTickProbe.stop();
@@ -140,20 +140,16 @@ final class AnalyzerVisualOracle {
         server.runCommand("fill -11 -60 -7 11 -50 19 minecraft:air");
         server.runCommand("fill -10 -60 -6 10 -60 7 minecraft:black_concrete");
         if(kind==0 || kind==-1) {
-            server.runCommand("setblock -3 -59 4 minecraft:ancient_debris");
-            if(kind==0) server.runCommand("fill -5 -59 6 -1 -55 6 minecraft:stone");
-        }
-        if(kind==1 || kind==-1) {
             server.runCommand("fill -1 -60 3 1 -58 5 minecraft:barrier");
             server.runCommand("setblock 0 -59 4 minecraft:lava");
-            if(kind==1) server.runCommand("fill -2 -59 6 2 -55 6 minecraft:stone");
+            if(kind==0) server.runCommand("fill -2 -59 6 2 -55 6 minecraft:stone");
         }
-        if(kind==2 || kind==-1) {
+        if(kind==1 || kind==-1) {
             server.runCommand("fill 2 -60 3 4 -60 5 minecraft:iron_block");
             server.runCommand("setblock 3 -59 4 minecraft:beacon");
         }
-        if(kind==3 || kind==-1) server.runCommand("setblock -6 -59 4 minecraft:lightning_rod");
-        if(kind==4 || kind==-1) {
+        if(kind==2 || kind==-1) server.runCommand("setblock -6 -59 4 minecraft:lightning_rod");
+        if(kind==3 || kind==-1) {
             server.runCommand("setblock 2 -59 6 minecraft:barrel");
             server.runCommand("summon minecraft:villager 0 -59 6 {NoAI:1b,Invulnerable:1b}");
         }
@@ -177,7 +173,7 @@ final class AnalyzerVisualOracle {
         });
     }
     private static BlockLensConfig all(BlockLensConfig base,boolean enabled) {
-        for(var capability:CapabilityId.values()) base=base.withEnabled(capability,enabled && capability.ordinal()<51);
+        for(var capability:CapabilityId.values()) base=base.withEnabled(capability,enabled && capability.ordinal()<50);
         return base;
     }
     private static void install(ClientGameTestContext context,BlockLensConfig config) {
@@ -212,7 +208,7 @@ final class AnalyzerVisualOracle {
     private static void verifyCombined(ClientGameTestContext context,Path output,String name,
             BufferedImage baseline,StringBuilder evidence) throws IOException {
         var image=read(capture(context,output,name));
-        for(int kind=0;kind<5;kind++) {
+        for(int kind=0;kind<4;kind++) {
             int delta=colored(image,COLORS[kind])-colored(baseline,COLORS[kind]);
             require(delta>=12,"combined/reloaded analyzer cue missing: "+name+" kind="+kind+" delta="+delta);
             evidence.append(name).append("Kind").append(kind).append("CuePixelDelta=").append(delta).append('\n');
@@ -223,9 +219,9 @@ final class AnalyzerVisualOracle {
         server.runCommand("setblock -6 -59 4 minecraft:lightning_rod");
         server.runCommand("tp @a 0 -56 12 180 25");
         var config=all(BlockLensRuntime.config(),false).withEnabled(CapabilityId.LIGHTNING_ROD_RANGE,true)
-                .withAnalyzerOptions(AnalyzerOptions.defaults().with(3,0,8).with(3,1,5));
+                .withAnalyzerOptions(AnalyzerOptions.defaults().with(2,0,8).with(2,1,5));
         install(context,config);
-        context.waitFor(c->AnalyzerClient.engine().markers().stream().anyMatch(m->m.kind()==3),600);
+        context.waitFor(c->AnalyzerClient.engine().markers().stream().anyMatch(m->m.kind()==2),600);
         require(context.computeOnClient(c->!AnalyzerClient.engine().markers().isEmpty()),"disconnect needs a nonempty baseline");
     }
 }

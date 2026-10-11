@@ -1,5 +1,7 @@
 # BlockLens Current Roadmap
 
+> **After v0.3.0:** PR #60 retires the ancient-debris world analyzer and Masa/Litematica schematic comparison. Development catalog: 55 capabilities, including the original 37 AMATERAS controls. Historical release/CI metrics below remain unchanged.
+
 Status: **M0-M9 and P0-P5 complete / v0.3.0 published / Next target: v0.4.0 (Minecraft 26.4 transition)**
 
 ## Current release and development boundary

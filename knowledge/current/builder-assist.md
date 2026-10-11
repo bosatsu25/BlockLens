@@ -15,14 +15,13 @@ Behavior is reviewed against ChiseTweaks `9fc977c5fdc0b23040d152216f60d46724cc65
 These are behavioral references; their source implementation, reflection framework and
 artwork are not copied.
 
-Four independent, default-OFF controls are appended to the existing Other category:
+Three independent, default-OFF controls are appended to the existing Other category:
 
 | Capability | Accepted behavior |
 | --- | --- |
 | Block Inspector | Show the existing crosshair hit's registered block ID and sorted state properties, or entity type ID. No new ray scan, entity name/UUID, NBT, inventory or server-only state is inspected. |
 | Placement State Preview | Explain the current main-hand vanilla stateful block's predicted placement state and clicked face/upper-half input. This is a prediction from available client state, not a server acceptance guarantee. |
 | Pattern Consistency | The user explicitly captures the current block as a reference, then compares nearby blocks with that same block ID. Show compared/matching/mismatching/unknown counts and per-property mismatch totals. Clear is explicit; reference state and position are session-only. |
-| Schematic Comparison | Compare one locally available schematic state with the current predicted placement state through an optional, pinned typed Litematica adapter. Absence, unsupported versions or missing schematic data produce an unavailable result. Compatibility is claimed only after native evidence for the exact integration pins below. |
 
 The native Builder Assist panel is opened explicitly from the in-world settings surface
 or an initially unbound key. It does not pause the world. It consumes saved runtime
@@ -40,22 +39,8 @@ Vanilla registry ownership and supported implementation classes bound this predi
 path; arbitrary modded placement callbacks are not executed. Entity collision and
 server-side policy are not inferred by this advisory state preview.
 
-The optional read boundary compiles against these exact official releases. Both the
-Minecraft version and the two installed mod versions must match the same row:
-
-| Minecraft | Litematica | MaLiLib |
-| --- | --- | --- |
-| 26.1.2 | 0.27.14 | 0.28.12 |
-| 26.2 | 0.28.8 | 0.29.6 |
-| 26.3 | 0.29.1 | 0.30.2 |
-
-The isolated adapter calls the public `SchematicWorldHandler.getSchematicWorld()` and
-`WorldSchematic.getChunkSource().getChunkIfExists(...)` APIs. It reads one non-air state
-only when both the ordinary client position and the schematic chunk are already
-available. It does not create a schematic chunk or retain the schematic world. These
-dependencies are compile-only and never packaged. The normal native suite must prove
-the absent-mod path, and the separate `masa` profile must prove match, state difference,
-block difference, missing chunk and unload cleanup with the pinned installed pair.
+The former optional Litematica/MaLiLib schematic adapter was retired after v0.3.0.
+The remaining three Builder Assist tools require no Masa-family mods.
 
 Intentional differences from ChiseTweaks: there is no interaction-history log, no
 post-placement observation window, no automatic material replacement and no reflection
@@ -86,7 +71,7 @@ an atomic world snapshot or a whole-world consistency claim.
 Changing the reference block state, unloading the reference, changing world identity,
 disconnecting, resource reload, disabling Pattern Consistency or clearing the reference
 discards the reference and partial/result counts. Target MISS and unloaded targets
-clear their inspector/preview outputs. All four tools OFF means zero world queries and
+clear their inspector/preview outputs. All three tools OFF means zero world queries and
 no retained inspection state. No position, world identity or Minecraft object is saved
 to configuration or diagnostic evidence.
 
@@ -97,5 +82,4 @@ data, exact domain/budgets, reference lifecycle, OFF behavior and deterministic 
 selected coverage/PIT; three-version native stateful-block prediction and read-only
 checks; rendered panel evidence and reference button interaction; combined existing
 capabilities, reload and disconnect cleanup; reproducible runtime JAR audit and the
-user-authorized 204800-byte release ceiling. Third-party Litematica compatibility is claimed
-only for the exact versions independently exercised in native clients.
+user-authorized 204800-byte release ceiling. No external schematic integration is part of the current runtime.

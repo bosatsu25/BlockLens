@@ -22,26 +22,6 @@
         "size": 1940135,
         "sha512": "9a3cbc8111979fb2cada74d4df24867f4a8a76053b28d76796f0d1c9156cfc96c4f7d88b07072aea8d9574d46b5bc3ebf3b4d23c09c501f0089ee37681743475",
         "sha256": "dd19aaf6755788673941329cff855d89870dc9f69363c653c7f5378e799834f3"
-      },
-      "litematica": {
-        "project": "bEpr0Arc",
-        "version_id": "w8P6TokG",
-        "version": "0.27.14",
-        "filename": "litematica-fabric-26.1.2-0.27.14.jar",
-        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/w8P6TokG/litematica-fabric-26.1.2-0.27.14.jar",
-        "size": 1934808,
-        "sha512": "abfee139486726a2c7b380c06e5b3b6bf83945401a77e845787d76371c2e16818edee2cfdbc07ee4b057c8ec50c3acdfa22371ef630228d580cd2d04ecfdbe0e",
-        "sha256": "6e2b224ce9e4778660b4e8f2a392fd2caa93302258551851624c52c43d9d836d"
-      },
-      "malilib": {
-        "project": "GcWjdA9I",
-        "version_id": "FItuNokS",
-        "version": "0.28.12",
-        "filename": "malilib-fabric-26.1.2-0.28.12.jar",
-        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/FItuNokS/malilib-fabric-26.1.2-0.28.12.jar",
-        "size": 2042597,
-        "sha512": "e1ef04504991f395e30266f2cb006a17ec5657a00b6d84df4d327e486ac35944346e17bcb610d24c98b7ea828cac6f5c80968e09416d73847540dfee8436466a",
-        "sha256": "0d4b1de602358bc7dfb8a520aa10f89b3ea6daa8b99c1151979a4e845520b211"
       }
     },
     "26.2": {
@@ -64,26 +44,6 @@
         "size": 1885572,
         "sha512": "9b7a7aade8824543ce2a804fddfd04e37f57d1f91c00574e7dc87e554eb1835d888313ee6f715a7599bd729840cf01fd74e02aeae87b4e5a3c10c34a016e407c",
         "sha256": "16a5e91db49750f8c046ecca3b8f2af5a28ea6f9b6581b42f123ca8fda20864f"
-      },
-      "litematica": {
-        "project": "bEpr0Arc",
-        "version_id": "CuniXtbo",
-        "version": "0.28.8",
-        "filename": "litematica-fabric-26.2-0.28.8.jar",
-        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/CuniXtbo/litematica-fabric-26.2-0.28.8.jar",
-        "size": 1929569,
-        "sha512": "d1c80538f3311b585c9311e59f14fd7fd3eb82288fe5afb399b2139cb35b42d24db7203379f2f61b50a610736335a86dbd395ca1795b001622e6b24dc6fe2a67",
-        "sha256": "6de0774f78aee1698154dc7e7fa3c3afb19201e3d9474ddaf073fa4f4309a064"
-      },
-      "malilib": {
-        "project": "GcWjdA9I",
-        "version_id": "KvjmGjAV",
-        "version": "0.29.6",
-        "filename": "malilib-fabric-26.2-0.29.6.jar",
-        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/KvjmGjAV/malilib-fabric-26.2-0.29.6.jar",
-        "size": 2037195,
-        "sha512": "0fab398f835d9c4736dac65510f707c77a60be6e6051bfd008225c20a5ff13e146296da258bee551d39fa28102b8854d77fa25b2ecb6b0f89fb3c874bac563db",
-        "sha256": "db49040123d8dfe725a95407b4e777383e7162656045bff38ff72fc570080600"
       }
     },
     "26.3": {
@@ -106,26 +66,6 @@
         "size": 1908068,
         "sha512": "f3f260f204b8ce5e8777c2c73f537956755ec61f3817b0b78b5e5568e8aa40f14891f146475075109747665c7c88a45ca0ca9a8df3c68d79c58ecdaa8d8c4b93",
         "sha256": "87a5bb39f7e6e41106e77f122f82fc93f9d3bc0b6ebcb746b314172a446a287a"
-      },
-      "litematica": {
-        "project": "bEpr0Arc",
-        "version_id": "ZqV316KY",
-        "version": "0.29.1",
-        "filename": "litematica-fabric-26.3-0.29.1.jar",
-        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/ZqV316KY/litematica-fabric-26.3-0.29.1.jar",
-        "size": 1972556,
-        "sha512": "45a8d468463afb97b3fc72efa168024ad69e670e77f5455ecf588583434a1787b32795edf5236579c32c828b02873efb39a4808caa08bbbaf1d8b6b090b160c3",
-        "sha256": "0138223fb9b8f971f5c3dc4a79021b33b73e0f145ed6f4c76df3732583e676da"
-      },
-      "malilib": {
-        "project": "GcWjdA9I",
-        "version_id": "JX9bESec",
-        "version": "0.30.2",
-        "filename": "malilib-fabric-26.3-0.30.2.jar",
-        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/JX9bESec/malilib-fabric-26.3-0.30.2.jar",
-        "size": 2081094,
-        "sha512": "8f17a5d70cb2f461aeb540f4a99de01c3351f8d3678d902d3d00cfe5d10c039fdc111c1079fe23aacb7936b793ad1cd045a8dc3a9e7926865820c254d92345b8",
-        "sha256": "abd59f642abd891586bfec2cd1937771ded925081ebe3870d152ca96356b5119"
       }
     }
   },

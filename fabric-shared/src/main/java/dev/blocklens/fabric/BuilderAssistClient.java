@@ -4,12 +4,10 @@ import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.builder.BuilderState;
 import dev.blocklens.core.builder.PatternInspector;
-import dev.blocklens.core.builder.SchematicCompatibility;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -32,9 +30,9 @@ import net.minecraft.world.phys.HitResult;
 /** Client-thread read-model owner; no renderer, interaction callback or world-write dependency. */
 public final class BuilderAssistClient {
     public record Snapshot(int kind, BuilderState target, BuilderState prediction,
-            String face, boolean upper, BuilderState expected) { }
+            String face, boolean upper) { }
     public record Placement(BlockPos position, BlockState state) { }
-    private static final Snapshot EMPTY = new Snapshot(0, null, null, "", false, null);
+    private static final Snapshot EMPTY = new Snapshot(0, null, null, "", false);
     private static final BuilderState OTHER = new BuilderState("minecraft:air", Map.of());
     private static final PatternInspector PATTERN = new PatternInspector();
     private static final Map<BlockState, BuilderState> STATES = new IdentityHashMap<>();
@@ -45,7 +43,6 @@ public final class BuilderAssistClient {
     private static Snapshot snapshot = EMPTY;
     private static int patternOperations;
     private static volatile boolean invalidated;
-    private static Boolean schematicSupported;
 
     private BuilderAssistClient() { }
 
@@ -70,8 +67,7 @@ public final class BuilderAssistClient {
         boolean inspector = config.isEnabled(CapabilityId.BLOCK_INSPECTOR);
         boolean preview = config.isEnabled(CapabilityId.PLACEMENT_PREVIEW);
         boolean pattern = config.isEnabled(CapabilityId.PATTERN_CONSISTENCY);
-        boolean schematic = config.isEnabled(CapabilityId.SCHEMATIC_COMPARISON);
-        if ((!inspector && !preview && !pattern && !schematic) || client.level == null || client.player == null) {
+        if ((!inspector && !preview && !pattern) || client.level == null || client.player == null) {
             clear(); return;
         }
         if (level != client.level) { clear(); level = client.level; }
@@ -82,15 +78,14 @@ public final class BuilderAssistClient {
             if (client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
                 var state = loaded(level, hit.getBlockPos());
                 if (state != null && !state.isAir()) {
-                    var placement = preview || schematic ? predict(client, hit) : null;
+                    var placement = preview ? predict(client, hit) : null;
                     var predicted = placement == null ? null : describe(placement.state());
-                    var expected = schematic && predicted != null ? schematicState(placement.position()) : null;
                     next = new Snapshot(1, inspector ? describe(state) : null, predicted,
-                            hit.getDirection().getName(), hit.getLocation().y - hit.getBlockPos().getY() > .5, expected);
+                            hit.getDirection().getName(), hit.getLocation().y - hit.getBlockPos().getY() > .5);
                 }
             } else if (inspector && client.hitResult instanceof EntityHitResult hit && hit.getEntity().isAlive()) {
                 next = new Snapshot(2, new BuilderState(BuiltInRegistries.ENTITY_TYPE.getKey(hit.getEntity().getType()).toString(),
-                        Map.of()), null, "", false, null);
+                        Map.of()), null, "", false);
             }
             if (!next.equals(snapshot)) snapshot = next;
         } catch (RuntimeException | LinkageError unavailable) { clear(); }
@@ -111,7 +106,7 @@ public final class BuilderAssistClient {
     /** Native state prediction only: this method never calls placement, item use or entity enumeration. */
     public static Placement predict(Minecraft client, BlockHitResult hit) {
         var config = BlockLensRuntime.config();
-        if ((!config.isEnabled(CapabilityId.PLACEMENT_PREVIEW) && !config.isEnabled(CapabilityId.SCHEMATIC_COMPARISON))
+        if (!config.isEnabled(CapabilityId.PLACEMENT_PREVIEW)
                 || client.level == null || client.player == null || hit == null || hit.getType() != HitResult.Type.BLOCK) return null;
         var stack = client.player.getMainHandItem();
         if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem item) || !supported(item.getBlock())
@@ -183,20 +178,4 @@ public final class BuilderAssistClient {
         values.put(property.getName(), property.getName(state.getValue(property)));
     }
 
-    public static boolean schematicSupported() {
-        if (schematicSupported == null) schematicSupported = SchematicCompatibility.supported(
-                BlockLensRuntime.minecraftVersion(), version("litematica"), version("malilib"));
-        return schematicSupported;
-    }
-
-    private static String version(String id) {
-        return FabricLoader.getInstance().getModContainer(id).map(mod -> mod.getMetadata().getVersion().getFriendlyString()).orElse("");
-    }
-
-    public static BuilderState schematicState(BlockPos position) {
-        if (!BlockLensRuntime.config().isEnabled(CapabilityId.SCHEMATIC_COMPARISON) || position == null
-                || !schematicSupported() || loaded(Minecraft.getInstance().level, position) == null) return null;
-        try { return describe(LitematicaStateReader.read(position)); }
-        catch (RuntimeException | LinkageError unavailable) { return null; }
-    }
 }

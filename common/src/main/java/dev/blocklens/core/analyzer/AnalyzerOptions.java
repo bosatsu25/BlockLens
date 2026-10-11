@@ -4,9 +4,9 @@ import java.util.Arrays;
 
 /** Immutable per-analyzer radius, vertical radius, marker and minimum-interval options. */
 public final class AnalyzerOptions {
-    private static final int[][] DEFAULTS = {{64,64,64,20},{5,3,12,10},{16,8,8,20},{16,8,8,20},{16,8,12,20}};
-    private static final int[][] MIN = {{16,16,8,5},{1,1,1,5},{1,1,1,5},{1,1,1,5},{1,1,1,5}};
-    private static final int[][] MAX = {{256,256,128,100},{8,5,24,100},{32,16,16,100},{32,16,16,100},{32,16,24,100}};
+    private static final int[][] DEFAULTS = {{5,3,12,10},{16,8,8,20},{16,8,8,20},{16,8,12,20}};
+    private static final int[][] MIN = {{1,1,1,5},{1,1,1,5},{1,1,1,5},{1,1,1,5}};
+    private static final int[][] MAX = {{8,5,24,100},{32,16,16,100},{32,16,16,100},{32,16,24,100}};
     private final int[][] values;
 
     private AnalyzerOptions(int[][] values) { this.values = values; }
@@ -21,7 +21,6 @@ public final class AnalyzerOptions {
         }
         int[][] changed = copy(values);
         changed[kind][field] = value;
-        if (kind == 0 && field <= 1) { changed[0][0] = value; changed[0][1] = value; }
         return new AnalyzerOptions(changed);
     }
     private static int[][] copy(int[][] source) {
