@@ -40,6 +40,8 @@ jobs:
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p test_sanitize_client_diagnostics.py -v
       - name: Test external preparation and evidence validation
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p '*external_compatibility.py' -v
+      - name: Verify resource-pack audit utility
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_audit_resource_packs.py' -v
       - name: Run shared quality gate
         run: gradle --stacktrace :common:qualityGate
 
