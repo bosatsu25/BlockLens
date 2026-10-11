@@ -43,6 +43,22 @@ final class ComfortSettingsDraftTest {
     }
 
     @Test
+    void smallHandheldProfileIsDraftOnlyAndRetainsFirePreference() throws IOException {
+        var original=BlockLensConfig.defaults();
+        var draft=new SettingsDraft(original);
+        var adjusted=new ComfortOptions(0,85,70,95);
+        draft.setComfortOptions(adjusted.smallHandheldsProfile());
+        assertEquals(new ComfortOptions(0,40,40,50),draft.config().comfortOptions());
+        assertEquals(original.enabledMask(),draft.config().enabledMask());
+        assertEquals(ComfortOptions.defaults(),original.comfortOptions());
+        draft.discard();
+        assertFalse(draft.changed());
+        draft.setComfortOptions(adjusted.smallHandheldsProfile());
+        assertTrue(draft.save(directory));
+        assertEquals(new ComfortOptions(0,40,40,50),BlockLensConfigFiles.loadOrCreate(directory).comfortOptions());
+    }
+
+    @Test
     void failedWriteKeepsOptionEditsAndAllowsRetry() throws IOException {
         SettingsDraft draft = new SettingsDraft(BlockLensConfig.defaults());
         ComfortOptions edited = new ComfortOptions(0, 90, 80, 50);

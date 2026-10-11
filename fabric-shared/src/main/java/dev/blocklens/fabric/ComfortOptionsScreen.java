@@ -59,6 +59,13 @@ public final class ComfortOptionsScreen extends Screen {
                         .bounds(left + contentWidth - 28, 48 + category * 30, 26, 20).build());
             }
         }
+        if (capability == CapabilityId.HANDHELD_SIZE) {
+            addRenderableWidget(Button.builder(Component.translatable("blocklens.comfort.preset.small_handhelds"),
+                    ignored -> {
+                        draft.setComfortOptions(draft.config().comfortOptions().smallHandheldsProfile());
+                        rebuildWidgets();
+                    }).bounds(left, 144, contentWidth, 20).build());
+        }
         addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.back"), ignored -> onClose())
                 .bounds(left, height - 28, contentWidth, 20).build());
     }
@@ -109,7 +116,7 @@ public final class ComfortOptionsScreen extends Screen {
                         54 + category * 30, 0xFFFFFFFF);
             }
         }
-        int y = 146;
+        int y = capability == CapabilityId.HANDHELD_SIZE ? 174 : 146;
         for (var line : font.split(Component.translatable("blocklens.comfort.draft_hint"), contentWidth - 8)) {
             if (y + font.lineHeight > height - 34) break;
             extractor.text(font, line, left + 4, y, 0xFFAAAAAA);

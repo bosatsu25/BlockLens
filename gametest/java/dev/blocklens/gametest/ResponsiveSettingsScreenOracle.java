@@ -79,7 +79,8 @@ final class ResponsiveSettingsScreenOracle {
                         || AnalyzerCatalog.index(capability) >= 0
                         || SceneFilterCatalog.index(capability) >= 0
                         || capability.sourceKey().startsWith("builder.")).count();
-        require(buttons.size() == count + 6 + actions, "widget registry changed");
+        require(buttons.size() == count + 6 + actions
+                + (category == CapabilityId.Category.RESOURCE ? 1 : 0), "widget registry changed");
         List<Button> toggles = buttons.subList(4, 4 + count);
         var reached = new HashSet<Button>();
         for (int index = 0; index < buttons.size() * 2; index++) {

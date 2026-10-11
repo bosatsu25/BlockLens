@@ -20,6 +20,11 @@ public record ComfortOptions(int fireSize, int blocksPercent, int itemsPercent, 
         return new ComfortOptions(1, 70, 60, 75);
     }
 
+    /** Small Handhelds-inspired first-person profile; keeps the current fire option. */
+    public ComfortOptions smallHandheldsProfile() {
+        return new ComfortOptions(fireSize, 40, 40, 50);
+    }
+
     private static void requirePercent(int value) {
         if (value < MIN_PERCENT || value > MAX_PERCENT) {
             throw new IllegalArgumentException("handheld percent must be 40..100");

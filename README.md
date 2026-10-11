@@ -10,13 +10,20 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Current stable release:** BlockLens **v0.3.0** provides **57 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
+> **Historical stable release:** BlockLens **v0.3.0** provides **57 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
 >
 > **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
 > **Post-v0.3.0 development:** 55 current capabilities. The ancient-debris analyzer and optional Masa/Litematica schematic comparison are retired; the original 37 AMATERAS source controls remain intact. The published v0.3.0 artifact is unchanged.
 
-## Current development: three Minecraft versions
+
+## Native profiles from the six supplied resource packs
+
+BlockLens now offers source-informed presets without redistributing image/model/font assets: **Glow ores** (19 independent vanilla ore highlight toggles), **Small Handhelds-style** (40/40/50 percent first-person blocks/items/tools), and **Eater Clear** (registered IDs from the 196 original full-clear model overrides, through the existing Block Filter). The existing Low Fire, Bright Concrete and Bright Chest capabilities remain available. Presets edit the existing draft only; enable the related capability when needed, then **Save and apply**.
+
+The original OptiFine connected-texture border art, third-person/special item transformations, eleven custom transparent foliage models, world-fire textures and Chise's pale-oak artwork are **not** reproduced inside the JAR. Physical collision and solid occlusion remain unchanged. See the [source-by-source audit and scope limitations](knowledge/current/resourcepack-native-profiles.md).
+
+## Current development: v0.4.0 source and three Minecraft versions
 
 The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, four bounded analyzers, two independent scene filters and three advisory Builder Assist tools. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
 

@@ -38,6 +38,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private SettingsLayout layout;
     private Button discardButton;
     private Button applyButton;
+    private Button orePresetButton;
     private boolean saveFailed;
 
     protected AbstractBlockLensConfigScreen(Screen parent, Path configDirectory) {
@@ -52,6 +53,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     protected final void init() {
         clearFocus();
         tabs.clear();
+        orePresetButton = null;
         toggles.clear();
         details.clear();
         detailRows.clear();
@@ -104,6 +106,15 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
             detailButton.active = !builderTool || net.minecraft.client.Minecraft.getInstance().level != null;
             details.add(detailButton);
             detailRows.add(index);
+        }
+        if (category == CapabilityId.Category.RESOURCE) {
+            orePresetButton = addRenderableWidget(Button.builder(
+                    Component.translatable("blocklens.resource.preset.glow"),
+                    ignored -> {
+                        draft.enableOreGlowProfile();
+                        refreshStates();
+                    }).tooltip(Tooltip.create(Component.translatable("blocklens.resource.preset.glow.hint")))
+                    .bounds(layout.left() + 4, 8, Math.min(120, layout.contentWidth() / 2), 20).build());
         }
         int footerWidth = (layout.contentWidth() - 8) / 2;
         discardButton = addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.discard"),
@@ -177,6 +188,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                 int detail = detailRows.indexOf(row);
                 if (detail >= 0) order.add(details.get(detail));
             }
+            if (orePresetButton != null) order.add(orePresetButton);
             order.add(discardButton);
             order.add(applyButton);
             int direction = event.hasShiftDown() ? -1 : 1;

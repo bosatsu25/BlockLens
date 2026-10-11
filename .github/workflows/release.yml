@@ -202,18 +202,19 @@ jobs:
           cat > dist/RELEASE_NOTES.md <<EOF
           # BlockLens v${version}
 
-          Client-side Fabric visual inspection for Minecraft Java Edition with **57 independently configurable capabilities** (expanded from the 40 independently configurable capabilities in v0.2.2), preserving the frozen 37-capability source baseline and adding the verified ChiseTweaks-overlap P0 capabilities, lightweight visuals, world analyzers, scene filters, builder assist, and ore extensions.
+          Client-side Fabric visual inspection for Minecraft Java Edition with **55 independently configurable capabilities** (from 40 independently configurable capabilities in v0.2.2), preserving the frozen 37-capability source baseline and adding the verified ChiseTweaks-overlap P0 capabilities, lightweight visuals, world analyzers, scene filters, builder assist, and ore extensions.
 
           ## Highlights & Additions
-          - 57 independently configurable capabilities across Orientation, Visibility, Resource, Analyzers, Scene Filter, and Builder Assist
+          - 55 independently configurable capabilities across Orientation, Visibility, Resource, Analyzers, Scene Filter, and Builder Assist
           - Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore as independent Resource capabilities
           - Tripwire Hook coverage in String Tweaks
           - Polished Basalt coverage in Nether Tweaks
-          - 5 Bounded World Analyzers (Ancient Debris, Lava Source, Beacon Range, Lightning Rod Range, Villager Job Site Links)
+          - 4 bounded world analyzers (Lava Source, Beacon Range, Lightning Rod Range, Villager Job Site Links); removed ancient-debris world scanning while retaining ordinary Ancient Debris highlighting
           - 2 Bounded Scene Filters (Block & Entity Filters with blacklist/whitelist)
-          - 4 Builder Assist tools (Block Inspector, Placement Preview, Pattern Consistency, Litematica Comparison)
+          - 3 native, read-only Builder Assist tools (Block Inspector, Placement Preview, Pattern Consistency); optional Masa/Litematica comparison removed
           - Bounded Ore Extensions API & synchronized conventional ore tags
           - Optional Sodium 0.9.2 terrain integration
+          - Opt-in Glow Ores shortcut for 19 vanilla ore accents, Small Handhelds-style 40/40/50% first-person profile and registered Eater Clear block filter preset based on 196 pure-clear source blockstates; no copyrighted textures or OptiFine CTM assets bundled
           - executable raw-source parity regression protection for the original source contract
 
           ## Supported
@@ -226,7 +227,7 @@ jobs:
           This release is published only from a successful main CI run. The exact attached JARs passed JUnit, JaCoCo, PIT mutation testing, reproducibility checks, Client GameTest, M3/M5/M7 visual evidence, M8 performance/retention guards, privacy/residue checks, and runtime size budgets.
 
           ## Compatibility scope
-          Representative shader-ON configurations are not yet claimed as supported. Minecraft 26.2 Vulkan remains experimental. Broader third-party resource-pack compatibility is intentionally evidence-bounded.
+          Named shader-ON/OFF and Vulkan tests are independently exercised in the external compatibility matrix; this is not a blanket claim for every third-party shader and modpack. The six source packs are behavior references, not bundled assets. Original OptiFine CTM connected borders, special foliage models and pale-oak artwork are not reproduced.
 
           ## Integrity
           SHA-256 hashes are attached in SHA256SUMS.txt.

@@ -59,6 +59,36 @@ final class SceneFilterOptionsTest {
         assertEquals(entity.hashCode(),white.withList(1,false,"minecraft:item").withMode(1,SceneFilterOptions.Mode.BLACKLIST).hashCode());
         assertThrows(IllegalArgumentException.class,()->defaults.rule(2));
     }
+    @Test void eaterSourceInventoryIsExactAndOnlyRegisteredTargetsAreUsed() {
+        var source=EaterClearPreset.sourceIds();
+        assertEquals(196,source.size());
+        assertEquals(196,new java.util.HashSet<>(source).size());
+        assertTrue(source.contains("minecraft:stone"));
+        assertTrue(source.contains("minecraft:oak_planks"));
+        assertTrue(source.contains("minecraft:pale_oak_log"));
+        assertTrue(source.contains("minecraft:blue_ice"));
+        assertFalse(source.contains("minecraft:big_dripleaf"),
+                "specialized foliage model is not an invisible-block override");
+        assertThrows(UnsupportedOperationException.class,()->source.add("minecraft:air"));
+        assertEquals(List.of("minecraft:oak_planks","minecraft:stone"),
+                EaterClearPreset.available(id->id.equals("minecraft:stone") || id.equals("minecraft:oak_planks")));
+        assertThrows(NullPointerException.class,()->EaterClearPreset.available(null));
+    }
+
+    @Test void eaterPresetIsExplicitAndPreservesEntityFiltersAndImmutability() {
+        var original=SceneFilterOptions.defaults()
+                .withEntityPreset(1).withList(0,true,"minecraft:dirt")
+                .withMode(0,SceneFilterOptions.Mode.WHITELIST);
+        var selected=EaterClearPreset.available(id->id.equals("minecraft:stone") || id.equals("minecraft:oak_planks"));
+        var updated=original.withEaterClearPreset(selected);
+        assertEquals(SceneFilterOptions.Mode.BLACKLIST,updated.blocks().mode());
+        assertEquals(selected,updated.blocks().blacklist());
+        assertEquals(List.of(),updated.blocks().whitelist());
+        assertEquals(original.entities(),updated.entities());
+        assertEquals(SceneFilterOptions.Mode.WHITELIST,original.blocks().mode());
+        assertThrows(IllegalArgumentException.class,()->original.withEaterClearPreset(List.of()));
+    }
+
     @Test void presetsOnlyReplaceEntityRule() {
         var baseline=SceneFilterOptions.defaults().withList(0,false,"minecraft:stone");
         var build=baseline.withEntityPreset(0);

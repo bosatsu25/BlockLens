@@ -30,6 +30,20 @@ final class SettingsTranslationsTest {
         }
     }
 
+    @org.junit.jupiter.api.Test
+    void nativeResourcePackPresetTranslationsAreAvailable() throws java.io.IOException {
+        var root=java.nio.file.Path.of("").toAbsolutePath();
+        for(var locale:new String[] {"en_us","ja_jp"}) {
+            var text=java.nio.file.Files.readString(root.resolve(
+                    "src/main/resources/assets/blocklens/lang/"+locale+".json"));
+            for(var key:new String[] {"blocklens.scene.preset.eater",
+                    "blocklens.comfort.preset.small_handhelds",
+                    "blocklens.resource.preset.glow","blocklens.resource.preset.glow.hint"}) {
+                requireText(text,key);
+            }
+        }
+    }
+
     private static void requireText(String translations, String key) {
         String quoted = java.util.regex.Pattern.quote(key);
         assertTrue(java.util.regex.Pattern.compile("\\\"" + quoted + "\\\"\\s*:\\s*\\\"[^\\\"]+\\\"")

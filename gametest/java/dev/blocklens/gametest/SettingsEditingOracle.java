@@ -47,6 +47,21 @@ final class SettingsEditingOracle {
                 require(BlockLensConfigFiles.loadOrCreate(configDirectory).enabledMask() == original.enabledMask(),
                         "Discard persisted edits");
 
+                // Ore-source shortcut modifies the draft only and excludes non-ore obsidian toggles.
+                screen = new BlockLensConfigScreen(previous);
+                BlockLensConfigScreen.show(client, screen);
+                ResponsiveSettingsScreenOracle.select(screen, CapabilityId.Category.RESOURCE);
+                press(screen, "blocklens.resource.preset.glow");
+                String enabledLabel=state(true);
+                long enabledOreRows=ResponsiveSettingsScreenOracle.buttons(screen).subList(4,25).stream()
+                        .filter(button->button.getMessage().getString().equals(enabledLabel)).count();
+                require(enabledOreRows==19,"glow preset did not activate exactly nineteen ores");
+                require(BlockLensRuntime.config().enabledMask()==original.enabledMask(),
+                        "ore shortcut published its draft before Save");
+                press(screen, "blocklens.settings.discard");
+                require(BlockLensRuntime.config().enabledMask()==original.enabledMask(),
+                        "ore shortcut discard changed the published config");
+
                 screen = new BlockLensConfigScreen(previous);
                 BlockLensConfigScreen.show(client, screen);
                 pressFirstToggle(screen);

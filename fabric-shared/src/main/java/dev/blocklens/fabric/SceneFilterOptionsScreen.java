@@ -1,5 +1,6 @@
 package dev.blocklens.fabric;
 
+import dev.blocklens.core.scene.EaterClearPreset;
 import dev.blocklens.core.scene.SceneFilterCatalog;
 import dev.blocklens.core.scene.SceneFilterOptions;
 import dev.blocklens.core.ui.SettingsCatalog;
@@ -56,6 +57,17 @@ public final class SceneFilterOptionsScreen extends Screen {
             draft.setSceneFilterOptions(draft.config().sceneFilterOptions().withList(kind,white,""));
             input.setValue("");invalid=false;applied=true;
         }).bounds(left+half+8,122,half,20).build());
+        if(kind==0) {
+            addRenderableWidget(Button.builder(Component.translatable("blocklens.scene.preset.eater"),ignored->{
+                try {
+                    var registered=EaterClearPreset.available(id->SceneFilterClient.registered(0,id));
+                    draft.setSceneFilterOptions(draft.config().sceneFilterOptions().withEaterClearPreset(registered));
+                    white=false;input=null;invalid=false;applied=true;rebuildWidgets();
+                } catch(IllegalArgumentException unavailable) {
+                    invalid=true;applied=false;
+                }
+            }).bounds(left,148,size,20).build());
+        }
         if(kind==1) {
             String[] names={"build","trace","photo","reset"};
             int part=(size-12)/4;
@@ -103,7 +115,7 @@ public final class SceneFilterOptionsScreen extends Screen {
         extractor.fill(left,8,left+size,height-32,0xEE000000);
         super.extractRenderState(extractor,mouseX,mouseY,delta);
         extractor.centeredText(font,font.plainSubstrByWidth(title.getString(),size),width/2,14,0xFFFFFFFF);
-        int y=kind==1?174:150;
+        int y=174;
         String key=invalid?"blocklens.scene.invalid":applied?"blocklens.scene.applied":"blocklens.scene.hint";
         for(var line:font.split(Component.translatable(key),size-8)) {
             if(y+font.lineHeight>height-34) break;

@@ -441,14 +441,14 @@ jobs:
           target="build/ci/scene-filters-${{ matrix.minecraft }}"
           mkdir -p "$target/ui" "$target/visual"
           test "$(find "$root/scene-filter-ui" -maxdepth 1 -name '*.png' | wc -l)" -eq 4
-          test "$(find "$root/scene-filter-visual" -maxdepth 1 -name '*.png' | wc -l)" -eq 25
+          test "$(find "$root/scene-filter-visual" -maxdepth 1 -name '*.png' | wc -l)" -eq 26
           for locale in en_us ja_jp; do
             for kind in 0 1; do
               test -s "$root/scene-filter-ui/scene-$locale-$kind.png"
             done
           done
           manifest="$root/scene-filter-visual/scene-filter-visual-manifest.txt"
-          for check in generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all55Enabled all55Reload dimensionCleanup finalOffEmpty; do
+          for check in eaterClear generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all55Enabled all55Reload dimensionCleanup finalOffEmpty; do
             grep -q "^$check=true$" "$manifest"
           done
           cp "$root/scene-filter-ui/"*.png "$target/ui/"

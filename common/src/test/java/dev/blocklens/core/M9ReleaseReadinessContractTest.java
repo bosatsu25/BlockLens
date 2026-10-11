@@ -69,6 +69,10 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(release.contains("no duplicate release"));
 
         assertTrue(release.contains("40 independently configurable capabilities"));
+        assertTrue(release.contains("55 independently configurable capabilities"));
+        assertTrue(release.contains("3 native, read-only Builder Assist tools"));
+        assertFalse(release.contains("5 Bounded World Analyzers"));
+        assertFalse(release.contains("Litematica Comparison"));
         assertTrue(release.contains("37-capability source baseline"));
         assertTrue(release.contains("Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore"));
         assertTrue(release.contains("Tripwire Hook coverage in String Tweaks"));
@@ -82,10 +86,11 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        assertTrue(properties.contains("mod_version=0.3.0"));
+        assertTrue(properties.contains("mod_version=0.4.0"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
         assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
-        assertTrue(properties.contains("v0.3.0 ships 57 capabilities across Minecraft 26.1.2, 26.2 and 26.3"));
+        assertTrue(properties.contains("v0.3.0 shipped 57 capabilities across Minecraft 26.1.2, 26.2 and 26.3"));
+        assertTrue(properties.contains("v0.4.0 keeps 55"));
 
         assertTrue(properties.contains("runtime_jar_baseline_bytes=204800"));
         assertTrue(properties.contains("runtime_jar_release_budget_bytes=204800"));
