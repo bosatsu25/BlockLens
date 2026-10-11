@@ -43,6 +43,19 @@ final class M9ReleaseReadinessContractTest {
         String release = Files.readString(root().resolve(".github/workflows/release.yml"));
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
 
+        // An independent successful workflow is insufficient: both compatibility
+        // matrices must be required jobs in the same release-authorizing CI run.
+        assertTrue(ci.contains("uses: ./.github/workflows/bbe-compatibility.yml"),
+                "publishing CI omits the optimized chest rendering paths");
+        assertTrue(ci.contains("uses: ./.github/workflows/external-compatibility.yml"),
+                "publishing CI omits the advertised shader/backend profiles");
+        assertFalse(ci.contains("continue-on-error:"), "required CI failures must block release");
+        for (String workflow : new String[] {"bbe-compatibility.yml", "external-compatibility.yml"}) {
+            String required = Files.readString(root().resolve(".github/workflows/" + workflow));
+            assertTrue(required.contains("workflow_call:"), "matrix must run inside authorizing CI");
+            assertFalse(required.contains("continue-on-error:"));
+        }
+
         assertTrue(release.contains("workflow_run:"));
         assertTrue(release.contains("- CI"));
         assertTrue(release.contains("github.event.workflow_run.conclusion == 'success'"));
@@ -86,7 +99,7 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        assertTrue(properties.contains("mod_version=0.4.0"));
+        assertTrue(properties.contains("mod_version=0.4.1"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
         assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
         assertTrue(properties.contains("v0.3.0 shipped 57 capabilities across Minecraft 26.1.2, 26.2 and 26.3"));

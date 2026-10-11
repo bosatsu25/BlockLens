@@ -12,7 +12,7 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Historical stable release:** BlockLens **v0.3.0** provides **57 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
+> **Historical stable release:** BlockLens **v0.4.0** provides **55 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
 >
 > **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
@@ -25,9 +25,11 @@ BlockLens now offers source-informed presets without redistributing image/model/
 
 The original OptiFine connected-texture border art, third-person/special item transformations, eleven custom transparent foliage models, world-fire textures and Chise's pale-oak artwork are **not** reproduced inside the JAR. Physical collision and solid occlusion remain unchanged. See the [source-by-source audit and scope limitations](knowledge/current/resourcepack-native-profiles.md).
 
-## Current development: v0.4.0 source and three Minecraft versions
+## Current development: v0.4.1 source and three Minecraft versions
 
-The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, four bounded analyzers, two independent scene filters and three advisory Builder Assist tools. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
+The 0.4.1 candidate fixes closed regular chest brightening on Minecraft 26.3 with exact BBE 1.3.9+mc26.3 and Sodium 0.9.2+mc26.3. BBE optimization remains enabled; trapped/ender/copper/Christmas materials are not substituted. The tested Cele stack adds Iris 1.11.7+mc26.3 and Continuity 3.0.1+26.3 with shaders OFF. BBE plus shaders ON is unverified. Upgrade with one matching BlockLens JAR and retain configuration. Publishing requires the same commit's normal, shader/backend and BBE/Cele matrices; see [the precise compatibility boundary](knowledge/current/cele-bbe-compatibility.md).
+
+The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, four bounded analyzers, two independent scene filters and three advisory Builder Assist tools. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; published v0.4.0 already supports all three targets.
 
 To watch real Minecraft UI automation on Windows, with Java 25 and Gradle 9.5.1 on PATH, run `./scripts/run-ui-tests.ps1` (all three) or `./scripts/run-ui-tests.ps1 -Version 26.3`. The runner opens actual clients sequentially using the built distribution JAR, checks loaded class origins, exits after testing and stops on failure. CI requires ten settings screenshots per target and separate rendering/JAR evidence. See [current version contract, exact dependencies and verification status](knowledge/current/minecraft-26-3.md).
 
@@ -213,14 +215,14 @@ Bounded config reads, synchronous temporary-file writes with atomic replacement 
 
 ## Release
 
-**v0.2.2** is the latest published stable release, at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`.
+**v0.2.2** is a historical published stable release, at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`.
 
 | Minecraft | Published JAR | Size | SHA-256 |
 | --- | --- | ---: | --- |
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). A 26.3 release artifact is not yet published. Current development budgets are **204,800 B (200 KiB)** no-growth, **204,800 B (200 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
+The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). Published v0.4.0 includes all three targets; v0.4.1 remains a source candidate until its required main CI and release gates pass. Current development budgets are **204,800 B (200 KiB)** no-growth, **204,800 B (200 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
 
 **v0.2.0** remains historical P0 release evidence.
 
@@ -273,7 +275,7 @@ BlockLens is intentionally small at runtime, but its engineering and QA foundati
 | PIT JUnit adapter | **pitest-junit5-plugin 1.2.3** | JUnit 5 mutation execution |
 | Real-client integration | **Fabric Client GameTest** | real Minecraft startup/reload/render verification |
 | Headless graphics | **Xvfb / Ubuntu 24.04** | framebuffer tests in GitHub Actions |
-| CI/CD | **GitHub Actions** | dual-version quality/release pipeline |
+| CI/CD | **GitHub Actions** | three-version quality/release pipeline |
 | Artifact integrity | **SHA-256** | reproducibility and CI/release byte identity |
 
 Java compilation uses `-Xlint:deprecation`, `-Xlint:unchecked`, and **`-Werror`**.
@@ -287,7 +289,7 @@ Quality gates remain:
 
 ## Real-client verification
 
-Both supported Minecraft versions run **Fabric Client GameTest** under Xvfb. The gate covers configuration round-trips, resource reload, Overworld/Nether transitions, target/state mapping, full enable/OFF restoration, rendered visual evidence, resource-pack preservation fixtures, M8 performance/retention observations, model resolution, and reproducible artifact checks.
+All three supported Minecraft versions run **Fabric Client GameTest** under Xvfb. The gate covers configuration round-trips, resource reload, Overworld/Nether transitions, target/state mapping, full enable/OFF restoration, rendered visual evidence, resource-pack preservation fixtures, M8 performance/retention observations, model resolution, and reproducible artifact checks.
 
 The original 37-capability source baseline remains a historical regression contract even as the development runtime grows beyond it.
 
@@ -336,7 +338,7 @@ For the stable release:
 1. Install Fabric Loader for the target Minecraft version.
 2. Install the matching Fabric API.
 3. Use Java 25 or later.
-4. Download the matching 26.1.2, 26.2, or 26.3 JAR from the [`v0.3.0` GitHub Release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.3.0).
+4. Download the matching 26.1.2, 26.2, or 26.3 JAR from the [`v0.4.0` GitHub Release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.0).
 5. Put the JAR in the Minecraft `mods` directory.
 6. Launch the client.
 

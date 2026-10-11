@@ -1,0 +1,36 @@
+// Explicit test-only profile for the exact optional renderer supplied in Cele-Modpack-v1.1.
+def bbeEnabled = providers.gradleProperty('bbeCompatibility').orElse('false').get()
+if (!(bbeEnabled in ['true', 'false'])) {
+    throw new GradleException('bbeCompatibility must be true or false')
+}
+if (bbeEnabled == 'true') {
+    if (blockLensMinecraftVersion.toString() != '26.3'
+            || providers.gradleProperty('verifyPackagedRuntime').orElse('false').get() != 'true') {
+        throw new GradleException('BBE compatibility requires packaged Minecraft 26.3 runtime')
+    }
+    def input = providers.gradleProperty('bbeCompatibilityDirectory').orElse('').get()
+    if (input.isBlank()) throw new GradleException('A hash-verified BBE compatibility directory is required')
+    File prepared = rootProject.file(input)
+    def fixture = new groovy.json.JsonSlurper().parse(new File(prepared, 'manifest.json'))
+    if (!(fixture.stack in ['bbe-sodium', 'cele-render']) || fixture.minecraft != '26.3') {
+        throw new GradleException('Invalid BBE compatibility manifest')
+    }
+    dependencies {
+        gametestRuntimeOnly fileTree(dir: new File(prepared, 'mods'), include: '*.jar')
+    }
+    def launchDirectory = loom.runs.named('clientGameTest').flatMap { it.runDirectory }
+    tasks.named('runClientGameTest') {
+        systemProperty 'blocklens.test.bbeCompatibility', 'true'
+        systemProperty 'blocklens.test.bbeStack', fixture.stack
+        args '--graphicsBackend', 'OPENGL'
+        doFirst {
+            File gameDirectory = launchDirectory.get().asFile
+            for (String folder : ['config', 'resourcepacks']) {
+                copy {
+                    from new File(prepared, folder)
+                    into new File(gameDirectory, folder)
+                }
+            }
+        }
+    }
+}

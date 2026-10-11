@@ -23,6 +23,7 @@
     "blocklens-runtime": "=${version}"
   },
   "mixins": [
-    "blocklens.mixins.json"
+    "blocklens.mixins.json",
+    "blocklens-bbe.mixins.json"
   ]
 }
