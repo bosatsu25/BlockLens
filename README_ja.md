@@ -192,7 +192,19 @@ runtime原則:
 - repeated resource reloadでもretained-capability構造をboundedに維持
 - client-only packaging、nested runtime dependency JARなし
 
-### 現在のsource hardening
+#
+## 添付リソースパックからのネイティブ機能プロファイル
+
+元のリソースパックの画像・フォント・モデルをJAR内に再配布せず、使える挙動をBlockLensのネイティブ設定として追加しました。
+
+- **NewGlowingOres:** 資源タブの「鉱石発光一括ON」で19種類の鉱石ハイライトを編集案として有効化します。個別設定も引き続き可能です。元パックのOptiFine CTM／境界ピクセル表現とは同一ではありません。
+- **Small Handhelds:** 「手持ちアイテムの大きさ」→詳細に40%／40%／50%のプリセットを追加しました。一人称限定で、盾などの特例は既存仕様のままです。
+- **Eater Clear:** 「ブロックの表示フィルター」→詳細に、元パックの無表示モデル196件を基にした登録済みブロックIDのプリセットを追加しました。11件の専用植物モデルは含めていません。物理的なブロック・衝突・遮蔽は変更しません。
+- **LowOnFire / Chise:** 既存のLow Fire、白色コンクリート、白色チェストの機能を引き続き利用できます。ペールオークの独自画像などは取り込んでいません。
+
+編集内容は、親画面の「保存・適用」で初めて有効になります。**プリセットだけでは対応する機能のON/OFFは切り替わりません。** 正確な対応範囲・未対応部分・元ファイルのハッシュは[ソース監査](knowledge/current/resourcepack-native-profiles.md)をご覧ください。
+
+## 現在のsource hardening
 
 現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。55設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付パック同士の実ゲーム併用と元画面との画素単位の一致は未確認です。Shader・Vulkanの正確な試験結果は[今回の実装記録](knowledge/current/remaining-delivery.md)に記載します。
 

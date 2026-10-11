@@ -444,7 +444,7 @@ jobs:
             done
           done
           manifest="$root/scene-filter-visual/scene-filter-visual-manifest.txt"
-          for check in eaterClearDifferentPixels generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all55Enabled all55Reload dimensionCleanup finalOffEmpty; do
+          for check in eaterClear generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all55Enabled all55Reload dimensionCleanup finalOffEmpty; do
             grep -q "^$check=true$" "$manifest"
           done
           cp "$root/scene-filter-ui/"*.png "$target/ui/"

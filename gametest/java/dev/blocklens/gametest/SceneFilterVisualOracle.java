@@ -82,6 +82,7 @@ final class SceneFilterVisualOracle {
                         "Eater Clear must not alter physical occlusion");
             });
             distinct(stone,read(capture(context,output,"eater-clear-preset")),evidence,"eaterClear");
+            evidence.append("eaterClear=true\n");
             install(context,blocks);
             // An entity-only edit and equivalent decoded options must not expose a published block rule
             // between config publication / terrain invalidation and the next client tick.
