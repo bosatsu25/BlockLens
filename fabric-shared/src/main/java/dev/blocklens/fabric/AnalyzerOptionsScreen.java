@@ -24,7 +24,6 @@ public final class AnalyzerOptionsScreen extends Screen {
     @Override protected void init() {
         int size=Math.min(420,width-24),left=(width-size)/2,row=0;
         for(int field=0;field<4;field++) {
-            if(kind==0 && field==1) continue;
             int selected=field,y=48+row++*30;
             for(int direction:new int[]{-1,1}) {
                 int step=direction;
@@ -58,7 +57,6 @@ public final class AnalyzerOptionsScreen extends Screen {
         super.extractRenderState(extractor,mouseX,mouseY,delta);
         extractor.centeredText(font,font.plainSubstrByWidth(title.getString(),size),width/2,14,0xFFFFFFFF);
         for(int field=0;field<4;field++) {
-            if(kind==0 && field==1) continue;
             var label=Component.translatable("blocklens.analyzer."+AnalyzerCatalog.FIELDS.get(field))
                     .append(": "+draft.config().analyzerOptions().value(kind,field));
             extractor.text(font,font.plainSubstrByWidth(label.getString(),size-72),left+4,54+row++*30,0xFFFFFFFF);

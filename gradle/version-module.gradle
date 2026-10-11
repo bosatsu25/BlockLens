@@ -17,20 +17,12 @@ def runtimeSourcePackBytes = Long.parseLong(rootProject.runtime_jar_source_pack_
 def runtimeHardMaxBytes = Long.parseLong(rootProject.runtime_jar_hard_max_bytes.toString())
 def runtimeBaselineBytes = Long.parseLong(rootProject.runtime_jar_baseline_bytes.toString())
 def runtimeReleaseBudgetBytes = Long.parseLong(rootProject.runtime_jar_release_budget_bytes.toString())
-def masaCompilePins = [
-        '26.1.2': ['w8P6TokG', 'FItuNokS'],
-        '26.2': ['CuniXtbo', 'KvjmGjAV'],
-        '26.3': ['ZqV316KY', 'JX9bESec']
-][blockLensMinecraftVersionValue]
 
 dependencies {
     minecraft "com.mojang:minecraft:${blockLensMinecraftVersionValue}"
     implementation "net.fabricmc:fabric-loader:${blockLensLoaderVersionValue}"
     implementation "net.fabricmc.fabric-api:fabric-api:${blockLensFabricApiVersion}"
     implementation project(':common')
-    // Typed optional boundary; these dependencies are never packaged or required at runtime.
-    compileOnly "maven.modrinth:litematica:${masaCompilePins[0]}"
-    compileOnly "maven.modrinth:malilib:${masaCompilePins[1]}"
 
     testImplementation platform('org.junit:junit-bom:5.14.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -47,8 +39,6 @@ fabricApi {
 }
 
 dependencies {
-    gametestCompileOnly "maven.modrinth:litematica:${masaCompilePins[0]}"
-    gametestCompileOnly "maven.modrinth:malilib:${masaCompilePins[1]}"
 }
 
 // Diagnostic variation applies only to the isolated client test JVM.
@@ -61,7 +51,7 @@ if (!(clientTestFocus in ['all', 'scene', 'm8', 'external'])) {
     throw new GradleException('clientTestFocus must be all, scene, m8 or external')
 }
 def externalProfile = providers.gradleProperty('externalCompatibilityProfile').orElse('none').get()
-if (!(externalProfile in ['none', 'shader-off', 'shader-on', 'vulkan', 'packs', 'masa'])) {
+if (!(externalProfile in ['none', 'shader-off', 'shader-on', 'vulkan', 'packs'])) {
     throw new GradleException('Unknown external compatibility profile')
 }
 def externalDirectory = providers.gradleProperty('externalCompatibilityDirectory').orElse('').get()
