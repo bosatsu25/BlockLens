@@ -4,6 +4,8 @@ import com.mojang.blaze3d.platform.InputConstants;
 
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.analyzer.AnalyzerCatalog;
+import dev.blocklens.core.scene.SceneFilterCatalog;
 import dev.blocklens.core.ui.SettingsCatalog;
 import dev.blocklens.fabric.BlockLensConfigScreen;
 import java.util.HashSet;
@@ -69,8 +71,14 @@ final class ResponsiveSettingsScreenOracle {
             BlockLensConfigScreen screen, int width, int height, CapabilityId.Category category) {
         List<Button> buttons = buttons(screen);
         int count = SettingsCatalog.capabilities(category).size();
-        // Other has two comfort, five analyzer, two filter and four Builder actions.
-        int actions = category == CapabilityId.Category.OTHER ? 13 : 0;
+        // Derive detail/open actions from production catalogs, so retired capabilities
+        // cannot make the native registry assertion drift.
+        int actions = category != CapabilityId.Category.OTHER ? 0
+                : (int) SettingsCatalog.capabilities(category).stream().filter(capability ->
+                        capability == CapabilityId.LOW_FIRE || capability == CapabilityId.HANDHELD_SIZE
+                        || AnalyzerCatalog.index(capability) >= 0
+                        || SceneFilterCatalog.index(capability) >= 0
+                        || capability.sourceKey().startsWith("builder.")).count();
         require(buttons.size() == count + 6 + actions, "widget registry changed");
         List<Button> toggles = buttons.subList(4, 4 + count);
         var reached = new HashSet<Button>();
