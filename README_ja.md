@@ -16,7 +16,7 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
-> **v0.3.0公開後の開発版:** 現行55機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。AMATERAS由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
+> **v0.3.0公開後の開発版:** 現行55機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
 
 ## 開発版 v0.4.1：Minecraft 3バージョン
 

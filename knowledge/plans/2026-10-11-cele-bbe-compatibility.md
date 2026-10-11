@@ -5,7 +5,7 @@ Architecture: retain both the existing vanilla renderer and BBE terrain meshing.
 Stack: Java 25, Fabric, Minecraft 26.1.2/26.2/26.3. Optional adapter evidence is scoped to BBE 1.3.9+mc26.3 and Sodium 0.9.2+mc26.3, plus a second stack adding Iris 1.11.7+mc26.3 (shaders OFF) and Continuity 3.0.1+26.3.
 
 ## Constraints
-- Preserve all 55 capability keys/defaults and the AMATERAS contract. Do not revive Masa integration or the debris analyzer.
+- Preserve all 55 capability keys/defaults and the source reference contract. Do not revive Masa integration or the debris analyzer.
 - Runtime JAR <= 204800 bytes. Never upload private source-pack configurations/world data or redistribute third-party artwork.
 - The supplied pack embeds an older 0.4.0 JAR without the ore-border classes/assets. Displayed version alone is not build identity.
 - Four-mod rendering-stack evidence is not proof of whole-pack runtime equivalence.

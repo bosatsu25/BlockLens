@@ -1,6 +1,6 @@
 # Bounded world analyzers — implementation contract and historical evidence
 
-**Current implementation (post-v0.3.0):** Four analyzers remain: lava source, beacon range, lightning-rod range and villager job-site links. The ancient-debris analyzer was removed; its historical config key is ignored and capability bit 46 remains reserved. The AMATERAS ancient-debris *resource highlight* remains supported. The 19-option/five-analyzer benchmarks and screenshots below refer only to the old v0.3.0 behavior and must not be interpreted as new verification evidence. New hosted CI verification is tracked in [PR #60](https://github.com/bosatsu25/BlockLens/pull/60).
+**Current implementation (post-v0.3.0):** Four analyzers remain: lava source, beacon range, lightning-rod range and villager job-site links. The ancient-debris analyzer was removed; its historical config key is ignored and capability bit 46 remains reserved. The source reference ancient-debris *resource highlight* remains supported. The 19-option/five-analyzer benchmarks and screenshots below refer only to the old v0.3.0 behavior and must not be interpreted as new verification evidence. New hosted CI verification is tracked in [PR #60](https://github.com/bosatsu25/BlockLens/pull/60).
 
 ## Archived v0.3.0 design and measurements
 

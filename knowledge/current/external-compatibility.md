@@ -180,22 +180,30 @@ RPO sidecars or change an installed user's resources.
 
 | Test alias | Reference | SHA-256 | Declared resource formats |
 | --- | --- | --- | --- |
-| `amateras` | AMATERAS Resourcepack 1.21.7 v2 | `070bc338936f89320408e7b78bb6f74856917f5944deecc1a1b52390f5363616` | 64–84 |
+| `reference-ui` | Source reference pack 1.21.7 v2 | `070bc338936f89320408e7b78bb6f74856917f5944deecc1a1b52390f5363616` | 64–84 |
 | `chise` | Chise texture pack for 26.1.2 | `4d68bc024c8e92d2cca56815c9fab3509d7a21bfbbd580ec70458b23a0887d60` | 84 |
+| `chise-server` | Chise server texture pack for 26.1.2 | `53d456fa9396a362d8f408a7f17f70372ef8df15e4fc9e2439db31fbd23f1109` | 84 |
 | `lowfire` | LowOnFire v26.2 | `e0eaf94bbc15f4c7d40727ecaf7a3b9eaf72ec2bf5fee53898613981159326a3` | 15–200 |
 | `glowing` | NewGlowingOres Border v2.0 | `f8464293c2abe4bbb1b424fdec6e122a89b79f1936a02699cc832cafe7d9bb7f` | 8–84 |
 | `small` | Small Handhelds | `3ae36207dae0a1c72b0be5b52b9975f706be936e205d20395a0b490887cbd4e0` | 46–1000 |
 
 Official client `version.json` reports resource versions 84.0, 88.0 and 97.1 for the three targets.
-AMATERAS, Chise and NewGlowingOres therefore declare 26.1.2's format but do not declare the newer
+The source reference, both Chise packs and NewGlowingOres therefore declare 26.1.2's format but do not declare the newer
 formats. On 26.2/26.3 their row is explicitly an **out-of-range forced-load experiment**. Successful
 rendering must not be reported as an author's claim of version support.
 
-For each target, test the five-pack order above and its exact reverse. Eight known resources are
-resolved from the live resource manager and compared with bytes from the selected archives.
-The two overlapping vanilla textures, `nether_gold_ore.png` and `nether_quartz_ore.png`, must switch
-between AMATERAS and NewGlowingOres with the priority order. Other probes cover the anvil model,
-diamond blockstate, white concrete, fire model, diamond texture and inherited handheld model.
+For each target, test the six-pack order above and its exact reverse. The live resource manager
+must resolve all **29** pinned probes to the exact selected source and asset SHA-256. This includes
+the original eight probes, all three regular chest textures, and the server pack's 18 pale-oak
+block/item/boat/sign/UI textures. Reversing order must change exactly **six** winners: two Nether
+ore textures, white concrete and the three regular chest textures. The public lock records resource names and candidate aliases only. Expected
+material hashes are computed from the validated private input archives at verification time; the independent collector rejects missing/duplicate rows, wrong winners,
+wrong bytes and failed native geometry metrics. Retention is recomputed from foreground/retained
+counts within the unchanged 60,200-pixel region, 24-color-delta/two-pixel tolerance and 950-permille gate.
+
+Resolving a texture does not prove that a version's item/entity/UI renderer uses that legacy path.
+This is six-pack resource priority and scoped base-model preservation evidence, not implementation
+or rendered parity of the pale-oak palette, world-fire style, CTM or every handheld transform.
 
 Each order captures an OFF/ON/air triplet for nether gold ore, an anvil and a log. The test requires
 a substantial base foreground, visible BlockLens cue changes, and at least 95% containment of the
@@ -204,10 +212,11 @@ original selected packs and BlockLens configuration. This is base-model preserva
 it does not validate NewGlowingOres' optional OptiFine CTM/emissive integration or every handheld
 transform merely because those resources resolved.
 
-## Optional schematic integration inputs
+## Historical optional schematic integration inputs (retired by PR #60)
 
-The same downloader pins the separate #36 optional integration profile, without adding Masa mods
-to the shader or Vulkan tests:
+The former #36 test profile used the following pinned inputs. The current downloader does not
+accept `masa`; the integration and comparison capability were removed by PR #60. This table is
+historical evidence only and is not a current launch procedure:
 
 | Minecraft | Litematica | MaLiLib |
 | --- | --- | --- |
@@ -215,7 +224,7 @@ to the shader or Vulkan tests:
 | 26.2 | 0.28.8 / `CuniXtbo` | 0.29.6 / `KvjmGjAV` |
 | 26.3 | 0.29.1 / `ZqV316KY` | 0.30.2 / `JX9bESec` |
 
-All three actual release JARs expose the typed `SchematicWorldHandler.getSchematicWorld()`
+The three former pinned dependency JARs exposed the typed `SchematicWorldHandler.getSchematicWorld()`
 accessor. Artifact/API availability is not itself runtime verification. The Builder Assist native
 oracle owns schematic match/mismatch, missing-chunk, empty/air and lifecycle assertions.
 
@@ -233,8 +242,8 @@ passes the actual requested graphics backend. Run with packaged runtime verifica
 external focus; never substitute this focused run for the normal CI gate.
 
 The private pack profile additionally requires `--pack-dir` pointing to the directory containing
-the original five archives. The script verifies content hashes instead of relying on filenames.
-The `vulkan` profile rejects 26.1.2. The `masa` profile is dispatched to the Builder Assist oracle.
+the original six archives. The script verifies content hashes instead of relying on filenames.
+The `vulkan` profile rejects 26.1.2. Current profiles are `shader-off`, `shader-on`, `vulkan` and `packs`.
 
 ```sh
 python scripts/verify_external_compatibility.py --directory versions/mc26_3/build/run/clientGameTest/external-compatibility --minecraft 26.3 --profile shader-on --destination build/ci/external-26.3-shader-on
@@ -245,8 +254,7 @@ Rendering profiles retain the six original M3/M5 PNGs. Each Shader OFF/ON row al
 the fifteen Sodium PNGs and its native manifest: 21 PNGs and 25 result files before
 SHA256SUMS. Vulkan and private-pack rows keep their six-image boundary. The verifier
 checks every required PNG header, dimensions and named result file.
-The separate Masa profile requires all typed read/absence/restoration assertions in the schematic
-manifest and the two pinned loaded-mod hashes. It has no image artifact. Every profile writes
+Every current profile writes
 SHA256SUMS. Its collector copies an explicit allowlist only; original packs,
 mod JARs, configuration directories and arbitrary logs are not result artifacts.
 
@@ -259,7 +267,9 @@ the Sodium manifest to 16 KiB and other text to 64 KiB, and writes SHA-256 hashe
 that diagnostic directory even if a copied native manifest says `passed`. This artifact is
 for diagnosis and cannot turn a failed row into passing evidence.
 
-The optional Masa test records progress around schematic assertions, client restoration,
+## Historical lifecycle and five-pack acceptance
+
+The retired optional Masa test recorded progress around schematic assertions, client restoration,
 evidence copying and world closure. A test-only daemon watchdog records one bounded thread
 snapshot if a phase remains unchanged for 60 seconds. Its fixed output is
 `external-compatibility/external-lifecycle-diagnostics.txt`, written by atomic replacement
@@ -296,7 +306,7 @@ unproven; lifecycle instrumentation supplies the missing observation without
 claiming the failed attempt passed or changing product behavior. Subsequent exact
 head and merge results are recorded in PR #53 and the delivery issues.
 
-The local reference-pack attempt on 2026-10-10 reached a display limitation under headless Xvfb on Linux.
+The historical five-pack/eight-probe reference attempt on 2026-10-10 reached a display limitation under headless Xvfb on Linux.
 On 2026-10-11, native client execution was performed on an authorized local Windows runtime with
 Adoptium JDK 25 and Gradle 9.5.1 using the original hash-verified private pack archives.
 All three supported Minecraft targets (26.1.2, 26.2, and 26.3) executed the full forward/reverse
@@ -306,7 +316,7 @@ and passed visual retention contracts:
 - 26.2: forward retention 985/1000 (base foreground 2443, changed pixels 604), reverse retention 1000/1000 (base foreground 2381, changed pixels 604).
 - 26.3: forward retention 985/1000 (base foreground 2441, changed pixels 604), reverse retention 1000/1000 (base foreground 2380, changed pixels 604).
 In all three versions, all eight probe resources resolved with exact matching SHA-256 digests,
-the two overlapping ore textures shifted between AMATERAS and NewGlowingOres as priority reversed,
+the two overlapping ore textures shifted between source reference and NewGlowingOres as priority reversed,
 and selected packs/config were strictly restored. All twelve result files per version were verified
 by `scripts/verify_external_compatibility.py`. The original archives remain outside git and public artifacts.
 
@@ -317,3 +327,14 @@ by `scripts/verify_external_compatibility.py`. The original archives remain outs
 - [Complementary Reimagined r5.9.3 metadata](https://api.modrinth.com/v2/version/Bqen1mJX).
 - [Modrinth Maven Litematica artifact metadata](https://api.modrinth.com/maven/maven/modrinth/litematica/ZqV316KY/litematica-ZqV316KY.pom).
 - [Official 26.3 launch metadata](https://piston-meta.mojang.com/v1/packages/702fe59163c6ee6578607daa85811d9bc9c7cc40/26.3.json), including the client artifact used for direct API inspection.
+
+## Private material-hash boundary
+
+Individual asset SHA-256 values remain local. The public lock contains only the 29 logical
+resource names and their candidate pack aliases; the six whole-archive hashes were already public.
+Use `--pack-input` with the private prepared directory when verifying `packs` results. The verifier
+checks each archive's pinned bytes before deriving the expected material hashes, preserving exact
+resource/priority validation. Collection removes the third material-hash column from resource TSVs;
+raw native proof remains private and is not overwritten. A collected two-column resource report
+cannot substitute for the raw private acceptance proof. Other shader/backend rows need no private
+inputs and keep their existing verification contract.

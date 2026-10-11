@@ -27,12 +27,37 @@ import net.minecraft.resources.Identifier;
 
 /** Private reference bytes are read locally; published evidence contains only hashes and frames. */
 final class ExternalResourcePackOracle {
-    private static final List<String> PACKS = List.of("amateras", "chise", "lowfire", "glowing", "small");
+    private static final List<String> PACKS = List.of("reference-ui", "chise", "chise-server", "lowfire", "glowing", "small");
     private static final List<String> PROBES = List.of(
-            "blockstates/diamond_ore.json", "models/block/anvil/anvil.json",
-            "textures/block/white_concrete.png", "models/block/fire_floor1.json",
-            "textures/block/diamond_ore.png", "models/block/block.json",
-            "textures/block/nether_gold_ore.png", "textures/block/nether_quartz_ore.png");
+            "blockstates/diamond_ore.json",
+            "models/block/anvil/anvil.json",
+            "textures/block/white_concrete.png",
+            "models/block/fire_floor1.json",
+            "textures/block/diamond_ore.png",
+            "models/block/block.json",
+            "textures/block/nether_gold_ore.png",
+            "textures/block/nether_quartz_ore.png",
+            "textures/block/pale_oak_door_bottom.png",
+            "textures/block/pale_oak_door_top.png",
+            "textures/block/pale_oak_log_top.png",
+            "textures/block/pale_oak_planks.png",
+            "textures/block/pale_oak_shelf.png",
+            "textures/block/pale_oak_trapdoor.png",
+            "textures/block/stripped_pale_oak_log.png",
+            "textures/block/stripped_pale_oak_log_top.png",
+            "textures/entity/boat/pale_oak.png",
+            "textures/entity/chest/normal.png",
+            "textures/entity/chest/normal_left.png",
+            "textures/entity/chest/normal_right.png",
+            "textures/entity/chest_boat/pale_oak.png",
+            "textures/entity/signs/hanging/pale_oak.png",
+            "textures/entity/signs/pale_oak.png",
+            "textures/gui/hanging_signs/pale_oak.png",
+            "textures/item/pale_oak_boat.png",
+            "textures/item/pale_oak_chest_boat.png",
+            "textures/item/pale_oak_door.png",
+            "textures/item/pale_oak_hanging_sign.png",
+            "textures/item/pale_oak_sign.png");
 
     private ExternalResourcePackOracle() { }
 
@@ -70,7 +95,7 @@ final class ExternalResourcePackOracle {
             for (String resource : PROBES) {
                 if (!forwardSources.get(resource).equals(reverseSources.get(resource))) changed++;
             }
-            require(changed == 2, "The two overlapping ore textures did not follow pack priority");
+            require(changed == 6, "The six overlapping resource probes did not follow pack priority");
         } finally {
             context.runOnClient(client -> {
                 BlockLensRuntime.installConfig(originalConfig);
@@ -82,7 +107,7 @@ final class ExternalResourcePackOracle {
                 List.copyOf(client.getResourcePackRepository().getSelectedIds()))), "Selected packs were not restored");
         require(BlockLensRuntime.config().enabledMask() == originalConfig.enabledMask(), "Config was not restored");
         Files.writeString(output.resolve("external-packs-restoration.txt"),
-                "packCount=5\nprobesPerOrder=8\npriorityChangedSources=2\nselectedPacksRestored=true\nconfigRestored=true\n",
+                "packCount=6\nprobesPerOrder=29\npriorityChangedSources=6\nselectedPacksRestored=true\nconfigRestored=true\n",
                 StandardCharsets.UTF_8);
     }
 
@@ -231,7 +256,7 @@ final class ExternalResourcePackOracle {
         }
         int retention = foreground == 0 ? 0 : retained * 1000 / foreground;
         Files.writeString(output.resolve("external-packs-" + name + "-visual.txt"),
-                "changedPixels=" + changed + "\nbaseForeground=" + foreground + "\nretentionPermille=" + retention
+                "changedPixels=" + changed + "\nbaseForeground=" + foreground + "\nbaseRetained=" + retained + "\nretentionPermille=" + retention
                         + "\nmaskThreshold=24\nmaskToleranceRadius=2\nminimumRetentionPermille=950\n",
                 StandardCharsets.UTF_8);
         require(foreground >= 120, "Reference pack scene has no substantial target geometry");

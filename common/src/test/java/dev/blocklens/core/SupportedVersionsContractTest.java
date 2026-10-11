@@ -60,8 +60,7 @@ final class SupportedVersionsContractTest {
 
     @Test
     void modernRendererIsSharedWithOnlyAnExplicitLightingBoundary() throws IOException {
-        String modern = Files.readString(root().resolve("versions/mc26_2/src/main/java/"
-                + "dev/blocklens/fabric/MinecraftDecorationModel.java"));
+        String modern = Files.readString(SupportedVersionFixtures.rendererSource(root()));
         String thirdBuild = Files.readString(root().resolve("versions/mc26_3/build.gradle"));
         assertTrue(thirdBuild.contains("versions/mc26_2/src/main/java"));
         assertTrue(thirdBuild.contains("versions/mc26_2/src/gametest/java"));

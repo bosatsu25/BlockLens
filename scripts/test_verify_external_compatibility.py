@@ -2,6 +2,9 @@
 
 from pathlib import Path
 import hashlib
+import copy
+import io
+import zipfile
 import struct
 import tempfile
 import unittest
@@ -77,6 +80,111 @@ class ExternalEvidenceTest(unittest.TestCase):
             files = evidence.verify(directory, "26.3", "vulkan")
             self.assertEqual(9, len(files))
             self.assertTrue(set(evidence.DEFAULT_IMAGES).issubset(path.name for path in files))
+
+    def pack_order_fixture(self, directory, order="forward"):
+        lock = evidence.read_lock()
+        aliases = list(lock["packs"])
+        if order == "reverse":
+            aliases.reverse()
+        expected = {path: {alias: hashlib.sha256((path + alias).encode()).hexdigest()
+                           for alias in candidates}
+                    for path, candidates in lock["pack_probes"].items()}
+        rows = []
+        for path, candidates in lock["pack_probes"].items():
+            winner = next(alias for alias in reversed(aliases) if alias in candidates)
+            rows.append(f"{path}\t{winner}\t{expected[path][winner]}\n")
+        (directory / f"external-packs-{order}-resources.tsv").write_text("".join(rows), encoding="utf-8")
+        (directory / f"external-packs-{order}-visual.txt").write_text(
+            "changedPixels=100\nbaseForeground=200\nbaseRetained=198\nretentionPermille=990\n"
+            "maskThreshold=24\nmaskToleranceRadius=2\nminimumRetentionPermille=950\n", encoding="utf-8")
+        return lock, expected
+
+    def test_pack_order_requires_every_pinned_source_and_correct_priority(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            lock, expected = self.pack_order_fixture(directory)
+            self.assertEqual(2, len(evidence.verify_pack_order(directory, "forward", lock, expected)))
+            path = directory / "external-packs-forward-resources.tsv"
+            valid = path.read_text()
+            for invalid in ("", "\n".join(valid.splitlines()[:-1]), valid + valid.splitlines()[0] + "\n",
+                            valid.replace("chise-server", "chise")):
+                path.write_text(invalid)
+                with self.assertRaisesRegex(ValueError, "pack resource"):
+                    evidence.verify_pack_order(directory, "forward", lock, expected)
+            path.write_text(valid)
+            self.pack_order_fixture(directory, "reverse")
+            self.assertEqual(2, len(evidence.verify_pack_order(directory, "reverse", lock, expected)))
+            path.write_text((directory / "external-packs-reverse-resources.tsv").read_text())
+            with self.assertRaisesRegex(ValueError, "pack resource"):
+                evidence.verify_pack_order(directory, "forward", lock, expected)
+
+    def test_pack_visual_counts_cannot_claim_failed_geometry_passed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            lock, expected = self.pack_order_fixture(directory)
+            path = directory / "external-packs-forward-visual.txt"
+            valid = path.read_text()
+            for old, new in (("changedPixels=100", "changedPixels=0"),
+                             ("baseForeground=200", "baseForeground=0"),
+                             ("baseRetained=198", "baseRetained=180"),
+                             ("retentionPermille=990", "retentionPermille=949"),
+                             ("maskThreshold=24", "maskThreshold=1")):
+                path.write_text(valid.replace(old, new))
+                with self.assertRaises(ValueError):
+                    evidence.verify_pack_order(directory, "forward", lock, expected)
+
+    def test_public_probe_catalog_does_not_contain_material_hashes(self):
+        lock = evidence.read_lock()
+        self.assertEqual(29, len(lock["pack_probes"]))
+        for candidates in lock["pack_probes"].values():
+            self.assertIsInstance(candidates, list)
+            self.assertTrue(set(candidates).issubset(lock["packs"]))
+
+    def test_private_pack_input_is_required_for_material_validation(self):
+        with self.assertRaisesRegex(ValueError, "private prepared pack input"):
+            evidence.private_pack_probe_hashes(None, evidence.read_lock())
+
+    def test_private_material_hashes_derive_from_pinned_bytes_and_tampering_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            packs = directory / "packs"
+            packs.mkdir()
+            lock = copy.deepcopy(evidence.read_lock())
+            expected = {path: {} for path in lock["pack_probes"]}
+            for alias, pin in lock["packs"].items():
+                output = io.BytesIO()
+                with zipfile.ZipFile(output, "w") as archive:
+                    archive.writestr("pack.mcmeta", '{"pack":{"pack_format":84,"description":"fixture"}}')
+                    for path, candidates in lock["pack_probes"].items():
+                        if alias in candidates:
+                            content = (path + alias).encode()
+                            archive.writestr("assets/minecraft/" + path, content)
+                            expected[path][alias] = hashlib.sha256(content).hexdigest()
+                data = output.getvalue()
+                (packs / pin["filename"]).write_bytes(data)
+                pin["size"] = len(data)
+                pin["sha256"] = hashlib.sha256(data).hexdigest()
+            self.assertEqual(expected, evidence.private_pack_probe_hashes(directory, lock))
+            victim = packs / lock["packs"]["chise-server"]["filename"]
+            victim.write_bytes(victim.read_bytes()[:-1])
+            with self.assertRaisesRegex(ValueError, "size"):
+                evidence.private_pack_probe_hashes(directory, lock)
+
+    def test_collected_private_material_hashes_are_redacted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "external-packs-forward-resources.tsv"
+            material_hash = hashlib.sha256(b"private reference material").hexdigest()
+            source.write_text(f"textures/block/example.png\tchise-server\t{material_hash}\n")
+            destination = root / "public-result"
+            with patch.object(evidence, "verify", return_value=[source]):
+                evidence.collect(root, "26.3", "packs", destination)
+            content = (destination / source.name).read_text()
+            self.assertEqual("textures/block/example.png\tchise-server\n", content)
+            self.assertNotIn(material_hash, content)
+            self.assertIn(hashlib.sha256((destination / source.name).read_bytes()).hexdigest(),
+                          (destination / "SHA256SUMS.txt").read_text())
+            self.assertIn(material_hash, source.read_text())
 
     def test_duplicate_fields_are_not_last_write_wins(self):
         with tempfile.TemporaryDirectory() as tmp:

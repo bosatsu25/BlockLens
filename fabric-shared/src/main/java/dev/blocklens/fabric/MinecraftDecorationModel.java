@@ -32,7 +32,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.IronBarsBlock;
 import org.jspecify.annotations.Nullable;
 
-/** Minecraft 26.1.2 baked-model wrapper shared by the M3-M7 rendering families. */
+/** Shared baked-model wrapper shared by the M3-M7 rendering families. */
 final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.bitPosition();
 
@@ -208,7 +208,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
 
     private void emitLightweightOverlay(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos,
             BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest, long enabled) {
-        ExtraModelKey<BlockStateModel> key = (enabled & (1L << CapabilityId.KELP_HIGHLIGHT.ordinal())) != 0L
+        ExtraModelKey<BlockStateModel> key = (enabled & (1L << CapabilityId.KELP_HIGHLIGHT.bitPosition())) != 0L
                 ? LightweightOverlayModels.KELP : state.getBlock() instanceof IronBarsBlock
                 ? LightweightOverlayModels.PANE : LightweightOverlayModels.GLASS;
         BlockStateModel overlay = lookupLightweightOverlay(key);
@@ -216,7 +216,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         emitter.pushTransform(quad -> {
             quad.chunkLayer(ChunkSectionLayer.CUTOUT);
             quad.emissive(true);
-            quad.diffuseShade(false);
+            MinecraftQuadLighting.disableDirectionalShade(quad);
             quad.ambientOcclusion(TriState.FALSE);
             return true;
         });
@@ -237,7 +237,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             quad.chunkLayer(ChunkSectionLayer.CUTOUT);
             quad.multiplyColor(oreBorderTint);
             quad.emissive(true);
-            quad.diffuseShade(false);
+            MinecraftQuadLighting.disableDirectionalShade(quad);
             quad.ambientOcclusion(TriState.FALSE);
             return true;
         });
@@ -298,7 +298,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
         if (instruction.emissive()) {
             quad.emissive(true);
-            quad.diffuseShade(false);
+            MinecraftQuadLighting.disableDirectionalShade(quad);
             quad.ambientOcclusion(TriState.FALSE);
         }
     }

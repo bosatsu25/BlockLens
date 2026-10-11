@@ -14,7 +14,7 @@ The supplied `BlockLens-26.3-v0.4.0.jar` has SHA-256 `2c9d582650b7e3a6c32cd09b55
 
 The optional adapter is applied only with Minecraft 26.3, BBE 1.3.9+mc26.3 and Sodium 0.9.2+mc26.3. It replaces regular single/left/right material identities at BBE selection, registers BlockLens's existing original chest artwork in the terrain atlas, and sets final optimized quads emissive. Only BBE flag 2 (its non-emissive custom lighting route) is cleared for those owned materials; other flags and optimized geometry/scheduling remain intact. Sprite identities, not atlas objects, are retained so reload resolves fresh atlas resources.
 
-Trapped, ender, copper and Christmas materials are not substituted. The base mod does not require BBE/Sodium. Unsupported versions do not activate this adapter. There is no automatic configuration edit or mod disabling. Existing 55 capabilities, source keys, defaults, original AMATERAS controls and removed Masa/debris-analyzer decisions are unchanged.
+Trapped, ender, copper and Christmas materials are not substituted. The base mod does not require BBE/Sodium. Unsupported versions do not activate this adapter. There is no automatic configuration edit or mod disabling. Existing 55 capabilities, source keys, defaults, original source reference controls and removed Masa/debris-analyzer decisions are unchanged.
 
 ## Automated evidence
 
