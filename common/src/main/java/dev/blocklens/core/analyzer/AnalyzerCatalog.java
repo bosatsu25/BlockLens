@@ -13,7 +13,7 @@ public final class AnalyzerCatalog {
     public static int index(CapabilityId capability) { return CAPABILITIES.indexOf(capability); }
     public static int mask(BlockLensConfig config) {
         int mask=0;
-        for(int i=0;i<CAPABILITIES.size();i++) if(config.isEnabled(CAPABILITIES.get(i))) mask|=1<<i;
+        for(int i=0;i<CAPABILITIES.size();i++) if(CAPABILITIES.get(i).available() && config.isEnabled(CAPABILITIES.get(i))) mask|=1<<i;
         return mask;
     }
     public static String optionKey(int kind,int field) {
