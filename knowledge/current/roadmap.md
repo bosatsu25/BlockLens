@@ -1,14 +1,26 @@
 # BlockLens Current Roadmap
 
-Status: **M0-M9 and P0-P5 complete / v0.3.0 release candidate / three-version main verified**
+Status: **M0-M9 and P0-P5 complete / v0.3.0 published / Next target: v0.4.0 (Minecraft 26.4 transition)**
 
 ## Current release and development boundary
 
-Target release candidate: **v0.3.0**, shipping **57 independently configurable capabilities** across **Minecraft 26.1.2, 26.2, and 26.3**. It encompasses all P0-P5 migrations (lightweight visuals, world analyzers, scene filters, builder assist, ore extension APIs, synchronized conventional tags, pinned Sodium terrain integration, private reference-pack validation, and comprehensive codebase hardening).
+Published stable release: **[v0.3.0](https://github.com/bosatsu25/BlockLens/releases/tag/v0.3.0)**, shipping **57 independently configurable capabilities** across **Minecraft 26.1.2, 26.2, and 26.3**. It encompasses all P0-P5 migrations (lightweight visuals, world analyzers, scene filters, builder assist, ore extension APIs, synchronized conventional tags, pinned Sodium terrain integration, private reference-pack validation, and comprehensive codebase hardening).
 
 Historical published release: [v0.2.2](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2), target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`, shipping 40 capabilities for 26.1.2 / 26.2.
 
 Current size policy is **204,800 B (200 KiB)** for both development and release gates, explicitly authorized by the user on 2026-10-11. The **1,183,432 B** absolute ceiling and runtime/quality guards are unchanged. Older 100/140/150 KiB limits and measurements below are historical evidence. See [remaining-delivery.md](remaining-delivery.md).
+
+## Future target migration: Minecraft 26.4 & 26.1.2 deprecation (v0.4.0)
+
+As authorized on 2026-10-11 (Plan A adoption):
+- BlockLens maintains a rolling 3-version support model.
+- Current stable release (`v0.3.0`): supports Minecraft **26.1.2**, **26.2**, and **26.3**.
+- Mojang currently provides development snapshots for 26.4 (latest `26.4-snapshot-3`, with official general availability scheduled for Winter 2026).
+- Upon official general availability of Minecraft **26.4**:
+  1. Retire Minecraft **26.1.2** support (removing legacy GLFW/OpenGL fallback constraints and the `versions/mc26_1_2` module).
+  2. Add Minecraft **26.4** support (`versions/mc26_4`).
+  3. The three supported release targets will become **26.2**, **26.3**, and **26.4** for the **v0.4.0** release.
+  4. Until the official 26.4 release is published by Mojang, v0.3.0 remains the stable production baseline on 26.1.2, 26.2, and 26.3.
 
 ## Remaining implementation graph
 
