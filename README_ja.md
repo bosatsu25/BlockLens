@@ -18,7 +18,7 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 > **v0.3.0公開後の開発版:** 現行56機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
 
-## 開発版 v0.4.1：Minecraft 3バージョン
+## 開発版 v0.4.2：ペールオークの配色とMinecraft 3バージョン
 
 公開済みv0.4.1は、26.3／BBE 1.3.9+mc26.3／Sodium 0.9.2+mc26.3の組み合わせで、閉じた通常チェストが保存・適用だけで白くなるよう修正します。最適化は有効なままです。trapped／ender／copper／Christmasの素材は置換しません。検証したCele構成にはIris 1.11.7とContinuity 3.0.1（シェーダーOFF）を含みます。BBEとシェーダーONの併用は未確認です。更新時は対応するBlockLens JARを1個だけ入れ、設定を保持してください。公開には同一コミットの通常3版・シェーダー／バックエンド・BBE／Celeの全CI成功を要求します。[正確な対応範囲](knowledge/current/cele-bbe-compatibility.md)を参照してください。
 

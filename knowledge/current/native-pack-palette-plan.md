@@ -76,3 +76,7 @@ and native-compilation gates. The same compiled helper accepts the three preserv
 and rejects their OFF/ON substitution. Actual Windows 26.3 with the pinned active Iris/Sodium shader
 profile passes and exits cleanly; its strict independent collector accepts 32 files. Final hosted
 current-head all-three/all-eight/BBE evidence is still required before merge.
+
+## Release identity
+
+v0.4.1 is already published. This additive 56-capability change uses v0.4.2, so the immutable-tag guard cannot silently skip publication. Upgrade instructions use the workflow version variable. Publication still requires all same-commit main CI gates.

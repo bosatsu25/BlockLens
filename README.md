@@ -27,7 +27,7 @@ BlockLens now offers source-informed presets without redistributing image/model/
 
 The original OptiFine connected-texture border art, third-person/special item transformations, eleven custom transparent foliage models, the original lowered fire sprites and Chise's pale-oak artwork are **not** reproduced inside the JAR. Physical collision and solid occlusion remain unchanged. See the [source-by-source audit and scope limitations](knowledge/current/resourcepack-native-profiles.md).
 
-## Current development: native palette and v0.4.1 source and three Minecraft versions
+## Development v0.4.2: native palette and three Minecraft versions
 
 Published v0.4.1 fixes closed regular chest brightening on Minecraft 26.3 with exact BBE 1.3.9+mc26.3 and Sodium 0.9.2+mc26.3. BBE optimization remains enabled; trapped/ender/copper/Christmas materials are not substituted. The tested Cele stack adds Iris 1.11.7+mc26.3 and Continuity 3.0.1+26.3 with shaders OFF. BBE plus shaders ON is unverified. Upgrade with one matching BlockLens JAR and retain configuration. Publishing requires the same commit's normal, shader/backend and BBE/Cele matrices; see [the precise compatibility boundary](knowledge/current/cele-bbe-compatibility.md).
 
@@ -224,7 +224,7 @@ Bounded config reads, synchronous temporary-file writes with atomic replacement 
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). Published v0.4.0 includes all three targets; v0.4.1 remains a source candidate until its required main CI and release gates pass. Current development budgets are **204,800 B (200 KiB)** no-growth, **204,800 B (200 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
+The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). Published v0.4.0 includes all three targets; v0.4.1 is published; v0.4.2 remains a source candidate until its required main CI and release gates pass. Current development budgets are **204,800 B (200 KiB)** no-growth, **204,800 B (200 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
 
 **v0.2.0** remains historical P0 release evidence.
 
