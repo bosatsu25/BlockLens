@@ -280,8 +280,13 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private void saveAndClose() {
         try {
             if (draft.save(configDirectory)) {
+                boolean chestChanged = BlockLensRuntime.config().isEnabled(CapabilityId.BRIGHT_CHEST)
+                        != draft.config().isEnabled(CapabilityId.BRIGHT_CHEST);
                 BlockLensRuntime.installConfig(draft.config());
                 MinecraftTerrainInvalidator.invalidateAll(minecraft);
+                // Chest block entities may retain extracted render state while closed.
+                // A pack reload rebuilds their sprites without requiring a lid interaction.
+                if (chestChanged) minecraft.reloadResourcePacks();
             }
             showParent(parent);
         } catch (IOException | SecurityException exception) {
