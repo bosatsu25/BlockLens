@@ -118,14 +118,14 @@ final class SimplifiedTerrainOracle {
                 saveUiToggle(context);
                 var restored=capture(context,output,ROLES[role]+"-restored");
                 require(difference(enabled,restored)>20,"Simplification did not visibly restore: "+ROLES[role]);
-                // Same frozen state and fixed backdrop as OFF; use the unchanged-reload bound.
-                require(difference(baseline,restored)<200,"Restored terrain differs from OFF baseline: "+ROLES[role]);
+                // Same frozen state as OFF; spatial color and raw detail guards reject incorrect restoration.
+                require(stable(baseline,restored,20),"Restored terrain differs from OFF baseline: "+ROLES[role]);
                 require(difference(restored,empty)>20,"Restoration removed visible terrain: "+ROLES[role]);
                 context.runOnClient(c->require(c.level.getBlockState(TARGET)==state,"Restoration changed world state"));
             }
             server.runCommand("fill 0 -59 4 0 -57 4 minecraft:air");server.runCommand("setblock 0 -59 4 minecraft:stone");
             saveUiToggle(context);var before=capture(context,output,"simplified-reload-before");reload(context);verifyTextures(context);
-            var after=capture(context,output,"simplified-reloaded");require(difference(before,after)<200,"Unchanged terrain reload drifted");
+            var after=capture(context,output,"simplified-reloaded");require(stable(before,after,20),"Unchanged terrain reload drifted");
             // Hidden solids retain physical occlusion; fixed adjacent light isolates mesh suppression.
             for(var direction:net.minecraft.core.Direction.values()) {
                 var light=TARGET.relative(direction);
@@ -167,7 +167,7 @@ final class SimplifiedTerrainOracle {
                 SimplifiedTerrainProbe.start();saveUiToggle(context);
                 var externalOn=capture(context,output,externalNames[role]+"-on");
                 require(!SimplifiedTerrainProbe.seen(externalRoles[role],SimplifiedTerrainPolicy.Kind.CUBE),"Externally owned dependency was wrapped");
-                require(difference(externalOff,externalOn)<100,"External resource priority overridden: "+externalRoles[role]);
+                require(stable(externalOff,externalOn,10),"External resource priority overridden: "+externalRoles[role]);
             }
             Files.writeString(output.resolve("simplified-manifest.txt"),"minecraft="+BlockLensRuntime.minecraftVersion()+"\nroles="+ROLES.length
                     +"\nchangedPixels="+changed+"\nactualEmission=true\nopaque=true\nsparse=true\nstatesPreserved=true\nuiSave=true\nuiDiscard=true\nfailedSave=true"
@@ -250,6 +250,9 @@ final class SimplifiedTerrainOracle {
     /** Upper mesh interior excludes side/floor AO which retained physical solids intentionally affect. */
     private static int filterInteriorDifference(BufferedImage a,BufferedImage b) {
         return difference(a,b,308,198,328,210);
+    }
+    private static boolean stable(BufferedImage a,BufferedImage b,int maximumChangedCells) {
+        return dev.blocklens.testing.SpatialFrameDifference.matches(a,b,280,140,360,270,maximumChangedCells);
     }
     private static int difference(BufferedImage a,BufferedImage b) { return difference(a,b,280,140,360,270); }
     private static int difference(BufferedImage a,BufferedImage b,int x0,int y0,int x1,int y1) {
