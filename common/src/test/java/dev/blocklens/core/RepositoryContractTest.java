@@ -207,7 +207,9 @@ final class RepositoryContractTest {
             assertTrue(model.contains("quad.multiplyColor(instruction.multiplyArgb())"));
             assertTrue(model.contains("quad.emissive(true)"));
             assertTrue(model.contains("wrapped.createGeometryKey"));
-            assertTrue(model.contains("instruction = visibility.cue().instruction()"));
+            assertTrue(model.contains("descriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state).cue().instruction()"));
+            assertTrue(model.contains("FaceInstructionTable.compile(DecorationRenderDescriptor.of(capability, state))"));
+            assertTrue(model.contains("instruction = table.instruction(face)"));
             assertTrue(model.contains("ResourceHighlightCue.forCapability"));
             assertFalse(model.contains("VisibilityQuadCuePolicy"));
 

@@ -142,8 +142,10 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(cue.contains("public DecorationQuadInstruction instruction()"));
         assertFalse(cue.contains("private final int accentArgb;"));
 
-        assertTrue(model2612.contains("instruction = ((ResourceHighlightCue) descriptor).instruction();"));
-        assertTrue(model262.contains("instruction = ((ResourceHighlightCue) descriptor).instruction();"));
+        assertTrue(model2612.contains("descriptors[i] = cue.instruction();"));
+        assertTrue(model2612.contains("instruction = (DecorationQuadInstruction) descriptor;"));
+        assertTrue(model262.contains("descriptors[i] = cue.instruction();"));
+        assertTrue(model262.contains("instruction = (DecorationQuadInstruction) descriptor;"));
         assertFalse(model2612.contains("DecorationQuadInstruction.emissiveTint(resource.accentArgb())"));
         assertFalse(model262.contains("DecorationQuadInstruction.emissiveTint(resource.accentArgb())"));
     }
@@ -177,8 +179,8 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(cue.contains("private final DecorationQuadInstruction instruction;"));
         assertTrue(cue.contains("this.instruction = DecorationQuadInstruction.emissiveTint(accentArgb);"));
         assertTrue(cue.contains("public DecorationQuadInstruction instruction()"));
-        assertTrue(model2612.contains("instruction = visibility.cue().instruction();"));
-        assertTrue(model262.contains("instruction = visibility.cue().instruction();"));
+        assertTrue(model2612.contains("descriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state).cue().instruction();"));
+        assertTrue(model262.contains("descriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state).cue().instruction();"));
         assertFalse(model2612.contains("VisibilityQuadCuePolicy.instruction(visibility)"));
         assertFalse(model262.contains("VisibilityQuadCuePolicy.instruction(visibility)"));
         assertFalse(Files.exists(root().resolve(
