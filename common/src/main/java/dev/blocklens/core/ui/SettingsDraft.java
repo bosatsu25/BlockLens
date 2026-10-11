@@ -28,6 +28,17 @@ public final class SettingsDraft {
         config = config.withEnabled(capability, !config.isEnabled(capability));
     }
 
+    /** NewGlowingOres vanilla ore subset; original CTM artwork is not copied. */
+    public void enableOreGlowProfile() {
+        for (CapabilityId capability : CapabilityId.values()) {
+            if (capability.category() == CapabilityId.Category.RESOURCE
+                    && capability != CapabilityId.OBSIDIAN
+                    && capability != CapabilityId.CRYING_OBSIDIAN) {
+                config = config.withEnabled(capability, true);
+            }
+        }
+    }
+
     public void setComfortOptions(ComfortOptions options) {
         config = config.withComfortOptions(options);
     }

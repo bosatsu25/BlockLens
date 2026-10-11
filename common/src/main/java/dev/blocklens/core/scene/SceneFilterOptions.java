@@ -63,6 +63,13 @@ public record SceneFilterOptions(Rule blocks, Rule entities) {
                 white ? parsed : current.whitelist()));
     }
 
+    /** Eater Clear replaces only the block rule; other independent filters stay intact. */
+    public SceneFilterOptions withEaterClearPreset(List<String> registeredBlockIds) {
+        Objects.requireNonNull(registeredBlockIds, "registeredBlockIds");
+        if (registeredBlockIds.isEmpty()) throw new IllegalArgumentException("no registered source blocks");
+        return new SceneFilterOptions(new Rule(Mode.BLACKLIST, registeredBlockIds, List.of()), entities);
+    }
+
     public SceneFilterOptions withEntityPreset(int preset) {
         List<String> build = List.of("minecraft:item", "minecraft:experience_orb", "minecraft:area_effect_cloud");
         Rule rule = switch (preset) {

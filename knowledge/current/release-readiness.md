@@ -1,5 +1,9 @@
 # BlockLens M9 Release Readiness
 
+## v0.4.0 resource-pack native profiles candidate
+
+Source mainline keeps 55 independent capabilities while adding Eater Clear, Small Handhelds, and ore-glow shortcuts under the 200 KiB ceiling. The input artwork and OptiFine CTM edge connections are not redistributed. The 3-version CI and release workflow must pass at the exact final SHA before publication. See [resource-pack source audit](resourcepack-native-profiles.md). The v0.3.0 data below is historical publication evidence.
+
 Status: **current publication boundary plus immutable historical release evidence**
 
 ## Current release: v0.3.0

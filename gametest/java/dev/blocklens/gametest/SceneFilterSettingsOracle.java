@@ -54,7 +54,7 @@ final class SceneFilterSettingsOracle {
                             var child=BlockLensConfigScreen.current(c);
                             require(child instanceof SceneFilterOptionsScreen,"filter details missing");
                             require(child.width==320 && child.height==240,"filter details viewport differs");
-                            require(ResponsiveSettingsScreenOracle.buttons(child).size()==(kind==0?5:9),"filter controls differ");
+                            require(ResponsiveSettingsScreenOracle.buttons(child).size()==(kind==0?6:9),"filter controls differ");
                             for(int i=0;i<3;i++) {
                                 click(child,ResponsiveSettingsScreenOracle.buttons(child).getFirst());
                                 tab(child);
@@ -90,6 +90,16 @@ final class SceneFilterSettingsOracle {
                             input(child).setValue(white);
                             click(child,button(child,"blocklens.scene.use_list"));
                             expected=expected.withList(kind,true,white);
+                            if(kind==0) {
+                                click(child,button(child,"blocklens.scene.preset.eater"));
+                                var activeIds=SceneFilterOptions.parseList(input(child).getValue());
+                                require(activeIds.size()>100 && activeIds.contains("minecraft:stone")
+                                        && activeIds.contains("minecraft:oak_planks"),
+                                        "Eater Clear did not resolve the registered transparent model set");
+                                require(!activeIds.contains("minecraft:blockofamethyst"),
+                                        "Eater Clear kept an unregistered source alias");
+                                expected=expected.withEaterClearPreset(activeIds);
+                            }
                             if(kind==1) {
                                 String[] presets={"build","trace","photo","reset"};
                                 for(int p=0;p<4;p++) {

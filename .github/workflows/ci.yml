@@ -36,6 +36,8 @@ jobs:
         with:
           gradle-version: '9.5.1'
           cache-read-only: ${{ github.event_name == 'pull_request' }}
+      # The discovery suite covers sanitizer, external compatibility, source-pack audit,
+      # and clean-room render asset helper regressions without duplicated invocations.
       - name: Verify clean-room generated render assets
         run: PYTHONDONTWRITEBYTECODE=1 python3 scripts/verify_cleanroom_render_assets.py
       - name: Test CI helper contracts (discovery)
@@ -374,7 +376,11 @@ jobs:
           set -euo pipefail
           root="versions/${{ matrix.module }}/build/run/clientGameTest/lightweight-visual"
           test -f "$root/lightweight-visual-manifest.txt"
-          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 32
+          test "$(find "$root" -maxdepth 1 -name '*.png' | wc -l)" -eq 34
+          grep -q '^chestClosedUiOnWithoutOpening=true$' "$root/lightweight-visual-manifest.txt"
+          grep -q '^chestClosedUiOffWithoutOpening=true$' "$root/lightweight-visual-manifest.txt"
+          test -s "$root/bright-chest-ui-closed-on.png"
+          test -s "$root/bright-chest-ui-closed-off.png"
           grep -q '^all46Enabled=true$' "$root/lightweight-visual-manifest.txt"
           grep -q '^all46Reload=true$' "$root/lightweight-visual-manifest.txt"
           grep -q '^all46FireAndBothHands=true$' "$root/lightweight-visual-manifest.txt"
@@ -465,14 +471,14 @@ jobs:
           target="build/ci/scene-filters-${{ matrix.minecraft }}"
           mkdir -p "$target/ui" "$target/visual"
           test "$(find "$root/scene-filter-ui" -maxdepth 1 -name '*.png' | wc -l)" -eq 4
-          test "$(find "$root/scene-filter-visual" -maxdepth 1 -name '*.png' | wc -l)" -eq 25
+          test "$(find "$root/scene-filter-visual" -maxdepth 1 -name '*.png' | wc -l)" -eq 26
           for locale in en_us ja_jp; do
             for kind in 0 1; do
               test -s "$root/scene-filter-ui/scene-$locale-$kind.png"
             done
           done
           manifest="$root/scene-filter-visual/scene-filter-visual-manifest.txt"
-          for check in generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all55Enabled all55Reload dimensionCleanup finalOffEmpty; do
+          for check in eaterClear generationContinuity blockModes entityModes blockEntityExtraction selfPreserved physicalStatePreserved fluidPreserved modelGroupsPreserved jobSiteHidden all55Enabled all55Reload dimensionCleanup finalOffEmpty; do
             grep -q "^$check=true$" "$manifest"
           done
           cp "$root/scene-filter-ui/"*.png "$target/ui/"

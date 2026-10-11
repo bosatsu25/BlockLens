@@ -11,6 +11,28 @@ import org.junit.jupiter.api.io.TempDir;
 final class SettingsDraftTest {
     @TempDir Path directory;
 
+    @Test void glowProfileEnablesExactlyNineteenResourceControlsWithoutMutatingOtherGroups() {
+        var baseline=BlockLensConfig.defaults();
+        var draft=new SettingsDraft(baseline);
+        draft.enableOreGlowProfile();
+        assertTrue(draft.changed());
+        int changed=0;
+        for(var id:dev.blocklens.core.CapabilityId.values()) {
+            if(id.category()==dev.blocklens.core.CapabilityId.Category.RESOURCE
+                    && id!=dev.blocklens.core.CapabilityId.OBSIDIAN
+                    && id!=dev.blocklens.core.CapabilityId.CRYING_OBSIDIAN) {
+                changed++;
+                org.junit.jupiter.api.Assertions.assertTrue(draft.config().isEnabled(id),id.sourceKey());
+            } else {
+                org.junit.jupiter.api.Assertions.assertEquals(baseline.isEnabled(id),
+                        draft.config().isEnabled(id),id.sourceKey());
+            }
+        }
+        org.junit.jupiter.api.Assertions.assertEquals(19,changed);
+        draft.discard();
+        org.junit.jupiter.api.Assertions.assertFalse(draft.changed());
+    }
+
     @Test
     void editsStayLocalAndCanBeDiscarded() {
         var original = BlockLensConfig.defaults();
