@@ -1,0 +1,95 @@
+name: Cele rendering compatibility
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blocklens-bbe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bbe-rendering:
+    name: 26.3 / ${{ matrix.stack }} / closed chest regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: [bbe-sodium, cele-render]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Gradle 9.5.1
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          gradle-version: '9.5.1'
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - name: Test exact dependency validation
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_prepare_bbe_compatibility.py' -v
+      - name: Prepare inspected public dependencies and synthetic settings
+        run: python3 scripts/prepare_bbe_compatibility.py build/bbe-input --stack '${{ matrix.stack }}'
+      - name: Install EGL runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libegl1 libgl1-mesa-dri
+      - name: Verify packaged client with BBE optimization enabled
+        timeout-minutes: 12
+        env:
+          SDL_VIDEO_FORCE_EGL: '1'
+        run: >-
+          xvfb-run -a gradle --stacktrace -PverifyPackagedRuntime=true
+          -PbbeCompatibility=true -PbbeCompatibilityDirectory=build/bbe-input
+          -Pm8Compilation=c2-batch -Pm8FpsLimit=60
+          :versions:mc26_3:runClientGameTest
+          :versions:mc26_3:verifyRuntimeJarBudget
+      - name: Require native path and real UI evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=versions/mc26_3/build/run/clientGameTest
+          metrics="$root/bbe-compatibility/metrics.properties"
+          grep -Eq '^optimizedRegularOn=[1-9][0-9]*$' "$metrics"
+          grep -Eq '^optimizedRegularOff=[1-9][0-9]*$' "$metrics"
+          for key in closedChestUi glassKelpRegression oreBorders optimizationsRetained; do
+            grep -q "^$key=true$" "$metrics"
+          done
+          manifest="$root/lightweight-visual/lightweight-visual-manifest.txt"
+          grep -q '^chestClosedUiOnWithoutOpening=true$' "$manifest"
+          grep -q '^chestClosedUiOffWithoutOpening=true$' "$manifest"
+          grep -q '^nonRegularChestsUnchanged=true$' "$manifest"
+          grep -q '^chestLidAnimation=true$' "$manifest"
+      - name: Collect bounded rendering evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=versions/mc26_3/build/run/clientGameTest
+          target=build/ci/bbe-${{ matrix.stack }}
+          mkdir -p "$target"
+          for part in lightweight-visual ore-border-visual bbe-compatibility; do
+            if [[ -d "$root/$part" ]]; then cp -r "$root/$part" "$target/"; fi
+          done
+          if [[ -f build/bbe-input/manifest.json ]]; then cp build/bbe-input/manifest.json "$target/input-manifest.json"; fi
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/sanitize-client-diagnostics.py mc26_3 > "$target/log-summary.txt"
+      - name: Upload evidence without private pack or third-party binaries
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-bbe-${{ matrix.stack }}
+          path: build/ci/bbe-${{ matrix.stack }}
+          if-no-files-found: error
+          retention-days: 14

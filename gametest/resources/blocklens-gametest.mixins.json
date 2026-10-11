@@ -8,7 +8,8 @@
     "AnalyzerTickProbeMixin",
     "SectionCompileAllocationProbeMixin",
     "SodiumTerrainProbeMixin",
-    "SodiumTerrainVisitProbeMixin"
+    "SodiumTerrainVisitProbeMixin",
+    "BBETerrainProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

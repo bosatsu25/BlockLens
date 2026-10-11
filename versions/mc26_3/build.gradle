@@ -40,3 +40,5 @@ tasks.register('verifyClientLaunchContract') {
 tasks.named('check') {
     dependsOn 'verifyClientLaunchContract'
 }
+
+apply from: rootProject.file('gradle/bbe-compatibility.gradle')

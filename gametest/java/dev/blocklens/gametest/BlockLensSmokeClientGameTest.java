@@ -20,6 +20,10 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (Boolean.getBoolean("blocklens.test.bbeCompatibility")) {
+            BBECompatibilityOracle.verify(context);
+            return;
+        }
         if ("external".equals(System.getProperty("blocklens.test.focus", "all"))) {
             ExternalCompatibilityOracle.verify(context);
             return;
