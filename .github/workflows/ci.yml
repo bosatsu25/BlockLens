@@ -36,6 +36,8 @@ jobs:
         with:
           gradle-version: '9.5.1'
           cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - name: Verify clean-room generated render assets
+        run: PYTHONDONTWRITEBYTECODE=1 python3 scripts/verify_cleanroom_render_assets.py
       - name: Test bounded failure-log sanitizer
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p test_sanitize_client_diagnostics.py -v
       - name: Test external preparation and evidence validation
