@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 
 final class AnalyzerOptionsContractTest {
     @Test void documentedLimitsAndDefaultsAreStableForEveryField() {
-        int[][] minimum = {{16,16,8,5},{1,1,1,5},{1,1,1,5},{1,1,1,5},{1,1,1,5}};
-        int[][] maximum = {{256,256,128,100},{8,5,24,100},{32,16,16,100},{32,16,16,100},{32,16,24,100}};
-        int[][] defaults = {{64,64,64,20},{5,3,12,10},{16,8,8,20},{16,8,8,20},{16,8,12,20}};
+        int[][] minimum = {{1,1,1,5},{1,1,1,5},{1,1,1,5},{1,1,1,5}};
+        int[][] maximum = {{8,5,24,100},{32,16,16,100},{32,16,16,100},{32,16,24,100}};
+        int[][] defaults = {{5,3,12,10},{16,8,8,20},{16,8,8,20},{16,8,12,20}};
         var options = AnalyzerOptions.defaults();
-        for (int kind = 0; kind < 5; kind++) {
+        for (int kind = 0; kind < 4; kind++) {
             for (int field = 0; field < 4; field++) {
                 assertEquals(minimum[kind][field], AnalyzerOptions.minimum(kind, field));
                 assertEquals(maximum[kind][field], AnalyzerOptions.maximum(kind, field));
@@ -28,26 +28,20 @@ final class AnalyzerOptionsContractTest {
         }
     }
 
-    @Test void sphereAxesRemainLinkedWhileOtherFieldsRemainIndependent() {
+    @Test void analyzerFieldsRemainIndependentAndImmutable() {
         var original = AnalyzerOptions.defaults();
-        var sphere = original.with(0, 1, 128);
-        assertEquals(128, sphere.value(0, 0));
-        assertEquals(128, sphere.value(0, 1));
-        assertEquals(64, sphere.value(0, 2));
-        var markers = original.with(0, 2, 128);
-        assertEquals(64, markers.value(0, 0));
-        assertEquals(64, markers.value(0, 1));
-        assertEquals(128, markers.value(0, 2));
-        var lava = original.with(1, 1, 5);
-        assertEquals(5, lava.value(1, 0));
-        assertEquals(5, lava.value(1, 1));
-        assertEquals(3, original.value(1, 1));
+        var lavaRadius = original.with(0, 0, 8);
+        assertEquals(8, lavaRadius.value(0, 0));
+        assertEquals(3, lavaRadius.value(0, 1));
+        var beaconMarkers = original.with(1, 2, 16);
+        assertEquals(8, beaconMarkers.value(1, 2));
+        assertEquals(16, original.value(1, 2));
         assertEquals(original, AnalyzerOptions.defaults());
         assertEquals(original.hashCode(), AnalyzerOptions.defaults().hashCode());
-        assertNotEquals(original, lava);
+        assertNotEquals(original, lavaRadius);
         assertNotEquals(original, null);
         assertNotEquals(original, "options");
-        assertEquals(original, original.with(1, 1, 3));
+        assertEquals(original, original.with(0, 1, 3));
     }
 
     @Test void analyzerMaskNeverAbsorbsLegacyControlsAndEachAnalyzerIsIndependent() {
@@ -56,7 +50,7 @@ final class AnalyzerOptionsContractTest {
         assertEquals(0, AnalyzerCatalog.mask(original));
         assertEquals(-1, AnalyzerCatalog.index(CapabilityId.ANVIL));
         var all = original;
-        for (int kind = 0; kind < 5; kind++) {
+        for (int kind = 0; kind < 4; kind++) {
             CapabilityId capability = AnalyzerCatalog.CAPABILITIES.get(kind);
             assertEquals(kind, AnalyzerCatalog.index(capability));
             var single = original.withEnabled(capability, true).withEnabled(CapabilityId.ANVIL, true);
@@ -64,15 +58,15 @@ final class AnalyzerOptionsContractTest {
             assertEquals(0, AnalyzerCatalog.mask(single.withEnabled(capability, false)));
             all = all.withEnabled(capability, true);
         }
-        assertEquals(31, AnalyzerCatalog.mask(all));
+        assertEquals(15, AnalyzerCatalog.mask(all));
         assertEquals(originalMask, original.enabledMask());
     }
 
     @Test void optionKeysAndImmutableCatalogKeepConfigurationOwnershipExplicit() {
-        String[] keys = {"analyzer.debris_analyzer", "analyzer.lava_analyzer", "analyzer.beacon_range",
+        String[] keys = {"analyzer.lava_analyzer", "analyzer.beacon_range",
                 "analyzer.lightning_rod_range", "analyzer.villager_job_site_links"};
         String[] fields = {"radius", "vertical_radius", "markers", "interval"};
-        for (int kind = 0; kind < 5; kind++) {
+        for (int kind = 0; kind < 4; kind++) {
             for (int field = 0; field < 4; field++) {
                 assertEquals(keys[kind] + "." + fields[field], AnalyzerCatalog.optionKey(kind, field));
             }

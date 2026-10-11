@@ -23,7 +23,7 @@ final class AnalyzerSceneVisibilityTest {
             }
         };
         for(int i=0;i<80;i++) {
-            engine.tick(identity,view,EYE,4,AnalyzerOptions.defaults());
+            engine.tick(identity,view,EYE,2,AnalyzerOptions.defaults());
             assertTrue(engine.work().cells()<=512);
         }
         assertTrue(engine.markers().stream().anyMatch(marker->marker.radius()==20));
@@ -39,12 +39,12 @@ final class AnalyzerSceneVisibilityTest {
                 return new AnalyzerEngine.VillageSample(List.of(new AnalyzerEngine.Villager(EYE,site)),1,1);
             }
         };
-        engine.tick(identity,view,EYE,16,AnalyzerOptions.defaults());
+        engine.tick(identity,view,EYE,8,AnalyzerOptions.defaults());
         assertEquals(1,engine.markers().size());
         view.hidden=true;
-        engine.tick(identity,view,EYE,16,AnalyzerOptions.defaults());
+        engine.tick(identity,view,EYE,8,AnalyzerOptions.defaults());
         assertTrue(engine.markers().isEmpty(),"hidden retained endpoint");
-        for(int i=0;i<40;i++) engine.tick(identity,view,EYE,16,AnalyzerOptions.defaults());
+        for(int i=0;i<40;i++) engine.tick(identity,view,EYE,8,AnalyzerOptions.defaults());
         assertTrue(engine.markers().isEmpty(),"hidden newly sampled endpoint");
         assertTrue(engine.work().cells()<=512);
     }
