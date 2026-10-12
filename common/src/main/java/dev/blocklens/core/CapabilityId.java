@@ -88,7 +88,9 @@ public enum CapabilityId {
     COMPACT_ITEMS("others.compact_items", Category.OTHER, false),
     COMPACT_TOOLS("others.compact_tools", Category.OTHER, false),
 
-    SIMPLIFIED_TERRAIN("scene.simplified_terrain", Category.OTHER, false);
+    SIMPLIFIED_TERRAIN("scene.simplified_terrain", Category.OTHER, false),
+
+    CONNECTED_ORE_EDGES("resource.connected_ore_edges", Category.RESOURCE, false);
 
     public enum Category {
         DECORATION,
@@ -128,6 +130,11 @@ public enum CapabilityId {
 
     public String sourceKey() {
         return sourceKey;
+    }
+
+    /** Resource-tab topology controls are not material/highlight registrations. */
+    public boolean isResourceHighlight() {
+        return category == Category.RESOURCE && this != CONNECTED_ORE_EDGES;
     }
 
     public Category category() {

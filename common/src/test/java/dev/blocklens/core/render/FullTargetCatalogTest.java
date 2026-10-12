@@ -21,7 +21,7 @@ final class FullTargetCatalogTest {
                 assertFalse(BlockLensTargetCatalog.targets(capability).isEmpty(), capability.sourceKey());
             }
         }
-        assertEquals(60, CapabilityId.values().length);
+        assertEquals(61, CapabilityId.values().length);
         assertEquals(366, BlockLensTargetCatalog.totalBindingCount());
         assertEquals(328, java.util.Arrays.stream(CapabilityId.values()).filter(c -> c.ordinal() < 40)
                 .mapToInt(c -> BlockLensTargetCatalog.targets(c).size()).sum());
@@ -32,7 +32,7 @@ final class FullTargetCatalogTest {
         assertEquals(18, ResourceTargetCatalog.SOURCE_M0_BINDING_COUNT);
         assertEquals(21, ResourceTargetCatalog.totalBindingCount());
         for (CapabilityId capability : CapabilityId.values()) {
-            if (capability.category() == CapabilityId.Category.RESOURCE) {
+            if (capability.isResourceHighlight()) {
                 assertEquals(1, ResourceTargetCatalog.targets(capability).size(), capability.sourceKey());
             } else {
                 assertTrue(ResourceTargetCatalog.targets(capability).isEmpty(), capability.sourceKey());

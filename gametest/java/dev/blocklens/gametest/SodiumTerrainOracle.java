@@ -153,7 +153,7 @@ final class SodiumTerrainOracle {
                 context.waitFor(c -> reload.isDone(), 1200);
                 reload.join();
                 context.waitFor(c -> MinecraftOreExtensions.ready()
-                        && MinecraftOreExtensions.compiledModelCount() == 2, 600);
+                        && MinecraftOreExtensions.compiledModelCount() == 8, 600);
                 Thread.sleep(1500);
                 context.waitTicks(30);
                 Capture reloaded = capture("tagged-reloaded", OreExtensionFixture.TAGGED);
@@ -231,7 +231,7 @@ final class SodiumTerrainOracle {
             server.runCommand("tp @a 0 -54 12 180 16");
             context.waitTicks(25);
             context.waitFor(c -> MinecraftOreExtensions.ready()
-                    && MinecraftOreExtensions.compiledModelCount() == 1, 600);
+                    && MinecraftOreExtensions.compiledModelCount() == 7, 600);
             context.runOnClient(c -> {
                 require(MinecraftOreExtensions.tagCandidateCount() == 0, "Sodium fixture starts with unexpected tag bindings");
                 var index = MinecraftDecorationTargetIndex.build();
@@ -352,7 +352,7 @@ final class SodiumTerrainOracle {
             context.waitFor(c -> reload.isDone(), 1200);
             reload.join();
             context.waitFor(c -> MinecraftOreExtensions.tagUpdateCount() > previous && MinecraftOreExtensions.ready()
-                    && MinecraftOreExtensions.compiledModelCount() == (include ? 2 : 1), 600);
+                    && MinecraftOreExtensions.compiledModelCount() == (include ? 8 : 7), 600);
             context.waitTicks(35);
         }
 

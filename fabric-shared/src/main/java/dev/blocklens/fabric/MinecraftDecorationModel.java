@@ -16,6 +16,7 @@ import dev.blocklens.core.state.DecorationStateKind;
 import dev.blocklens.core.state.SemanticState;
 import dev.blocklens.core.state.VisibilityStateKind;
 import java.util.Objects;
+import java.util.ArrayList;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
@@ -25,9 +26,13 @@ import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.data.AtlasIds;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.IronBarsBlock;
@@ -41,6 +46,10 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             | (1L << CapabilityId.KELP_HIGHLIGHT.bitPosition());
     private final @Nullable RetainedValue<BlockStateModel> lightweightOverlay;
     private final @Nullable RetainedValue<BlockStateModel> oreBorderOverlay;
+    private final @Nullable RetainedValue<BlockStateModel> connectedOreBorderOverlay;
+    private static final int[] NEIGHBOR_U={0,1,0,-1,1,1,-1,-1};
+    private static final int[] NEIGHBOR_V={-1,0,1,0,-1,1,1,-1};
+    private final @Nullable RetainedValue<BlockStateModelPart> connectedOrePart;
     private final long oreBorderMask;
     private final int oreBorderTint;
 
@@ -99,7 +108,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
                 descriptors[i] = FaceInstructionTable.compile(DecorationRenderDescriptor.of(capability, state));
             } else if (VisibilityStateKind.isVisibilityCapability(capability)) {
                 descriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state).cue().instruction();
-            } else if (capability.category() == CapabilityId.Category.RESOURCE) {
+            } else if (capability.isResourceHighlight()) {
                 var cue = ResourceHighlightCue.forCapability(capability);
                 descriptors[i] = cue.instruction();
                 if (ResourceBorderPolicy.supports(capability)) {
@@ -120,6 +129,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         this.representedRenderableMask = represented;
         this.lightweightOverlay = (represented & LIGHTWEIGHT_OVERLAY_MASK) == 0L ? null : new RetainedValue<>();
         this.oreBorderOverlay = borders == 0L ? null : new RetainedValue<>();
+        this.connectedOreBorderOverlay = borders == 0L ? null : new RetainedValue<>();
+        this.connectedOrePart=borders==0L || wrapped.getClass()!=SingleVariant.class ? null : new RetainedValue<>();
         this.oreBorderMask = borders;
         this.oreBorderTint = borderTint;
     }
@@ -142,8 +153,17 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             return;
         }
 
+        boolean connected = connectedOrePart!=null && (enabledCapabilities & oreBorderMask) != 0L
+                && BlockLensRuntime.config().isEnabled(CapabilityId.CONNECTED_ORE_EDGES);
+        int[] cubeFaces = connected ? new int[2] : null;
         boolean netherEnabled = netherCue != null && (enabledCapabilities & NETHER_TWEAKS_BIT) != 0L;
         emitter.pushTransform(quad -> {
+            if(cubeFaces != null) {
+                Direction direction=quad.cullFace();
+                if(direction==null) cubeFaces[1]=63;
+                else if(unitCubeFace(quad,direction)) cubeFaces[0]|=1<<direction.ordinal();
+                else cubeFaces[1]|=1<<direction.ordinal();
+            }
             if (netherEnabled) {
                 quad.multiplyColor(netherCue.frameArgb());
             }
@@ -163,7 +183,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             emitLightweightOverlay(emitter, level, pos, state, random, cullTest, enabledCapabilities);
         }
         if ((enabledCapabilities & oreBorderMask) != 0L) {
-            emitOreBorder(emitter, level, pos, state, random, cullTest);
+            emitOreBorder(emitter, level, pos, state, random, cullTest,
+                    cubeFaces==null ? -1 : cubeFaces[0]&~cubeFaces[1]);
         }
     }
 
@@ -230,11 +251,24 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
 
     /** Clean-room emissive edge model; baked once, emitted only for enabled ore highlights. */
     private void emitOreBorder(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos,
-            BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest) {
-        BlockStateModel overlay = oreBorderOverlay == null ? null
-                : oreBorderOverlay.get(LightweightOverlayModels.ORE_BORDER, MinecraftDecorationModel::lookup);
+            BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest,int connectedFaces) {
+        boolean connected=connectedFaces>=0;
+        var retained=connected ? connectedOreBorderOverlay : oreBorderOverlay;
+        BlockStateModel overlay = retained == null ? null
+                : retained.get(connected ? LightweightOverlayModels.CONNECTED_ORE_BORDER
+                    : LightweightOverlayModels.ORE_BORDER, MinecraftDecorationModel::lookup);
         if (overlay == null) return;
+        var sprite=connected ? Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS)
+                .getSprite(Identifier.fromNamespaceAndPath("blocklens","block/lightweight/connected_ore_border")) : null;
+        var part=connected ? fixedOrePart() : null;
         emitter.pushTransform(quad -> {
+            Direction direction=quad.cullFace();
+            if(sprite!=null && direction!=null && (connectedFaces&(1<<direction.ordinal()))!=0) {
+                int mask=connectedNeighbors(level,pos,state,direction,part);
+                float uOffset=(sprite.getU1()-sprite.getU0())*(mask%16)/16;
+                float vOffset=(sprite.getV1()-sprite.getV0())*(mask/16)/16;
+                for(int vertex=0;vertex<4;vertex++)quad.uv(vertex,quad.u(vertex)+uOffset,quad.v(vertex)+vOffset);
+            }
             quad.chunkLayer(ChunkSectionLayer.CUTOUT);
             quad.multiplyColor(oreBorderTint);
             quad.emissive(true);
@@ -247,6 +281,47 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         } finally {
             emitter.popTransform();
         }
+    }
+
+    private static boolean unitCubeFace(MutableQuadView quad,Direction face) {
+        int corners=0;
+        for(int vertex=0;vertex<4;vertex++) {
+            float x=quad.x(vertex),y=quad.y(vertex),z=quad.z(vertex);
+            if((x!=0&&x!=1)||(y!=0&&y!=1)||(z!=0&&z!=1))return false;
+            float plane=switch(face.getAxis()){case X->x;case Y->y;case Z->z;};
+            if(plane!=(face.getAxisDirection()==Direction.AxisDirection.POSITIVE ? 1 : 0))return false;
+            int corner=switch(face.getAxis()){case X->(int)y+2*(int)z;case Y->(int)x+2*(int)z;case Z->(int)x+2*(int)y;};
+            corners|=1<<corner;
+        }
+        return corners==15;
+    }
+    private @Nullable BlockStateModelPart fixedOrePart() {
+        return connectedOrePart==null ? null : connectedOrePart.get(wrapped,model->{
+            var parts=new ArrayList<BlockStateModelPart>(1);
+            model.collectParts(RandomSource.create(0),parts);
+            // Exact SingleVariant class above guarantees one immutable baked part.
+            return parts.getFirst();
+        });
+    }
+    private static int connectedNeighbors(BlockAndTintGetter level,BlockPos pos,BlockState state,Direction face,
+            @Nullable BlockStateModelPart part) {
+        Direction u=switch(face){case NORTH->Direction.WEST;case EAST->Direction.NORTH;case WEST->Direction.SOUTH;default->Direction.EAST;};
+        Direction v=switch(face){case UP->Direction.SOUTH;case DOWN->Direction.NORTH;default->Direction.DOWN;};
+        var neighbor=new BlockPos.MutableBlockPos();var front=new BlockPos.MutableBlockPos();int mask=0;
+        for(int bit=0;bit<8;bit++) {
+            neighbor.set(pos.getX()+u.getStepX()*NEIGHBOR_U[bit]+v.getStepX()*NEIGHBOR_V[bit],
+                    pos.getY()+u.getStepY()*NEIGHBOR_U[bit]+v.getStepY()*NEIGHBOR_V[bit],
+                    pos.getZ()+u.getStepZ()*NEIGHBOR_U[bit]+v.getStepZ()*NEIGHBOR_V[bit]);
+            var adjacent=level.getBlockState(neighbor);
+            front.set(neighbor).move(face);
+            if(part!=null && adjacent.getBlock()==state.getBlock()
+                    && !level.getBlockState(front).isSolidRender()) {
+                var models=Minecraft.getInstance().getModelManager().getBlockStateModelSet();
+                var candidate=MinecraftOreExtensions.model(models.get(adjacent),adjacent);
+                if(candidate instanceof MinecraftDecorationModel decoration && decoration.fixedOrePart()==part)mask|=1<<bit;
+            }
+        }
+        return mask;
     }
 
     private @Nullable BlockStateModel lookupLightweightOverlay(ExtraModelKey<BlockStateModel> key) {
@@ -349,6 +424,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             BlockPos pos,
             BlockState state,
             RandomSource random) {
+        if((BlockLensRuntime.config().enabledMask()&oreBorderMask)!=0L
+                && BlockLensRuntime.config().isEnabled(CapabilityId.CONNECTED_ORE_EDGES))return null;
         Object wrappedKey = wrapped.createGeometryKey(level, pos, state, random);
         if (wrappedKey == null) {
             return null;

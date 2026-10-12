@@ -17,7 +17,7 @@ final class ResourceHighlightPolicyTest {
         BlockLensConfig defaults = BlockLensConfig.defaults();
         int count = 0;
         for (CapabilityId capability : CapabilityId.values()) {
-            if (capability.category() != CapabilityId.Category.RESOURCE) continue;
+            if (!capability.isResourceHighlight()) continue;
             count++;
             assertFalse(defaults.isEnabled(capability));
 
@@ -27,7 +27,7 @@ final class ResourceHighlightPolicyTest {
                     ResourceHighlightCue.forCapability(capability));
 
             for (CapabilityId other : CapabilityId.values()) {
-                if (other.category() == CapabilityId.Category.RESOURCE && other != capability) {
+                if (other.isResourceHighlight() && other != capability) {
                     assertFalse(enabled.isEnabled(other),
                             () -> capability + " must not implicitly enable " + other);
                 }
@@ -64,7 +64,7 @@ final class ResourceHighlightPolicyTest {
     void allResourceCuesAreOpaqueVisibleAccents() {
         Set<ResourceHighlightCue> seen = EnumSet.noneOf(ResourceHighlightCue.class);
         for (CapabilityId capability : CapabilityId.values()) {
-            if (capability.category() != CapabilityId.Category.RESOURCE) continue;
+            if (!capability.isResourceHighlight()) continue;
             ResourceHighlightCue cue = ResourceHighlightCue.forCapability(capability);
             seen.add(cue);
             assertEquals(0xFF, cue.accentArgb() >>> 24);

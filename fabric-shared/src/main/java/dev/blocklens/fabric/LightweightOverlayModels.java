@@ -12,6 +12,7 @@ final class LightweightOverlayModels {
     static final ExtraModelKey<BlockStateModel> PANE = key("pane");
     static final ExtraModelKey<BlockStateModel> KELP = key("kelp");
     static final ExtraModelKey<BlockStateModel> ORE_BORDER = key("ore_border");
+    static final ExtraModelKey<BlockStateModel> CONNECTED_ORE_BORDER = key("connected_ore_border");
     private LightweightOverlayModels() { }
     private static Identifier id(String kind) {
         return Identifier.fromNamespaceAndPath("blocklens", "block/lightweight/" + kind);
@@ -24,5 +25,6 @@ final class LightweightOverlayModels {
         context.addModel(PANE, SimpleUnbakedExtraModel.blockStateModel(id("pane")));
         context.addModel(KELP, SimpleUnbakedExtraModel.blockStateModel(id("kelp")));
         context.addModel(ORE_BORDER, SimpleUnbakedExtraModel.blockStateModel(id("ore_border")));
+        context.addModel(CONNECTED_ORE_BORDER, SimpleUnbakedExtraModel.blockStateModel(id("connected_ore_border")));
     }
 }

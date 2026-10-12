@@ -84,4 +84,10 @@ final class PaleOakObjectFramesTest {
         for(int kind:new int[]{0,1,3,4,5})
             assertFalse(PaleOakObjectFrames.changed(off,image(kind),air,wood));
     }
+    @Test void blinkingBlankEditorCaretMustNotBeAcceptedAsTextureRestoration() {
+        var off=image(1);var blinking=image(1);
+        for(int y=170;y<172;y++)for(int x=310;x<320;x++)blinking.setRGB(x,y,0xFF000000);
+        assertFalse(PaleOakObjectFrames.restored(off,blinking,image(0),REGION));
+        assertTrue(PaleOakObjectFrames.restored(off,off,image(0),REGION));
+    }
 }

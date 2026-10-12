@@ -11,6 +11,17 @@ import java.util.Objects;
 public final class ResourceBorderPolicy {
     private ResourceBorderPolicy() { }
 
+    /** Cardinal bits0..3 and following diagonal bits4..7, clockwise in face UV space. */
+    public static int connectedBorderMask(int neighbors) {
+        if (neighbors < 0 || neighbors > 255) throw new IllegalArgumentException("Expected eight neighbor bits");
+        int visible = ~neighbors & 15;
+        for (int side = 0; side < 4; side++) {
+            int adjacent = (1 << side) | (1 << ((side + 1) % 4)) | (1 << (side + 4));
+            if ((neighbors & adjacent) != adjacent) visible |= 1 << (side + 4);
+        }
+        return visible;
+    }
+
     public static boolean supports(CapabilityId capability) {
         return switch (Objects.requireNonNull(capability, "capability")) {
             case COAL_ORE, DEEPSLATE_COAL_ORE,

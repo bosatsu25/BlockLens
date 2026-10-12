@@ -28,7 +28,7 @@ public final class OreExtensionCatalog {
     public synchronized boolean add(String blockId, CapabilityId capability) {
         if (frozen != null || blockId == null || blockId.length() > MAX_ID_LENGTH
                 || blockId.startsWith("minecraft:") || !ID.matcher(blockId).matches()
-                || capability == null || capability.category() != CapabilityId.Category.RESOURCE) {
+                || capability == null || !capability.isResourceHighlight()) {
             return false;
         }
         if (registrations.containsKey(blockId)) {

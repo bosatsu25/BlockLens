@@ -1,6 +1,6 @@
 # BlockLens
 
-今回の独自発光境界（NewGlowingOres参考）は、18種のバニラ鉱石の個別強調表示と連動します。オリジナル画像・OptiFine CTMは同梱せず、透過PNGと6面カリングモデルを独自生成します。隣接CTM、外部MOD鉱石、eaterパックの全ブロック状態は今後の対象です。仕様・未対応範囲はIssue #64を参照してください。
+今回の独自発光境界（NewGlowingOres参考）は、18種のバニラ鉱石の個別強調表示と連動します。オリジナル画像・OptiFine CTMは同梱せず、透過PNGと6面カリングモデルを独自生成します。独立した既定OFFの「鉱石境界の接続」で、同じ固定立方体モデルの内側境界を取り除けます。対応しない形状は個別の境界を維持します。[接続仕様と検証範囲](knowledge/current/native-connected-ore-plan.md)を参照してください。
 
 <p align="center">
   <img src="common/src/main/resources/assets/blocklens/icon.png" alt="BlockLens icon" width="192">
@@ -8,19 +8,19 @@
 
 [English](README.md) | **日本語**
 
-BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする60機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
+BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする61機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現在の安定版:** BlockLens **v0.4.3** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な59機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
+> **現在の安定版:** BlockLens **v0.4.4** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な60機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
-> **v0.3.0公開後の開発版:** 現行60機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
+> **v0.3.0公開後の開発版:** 現行61機能。古代の残骸アナライズとMasa/Litematica設計図比較は削除します。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
 
 初期状態では無効の「地形の簡略表示」は、対象となるバニラの地形を不透明な暗灰色に、草・茂みを疎な形に表示します。ドリップリーフ・ツタ・鍾乳石・落ち葉の状態別形状を保ち、外部パックの定義を優先します。ワールドの状態・当たり判定・遮蔽は変更しません。[実装と検証計画](knowledge/current/native-simplified-terrain-plan.md)を参照してください。
 
-## 開発版 v0.4.4：地形の簡略表示とMinecraft 3バージョン
+## 開発版 v0.4.5：鉱石の接続枠と地形の簡略表示とMinecraft 3バージョン
 
 公開済みv0.4.1は、26.3／BBE 1.3.9+mc26.3／Sodium 0.9.2+mc26.3の組み合わせで、閉じた通常チェストが保存・適用だけで白くなるよう修正します。最適化は有効なままです。trapped／ender／copper／Christmasの素材は置換しません。検証したCele構成にはIris 1.11.7とContinuity 3.0.1（シェーダーOFF）を含みます。BBEとシェーダーONの併用は未確認です。更新時は対応するBlockLens JARを1個だけ入れ、設定を保持してください。公開には同一コミットの通常3版・シェーダー／バックエンド・BBE／Celeの全CI成功を要求します。[正確な対応範囲](knowledge/current/cele-bbe-compatibility.md)を参照してください。
 

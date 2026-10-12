@@ -47,7 +47,10 @@ SODIUM_CHECKS = (
     "terrainVisible", "terrainEmissionSuppressed", "terrainHiddenAir", "terrainPhysicalStatePreserved",
     "terrainRestoredEmission", "terrainRestoration",
 )
+from verify_connected_evidence import IMAGES as CONNECTED_IMAGES
+
 FAILURE_FILES = (
+    *(f"connected-visual/{name}" for name in (*CONNECTED_IMAGES,"connected-manifest.txt")),
     "external-compatibility/external-compatibility-manifest.properties",
     "external-compatibility/external-lifecycle-diagnostics.txt",
     "m3-visual/m3-all13-on.png", "m3-visual/m3-all13-reloaded.png",
@@ -262,6 +265,8 @@ def verify(directory: Path, minecraft: str, profile: str, pack_input: Path | Non
         raise ValueError("26.1.2 is not a native Vulkan matrix row")
     manifest = directory / "external-compatibility-manifest.properties"
     evidence = properties(manifest)
+    if evidence.get("connectedOreOnly", "false") != "false":
+        raise ValueError("A focused connected suite cannot certify the full renderer graph")
     for key, expected in {
         "schema": "1", "minecraft": minecraft, "profile": profile, "status": "passed",
         "fullGraph": "false", "packagedRuntime": "true", "backendVerified": "true",

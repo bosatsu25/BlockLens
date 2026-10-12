@@ -38,10 +38,10 @@ final class CapabilityIdTest {
             counts.merge(capability.category(), 1L, Long::sum);
         }
         assertEquals(13L, counts.get(CapabilityId.Category.DECORATION));
-        assertEquals(21L, counts.get(CapabilityId.Category.RESOURCE));
+        assertEquals(22L, counts.get(CapabilityId.Category.RESOURCE));
         assertEquals(9L, counts.get(CapabilityId.Category.OUTLINE));
         assertEquals(17L, counts.get(CapabilityId.Category.OTHER));
-        assertEquals(60, CapabilityId.values().length);
+        assertEquals(61, CapabilityId.values().length);
         assertTrue(CapabilityId.values().length <= Long.SIZE, "capability mask exhausted");
     }
 

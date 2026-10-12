@@ -31,6 +31,7 @@ final class PaleOakRenderedScenes {
         Files.writeString(output.resolve("palette-objects-manifest.txt"),"status=started\nminecraft="+BlockLensRuntime.minecraftVersion()+"\n");
         var server=world.getServer();
         server.runCommand("tick freeze");
+        PaletteSignBackground.activate(true);
         try {
             context.runOnClient(c->BlockLensRuntime.installConfig(offConfig));PaleOakPaletteOracle.reload(context);
             for(int role=0;role<ROLES.length;role++) {
@@ -88,7 +89,7 @@ final class PaleOakRenderedScenes {
                     +"\nwoodChroma=true\ngrainRetained=true\noffRestored=true\nblankFixtures=true\nallFeatures=true\n");
             System.out.println("BLOCKLENS_PALE_OAK_OBJECTS roles=6 boats=true signs=true editors=true foreground=true grain=true restored=true");
         } finally {
-            PaletteSignBackground.hide(false);context.runOnClient(c->BlockLensConfigScreen.show(c,null));server.runCommand("tick unfreeze");
+            PaletteSignBackground.activate(false);PaletteSignBackground.hide(false);context.runOnClient(c->BlockLensConfigScreen.show(c,null));server.runCommand("tick unfreeze");
         }
     }
     private static BufferedImage capture(ClientGameTestContext context,Path output,String name) throws IOException {

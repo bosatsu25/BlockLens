@@ -82,7 +82,7 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(release.contains("no duplicate release"));
 
         assertTrue(release.contains("40 independently configurable capabilities"));
-        assertTrue(release.contains("60 independently configurable capabilities"));
+        assertTrue(release.contains("61 independently configurable capabilities"));
         assertTrue(release.contains("3 native, read-only Builder Assist tools"));
         assertFalse(release.contains("5 Bounded World Analyzers"));
         assertFalse(release.contains("Litematica Comparison"));
@@ -99,12 +99,12 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        assertTrue(properties.contains("mod_version=0.4.4"));
+        assertTrue(properties.contains("mod_version=0.4.5"));
         String release = Files.readString(root().resolve(".github/workflows/release.yml"));
         assertTrue(release.contains("matching ${version} artifact"));
         assertFalse(release.contains("matching 0.4.1 artifact"));
-        assertTrue(english.contains("Development v0.4.4"));
-        assertTrue(japanese.contains("開発版 v0.4.4"));
+        assertTrue(english.contains("Development v0.4.5"));
+        assertTrue(japanese.contains("開発版 v0.4.5"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
         assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
         assertTrue(properties.contains("v0.3.0 shipped 57 capabilities across Minecraft 26.1.2, 26.2 and 26.3"));

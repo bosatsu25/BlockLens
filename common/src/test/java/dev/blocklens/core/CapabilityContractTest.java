@@ -22,7 +22,7 @@ final class CapabilityContractTest {
             "gaming.nether_quartz_ore", "outline.glass_highlight", "outline.kelp_highlight",
             "outline.bright_concrete", "others.low_fire", "others.handheld_size", "outline.bright_chest", "analyzer.lava_analyzer",
             "analyzer.beacon_range", "analyzer.lightning_rod_range", "analyzer.villager_job_site_links", "scene.block_filter", "scene.entity_filter",
-            "builder.block_inspector", "builder.placement_preview", "builder.pattern_consistency", "outline.pale_oak_neutral", "others.compact_blocks", "others.compact_items", "others.compact_tools", "scene.simplified_terrain");
+            "builder.block_inspector", "builder.placement_preview", "builder.pattern_consistency", "outline.pale_oak_neutral", "others.compact_blocks", "others.compact_items", "others.compact_tools", "scene.simplified_terrain", "resource.connected_ore_edges");
 
     @Test
     void compiledCatalogPreservesPinnedM0ContractAndAddsReviewedCapabilities() throws IOException {
@@ -39,7 +39,7 @@ final class CapabilityContractTest {
         }
 
         assertEquals(37, baseline.size());
-        assertEquals(60, CapabilityId.values().length);
+        assertEquals(61, CapabilityId.values().length);
         assertTrue(CapabilityId.bySourceKey().keySet().containsAll(baseline.keySet()));
 
         Set<String> additions = new HashSet<>(CapabilityId.bySourceKey().keySet());
@@ -68,7 +68,7 @@ final class CapabilityContractTest {
         }
 
         assertEquals(13, counts.get(CapabilityId.Category.DECORATION));
-        assertEquals(21, counts.get(CapabilityId.Category.RESOURCE));
+        assertEquals(22, counts.get(CapabilityId.Category.RESOURCE));
         assertEquals(9, counts.get(CapabilityId.Category.OUTLINE));
         assertEquals(17, counts.get(CapabilityId.Category.OTHER));
         assertEquals(Set.of(
@@ -85,7 +85,7 @@ final class CapabilityContractTest {
         assertEquals(CapabilityId.ANVIL, index.get("deco.anvil"));
         assertEquals(CapabilityId.STRING_TWEAKS, index.get("others.stringtweaks"));
         assertEquals(CapabilityId.CRYING_OBSIDIAN, index.get("gaming.crying_obsidian"));
-        assertEquals(60, index.size());
+        assertEquals(61, index.size());
         try {
             index.clear();
         } catch (UnsupportedOperationException expected) {

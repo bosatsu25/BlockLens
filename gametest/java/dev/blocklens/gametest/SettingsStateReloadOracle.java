@@ -125,7 +125,8 @@ final class SettingsStateReloadOracle {
     }
 
     private static Button lastToggle(Screen screen) {
-        return ResponsiveSettingsScreenOracle.buttons(screen).get(24);
+        return ResponsiveSettingsScreenOracle.buttons(screen).get(3 + dev.blocklens.core.ui.SettingsCatalog.capabilities(
+                CapabilityId.Category.RESOURCE).size());
     }
 
     private static void reload(ClientGameTestContext context) {

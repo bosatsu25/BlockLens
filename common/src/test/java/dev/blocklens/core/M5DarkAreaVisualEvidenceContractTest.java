@@ -21,7 +21,7 @@ final class M5DarkAreaVisualEvidenceContractTest {
 
         assertTrue(smoke.contains("M5DarkAreaVisualOracle.verify(context, singleplayer)"));
         assertTrue(oracle.contains("EXPECTED_RESOURCE_CAPABILITIES = 21"));
-        assertTrue(oracle.contains("capability.category() == CapabilityId.Category.RESOURCE"));
+        assertTrue(oracle.contains("capability.isResourceHighlight()"));
         assertTrue(oracle.contains("crying_obsidian"));
         assertTrue(oracle.contains("nether_gold_ore"));
         assertTrue(oracle.contains("nether_quartz_ore"));

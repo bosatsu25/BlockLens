@@ -61,7 +61,7 @@ final class OreExtensionVisualOracle {
             server.runCommand("tp @a 0 -54 12 180 16");
             context.waitTicks(25);
             context.waitFor(client -> MinecraftOreExtensions.ready()
-                    && MinecraftOreExtensions.compiledModelCount() == 1, 600);
+                    && MinecraftOreExtensions.compiledModelCount() == 7, 600);
             context.runOnClient(client -> {
                 var index = MinecraftDecorationTargetIndex.build();
                 require(index.bindingCount() == 366 && index.mappedCount() == 328, "extension changed original target index");
@@ -185,7 +185,7 @@ final class OreExtensionVisualOracle {
             var reload = context.computeOnClient(c -> c.reloadResourcePacks());
             context.waitFor(c -> reload.isDone(), 1200);
             reload.join();
-            context.waitFor(c -> MinecraftOreExtensions.compiledModelCount() == 2, 600);
+            context.waitFor(c -> MinecraftOreExtensions.compiledModelCount() == 8, 600);
             Thread.sleep(1500);
             context.waitTicks(30);
             require(difference(taggedOff, capture(context, output, "tagged-resource-reloaded", images)) >= MIN_DIFFERENCE,
@@ -239,7 +239,7 @@ final class OreExtensionVisualOracle {
         context.waitFor(client -> reload.isDone(), 1200);
         reload.join();
         context.waitFor(client -> MinecraftOreExtensions.tagUpdateCount() > updates && MinecraftOreExtensions.ready()
-                && MinecraftOreExtensions.compiledModelCount() == expectedModels, 600);
+                && MinecraftOreExtensions.compiledModelCount() == expectedModels + 6, 600);
         context.waitTicks(25);
     }
 

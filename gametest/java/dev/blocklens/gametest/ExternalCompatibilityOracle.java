@@ -33,7 +33,10 @@ final class ExternalCompatibilityOracle {
         evidence.setProperty("minecraft", BlockLensRuntime.minecraftVersion());
         evidence.setProperty("status", "started");
         evidence.setProperty("fullGraph", "false");
-        evidence.setProperty("captureMode", ExternalFrameCapture.required()
+        boolean connectedOnly=Boolean.getBoolean("blocklens.test.external.connectedOnly");
+        require(!connectedOnly || !profile.equals("packs"),"Connected renderer suite cannot certify supplied packs");
+        evidence.setProperty("connectedOreOnly",Boolean.toString(connectedOnly));
+        evidence.setProperty("captureMode", (ExternalFrameCapture.required() || (connectedOnly && profile.equals("shader-on")))
                 ? "completed-native-frame" : "fabric-test-capture");
         try (var lifecycle = ExternalLifecycleDiagnostics.open(output, false)) {
             Properties manifest = loadManifest(directory);
@@ -73,7 +76,12 @@ final class ExternalCompatibilityOracle {
                 lifecycle.phase("world_ready");
                 context.waitTicks(30);
                 verifyShader(context, manifest, evidence);
-                if (profile.equals("packs")) {
+                if(connectedOnly) {
+                    ConnectedOreOracle.verify(context,world);
+                    evidence.setProperty("connectedOres","true");
+                    verifyShader(context,manifest,evidence);
+                    copyEvidence("connected-visual",output);
+                } else if (profile.equals("packs")) {
                     ExternalResourcePackOracle.verify(context, world, directory, manifest, output);
                     evidence.setProperty("packOrderForward", "true");
                     evidence.setProperty("packOrderReverse", "true");

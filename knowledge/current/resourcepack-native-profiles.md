@@ -1,6 +1,6 @@
 # Native profiles — six uploaded resource pack audit
 
-Scope: reference-asset **behavior analysis**, not repackaging. These are implementation facts against BlockLens's 55-capability mainline following PR #60. Only the user's uploaded archives were inspected. Raw textures, shader/OptiFine CTM art, fonts and third-party model JSON are never stored in BlockLens runtime JARs.
+Scope: reference-asset **behavior analysis**, not repackaging. The source inventory and original preset facts below describe the historical 55-capability checkpoint after PR #60; the current implementation updates follow below. Only the user's uploaded archives were inspected. Raw textures, shader/OptiFine CTM art, fonts and third-party model JSON are never stored in BlockLens runtime JARs.
 
 | Source archive | Entries | SHA-256 | Behavior / implementation | Limitations |
 |---|---:|---|---|---|
@@ -24,3 +24,21 @@ Scope: reference-asset **behavior analysis**, not repackaging. These are impleme
 Common unit tests check: source inventory size/uniqueness, runtime registration predicate, identity/immutability, independent entity filter options, bounded input, Small Handhelds numeric profile, 19 resource toggles, and non-mutating settings drafts.
 
 These tests establish the hide preset and existing controls only; they cannot prove opaque source-profile parity. Three-version GameTests must verify: actual Eater source preset selection and persisted contents, toggle/discard operation of resource and comfort presets, rendered block filter occlusion and chest/ore/handheld existing oracles, UI bounds in Japanese and English, resource reload, and JAR 200 KiB limit. Source-asset pixel parity and unsupported model/style effects are explicitly excluded.
+
+## Current native behavior and optional-family boundary
+
+The current61-capability implementation adds independent compact blocks/items/tools with explicit state/display-context exceptions, native neutral pale-oak boat/sign/editor recoloring, opaque simplified terrain and sparse foliage, and an independent connected ore border modifier. Each uses original generated geometry/pixels or bounded transformations of the active resource, preserving independent switches and external-resource ownership. The source inventory above is not a claim that those original assets are bundled or that every unsupported third-party model is replaced. See [compact models](native-compact-model-plan.md), [terrain](native-simplified-terrain-plan.md), [pale-oak objects](palette-rendered-evidence.md) and [connections](native-connected-ore-plan.md) for the actual state, shape and verification contracts.
+
+The following14 referenced ore variants are outside actual named-mod integration on all three supported targets. Official Modrinth release queries on2026-10-12 found no Fabric binaries targeting26.1.2,26.2 or26.3 for the three projects. This is a current platform boundary, not an assertion that synthetic blocks reproduce those mods. The existing bounded public tag/API extension contract is retained and independently tested with fixed/non-cube models; mod authors can explicitly map compatible blocks without any startup registry/resource scan.
+
+| Source family | Referenced variants | 26.1.2 | 26.2 | 26.3 |
+|---|---|---|---|---|
+| Create zinc | Normal and deepslate (2) | No compatible pinned Fabric binary | Same | Same |
+| Mekanism fluorite | Normal and deepslate (2) | No compatible pinned Fabric binary | Same | Same |
+| Mekanism lead | Normal and deepslate (2) | No compatible pinned Fabric binary | Same | Same |
+| Mekanism osmium | Normal and deepslate (2) | No compatible pinned Fabric binary | Same | Same |
+| Mekanism tin | Normal and deepslate (2) | No compatible pinned Fabric binary | Same | Same |
+| Mekanism uranium | Normal and deepslate (2) | No compatible pinned Fabric binary | Same | Same |
+| Werewolves silver | Normal and deepslate (2) | No compatible pinned Fabric binary | Same | Same |
+
+Primary distributions: [Create Fabric](https://modrinth.com/mod/create-fabric/versions), [Mekanism](https://modrinth.com/mod/mekanism/versions), [Werewolves](https://modrinth.com/mod/werewolves/versions). The18 vanilla ore identities, lit redstone variants and registered/tagged synthetic extension behavior belong to the actual acceptance graph. Arbitrary OptiFine tile parsing, third-party art duplication and animated/unpinned shader or full-modpack combinations do not belong to the completed native scope.

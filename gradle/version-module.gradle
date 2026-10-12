@@ -47,12 +47,17 @@ if (!(m8FpsLimit in ['30', '60', '120'])) {
     throw new GradleException('m8FpsLimit must be 30, 60 or 120')
 }
 def clientTestFocus = providers.gradleProperty('clientTestFocus').orElse('all').get()
-if (!(clientTestFocus in ['all', 'scene', 'm8', 'external', 'palette', 'compact', 'simplified'])) {
-    throw new GradleException('clientTestFocus must be all, scene, m8, external, palette, compact or simplified')
+if (!(clientTestFocus in ['all', 'scene', 'm8', 'external', 'palette', 'compact', 'simplified', 'connected', 'settings'])) {
+    throw new GradleException('clientTestFocus must be all, scene, m8, external, palette, compact, simplified, connected or settings')
 }
 def externalProfile = providers.gradleProperty('externalCompatibilityProfile').orElse('none').get()
 if (!(externalProfile in ['none', 'shader-off', 'shader-on', 'vulkan', 'packs'])) {
     throw new GradleException('Unknown external compatibility profile')
+}
+def connectedExternalOnly = providers.gradleProperty('connectedExternalOnly').orElse('false').get()
+if (!(connectedExternalOnly in ['true', 'false']) || (connectedExternalOnly == 'true' &&
+        (clientTestFocus != 'external' || externalProfile == 'packs'))) {
+    throw new GradleException('connectedExternalOnly requires a recorded external renderer profile')
 }
 def externalDirectory = providers.gradleProperty('externalCompatibilityDirectory').orElse('').get()
 if ((clientTestFocus == 'external') != (externalProfile != 'none')) {
@@ -73,6 +78,7 @@ tasks.named('runClientGameTest') {
     systemProperty 'blocklens.test.m8.fpsLimit', m8FpsLimit
     systemProperty 'blocklens.test.focus', clientTestFocus
     systemProperty 'blocklens.test.external.profile', externalProfile
+    systemProperty 'blocklens.test.external.connectedOnly', connectedExternalOnly
     if (externalProfile != 'none') {
         File prepared = rootProject.file(externalDirectory)
         def launchDirectory = loom.runs.named('clientGameTest').flatMap { it.runDirectory }
@@ -169,6 +175,12 @@ def runtimeJarTask = tasks.findByName('remapJar') != null
         ? tasks.named('remapJar')
         : tasks.named('jar')
 
+apply from: rootProject.file('gradle/runtime-archive-compression.gradle')
+runtimeJarTask.configure {
+    inputs.file(rootProject.file('gradle/runtime-archive-compression.gradle')).withPropertyName('compressionPolicy')
+    doLast { compressOwnedRuntimeArchive(archiveFile.get().asFile) }
+}
+
 // Exactly one owned container; compiled bytes and debug information are unchanged.
 def runtimeMetadata = tasks.register('processRuntimeMetadata', Copy) {
     from rootProject.file('packaging/runtime')
@@ -203,7 +215,7 @@ def verifyPackagedRuntime = providers.gradleProperty('verifyPackagedRuntime').or
 if (!(verifyPackagedRuntime in ['true', 'false'])) {
     throw new GradleException('verifyPackagedRuntime must be true or false')
 }
-if (clientTestFocus in ['m8', 'external', 'palette', 'compact', 'simplified'] && verifyPackagedRuntime != 'true') {
+if (clientTestFocus in ['m8', 'external', 'palette', 'compact', 'simplified', 'connected', 'settings'] && verifyPackagedRuntime != 'true') {
     throw new GradleException('M8 and external experiments require verifyPackagedRuntime=true')
 }
 if (verifyPackagedRuntime == 'true') {
