@@ -29,7 +29,8 @@ public final class PaleOakObjectFrames {
         for(int y=region.y0;y<region.y1;y++) for(int x=region.x0;x<region.x1;x++) {
             int p=a.getRGB(x,y),q=b.getRGB(x,y),empty=air.getRGB(x,y);
             int r=p>>>16&255,g=p>>>8&255,blue=p&255;
-            if(blue<=20 || r<g || g<blue || r-blue<8 || r-blue>70 || difference(p,empty)<24) continue;
+            // Paired AIR keeps non-object support in place; do not assume warm illumination.
+            if(r+g+blue<=60 || difference(p,empty)<24) continue;
             int s=q>>>16&255,t=q>>>8&255,u=q&255;
             double first=r+g+blue,second=s+t+u;
             stats.count++;if(difference(q,empty)>=24) stats.retained++;

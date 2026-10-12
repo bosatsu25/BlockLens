@@ -40,4 +40,35 @@ final class PaleOakObjectFramesTest {
         assertThrows(IllegalArgumentException.class,()->new PaleOakObjectFrames.Region(0,0,641,360));
         assertFalse(PaleOakObjectFrames.changed(new BufferedImage(10,10,BufferedImage.TYPE_INT_RGB),image(2),image(0),REGION));
     }
+    @Test void coolShaderIlluminationDoesNotExcludeVisibleWood() {
+        var off=new java.awt.image.BufferedImage(640,360,java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var on=new java.awt.image.BufferedImage(640,360,java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var air=new java.awt.image.BufferedImage(640,360,java.awt.image.BufferedImage.TYPE_INT_RGB);
+        for(int y=150;y<190;y++) for(int x=280;x<350;x++) {
+            int grain=(x*13+y*7)%40;
+            off.setRGB(x,y,(120+grain)<<16|(135+grain)<<8|150+grain);
+            on.setRGB(x,y,(110+grain)<<16|(135+grain)<<8|159+grain);
+        }
+        var region=new PaleOakObjectFrames.Region(220,130,420,250);
+        assertTrue(PaleOakObjectFrames.changed(off,on,air,region));
+        assertTrue(PaleOakObjectFrames.restored(off,off,air,region));
+        assertFalse(PaleOakObjectFrames.changed(off,air,air,region));
+    }
+
+    @Test void recoloredSupportCannotCertifyUnchangedWood() {
+        var off=image(1);var air=image(0);var on=image(1);
+        for(int y=140;y<160;y++) for(int x=280;x<360;x++) {
+            int grain=90+(x*13+y*7)%70;
+            int support=(grain+25)<<16|(grain+12)<<8|grain;
+            off.setRGB(x,y,support);air.setRGB(x,y,support);
+            on.setRGB(x,y,grain<<16|grain<<8|grain);
+        }
+        assertFalse(PaleOakObjectFrames.changed(off,on,air,REGION));
+        for(int y=160;y<220;y++) for(int x=295;x<345;x++) {
+            int grain=90+(x*13+y*7)%70;
+            on.setRGB(x,y,grain<<16|grain<<8|grain);
+        }
+        assertTrue(PaleOakObjectFrames.changed(off,on,air,REGION));
+    }
+
 }

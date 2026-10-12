@@ -84,7 +84,7 @@ The test-only exception therefore reads the framebuffer after two complete nativ
 without issuing another direct renderer invocation. It retains 640 by 360 dimensions, the
 existing GUI/FOV options, and every original M3/M5 image and geometry assertion; it restores
 the previous window and render-target dimensions in `finally`. The evidence records
-`captureMode=completed-native-frame`. Other rows keep Fabric's screenshot path.
+`captureMode=completed-native-frame`. Other rows keep Fabric's screenshot path, except the six auxiliary palette Shader ON scenes that settle40 completed native frames at capture size.
 
 The same run passed both shader profiles on 26.2/26.3, all three Masa profiles and both Vulkan
 profiles. The separate 26.1.2 shader-ON M5 failure measured 862/1000 base retention against the

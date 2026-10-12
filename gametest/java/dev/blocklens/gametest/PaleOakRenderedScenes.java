@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.entity.SignBlockEntity;
 final class PaleOakRenderedScenes {
     private static final BlockPos TARGET=new BlockPos(0,-59,4);
     private static final double CAMERA_Z=9.5;
+    private static final double HANGING_CAMERA_Z=7.5;
     private static final String[] ROLES={"boat","chest-boat","standing-sign","hanging-sign","sign-gui","hanging-sign-gui"};
     private static final PaleOakObjectFrames.Region WORLD=new PaleOakObjectFrames.Region(220,130,420,250);
     private static final PaleOakObjectFrames.Region GUI=new PaleOakObjectFrames.Region(100,60,540,300);
@@ -32,31 +33,39 @@ final class PaleOakRenderedScenes {
                 server.runCommand("kill @e[type=!minecraft:player]");
                 server.runCommand("fill -12 -59 -8 12 -45 20 minecraft:air");
                 server.runCommand("fill -12 -60 -8 12 -60 20 minecraft:black_concrete");
-                server.runCommand("tp @a 0.5 -56.5 "+CAMERA_Z+" 180 25");
-                context.waitFor(PaleOakRenderedScenes::clearedSceneReady,200);
+                double cameraZ=hanging && !gui ? HANGING_CAMERA_Z : CAMERA_Z;
+                double cameraY=hanging && !gui ? -60.0 : -56.5;
+                float cameraPitch=hanging && !gui ? 6 : 25;
+                server.runCommand("tp @a 0.5 "+cameraY+" "+cameraZ+" 180 "+cameraPitch);
+                context.waitFor(c->clearedSceneReady(c,cameraZ,cameraY,cameraPitch),200);
                 context.waitTicks(20);
                 BufferedImage air;
                 if(gui) {
                     placeSign(world,hanging);
                     context.waitTicks(20);
                     openEditor(context,hanging);PaletteSignBackground.hide(true);
-                    air=PaleOakPaletteOracle.capture(context,output,ROLES[role]+"-air");
+                    air=capture(context,output,ROLES[role]+"-air");
                     PaletteSignBackground.hide(false);
                 } else {
-                    air=PaleOakPaletteOracle.capture(context,output,ROLES[role]+"-air");
+                    // The absent-object frame retains the hanging sign's non-palette support.
+                    if(hanging) {
+                        server.runCommand("setblock 0 -58 4 minecraft:white_concrete");
+                        context.waitTicks(20);
+                    }
+                    air=capture(context,output,ROLES[role]+"-air");
                     if(role<2) server.runCommand("summon minecraft:pale_oak_"+(role==0 ? "boat" : "chest_boat")+" 0.5 -59 4.5");
                     else placeSign(world,hanging);
                 }
                 context.waitTicks(20);
-                var off=PaleOakPaletteOracle.capture(context,output,ROLES[role]+"-off");
+                var off=capture(context,output,ROLES[role]+"-off");
                 context.runOnClient(c->BlockLensConfigScreen.show(c,null));PaleOakPaletteOracle.saveUiToggle(context);
                 if(gui) openEditor(context,hanging);
-                var on=PaleOakPaletteOracle.capture(context,output,ROLES[role]+"-on");
+                var on=capture(context,output,ROLES[role]+"-on");
                 var region=gui ? GUI : WORLD;
                 require(PaleOakObjectFrames.changed(off,on,air,region),"Rendered pale-oak chroma/grain/foreground absent: "+ROLES[role]);
                 context.runOnClient(c->BlockLensConfigScreen.show(c,null));PaleOakPaletteOracle.saveUiToggle(context);
                 if(gui) openEditor(context,hanging);
-                var restored=PaleOakPaletteOracle.capture(context,output,ROLES[role]+"-restored");
+                var restored=capture(context,output,ROLES[role]+"-restored");
                 require(PaleOakObjectFrames.restored(off,restored,air,region),"Rendered pale-oak restoration failed: "+ROLES[role]);
                 context.runOnClient(c->BlockLensConfigScreen.show(c,null));
             }
@@ -68,11 +77,17 @@ final class PaleOakRenderedScenes {
             PaletteSignBackground.hide(false);context.runOnClient(c->BlockLensConfigScreen.show(c,null));server.runCommand("tick unfreeze");
         }
     }
-    private static boolean clearedSceneReady(net.minecraft.client.Minecraft client) {
+    private static BufferedImage capture(ClientGameTestContext context,Path output,String name) throws IOException {
+        if(!"shader-on".equals(System.getProperty("blocklens.test.external.profile")))
+            return PaleOakPaletteOracle.capture(context,output,name);
+        var image=javax.imageio.ImageIO.read(ExternalFrameCapture.capture(context,output,name,640,360).toFile());
+        require(image!=null,"Native object frame missing");return image;
+    }
+    private static boolean clearedSceneReady(net.minecraft.client.Minecraft client,double cameraZ,double cameraY,float cameraPitch) {
         if(client.level==null || client.player==null || !client.level.getBlockState(TARGET).isAir()
                 || !client.level.getBlockState(TARGET.above()).isAir()
-                || Math.abs(client.player.getX()-.5)>.01 || Math.abs(client.player.getY()+56.5)>.01
-                || Math.abs(client.player.getZ()-CAMERA_Z)>.01 || Math.abs(client.player.getXRot()-25)>.01
+                || Math.abs(client.player.getX()-.5)>.01 || Math.abs(client.player.getY()-cameraY)>.01
+                || Math.abs(client.player.getZ()-cameraZ)>.01 || Math.abs(client.player.getXRot()-cameraPitch)>.01
                 || Math.abs(Math.abs(client.player.getYRot()%360)-180)>.01) return false;
         for(var entity:client.level.entitiesForRendering()) if(!(entity instanceof net.minecraft.world.entity.player.Player)) return false;
         return true;
