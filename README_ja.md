@@ -1,6 +1,6 @@
 # BlockLens
 
-今回の独自発光境界（NewGlowingOres参考）は、18種のバニラ鉱石の個別強調表示と連動します。オリジナル画像・OptiFine CTMは同梱せず、透過PNGと6面カリングモデルを独自生成します。隣接CTM、外部MOD鉱石、eaterパックの全ブロック状態は今後の対象です。仕様・未対応範囲はIssue #64を参照してください。
+今回の独自発光境界（NewGlowingOres参考）は、18種のバニラ鉱石の個別強調表示と連動します。オリジナル画像・OptiFine CTMは同梱せず、透過PNGと6面カリングモデルを独自生成します。独立した既定OFFの「鉱石境界の接続」で、同じ固定立方体モデルの内側境界を取り除けます。対応しない形状は個別の境界を維持します。[接続仕様と検証範囲](knowledge/current/native-connected-ore-plan.md)を参照してください。
 
 <p align="center">
   <img src="common/src/main/resources/assets/blocklens/icon.png" alt="BlockLens icon" width="192">
@@ -12,7 +12,7 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現在の安定版:** BlockLens **v0.4.3** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な59機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
+> **現在の安定版:** BlockLens **v0.4.4** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な60機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
