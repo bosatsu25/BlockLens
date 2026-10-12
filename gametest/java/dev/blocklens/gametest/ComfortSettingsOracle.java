@@ -70,7 +70,7 @@ final class ComfortSettingsOracle {
                             "numeric draft applied before save");
                     require(Arrays.equals(baseline, Files.readAllBytes(file)), "numeric draft wrote before save");
                     if (save) {
-                        press(parent, "blocklens.settings.apply");
+                        press(parent, "blocklens.settings.close");
                         var expected = new ComfortOptions(2, 40, 40, 50);
                         require(BlockLensRuntime.config().comfortOptions().equals(expected), "save lost numeric edits");
                         require(BlockLensConfigFiles.loadOrCreate(directory).comfortOptions().equals(expected),

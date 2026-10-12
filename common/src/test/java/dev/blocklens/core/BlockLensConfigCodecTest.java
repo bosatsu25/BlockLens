@@ -9,7 +9,24 @@ import org.junit.jupiter.api.Test;
 
 final class BlockLensConfigCodecTest {
     @Test
-    void defaultsMatchPinnedFiveFeaturePreset() {
+    void freshAndPartialConfigsDisableVisibilityButPreserveExplicitPreferences() {
+        for (var config : new BlockLensConfig[] {BlockLensConfig.defaults(),
+                BlockLensConfigCodec.decode("deco.anvil=true\n")}) {
+            for (var capability : CapabilityId.values()) {
+                if (capability.category() == CapabilityId.Category.OUTLINE) {
+                    assertFalse(config.isEnabled(capability), capability.sourceKey());
+                }
+            }
+            assertTrue(config.isEnabled(CapabilityId.STRING_TWEAKS));
+        }
+        var saved = BlockLensConfigCodec.decode("outline.blueice=true\noutline.bright_chest=true\n");
+        assertTrue(saved.isEnabled(CapabilityId.BLUE_ICE));
+        assertTrue(saved.isEnabled(CapabilityId.BRIGHT_CHEST));
+        assertFalse(saved.isEnabled(CapabilityId.BRIGHT_CONCRETE));
+    }
+
+    @Test
+    void defaultsUseReviewedVisibilityOffPreset() {
         BlockLensConfig config = BlockLensConfig.defaults();
         int enabled = 0;
         long expectedMask = 0L;
@@ -20,14 +37,14 @@ final class BlockLensConfigCodecTest {
             }
         }
 
-        assertEquals(7, enabled);
-        assertEquals(5, java.util.Arrays.stream(CapabilityId.values()).filter(c -> c.ordinal() < 40)
+        assertEquals(1, enabled);
+        assertEquals(1, java.util.Arrays.stream(CapabilityId.values()).filter(c -> c.ordinal() < 40)
                 .filter(config::isEnabled).count());
         assertEquals(expectedMask, config.enabledMask());
-        assertTrue(config.isEnabled(CapabilityId.BLUE_ICE));
-        assertTrue(config.isEnabled(CapabilityId.DEAD_CORAL));
-        assertTrue(config.isEnabled(CapabilityId.POWDER_SNOW));
-        assertTrue(config.isEnabled(CapabilityId.SCULK_CATALYST));
+        assertFalse(config.isEnabled(CapabilityId.BLUE_ICE));
+        assertFalse(config.isEnabled(CapabilityId.DEAD_CORAL));
+        assertFalse(config.isEnabled(CapabilityId.POWDER_SNOW));
+        assertFalse(config.isEnabled(CapabilityId.SCULK_CATALYST));
         assertTrue(config.isEnabled(CapabilityId.STRING_TWEAKS));
         assertFalse(config.isEnabled(CapabilityId.ANCIENT_DEBRIS));
         assertFalse(config.isEnabled(CapabilityId.CRYING_OBSIDIAN));
@@ -68,7 +85,7 @@ final class BlockLensConfigCodecTest {
 
         BlockLensConfig unchangedDefaults = BlockLensConfig.defaults();
         assertFalse(unchangedDefaults.isEnabled(CapabilityId.ANVIL));
-        assertTrue(unchangedDefaults.isEnabled(CapabilityId.BLUE_ICE));
+        assertFalse(unchangedDefaults.isEnabled(CapabilityId.BLUE_ICE));
     }
 
     @Test
@@ -86,7 +103,7 @@ final class BlockLensConfigCodecTest {
         BlockLensConfig config = BlockLensConfigCodec.decode(input);
         assertTrue(config.isEnabled(CapabilityId.ANVIL));
         assertFalse(config.isEnabled(CapabilityId.DIAMOND_ORE));
-        assertTrue(config.isEnabled(CapabilityId.BLUE_ICE));
+        assertFalse(config.isEnabled(CapabilityId.BLUE_ICE));
         assertTrue((config.enabledMask() & (1L << CapabilityId.ANVIL.ordinal())) != 0L);
     }
 

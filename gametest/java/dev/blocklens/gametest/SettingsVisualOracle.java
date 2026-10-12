@@ -81,6 +81,13 @@ final class SettingsVisualOracle {
                     || !SettingsClientAccess.ready(client)) {
                 throw new AssertionError("Settings capture requires the complete requested viewport");
             }
+            var footer = ResponsiveSettingsScreenOracle.buttons(screen).stream()
+                    .filter(button -> button.getY() == height - 28).toList();
+            if (footer.size() != 3) throw new AssertionError("Settings footer must have three actions");
+            for (var button : footer) {
+                if (client.font.width(button.getMessage()) > button.getWidth() - 8)
+                    throw new AssertionError("Settings footer label does not fit");
+            }
             for (var button : ResponsiveSettingsScreenOracle.buttons(screen)) {
                 if (button.visible && (button.getX() < 0 || button.getY() < 0
                         || button.getX() + button.getWidth() > width

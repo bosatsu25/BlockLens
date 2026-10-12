@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 
 final class LightweightCapabilitiesTest {
     @Test
-    void migratedControlsAreIndependentAdditionsWithSourceDefaults() {
+    void migratedControlsAreIndependentWithVisibilityOffDefaults() {
         List<String> keys = List.of("outline.glass_highlight", "outline.kelp_highlight",
                 "outline.bright_concrete", "others.low_fire", "others.handheld_size",
                 "outline.bright_chest");
-        Set<String> enabledByDefault = Set.of("outline.bright_concrete", "outline.bright_chest");
+        Set<String> enabledByDefault = Set.of();
         for (int i = 0; i < keys.size(); i++) {
             CapabilityId capability = CapabilityId.bySourceKey().get(keys.get(i));
             assertNotNull(capability, "Missing independent migrated control: " + keys.get(i));

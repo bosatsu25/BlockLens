@@ -1,11 +1,11 @@
 # BlockLens settings UI
 
-Status: settings redesign merged in PR #40; three-version integration is the development target and is not a published release.
+Status: native settings support all three Minecraft targets; the v0.4.6 change adds Apply without closing and Visibility-OFF defaults. Verification for this change is tracked in Issue #76.
 
 ## Scope
 
 The native settings screen groups all 61 current BlockLens capabilities into four categories: Decoration (13), Resources (22), Visibility (9), Other (17).
-The original 40 source keys, bit positions and defaults stay unchanged. The six visual/comfort additions, five analyzers, two scene filters and four Builder Assist controls are documented in their current feature specifications. Crying Obsidian,
+The original 40 source keys and bit positions stay unchanged. All nine Visibility controls default OFF in new or partial configurations. Explicitly saved values remain unchanged. The historical source preset stays frozen as reference evidence. The six visual/comfort additions, five analyzers, two scene filters and four Builder Assist controls are documented in their current feature specifications. Crying Obsidian,
 Nether Gold Ore and Nether Quartz Ore remain independent Resource options after the original 18.
 
 The uploaded UI reference pack defines its option hierarchy in respackopts.json5; it does not
@@ -26,15 +26,15 @@ menu/world backgrounds. Framebuffer tests check the complete viewport and a boun
 
 | Action | Behavior |
 | --- | --- |
-| Save and apply | Save changed edits, install the saved snapshot, invalidate terrain, then return to the parent |
-| Discard changes | Return to the parent without saving or applying |
-| Esc | Discard changes and return to the parent |
+| Apply | Save changed edits, install the snapshot, invalidate terrain and reload resources when required; stay on the same settings screen |
+| Save and close | Perform the same save/apply, then return to the parent |
+| Discard | Return to the parent without saving or applying subsequent edits |
+| Esc | Discard edits since the last successful apply and return to the parent |
 | Tab / Shift+Tab | Move through categories, all options and footer actions; reveal focused rows |
 | Mouse wheel / Page Up / Page Down / Home / End | Scroll the selected category |
 
 Esc discarding is an intentional change from the previous close-to-save screen.
-Settings keys, existing persisted values, the original five enabled defaults and existing rendered capability
-behavior are unchanged. Bright Concrete and Bright Chest add two enabled defaults, for seven total. Closing an unchanged draft performs no write or terrain invalidation.
+Settings keys, existing persisted values and rendered capability behavior are preserved. Visibility defaults change deliberately from six ON / three OFF to nine OFF. String Tweaks in Other remains ON, so new configurations have one enabled capability. Applying establishes a new saved draft baseline; later discard/Esc does not undo it. Applying or closing an unchanged draft performs no write or terrain invalidation.
 A save failure retains the screen and draft, leaves runtime settings untouched and displays a
 retry/discard message in a reserved area above the footer. No exception details or paths are displayed.
 
@@ -56,8 +56,12 @@ Required verification includes common JUnit/JaCoCo/PIT, three-version build, cli
 settings persistence/failure recovery, keyboard reachability at 320×240 / 640×360 / 854×480 /
 1920×1080, actual English/Japanese framebuffer evidence, JAR structure/size and reproducibility.
 
+The historical M7 five-control visual preset is now constructed explicitly in test-support, independently of product defaults. Its pure regression verifies the exact five source keys; the native oracle retains its independent preset assertion. Test-support classes remain excluded from distributed runtime JARs.
+
 The reviewed three-version baseline adjustment is recorded in [26.3 integration](minecraft-26-3.md); the newly uploaded ZIP
 does not redefine them. CI results must be tied to the current PR head.
+
+Historical UI redesign compatibility note (superseded by the scoped delivery evidence in [remaining delivery](remaining-delivery.md)):
 
 Uploaded compatibility references include the UI reference pack, Small Handhelds, NewGlowingOres,
 LowOnFire and both Chise packs. Their static resource domains and metadata were inspected,
@@ -80,13 +84,13 @@ Shared input code uses InputConstants so SDL-based 26.3 and earlier GLFW-based t
 
 ## Numeric detail controls
 
-Low Fire and Handheld Size rows include a separate Details button. The child screen shares the parent draft. Fire offers three presets; held categories use explicit decrease/increase controls bounded to 40–100 percent. Child Back/Esc returns to the parent without writing. Parent Discard/Esc discards all edits, including numeric-only edits. Only parent Save and Apply persists and installs the complete snapshot; failed saving retains it for retry. Mouse actions revalidate focus after preset widget rebuilds, and keyboard navigation uses current widgets. The real client oracle checks numeric-only edits, compact bounds, mouse preset selection, return/Esc, discard and persistence.
+Low Fire and Handheld Size rows include a separate Details button. The child screen shares the parent draft. Fire offers three presets; held categories use explicit decrease/increase controls bounded to 40–100 percent. Child Back/Esc returns to the parent without writing. Parent Discard/Esc discards all edits, including numeric-only edits. Parent Apply or Save and close persists and installs the complete snapshot; failed saving retains it for retry. Mouse actions revalidate focus after preset widget rebuilds, and keyboard navigation uses current widgets. The real client oracle checks numeric-only edits, compact bounds, mouse preset selection, return/Esc, discard and persistence.
 
 ## Builder Assist session panel
 
 The four Builder Assist rows include an Open button while a client world is loaded.
 The panel receives the parent screen and navigation callback, never the SettingsDraft.
-Inspection uses only saved runtime toggles; enable a tool and Save and apply first.
+Inspection uses only saved runtime toggles; enable a tool and Apply first.
 Back/Esc returns to the same parent draft without writing settings. The dedicated
 Builder Assist key is unbound by default, preserving the existing B settings binding.
 Reference selection and clearing affect only the current session. The nonpausing panel

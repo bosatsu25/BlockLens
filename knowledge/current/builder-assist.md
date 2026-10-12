@@ -26,7 +26,7 @@ Three independent, default-OFF controls are appended to the existing Other categ
 The native Builder Assist panel is opened explicitly from the in-world settings surface
 or an initially unbound key. It does not pause the world. It consumes saved runtime
 toggles only; opening it never installs or saves a settings draft. Enable tools and use
-the main screen's Save and Apply before inspecting. Its reference/clear buttons affect
+the main screen's Apply or Save and close before inspecting. Its reference/clear buttons affect
 only session inspection state. It has bounded scrolling and supports the same compact
 320-pixel viewport as the settings UI.
 

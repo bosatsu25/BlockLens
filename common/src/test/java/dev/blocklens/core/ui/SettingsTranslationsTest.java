@@ -19,7 +19,7 @@ final class SettingsTranslationsTest {
                 requireText(translations, SettingsCatalog.nameKey(capability));
                 requireText(translations, SettingsCatalog.descriptionKey(capability));
             }
-            for (String key : new String[] {"blocklens.settings.apply", "blocklens.settings.discard",
+            for (String key : new String[] {"blocklens.settings.close", "blocklens.settings.apply", "blocklens.settings.discard",
                     "blocklens.settings.unsaved", "blocklens.settings.saved_error",
                     "blocklens.state.enabled", "blocklens.state.disabled", "blocklens.settings.details",
                     "blocklens.settings.back", "blocklens.comfort.fire.0", "blocklens.comfort.fire.1",

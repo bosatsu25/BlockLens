@@ -219,7 +219,7 @@ final class CompactModelsOracle {
     }
     private static void saveToggle(ClientGameTestContext context, CapabilityId flag) {
         var before = CompactModelProbe.snapshot();
-        context.runOnClient(c -> { var screen = new BlockLensConfigScreen(null); BlockLensConfigScreen.show(c, screen); toggle(screen, flag); CompactModelProbe.reset(); press(screen, "blocklens.settings.apply"); });
+        context.runOnClient(c -> { var screen = new BlockLensConfigScreen(null); BlockLensConfigScreen.show(c, screen); toggle(screen, flag); CompactModelProbe.reset(); press(screen, "blocklens.settings.close"); });
         context.waitFor(SettingsClientAccess::ready, 1200); context.waitTicks(20);
         var after = CompactModelProbe.snapshot();
         System.out.println("BLOCKLENS_COMPACT_SAVE enabled=" + BlockLensRuntime.config().isEnabled(flag)
@@ -248,7 +248,7 @@ final class CompactModelsOracle {
                 && !BlockLensRuntime.config().isEnabled(FLAGS[0]), "Compact discard changed active state");
         Path fixture = Files.createTempDirectory(directory, "compact-failure-"); Path occupied = fixture.resolve("occupied"); Files.writeString(occupied, "keep");
         try {
-            context.runOnClient(c -> { var screen = new FailingScreen(occupied); BlockLensConfigScreen.show(c, screen); toggle(screen, FLAGS[1]); press(screen, "blocklens.settings.apply");
+            context.runOnClient(c -> { var screen = new FailingScreen(occupied); BlockLensConfigScreen.show(c, screen); toggle(screen, FLAGS[1]); press(screen, "blocklens.settings.close");
                 require(BlockLensConfigScreen.current(c) == screen && !BlockLensRuntime.config().isEnabled(FLAGS[1]), "Failed compact save applied or discarded state"); });
             context.waitTicks(5);
             require(Files.readString(occupied).equals("keep") && CompactModelProbe.snapshot().equals(models), "Failed compact save changed models or file");

@@ -205,7 +205,7 @@ final class SimplifiedTerrainOracle {
     }
     private static void saveUiToggle(ClientGameTestContext context) {
         var before=context.computeOnClient(c->c.getModelManager().getBlockStateModelSet());
-        context.runOnClient(c->{var screen=new BlockLensConfigScreen(null);BlockLensConfigScreen.show(c,screen);toggle(screen);press(screen,"blocklens.settings.apply");});
+        context.runOnClient(c->{var screen=new BlockLensConfigScreen(null);BlockLensConfigScreen.show(c,screen);toggle(screen);press(screen,"blocklens.settings.close");});
         context.waitFor(c->SettingsClientAccess.ready(c) && c.getModelManager().getBlockStateModelSet()!=before,1200);context.waitTicks(20);
     }
     private static void toggle(Screen screen) {
@@ -224,7 +224,7 @@ final class SimplifiedTerrainOracle {
         require(Arrays.equals(before,Files.readAllBytes(directory.resolve(BlockLensConfigFiles.FILE_NAME))) && !BlockLensRuntime.config().isEnabled(CapabilityId.SIMPLIFIED_TERRAIN),"Discard applied simplified config");
         Path fixture=Files.createTempDirectory(directory,"simplified-failure-");Path occupied=fixture.resolve("occupied");Files.writeString(occupied,"keep");
         try {
-            context.runOnClient(c->{var screen=new FailingScreen(occupied);BlockLensConfigScreen.show(c,screen);toggle(screen);press(screen,"blocklens.settings.apply");
+            context.runOnClient(c->{var screen=new FailingScreen(occupied);BlockLensConfigScreen.show(c,screen);toggle(screen);press(screen,"blocklens.settings.close");
                 require(BlockLensConfigScreen.current(c)==screen && !BlockLensRuntime.config().isEnabled(CapabilityId.SIMPLIFIED_TERRAIN),"Failed simplified save applied or discarded draft");});
             require(Files.readString(occupied).equals("keep"),"Failed save overwrote a file");
         } finally { context.runOnClient(c->BlockLensConfigScreen.show(c,null));Files.deleteIfExists(occupied);Files.deleteIfExists(fixture); }

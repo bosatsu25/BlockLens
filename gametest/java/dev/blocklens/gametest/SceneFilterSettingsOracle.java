@@ -116,7 +116,7 @@ final class SceneFilterSettingsOracle {
                         require(Arrays.equals(baseline,Files.readAllBytes(file)),"filter draft wrote before save");
                         require(BlockLensRuntime.config().sceneFilterOptions().equals(original.sceneFilterOptions()),"filter draft applied early");
                         if(save) {
-                            click(parent,button(parent,"blocklens.settings.apply"));
+                            click(parent,button(parent,"blocklens.settings.close"));
                             require(BlockLensRuntime.config().sceneFilterOptions().equals(expected),"filter save lost valid edits or accepted invalid list");
                             require(BlockLensConfigFiles.loadOrCreate(directory).sceneFilterOptions().equals(expected),"filter disk state differs");
                             require(BlockLensRuntime.config().enabledMask()==original.enabledMask(),"list save altered independent toggles");
@@ -146,7 +146,7 @@ final class SceneFilterSettingsOracle {
                         tab(child);
                     }
                     child.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE,0,0));
-                    click(parent,button(parent,"blocklens.settings.apply"));
+                    click(parent,button(parent,"blocklens.settings.close"));
                     require(BlockLensRuntime.config().sceneFilterOptions().equals(full),"failed oversized preset changed a rule");
                     BlockLensConfigFiles.save(directory,original);
                     BlockLensRuntime.installConfig(original);

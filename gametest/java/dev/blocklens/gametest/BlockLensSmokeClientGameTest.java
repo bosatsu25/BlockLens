@@ -37,6 +37,7 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             SettingsStateReloadOracle.verify(context);
             ResponsiveSettingsScreenOracle.verify(context);
             SettingsEditingOracle.verify(context);
+            SettingsVisualOracle.verify(context);
             return;
         }
         if ("connected".equals(System.getProperty("blocklens.test.focus", "all"))) {

@@ -69,7 +69,7 @@ final class AnalyzerSettingsOracle {
                         require(BlockLensRuntime.config().analyzerOptions().equals(original.analyzerOptions()),"draft applied early");
                         require(Arrays.equals(baseline,Files.readAllBytes(file)),"draft saved early");
                         if(save) {
-                            press(parent,"blocklens.settings.apply");
+                            press(parent,"blocklens.settings.close");
                             require(BlockLensRuntime.config().analyzerOptions().equals(expected),"numeric save lost edits");
                             require(BlockLensConfigFiles.loadOrCreate(directory).analyzerOptions().equals(expected),"numeric disk state differs");
                             require(BlockLensRuntime.config().enabledMask()==original.enabledMask(),"numeric save changed capability bits");

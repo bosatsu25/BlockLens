@@ -12,7 +12,7 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Current implementation:** BlockLens **v0.4.5** provides **61 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
+> **Current implementation:** BlockLens **v0.4.6** provides **61 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
 >
 > **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
@@ -23,7 +23,7 @@ The default-off **Neutral pale oak** control recolors vanilla wood while preserv
 
 ## Native profiles from the six supplied resource packs
 
-BlockLens now offers source-informed presets without redistributing image/model/font assets: **Glow ores** (19 independent vanilla ore highlight toggles), **Small Handhelds-style** (40/40/50 percent first-person blocks/items/tools), and **Eater Clear** (registered IDs from the 196 original full-clear model overrides, through the existing Block Filter). The existing Low Fire, Bright Concrete and Bright Chest capabilities remain available. Presets edit the existing draft only; enable the related capability when needed, then **Save and apply**.
+BlockLens now offers source-informed presets without redistributing image/model/font assets: **Glow ores** (19 independent vanilla ore highlight toggles), **Small Handhelds-style** (40/40/50 percent first-person blocks/items/tools), and **Eater Clear** (registered IDs from the 196 original full-clear model overrides, through the existing Block Filter). The existing Low Fire, Bright Concrete and Bright Chest capabilities remain available. Presets edit the existing draft only; enable the related capability when needed, then **Apply** or **Save and close**.
 
 The original OptiFine connected-texture border art, the original lowered fire sprites and Chise's pale-oak artwork are **not** reproduced inside the JAR. Physical collision and solid occlusion remain unchanged. See the [source-by-source audit and scope limitations](knowledge/current/resourcepack-native-profiles.md).
 
@@ -43,7 +43,7 @@ The two scene filters independently edit block/entity type ID blacklists and whi
 
 ## Builder Assist and ore extensions
 
-Enable the three independent Builder Assist tools in Other, then **Save and apply**.
+Enable the three independent Builder Assist tools in Other, then **Apply** or **Save and close**.
 In a world, open the panel using an Open button on those rows, or assign the initially
 unbound Builder Assist key. It displays local crosshair state, predicts supported
 main-hand block placement, and compares nearby blocks with an explicit session reference.
@@ -170,7 +170,7 @@ P0 extends the existing BlockLens engine rather than importing the ChiseTweaks f
 - String Tweaks → adds **Tripwire Hook** coverage
 - Nether Tweaks → adds **Polished Basalt** coverage
 
-The first 37 enum entries, bit positions, source/config keys, and defaults remain frozen. P0 appends new capability IDs only.
+P0 preserved the first 37 enum entries, bit positions, source/config keys and historical defaults. Current keys/bits and explicitly saved values remain stable; v0.4.6 deliberately defaults Visibility OFF for new or missing settings.
 
 Published v0.2.0 contract:
 
@@ -213,7 +213,7 @@ Runtime principles:
 
 ### Current source hardening
 
-The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 61 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Save and apply** persists edits; **Discard changes** and **Esc** discard them. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is merged in PR #40. Private six-pack resource priority in both orders and three rendered controls pass on all targets. Other pack-specific combinations and source-screen pixel equivalence remain unverified; exact Shader and Vulkan results are tracked in [the delivery record](knowledge/current/remaining-delivery.md).
+The current source tree provides a native **B-key settings screen** and an optional **Mod Menu** entrypoint without a required UI dependency. Its category-based redesign groups all 61 options into **Decoration, Resources, Visibility, and Other**, with explanations and separate Enabled/Disabled controls. **Apply** saves and installs edits while keeping the screen open; **Save and close** also returns to the parent. **Discard** and **Esc** discard edits since the last successful apply. New settings default all nine Visibility controls to OFF; existing saved values are preserved. See [settings UI behavior and verification boundaries](knowledge/current/settings-ui.md). The redesign is merged in PR #40. Private six-pack resource priority in both orders and three rendered controls pass on all targets. Other pack-specific combinations and source-screen pixel equivalence remain unverified; exact Shader and Vulkan results are tracked in [the delivery record](knowledge/current/remaining-delivery.md).
 
 Bounded config reads, synchronous temporary-file writes with atomic replacement where supported, immutable config publication, safe lazy-overlay publication, cached semantic enum tables/instructions, and two retained descriptor arrays per wrapped model are implemented. Historical v0.2.1 local artifacts measured **101,877 B / 101,913 B** under the then-current **102,400 B** ceiling. Current three-version gates use the reviewed **204,800 B** development baseline and **204,800 B** release ceiling. OFF/default/all-capability M8 measurements remain coarse regression guards; observed CI allocation variability is tracked in [#43](https://github.com/bosatsu25/BlockLens/issues/43).
 

@@ -49,10 +49,10 @@ public enum CapabilityId {
     REDSTONE_ORE("gaming.redstone_ore", Category.RESOURCE, false),
     DEEPSLATE_REDSTONE_ORE("gaming.deepslate_redstone_ore", Category.RESOURCE, false),
 
-    BLUE_ICE("outline.blueice", Category.OUTLINE, true),
-    DEAD_CORAL("outline.deadcoral", Category.OUTLINE, true),
-    POWDER_SNOW("outline.powdersnow", Category.OUTLINE, true),
-    SCULK_CATALYST("outline.sculk_catalyst", Category.OUTLINE, true),
+    BLUE_ICE("outline.blueice", Category.OUTLINE, false),
+    DEAD_CORAL("outline.deadcoral", Category.OUTLINE, false),
+    POWDER_SNOW("outline.powdersnow", Category.OUTLINE, false),
+    SCULK_CATALYST("outline.sculk_catalyst", Category.OUTLINE, false),
 
     NETHER_TWEAKS("others.nethertweaks", Category.OTHER, false),
     STRING_TWEAKS("others.stringtweaks", Category.OTHER, true),
@@ -65,10 +65,10 @@ public enum CapabilityId {
     // Lightweight visual migration: independent additions, preserving the original 40 bits.
     GLASS_HIGHLIGHT("outline.glass_highlight", Category.OUTLINE, false),
     KELP_HIGHLIGHT("outline.kelp_highlight", Category.OUTLINE, false),
-    BRIGHT_CONCRETE("outline.bright_concrete", Category.OUTLINE, true),
+    BRIGHT_CONCRETE("outline.bright_concrete", Category.OUTLINE, false),
     LOW_FIRE("others.low_fire", Category.OTHER, false),
     HANDHELD_SIZE("others.handheld_size", Category.OTHER, false),
-    BRIGHT_CHEST("outline.bright_chest", Category.OUTLINE, true),
+    BRIGHT_CHEST("outline.bright_chest", Category.OUTLINE, false),
 
     LAVA_ANALYZER("analyzer.lava_analyzer", Category.OTHER, false),
     BEACON_RANGE("analyzer.beacon_range", Category.OTHER, false),

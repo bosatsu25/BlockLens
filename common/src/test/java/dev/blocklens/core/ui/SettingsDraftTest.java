@@ -43,7 +43,7 @@ final class SettingsDraftTest {
         assertFalse(original.isEnabled(CapabilityId.ANVIL));
         assertTrue(draft.config().isEnabled(CapabilityId.ANVIL));
         assertTrue(draft.config().isEnabled(CapabilityId.NETHER_QUARTZ_ORE));
-        assertTrue(draft.config().isEnabled(CapabilityId.POWDER_SNOW));
+        assertFalse(draft.config().isEnabled(CapabilityId.POWDER_SNOW));
         draft.discard();
         assertEquals(original.enabledMask(), draft.config().enabledMask());
         assertFalse(draft.changed());

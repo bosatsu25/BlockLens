@@ -1,17 +1,17 @@
 # Lightweight visual and comfort features
 
-Issue #42 adds six independent capabilities after the existing 40, preserving their keys, ordinal order, defaults and rendering. All three Minecraft targets use the same pure policies and settings draft, with narrow version adapters.
+Issue #42 originally added six independent capabilities after the existing 40, preserving their keys, ordinal order, defaults and rendering. The reviewed v0.4.6 UI update defaults all Visibility controls OFF for new or missing settings while preserving saved values. All three Minecraft targets use the same pure policies and settings draft, with narrow version adapters.
 
 | Capability | Default | Contract |
 | --- | --- | --- |
 | Glass Highlight | Off | Add a cyan bracket/diamond cue to 35 exact glass targets; panes use an amber central cue. Keep active-pack base geometry and glass connections. |
 | Kelp Highlight | Off | Add crossed magenta/orange ribbons to kelp and kelp plants; eight animation frames, three ticks per frame with interpolation. |
-| Bright Concrete | On | Make the active-pack white concrete model emissive without replacing its geometry or texture. |
+| Bright Concrete | Off | Make the active-pack white concrete model emissive without replacing its geometry or texture. |
 | Low Fire | Off | Change only the first-person fire overlay. Large/medium/small use vertical scales 0.78/0.56/0.34 and offsets -0.14/-0.24/-0.34. Medium is the default preset. |
 | Handheld Size | Off | Change only first-person item models, keeping arm movement and inventory/third-person rendering. Blocks/items/tools default to 70/60/75 percent, bounded to 40–100. Shield uses 95 percent. |
-| Bright Chest | On | Use BlockLens-owned white textures and full light for regular single/left/right chests. Preserve models, lid animation and other chest materials. |
+| Bright Chest | Off | Use BlockLens-owned white textures and full light for regular single/left/right chests. Preserve models, lid animation and other chest materials. |
 
-Numeric options are edited in the parent settings draft. Only Save and Apply writes them; discard/Esc restores the baseline. Invalid individual values retain defaults or the preceding valid value. Existing boolean configuration remains compatible.
+Numeric options are edited in the parent settings draft. Parent Apply or Save and close writes them; discard/Esc restores the last successfully applied baseline. Invalid individual values retain defaults or the preceding valid value. Existing boolean configuration remains compatible.
 
 Source behavior is a reference. Runtime textures and models are original procedural BlockLens assets; no third-party source or artwork is redistributed. Normal startup performs no network calls, reflection discovery or registry scans.
 
@@ -29,7 +29,7 @@ The shared client oracle captures 34 PNGs per version, separate from the existin
 
 Kelp motion uses the BlockLens magenta/orange cue shape after six ticks. A higher-priority original static-control texture must win resource selection and retain at least 80 visible cue pixels. Animated change must reach 80 pixels, static residual must remain at most 12, and the animated change must exceed 8 times that residual. Fixed-camera static samples have a small raster/fringe displacement; water/base color changes alone cannot pass this paired protocol.
 
-Chest evidence verifies white-color gains separately for regular single, left and right variants, with unchanged white counts for trapped and ender chests. It now also uses the actual native Settings -> Save and Apply flow to toggle already-closed chest variants ON and OFF, records two extra frames, requires persisted config changes, and checks that the lids stay closed. The brightness override is applied per submit and restored via a finally block, so it does not depend on a lid-state extraction or bleed into a later frame. Controlled client lid events separately demonstrate opening with the feature OFF, preservation while enabling it, changed rendered open silhouette and subsequent closure. These events exist only in the client test fixture. This is not evidence for arbitrary third-party chest replacement mods.
+Chest evidence verifies white-color gains separately for regular single, left and right variants, with unchanged white counts for trapped and ender chests. It now also uses the actual native Settings -> Apply or Save and close flow to toggle already-closed chest variants ON and OFF, records two extra frames, requires persisted config changes, and checks that the lids stay closed. The brightness override is applied per submit and restored via a finally block, so it does not depend on a lid-state extraction or bleed into a later frame. Controlled client lid events separately demonstrate opening with the feature OFF, preservation while enabling it, changed rendered open silhouette and subsequent closure. These events exist only in the client test fixture. This is not evidence for arbitrary third-party chest replacement mods.
 
 Fire evidence samples actual submitted pose matrices for all three presets. Both first-person hands are measured for block, item, tool and shield categories. The all-46 fixture enables every control, reloads resources and keeps fire and both hand submissions active. M8 uses representative added world targets and retains its original coarse guards; noisy whole-client observations do not establish an FPS improvement.
 

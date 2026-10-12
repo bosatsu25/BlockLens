@@ -68,9 +68,7 @@ final class M7FullParityOracle {
             rebuild(context);
             Path netherOnlyPath = screenshot(context, outputDir, "m7-nether-only");
 
-            BlockLensConfig preset = BlockLensConfig.defaults()
-                    .withEnabled(CapabilityId.BRIGHT_CONCRETE, false)
-                    .withEnabled(CapabilityId.BRIGHT_CHEST, false);
+            BlockLensConfig preset = dev.blocklens.testing.ReferencePreset.historical();
             requireReferencePreset(preset);
             install(preset);
             reload(context);
