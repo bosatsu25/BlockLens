@@ -17,7 +17,8 @@
     "SimplifiedTerrainProbeMixin",
     "ConnectedOreProbeMixin",
     "ConnectedGeometryModelMixin",
-    "PaletteSignBackgroundMixin"
+    "PaletteSignBackgroundMixin",
+    "PaletteBlankSignTextMixin"
   ],
   "injectors": {
     "defaultRequire": 1
