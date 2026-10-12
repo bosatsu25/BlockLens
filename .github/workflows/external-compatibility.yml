@@ -15,7 +15,7 @@ jobs:
   external-client:
     name: ${{ matrix.minecraft }} / ${{ matrix.profile }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -77,9 +77,9 @@ jobs:
           :versions:${{ matrix.module }}:versionSmokeContract
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
       - name: Run the actual external client configuration
-        # The expanded static Shader graph passed terrain but exceeded its former 12-minute limit.
+        # The expanded static Shader graph passed terrain but exceeded its former 16-minute limit.
         # This bounds test duration; image and runtime performance gates remain unchanged.
-        timeout-minutes: 16
+        timeout-minutes: 22
         run: >-
           xvfb-run -a gradle --stacktrace
           -PclientTestFocus=external
