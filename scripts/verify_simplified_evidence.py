@@ -14,7 +14,7 @@ IMAGES = tuple(f"{role}-{stage}.png" for role in ROLES for stage in ("off", "on"
     "simplified-cue-before.png", "simplified-cue-on.png", "simplified-all-features.png", "simplified-external-off.png", "simplified-external-on.png",
     "simplified-external-model-off.png", "simplified-external-model-on.png",
     "simplified-external-texture-off.png", "simplified-external-texture-on.png")
-CHECKS = ("actualEmission", "opaque", "sparse", "statesPreserved", "uiSave", "uiDiscard", "failedSave",
+CHECKS = ("actualEmission", "opaque", "sparse", "neutralTints", "statesPreserved", "uiSave", "uiDiscard", "failedSave",
           "reload", "offRestored", "filterComposition", "cueComposition", "allFeatures", "externalPriority")
 
 def verify(directory: Path, minecraft: str) -> list[Path]:
