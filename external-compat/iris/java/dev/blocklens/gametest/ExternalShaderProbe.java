@@ -21,10 +21,10 @@ final class ExternalShaderProbe {
                 String option = name.substring("shaderOption.".length());
                 ExternalCompatibilityOracle.require(manifest.getProperty(name)
                                 .equals(options.getStringValueOrDefault(option)),
-                        "An actual shader option differs from the recorded LOW profile");
+                        "An actual shader option differs from the recorded LOW static-fixture profile");
                 verified++;
             }
-            ExternalCompatibilityOracle.require(verified == 14, "The complete shader profile was not verified");
+            ExternalCompatibilityOracle.require(verified == 16, "The complete shader profile was not verified");
         }
         return active;
     }
