@@ -21,12 +21,23 @@ class WaterControlTest(unittest.TestCase):
                 self.assertEqual(a, b)
                 self.assertEqual(digest, hashlib.sha256(a).hexdigest())
 
-    def test_control_freezes_only_water_and_never_replaces_kelp(self):
+    def test_control_freezes_base_metadata_without_replacing_kelp_art_or_cue(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             files = write_water_control(root)
-            self.assertEqual(len(files), 5)
-            self.assertFalse(any('kelp' in name for name in files))
+            expected = {'pack.mcmeta'}
+            for name in ('water_still', 'water_flow'):
+                prefix = 'assets/minecraft/textures/block/' + name + '.png'
+                expected.update((prefix, prefix + '.mcmeta'))
+            expected.update('assets/minecraft/textures/block/' + name + '.png.mcmeta'
+                            for name in ('kelp', 'kelp_plant'))
+            self.assertEqual(expected, set(files))
+            for name in ('kelp', 'kelp_plant'):
+                prefix = root / 'assets/minecraft/textures/block' / (name + '.png')
+                self.assertFalse(prefix.exists())
+                self.assertEqual({'animation': {'frames': [0, 0], 'frametime': 2, 'interpolate': False},
+                                  'texture': {'alpha_cutoff_bias': 0.1}},
+                                 json.loads(Path(str(prefix) + '.mcmeta').read_text()))
             for name in ('water_still', 'water_flow'):
                 meta = root / 'assets/minecraft/textures/block' / (name + '.png.mcmeta')
                 self.assertEqual({}, json.loads(meta.read_text()))

@@ -1,4 +1,4 @@
-"""Original, test-only static water: isolate kelp animation from fluid-texture animation."""
+"""Original, test-only background control: isolate cue motion from water and vanilla kelp animation."""
 import hashlib
 import json
 from pathlib import Path
@@ -30,6 +30,14 @@ def write_water_control(root: Path) -> dict[str, str]:
         prefix = 'assets/minecraft/textures/block/' + name + '.png'
         files[prefix] = _water_png(width)
         files[prefix + '.mcmeta'] = b'{}\n'
+    # Metadata-only overrides retain the vanilla PNGs/models and alpha-cutoff contract.
+    # Animated base alpha otherwise changes occlusion even when the overlay is static.
+    # Repeat the same frame: 26.3 single-frame strip upload otherwise uses the full PNG height.
+    metadata = {'animation': {'frames': [0, 0], 'frametime': 2, 'interpolate': False},
+                'texture': {'alpha_cutoff_bias': 0.1}}
+    for name in ('kelp', 'kelp_plant'):
+        files['assets/minecraft/textures/block/' + name + '.png.mcmeta'] = (
+            json.dumps(metadata, sort_keys=True) + '\n').encode('utf-8')
     hashes = {}
     for name, data in files.items():
         destination = root / name

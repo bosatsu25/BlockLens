@@ -214,7 +214,7 @@ runtime原則:
 
 ## 現在のsource hardening
 
-現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。56設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付6パックの2順序でのリソース解決と基本描画は3版の実クライアントで確認しています。各パックの全表示効果と元画面との画素単位の一致は未確認です。Shader・Vulkanの正確な試験結果は[今回の実装記録](knowledge/current/remaining-delivery.md)に記載します。
+現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。61設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付6パックの2順序でのリソース解決と基本描画は3版の実クライアントで確認しています。各パックの全表示効果と元画面との画素単位の一致は未確認です。Shader・Vulkanの正確な試験結果は[今回の実装記録](knowledge/current/remaining-delivery.md)に記載します。
 
 config readの上限、同期一時ファイル書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum/instructionの再利用、wrapped modelごとのdescriptor arrayの2本化は実装済みです。歴史的v0.2.1のlocal artifactは **101,877 B / 101,913 B**で、当時の上限は**102,400 B**でした。現在の3版ゲートはレビュー済み開発基準**204,800 B**と公開上限**204,800 B**を使います。OFF/default/全機能のM8測定は粗い回帰ガードであり、観測されたCI割り当て量のばらつきは[#43](https://github.com/bosatsu25/BlockLens/issues/43)で追跡します。
 

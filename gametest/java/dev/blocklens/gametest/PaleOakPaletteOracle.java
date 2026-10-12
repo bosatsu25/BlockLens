@@ -77,6 +77,9 @@ final class PaleOakPaletteOracle {
             server.runCommand("fill -11 -60 -7 11 -60 19 minecraft:white_concrete");
             server.runCommand("fill -4 -59 5 -2 -57 5 minecraft:pale_oak_planks");
             server.runCommand("fill 0 -59 5 2 -57 5 minecraft:stripped_pale_oak_log");
+            // Actual vanilla end grain adds a strong color control without altering either wood ROI.
+            server.runCommand("fill -1 -59 5 -1 -57 5 minecraft:pale_oak_log[axis=z]");
+            server.runCommand("fill -4 -56 5 2 -54 5 minecraft:pale_oak_log[axis=z]");
             server.runCommand("setblock 4 -59 5 minecraft:pale_oak_trapdoor[open=true]");
             server.runCommand("tp @a 0 -53 17 180 18");
             context.waitTicks(30);
@@ -87,8 +90,9 @@ final class PaleOakPaletteOracle {
             verifyPixels(context, true, false);
             BufferedImage onFrame = capture(context, output, "palette-on");
             int changed = changed(offFrame, onFrame);
-            require(changed > 80 && PaleOakFrameMetrics.visibleChange(offFrame, onFrame),
-                    "Palette UI save produced no visible change in both wood roles");
+            require(changed > 80, "Palette UI framebuffer RGB signal below threshold: " + changed);
+            require(PaleOakFrameMetrics.visibleChange(offFrame, onFrame),
+                    "Palette UI save did not retain visible color/grain changes in both wood roles");
             reload(context);
             verifyPixels(context, true, false);
             var reloaded = capture(context, output, "palette-on-reloaded");
@@ -275,7 +279,9 @@ final class PaleOakPaletteOracle {
     }
 
     static BufferedImage capture(ClientGameTestContext context, Path output, String name) throws IOException {
-        Path image = ExternalFrameCapture.required()
+        // Shader history must settle after the capture-size framebuffer is rebuilt.
+        Path image = (ExternalFrameCapture.required()
+                || "shader-on".equals(System.getProperty("blocklens.test.external.profile")))
                 ? ExternalFrameCapture.capture(context, output, name, 640, 360)
                 : context.takeScreenshot(TestScreenshotOptions.of(name).withDestinationDir(output)
                         .withSize(640, 360).disableCounterPrefix());

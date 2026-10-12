@@ -41,3 +41,11 @@ The Chise reference's pale-oak item/entity/GUI palette and LowOnFire's placed-wo
 ## Publication gate
 
 Normal CI requires the eight-profile External compatibility workflow and both Cele rendering compatibility profiles as reusable jobs. The release workflow listens only to the completion of that combined same-commit CI run. Standalone workflow_dispatch compatibility observations cannot authorize publishing. All required jobs must succeed; continue-on-error and conditional profile skips are absent. No public artifact is inferred from the source version alone.
+
+## Vanilla base-animation control
+
+A documentation-head replay at `97be68d` in [CI 38207924264](https://github.com/bosatsu25/BlockLens/actions/runs/38207924264) preserved a kelp-control failure: animated=243, static=13, against the unchanged static limit of12. Digest/CRC-verified native frames locate the changes at the cue silhouettes. The fixture already froze water, but vanilla kelp/kelp_plant alpha animation still changed occlusion behind the static cue. This is a test-background defect; it does not establish a production cue failure.
+
+The opt-in BBE fixture now overrides only the two vanilla animation metadata files in addition to its authored static water. Both frames select index0, frametime2, interpolation OFF, with vanilla alpha_cutoff_bias0.1 retained. Repeating frame0 avoids an observed26.3 single-listed-frame strip upload failure; its failed native log is preserved. Vanilla PNGs/models remain selected from the vanilla pack, and the BlockLens cue is untouched. Typed resolved-resource checks require this PNG provenance and the selected metadata before and after the scene. The authored fixture has exactly seven files, with deterministic/no-overwrite regressions. No third-party artwork is copied.
+
+The static limit12, animated minimum80 and movement-ratio requirement remain unchanged. Fresh local BBE/Sodium completes in2m36s with animated272/static0 and275 visible static samples, while optimized chest emissions remain active (ON26/OFF51). The Cele-render stack also exits normally in2m41s with animated198/static0 and275 visible samples; optimized chest emissions remain ON26/OFF51. Final-head hosted verification remains required. These samples are functional test evidence, not runtime performance measurements.

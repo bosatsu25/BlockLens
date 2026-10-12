@@ -25,6 +25,7 @@ public final class ExternalLifecycleDiagnostics implements AutoCloseable {
     private final Object lock = new Object();
     private final Path output;
     private final long stallNanos;
+    private final boolean worldCloseOnly;
     private final long started = System.nanoTime();
     private final ArrayDeque<String> history = new ArrayDeque<>();
     private final ScheduledThreadPoolExecutor executor;
@@ -37,8 +38,17 @@ public final class ExternalLifecycleDiagnostics implements AutoCloseable {
         return new ExternalLifecycleDiagnostics(output, enabled, 60_000);
     }
 
+    public static ExternalLifecycleDiagnostics openForWorldClose(Path output, boolean enabled) {
+        return new ExternalLifecycleDiagnostics(output, enabled, 60_000, true);
+    }
+
     ExternalLifecycleDiagnostics(Path output, boolean enabled, long stallMillis) {
+        this(output, enabled, stallMillis, false);
+    }
+
+    ExternalLifecycleDiagnostics(Path output, boolean enabled, long stallMillis, boolean worldCloseOnly) {
         this.output = Objects.requireNonNull(output);
+        this.worldCloseOnly = worldCloseOnly;
         if (stallMillis <= 0) throw new IllegalArgumentException("Positive diagnostic delay required");
         stallNanos = TimeUnit.MILLISECONDS.toNanos(stallMillis);
         if (!enabled) {
@@ -76,7 +86,8 @@ public final class ExternalLifecycleDiagnostics implements AutoCloseable {
         long elapsed;
         synchronized (lock) {
             elapsed = System.nanoTime() - phase.since;
-            if (closed || captured || elapsed < stallNanos) return;
+            if (closed || captured || elapsed < stallNanos
+                    || (worldCloseOnly && !phase.name.equals("world_close"))) return;
             captured = true;
             stalled = phase;
             phases = List.copyOf(history);

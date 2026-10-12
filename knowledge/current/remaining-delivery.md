@@ -1,4 +1,18 @@
-# Builder Assist, ore extensions and external compatibility delivery
+# Native three-version delivery and historical implementation evidence
+
+## Current delivery — v0.4.5
+
+The current catalog has61 independent capabilities on26.1.2/26.2/26.3, retaining the frozen original37 controls and defaults. [Features](features.md) lists every current control. Removed debris-analyzer and Masa schematic-comparison decisions supersede the historical delivery below; their reserved bit positions are not reused. Native compact models, simplified terrain, pale-oak block/item/boat/sign/editor palette, scene filters and independent default-OFF connected ore borders are implemented. Shared lossless model/archive refactoring preserves the public behavior and debug information.
+
+[PR74](https://github.com/bosatsu25/BlockLens/pull/74) merged at `dfcece0e8c1dab12903cfff82bbe8f9831ec770b`, with a tree identical to its tested head. Its [exact-head CI](https://github.com/bosatsu25/BlockLens/actions/runs/38204797278) and resulting [main CI](https://github.com/bosatsu25/BlockLens/actions/runs/38207305039) each pass all25 jobs: common quality,3 full native clients,3 focused connected clients,8 ordinary external profiles,8 connected external profiles and2 BBE profiles.
+
+The published [v0.4.5 release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.5) contains three JARs of201885/201931/204654 bytes. Actual downloaded bytes match the sizes and SHA256 of the corresponding exact-main CI artifacts. Prior v0.4.4 asset identities remain unchanged. All artifacts remain below204800 bytes. Local Windows clean rebuilds are reproducible within that environment; equality across operating systems is not claimed.
+
+Private six-pack checks pass all three native clients:29 resource probes,2 priority orders,3 actual rendered controls and restoration. These tests do not certify every pack-specific effect or arbitrary combination. No third-party artwork, individual uploaded-material hashes or local paths are published. Exact optional renderer/dependency boundaries remain in the current compatibility specifications; animated/unpinned shaders, arbitrary complete modpacks and unavailable optional mod distributions are not certified.
+
+A subsequent documentation-head replay in [CI38207924264](https://github.com/bosatsu25/BlockLens/actions/runs/38207924264) preserves BBE static-background, Shader palette-count and Vulkan world-close failures. [PR75](https://github.com/bosatsu25/BlockLens/pull/75) strengthens those visual fixtures and diagnostic contracts with unchanged production behavior and acceptance thresholds; [BBE evidence](cele-bbe-compatibility.md) and [palette evidence](palette-rendered-evidence.md) distinguish native results from unfinished verification. Current exact-head gates and closure are recorded in [issue64](https://github.com/bosatsu25/BlockLens/issues/64); older successful runs never replace them.
+
+## Historical delivery baseline
 
 ## Scope and authority
 

@@ -26,7 +26,7 @@ The compiled catalog contains 61 independent capabilities; existing keys, orderi
 
 ## 資源 / Resources（22）
 
-添付NewGlowingOresの対象に相当する18種類のバニラ鉱石について、既存の鉱石ハイライトを有効にするとBlockLens独自の発光境界を描画します。鉱石ごとの独立ON/OFFは従来どおりです。元の画像・OptiFine CTMは配布せず、露出面の透明モデルを使用します。隣接ブロック間のCTM連結や外部MOD鉱石までの完全互換は未実装です。
+添付NewGlowingOresの対象に相当する18種類のバニラ鉱石について、既存の鉱石ハイライトを有効にするとBlockLens独自の発光境界を描画します。鉱石ごとの独立ON/OFFは従来どおりです。元の画像・OptiFine CTMは配布せず、露出面の透明モデルを使用します。「鉱石の接続枠」を独立して有効にすると、適格な同種の固定立方体モデルで隣接する枠を接続します。非立方体・重み付き・適格性を確認できない独自モデルは保守的に元の表示へ戻します。元パックのOptiFine CTM解析や、任意の外部MOD鉱石との完全互換は保証しません。[接続枠の仕様](native-connected-ore-plan.md)を参照してください。
 
 
 | 日本語 | English | 動作 | 初期設定 |
@@ -108,4 +108,4 @@ Open with B or the optional Mod Menu entrypoint. Save and apply persists edits; 
 
 建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。3機能を有効にして「保存して適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
 
-外部Shader・Vulkanの正確な版と実測条件は[外部互換性](external-compatibility.md)で管理します。アップロード済みの非公開リソースパックの組み合わせと読み込み順は、実クライアントを動かせる非公開環境での確認が必要です。This catalog does not claim blanket shader/pack/backend compatibility or a new published release.
+外部Shader・Vulkanの正確な版と実測条件は[外部互換性](external-compatibility.md)で管理します。添付6パックは非公開環境で3版の実クライアントを起動し、2通りの優先順序・29素材の解決・3つの描画対照・復元を確認しています。素材ごとのハッシュは非公開です。この確認は各パックの全表示効果や任意の組み合わせの保証ではありません。This catalog does not claim blanket shader/pack/backend compatibility. Published downloads are listed separately on [GitHub Releases](https://github.com/bosatsu25/BlockLens/releases).
