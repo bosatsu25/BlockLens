@@ -364,7 +364,7 @@ final class LightweightVisualOracle {
             toggle.onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
             require(BlockLensRuntime.config().isEnabled(CapabilityId.BRIGHT_CHEST) != enabled,
                     "unsaved bright chest edit reached the render runtime");
-            String apply = Component.translatable("blocklens.settings.apply").getString();
+            String apply = Component.translatable("blocklens.settings.close").getString();
             Button save = controls.stream().filter(b -> b.getMessage().getString().equals(apply))
                     .findFirst().orElseThrow(() -> new AssertionError("Save and Apply action missing"));
             save.onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));

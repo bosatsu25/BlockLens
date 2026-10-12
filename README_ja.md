@@ -12,7 +12,7 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現行実装:** BlockLens **v0.4.5** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な61機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
+> **現行実装:** BlockLens **v0.4.6** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な61機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
@@ -36,7 +36,7 @@ Windowsで実際のMinecraft画面のUI自動テストを見るには、Java 25�
 
 ## 建築支援と鉱石拡張
 
-「その他」で3つの建築支援を個別に有効にして、**保存して適用**します。
+「その他」で3つの建築支援を個別に有効にして、**適用**します。
 ワールド内で各行の「開く」を押すか、初期状態では未割り当ての建築支援キーを設定して開きます。
 照準先の状態、メインハンドの対応ブロックの配置予測、選択した基準との周辺比較を表示します。設置・破壊・独自パケット送信は行いません。
 
@@ -214,7 +214,7 @@ runtime原則:
 
 ## 現在のsource hardening
 
-現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。61設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**保存して適用**で変更を保存し、**変更を破棄**と**Esc**では保存せず戻ります。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付6パックの2順序でのリソース解決と基本描画は3版の実クライアントで確認しています。各パックの全表示効果と元画面との画素単位の一致は未確認です。Shader・Vulkanの正確な試験結果は[今回の実装記録](knowledge/current/remaining-delivery.md)に記載します。
+現在のsource treeには、必須UI依存を追加しない**Bキー設定画面**と任意の**Mod Menu**入口があります。61設定を**向き・状態／資源／見やすさ／その他**に分類し、説明と独立した有効・無効の操作を表示します。**適用**は変更を保存・反映して画面に留まり、**保存して閉じる**は親画面へ戻ります。**変更を破棄**と**Esc**は最後の適用後の追加変更だけを破棄します。見やすさ9機能の初期値は無効です。既存の保存済み設定は保持します。[設定UIの操作と検証範囲](knowledge/current/settings-ui.md)を参照してください。再設計はPR #40でマージ済みです。添付6パックの2順序でのリソース解決と基本描画は3版の実クライアントで確認しています。各パックの全表示効果と元画面との画素単位の一致は未確認です。Shader・Vulkanの正確な試験結果は[今回の実装記録](knowledge/current/remaining-delivery.md)に記載します。
 
 config readの上限、同期一時ファイル書き込みと対応filesystemでのatomic置換、immutable config publication、安全なlazy overlay publication、semantic enum/instructionの再利用、wrapped modelごとのdescriptor arrayの2本化は実装済みです。歴史的v0.2.1のlocal artifactは **101,877 B / 101,913 B**で、当時の上限は**102,400 B**でした。現在の3版ゲートはレビュー済み開発基準**204,800 B**と公開上限**204,800 B**を使います。OFF/default/全機能のM8測定は粗い回帰ガードであり、観測されたCI割り当て量のばらつきは[#43](https://github.com/bosatsu25/BlockLens/issues/43)で追跡します。
 

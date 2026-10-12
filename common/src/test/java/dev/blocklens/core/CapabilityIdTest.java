@@ -56,18 +56,13 @@ final class CapabilityIdTest {
     }
 
     @Test
-    void catalogKeepsExactReferencePreset() {
+    void catalogKeepsKeysWithReviewedVisibilityOffDefaults() {
         Set<String> enabled = java.util.Arrays.stream(CapabilityId.values())
                 .filter(capability -> capability.ordinal() < 40)
                 .filter(CapabilityId::defaultEnabled)
                 .map(CapabilityId::sourceKey)
                 .collect(Collectors.toUnmodifiableSet());
-        assertEquals(Set.of(
-                "outline.blueice",
-                "outline.deadcoral",
-                "outline.powdersnow",
-                "outline.sculk_catalyst",
-                "others.stringtweaks"), enabled);
+        assertEquals(Set.of("others.stringtweaks"), enabled);
         assertFalse(CapabilityId.ANCIENT_DEBRIS.defaultEnabled());
         assertFalse(CapabilityId.NETHER_TWEAKS.defaultEnabled());
         assertFalse(CapabilityId.CRYING_OBSIDIAN.defaultEnabled());

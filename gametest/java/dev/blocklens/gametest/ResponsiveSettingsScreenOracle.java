@@ -79,7 +79,7 @@ final class ResponsiveSettingsScreenOracle {
                         || AnalyzerCatalog.index(capability) >= 0
                         || SceneFilterCatalog.index(capability) >= 0
                         || capability.sourceKey().startsWith("builder.")).count();
-        require(buttons.size() == count + 6 + actions
+        require(buttons.size() == count + 7 + actions
                 + (category == CapabilityId.Category.RESOURCE ? 1 : 0), "widget registry changed");
         List<Button> toggles = buttons.subList(4, 4 + count);
         var reached = new HashSet<Button>();
@@ -88,7 +88,7 @@ final class ResponsiveSettingsScreenOracle {
             require(screen.getFocused() instanceof Button, "keyboard focus escaped the controls");
             Button focused = (Button) screen.getFocused();
             require(focused.visible && focused.active, "keyboard focus escaped the visible controls");
-            if (toggles.contains(focused)) reached.add(focused);
+            reached.add(focused);
             for (Button button : buttons) {
                 if (!button.visible) continue;
                 require(button.getX() >= 0 && button.getRight() <= width,
@@ -97,7 +97,10 @@ final class ResponsiveSettingsScreenOracle {
                         "Visible button exceeds vertical bounds");
             }
         }
-        require(reached.size() == count, "Keyboard cannot reach every category option");
+        require(reached.containsAll(toggles), "Keyboard cannot reach every category option");
+        for (Button button : buttons) {
+            if (button.active) require(reached.contains(button), "Keyboard cannot reach a footer or detail action");
+        }
         for (int index = 0; index < buttons.size() * 2; index++) {
             screen.keyPressed(new KeyEvent(InputConstants.KEY_TAB, 0, InputConstants.MOD_SHIFT));
             require(screen.getFocused() instanceof Button focused && focused.visible && focused.active,

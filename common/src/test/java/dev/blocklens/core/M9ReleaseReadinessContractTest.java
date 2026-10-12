@@ -99,13 +99,13 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
-        assertTrue(properties.contains("mod_version=0.4.5"));
+        assertTrue(properties.contains("mod_version=0.4.6"));
         String release = Files.readString(root().resolve(".github/workflows/release.yml"));
         assertTrue(release.contains("matching ${version} artifact"));
         assertFalse(release.contains("matching 0.4.1 artifact"));
-        assertTrue(english.contains("**Current implementation:** BlockLens **v0.4.5** provides **"
+        assertTrue(english.contains("**Current implementation:** BlockLens **v0.4.6** provides **"
                 + CapabilityId.values().length + " independently configurable capabilities**"));
-        assertTrue(japanese.contains("**現行実装:** BlockLens **v0.4.5**"));
+        assertTrue(japanese.contains("**現行実装:** BlockLens **v0.4.6**"));
         assertTrue(japanese.contains("**独立設定可能な" + CapabilityId.values().length + "機能**"));
         assertFalse(english.contains("**Current stable release:** BlockLens **v0.4.4**"));
         assertFalse(japanese.contains("**現在の安定版:** BlockLens **v0.4.4**"));

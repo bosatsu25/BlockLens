@@ -167,7 +167,7 @@ final class PaleOakPaletteOracle {
         context.runOnClient(c -> {
             var screen = new BlockLensConfigScreen(null); BlockLensConfigScreen.show(c, screen);
             toggle(screen);
-            String apply = Component.translatable("blocklens.settings.apply").getString();
+            String apply = Component.translatable("blocklens.settings.close").getString();
             ResponsiveSettingsScreenOracle.buttons(screen).stream().filter(b -> b.getMessage().getString().equals(apply))
                     .findFirst().orElseThrow().onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
         });
@@ -197,7 +197,7 @@ final class PaleOakPaletteOracle {
         try {
             context.runOnClient(c -> {
                 var screen = new FailingScreen(occupied); BlockLensConfigScreen.show(c, screen);
-                toggle(screen); press(screen, "blocklens.settings.apply");
+                toggle(screen); press(screen, "blocklens.settings.close");
                 require(BlockLensConfigScreen.current(c) == screen, "Failed palette save closed its draft");
                 require(!BlockLensRuntime.config().isEnabled(CapabilityId.PALE_OAK_NEUTRAL), "Failed palette save applied config");
             });

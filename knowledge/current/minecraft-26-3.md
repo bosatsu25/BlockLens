@@ -4,7 +4,7 @@ Status: current three-version integration contract. Release availability is reco
 
 ## Supported targets
 
-The current supported targets are Minecraft 26.1.2, 26.2 and 26.3, each with an exact-version client-only JAR. Java 25 and Fabric Loader 0.19.5 are required. Fabric API pins are respectively 0.155.2+26.1.2, 0.160.0+26.2 and 0.162.0+26.3. The current catalog contains 61 independent capabilities and preserves the frozen original 37-control baseline, persisted keys and bit positions. The enabled defaults remain seven; see the [current feature contract](features.md). The historical #42 additive scope had 46 controls, specified in [lightweight-visuals.md](lightweight-visuals.md).
+The current supported targets are Minecraft 26.1.2, 26.2 and 26.3, each with an exact-version client-only JAR. Java 25 and Fabric Loader 0.19.5 are required. Fabric API pins are respectively 0.155.2+26.1.2, 0.160.0+26.2 and 0.162.0+26.3. The current catalog contains 61 independent capabilities and preserves the frozen original 37-control baseline, persisted keys and bit positions. Visibility now defaults OFF for new or missing values; explicitly saved preferences are preserved. String Tweaks remains the only enabled default; see the [current feature contract](features.md). The historical #42 additive scope had 46 controls, specified in [lightweight-visuals.md](lightweight-visuals.md).
 
 The 26.3 module compiles the modern mc26_2 adapters and loading-overlay test bridge independently against its own dependencies. The complete renderer is not copied. Shared UI and test input uses InputConstants: 26.3 moved from GLFW to SDL, so raw key/button/modifier values do not preserve behavior.
 

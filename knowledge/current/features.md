@@ -2,7 +2,7 @@
 
 Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
-The compiled catalog contains 61 independent capabilities; existing keys, ordering and defaults are preserved.
+The compiled catalog contains 61 independent capabilities; existing keys and ordering are preserved. Visibility defaults are OFF for new or missing values; explicitly saved preferences remain effective.
 
 **削除済み:** `analyzer.debris_analyzer` と `builder.schematic_comparison`。既存設定のこれらのキーは無視されます。通常の古代の残骸ハイライト `gaming.ancient_debris` は引き続き利用できます。
 
@@ -58,14 +58,14 @@ The compiled catalog contains 61 independent capabilities; existing keys, orderi
 
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
-| 青氷 | Blue Ice | 青氷の表示に見分けるための目印を加えます。 | 有効 / Enabled |
-| 死んだサンゴ | Dead Coral | 死んだサンゴの表示に目印を加えます。 | 有効 / Enabled |
-| 粉雪 | Powder Snow | 粉雪を見分けやすくします。 | 有効 / Enabled |
-| スカルクカタリスト | Sculk Catalyst | スカルクカタリストを見分けやすくします。 | 有効 / Enabled |
+| 青氷 | Blue Ice | 青氷の表示に見分けるための目印を加えます。 | 無効 / Disabled |
+| 死んだサンゴ | Dead Coral | 死んだサンゴの表示に目印を加えます。 | 無効 / Disabled |
+| 粉雪 | Powder Snow | 粉雪を見分けやすくします。 | 無効 / Disabled |
+| スカルクカタリスト | Sculk Catalyst | スカルクカタリストを見分けやすくします。 | 無効 / Disabled |
 | ガラスの目印 | Glass Highlight | ガラスに水色、ガラス板に琥珀色の目印を追加します。 | 無効 / Disabled |
 | 昆布の目印 | Kelp Highlight | 昆布に動くマゼンタ・オレンジ色の目印を追加します。 | 無効 / Disabled |
-| 明るい白色コンクリート | Bright Concrete | 元のモデルを保って白色コンクリートを発光表示します。 | 有効 / Enabled |
-| 明るいチェスト | Bright Chest | 通常のチェストを明るい白色にし、形と開閉を保ちます。 | 有効 / Enabled |
+| 明るい白色コンクリート | Bright Concrete | 元のモデルを保って白色コンクリートを発光表示します。 | 無効 / Disabled |
+| 明るいチェスト | Bright Chest | 通常のチェストを明るい白色にし、形と開閉を保ちます。 | 無効 / Disabled |
 | ペールオークを白灰色に | Neutral Pale Oak | バニラの木材を木目と色付き金具を保って白灰色にします。保存時に再読み込みし、外部パック素材を優先します。 | 無効 / Disabled |
 
 ## その他 / Other（17）
@@ -94,18 +94,18 @@ The compiled catalog contains 61 independent capabilities; existing keys, orderi
 
 表示フィルターはモードと4つの独立リストを編集し、リストの反映は下書きだけを変更します。空の許可リストは対象の種類をすべて隠します（自分のプレイヤーを除く）。親画面の保存・適用まで実行時設定は変更しません。[表示フィルターの仕様](scene-filter.md)を参照してください。Scene FilterはPR #51で実装済みです。
 
-Bキーまたは任意のMod Menuから開きます。4カテゴリで機能を切り替え、各行に名前・説明・独立した有効/無効ボタンを表示します。「保存して適用」で保存し、「変更を破棄」またはEscでは保存せず戻ります。保存失敗時は編集内容を保持し、再試行できます。
+Bキーまたは任意のMod Menuから開きます。4カテゴリで機能を切り替え、各行に名前・説明・独立した有効/無効ボタンを表示します。「適用」は保存・反映して画面に留まり、「保存して閉じる」は保存・反映して親画面へ戻ります。「変更を破棄」またはEscは最後の適用後の追加変更だけを破棄します。保存失敗時は編集内容を保持し、再試行できます。
 
 「炎の高さを抑える」と「手持ちアイテムの大きさ」の詳細画面も同じ編集内容を共有し、親画面の保存・適用まで保存しません。詳細は [追加6機能の仕様](lightweight-visuals.md) に記録しています。4つの解析機能にも半径・マーカー数・最小更新間隔の詳細設定があり、同じ保存・破棄の編集内容を共有します。走査上限と利用可能なクライアント情報の制限は [解析機能の仕様](world-analyzers.md) を参照してください。
 
-Open with B or the optional Mod Menu entrypoint. Save and apply persists edits; Discard changes and Esc discard them. A failed save retains the draft for retry. See [settings UI](settings-ui.md) for navigation and verification boundaries.
+Open with B or the optional Mod Menu entrypoint. Apply saves and installs edits while staying on the screen. Save and close returns to the parent. Discard and Esc discard only edits since the last successful apply. A failed save retains the draft for retry. See [settings UI](settings-ui.md) for navigation and verification boundaries.
 
 コンパクト表示3機能とペールオークの白灰色化は、保存が成功したときに必要なリソース再読み込みを行います。無効化で標準のモデルへ戻り、外部パックが所有する定義を直接変更しません。既存の一人称の大きさ設定は独立して適用できます。[コンパクト表示の仕様と検証範囲](native-compact-model-plan.md)を参照してください。
 
 ## 確認範囲 / Verification boundary
 
-一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援とペールオークの白灰色化、3つのコンパクト表示と地形簡略化、鉱石の接続枠を追加した構成です。既存機能の設定キー・ビット位置・既定値は維持します。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
+一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援とペールオークの白灰色化、3つのコンパクト表示と地形簡略化、鉱石の接続枠を追加した構成です。既存機能の設定キー・ビット位置・保存済みの値は維持します。新規設定と欠落キーでは見やすさ9機能を無効にします。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
 
-建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。3機能を有効にして「保存して適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
+建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。3機能を有効にして「適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
 
 外部Shader・Vulkanの正確な版と実測条件は[外部互換性](external-compatibility.md)で管理します。添付6パックは非公開環境で3版の実クライアントを起動し、2通りの優先順序・29素材の解決・3つの描画対照・復元を確認しています。素材ごとのハッシュは非公開です。この確認は各パックの全表示効果や任意の組み合わせの保証ではありません。This catalog does not claim blanket shader/pack/backend compatibility. Published downloads are listed separately on [GitHub Releases](https://github.com/bosatsu25/BlockLens/releases).

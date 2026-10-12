@@ -48,12 +48,12 @@ final class CapabilityContractTest {
 
         for (CapabilityId capability : CapabilityId.values()) {
             if (baseline.containsKey(capability.sourceKey())) {
-                assertEquals(baseline.get(capability.sourceKey()), capability.defaultEnabled(), capability.sourceKey());
+                assertEquals(capability.category() != CapabilityId.Category.OUTLINE
+                        && baseline.get(capability.sourceKey()), capability.defaultEnabled(), capability.sourceKey());
             } else if (capability.ordinal() < 40) {
                 assertFalse(capability.defaultEnabled(), capability.sourceKey());
             } else {
-                assertEquals(capability == CapabilityId.BRIGHT_CONCRETE || capability == CapabilityId.BRIGHT_CHEST,
-                        capability.defaultEnabled(), capability.sourceKey());
+                assertFalse(capability.defaultEnabled(), capability.sourceKey());
             }
         }
     }
@@ -71,12 +71,7 @@ final class CapabilityContractTest {
         assertEquals(22, counts.get(CapabilityId.Category.RESOURCE));
         assertEquals(9, counts.get(CapabilityId.Category.OUTLINE));
         assertEquals(17, counts.get(CapabilityId.Category.OTHER));
-        assertEquals(Set.of(
-                "outline.blueice",
-                "outline.deadcoral",
-                "outline.powdersnow",
-                "outline.sculk_catalyst",
-                "others.stringtweaks", "outline.bright_concrete", "outline.bright_chest"), enabled);
+        assertEquals(Set.of("others.stringtweaks"), enabled);
     }
 
     @Test

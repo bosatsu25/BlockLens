@@ -37,7 +37,7 @@ final class ConnectedOreSettingsOracle {
             require(Arrays.equals(unchanged,Files.readAllBytes(directory.resolve(BlockLensConfigFiles.FILE_NAME)))
                     && !BlockLensRuntime.config().isEnabled(CapabilityId.CONNECTED_ORE_EDGES),"Discard saved connection");
             var priorModels=context.computeOnClient(c->c.getModelManager().getBlockStateModelSet());
-            context.runOnClient(c->{var screen=new BlockLensConfigScreen(null);BlockLensConfigScreen.show(c,screen);toggle(screen);press(screen,"blocklens.settings.apply");});
+            context.runOnClient(c->{var screen=new BlockLensConfigScreen(null);BlockLensConfigScreen.show(c,screen);toggle(screen);press(screen,"blocklens.settings.close");});
             context.waitFor(c->SettingsClientAccess.ready(c)&&c.getModelManager().getBlockStateModelSet()!=priorModels,1200);context.waitTicks(20);
             var saved=BlockLensConfigFiles.loadOrCreate(directory);
             require(saved.isEnabled(CapabilityId.CONNECTED_ORE_EDGES)&&saved.isEnabled(CapabilityId.DIAMOND_ORE)
@@ -47,7 +47,7 @@ final class ConnectedOreSettingsOracle {
             fixture=Files.createTempDirectory(directory,"connected-failure-");occupied=fixture.resolve("occupied");Files.writeString(occupied,"keep");
             Path blocked=occupied;
             context.runOnClient(c->{BlockLensRuntime.installConfig(baseline);var screen=new FailingScreen(blocked);
-                BlockLensConfigScreen.show(c,screen);toggle(screen);press(screen,"blocklens.settings.apply");
+                BlockLensConfigScreen.show(c,screen);toggle(screen);press(screen,"blocklens.settings.close");
                 require(BlockLensConfigScreen.current(c)==screen && !BlockLensRuntime.config().isEnabled(CapabilityId.CONNECTED_ORE_EDGES),"Failed connection save lost draft/applied state");
                 int index=SettingsCatalog.capabilities(CapabilityId.Category.RESOURCE).indexOf(CapabilityId.CONNECTED_ORE_EDGES);
                 require(ResponsiveSettingsScreenOracle.buttons(screen).get(4+index).getMessage().getString()

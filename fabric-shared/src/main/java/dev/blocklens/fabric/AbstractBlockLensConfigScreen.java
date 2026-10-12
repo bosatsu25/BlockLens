@@ -23,7 +23,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-/** One settings implementation compiled against both supported Minecraft APIs. */
+/** One settings implementation compiled against all three supported Minecraft APIs. */
 public abstract class AbstractBlockLensConfigScreen extends Screen {
     private final Screen parent;
     private final Path configDirectory;
@@ -38,6 +38,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private SettingsLayout layout;
     private Button discardButton;
     private Button applyButton;
+    private Button saveButton;
     private Button orePresetButton;
     private boolean saveFailed;
 
@@ -116,12 +117,16 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                     }).tooltip(Tooltip.create(Component.translatable("blocklens.resource.preset.glow.hint")))
                     .bounds(layout.left() + 4, 8, Math.min(120, layout.contentWidth() / 2), 20).build());
         }
-        int footerWidth = (layout.contentWidth() - 8) / 2;
+        int footerWidth = (layout.contentWidth() - 16) / 3;
+        Button.OnPress action = button -> {
+            if (button == discardButton) onClose(); else save(button == saveButton);
+        };
         discardButton = addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.discard"),
-                ignored -> onClose()).bounds(layout.left(), layout.footerY(), footerWidth, 20).build());
+                action).bounds(layout.left(), layout.footerY(), footerWidth, 20).build());
         applyButton = addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.apply"),
-                ignored -> saveAndClose()).bounds(layout.left() + footerWidth + 8, layout.footerY(),
-                        footerWidth, 20).build());
+                action).bounds(layout.left() + footerWidth + 8, layout.footerY(), footerWidth, 20).build());
+        saveButton = addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.close"),
+                action).bounds(layout.left() + 2 * (footerWidth + 8), layout.footerY(), footerWidth, 20).build());
         positionRows();
         setInitialFocus();
     }
@@ -191,6 +196,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
             if (orePresetButton != null) order.add(orePresetButton);
             order.add(discardButton);
             order.add(applyButton);
+            order.add(saveButton);
             int direction = event.hasShiftDown() ? -1 : 1;
             int cursor = order.indexOf(getFocused());
             if (cursor < 0) cursor = direction > 0 ? -1 : 0;
@@ -289,7 +295,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
         }
     }
 
-    private void saveAndClose() {
+    private void save(boolean close) {
         try {
             if (draft.save(configDirectory)) {
                 boolean resourcesChanged = dev.blocklens.core.render.VisualResourceReloadPolicy.requiresReload(
@@ -298,7 +304,8 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                 MinecraftTerrainInvalidator.invalidateAll(minecraft);
                 if (resourcesChanged) minecraft.reloadResourcePacks();
             }
-            showParent(parent);
+            saveFailed = false;
+            if (close) showParent(parent);
         } catch (IOException | SecurityException exception) {
             saveFailed = true;
         }

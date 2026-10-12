@@ -76,11 +76,31 @@ final class SettingsEditingOracle {
                 pressFirstToggle(screen);
                 BlockLensConfig expected = original.withEnabled(CapabilityId.ANVIL, !original.isEnabled(CapabilityId.ANVIL))
                         .withEnabled(CapabilityId.OBSIDIAN, !original.isEnabled(CapabilityId.OBSIDIAN));
-                press(screen, "blocklens.settings.apply");
+                press(screen, "blocklens.settings.close");
                 require(BlockLensConfigScreen.current(client) == previous, "Save did not return to parent");
                 require(BlockLensRuntime.config().enabledMask() == expected.enabledMask(), "Save lost category edits");
                 require(BlockLensConfigFiles.loadOrCreate(configDirectory).enabledMask() == expected.enabledMask(),
                         "Persisted edits differ from the runtime");
+
+                screen = new BlockLensConfigScreen(previous);
+                BlockLensConfigScreen.show(client, screen);
+                pressFirstToggle(screen);
+                press(screen, "blocklens.settings.apply");
+                require(BlockLensConfigScreen.current(client) == screen, "Apply returned to the parent");
+                BlockLensConfig applied = expected.withEnabled(CapabilityId.ANVIL, original.isEnabled(CapabilityId.ANVIL));
+                require(BlockLensRuntime.config().equals(applied), "Apply did not install the snapshot");
+                require(BlockLensConfigFiles.loadOrCreate(configDirectory).equals(applied), "Apply did not persist");
+                Path savedPath = configDirectory.resolve(BlockLensConfigFiles.FILE_NAME);
+                Files.setLastModifiedTime(savedPath, java.nio.file.attribute.FileTime.fromMillis(1234000));
+                var savedTime = Files.getLastModifiedTime(savedPath);
+                press(screen, "blocklens.settings.apply");
+                require(BlockLensConfigScreen.current(client) == screen, "Unchanged Apply closed the screen");
+                require(Files.getLastModifiedTime(savedPath).equals(savedTime), "Unchanged Apply rewrote settings");
+                pressFirstToggle(screen);
+                screen.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE, 0, 0));
+                require(BlockLensConfigScreen.current(client) == previous, "Esc after Apply did not return");
+                require(BlockLensRuntime.config().equals(applied), "Esc undid applied edits");
+                require(BlockLensConfigFiles.loadOrCreate(configDirectory).equals(applied), "Esc saved later edits");
 
                 BlockLensConfigFiles.save(configDirectory, original);
                 BlockLensRuntime.installConfig(original);
@@ -97,14 +117,24 @@ final class SettingsEditingOracle {
                 failing.resize(320, 240);
                 require(firstToggle(failing).getMessage().getString().equals(state(!original.isEnabled(CapabilityId.ANVIL))),
                         "Save failure or resize lost the draft");
+                press(failing, "blocklens.settings.close");
+                require(BlockLensConfigScreen.current(client) == failing, "Save-and-close failure closed the screen");
+                require(BlockLensRuntime.config().equals(original), "Failed Save published edits");
                 Files.delete(occupied);
                 Files.createDirectory(occupied);
                 press(failing, "blocklens.settings.apply");
-                require(BlockLensConfigScreen.current(client) == previous, "Retry did not return to parent");
+                require(BlockLensConfigScreen.current(client) == failing, "Apply retry closed the screen");
                 require(BlockLensConfigFiles.loadOrCreate(occupied).isEnabled(CapabilityId.ANVIL)
                         == !original.isEnabled(CapabilityId.ANVIL), "Retry lost the draft");
                 require(BlockLensRuntime.config().isEnabled(CapabilityId.ANVIL)
                         == !original.isEnabled(CapabilityId.ANVIL), "Retry did not install the saved snapshot");
+                pressFirstToggle(failing);
+                press(failing, "blocklens.settings.discard");
+                require(BlockLensRuntime.config().isEnabled(CapabilityId.ANVIL)
+                        == !original.isEnabled(CapabilityId.ANVIL), "Discard undid applied changes");
+                BlockLensConfigScreen.show(client, failing);
+                press(failing, "blocklens.settings.close");
+                require(BlockLensConfigScreen.current(client) == previous, "Save and close did not return");
             } catch (IOException exception) {
                 throw new AssertionError("Settings editing oracle could not use its controlled storage");
             } finally {
@@ -125,8 +155,57 @@ final class SettingsEditingOracle {
                     BlockLensConfigScreen.show(client, previous);
                 }
             }
-            System.out.println("BLOCKLENS_SETTINGS_EDITING discard=true escape=true persistence=true retry=true");
+            System.out.println("BLOCKLENS_SETTINGS_EDITING discard=true escape=true persistence=true retry=true apply_stays=true unchanged_no_write=true");
         });
+        verifyApplyReload(context);
+    }
+
+    /** Resource-changing Apply must keep the screen and its newly saved baseline after reload. */
+    private static void verifyApplyReload(ClientGameTestContext context) {
+        BlockLensConfig original = BlockLensRuntime.config();
+        Screen parent = context.computeOnClient(BlockLensConfigScreen::current);
+        var screen = context.computeOnClient(client -> new BlockLensConfigScreen(parent));
+        BlockLensConfig applied = original.withEnabled(CapabilityId.PALE_OAK_NEUTRAL,
+                !original.isEnabled(CapabilityId.PALE_OAK_NEUTRAL));
+        Path directory = FabricLoader.getInstance().getConfigDir();
+        try {
+            context.runOnClient(client -> {
+                BlockLensConfigScreen.show(client, screen);
+                ResponsiveSettingsScreenOracle.select(screen, CapabilityId.Category.OUTLINE);
+                int index = dev.blocklens.core.ui.SettingsCatalog.capabilities(CapabilityId.Category.OUTLINE)
+                        .indexOf(CapabilityId.PALE_OAK_NEUTRAL);
+                screen.keyPressed(new KeyEvent(InputConstants.KEY_END, 0, 0));
+                ResponsiveSettingsScreenOracle.buttons(screen).get(4 + index)
+                        .onPress(new KeyEvent(InputConstants.KEY_RETURN, 0, 0));
+                press(screen, "blocklens.settings.apply");
+            });
+            context.waitFor(SettingsClientAccess::ready, 1200);
+            context.waitTicks(2);
+            context.runOnClient(client -> {
+                require(BlockLensConfigScreen.current(client) == screen, "Apply reload closed settings");
+                require(BlockLensRuntime.config().equals(applied), "Apply reload lost runtime settings");
+                require(ResponsiveSettingsScreenOracle.buttons(screen).get(12).visible,
+                        "Apply reload lost category or scroll");
+                try {
+                    require(BlockLensConfigFiles.loadOrCreate(directory).equals(applied), "Apply reload lost saved settings");
+                } catch (IOException exception) { throw new AssertionError("Apply reload persistence failed"); }
+                press(screen, "blocklens.settings.discard");
+                require(BlockLensConfigScreen.current(client) == parent, "Discard after reload did not return");
+                require(BlockLensRuntime.config().equals(applied), "Discard after reload undid Apply");
+            });
+            System.out.println("BLOCKLENS_SETTINGS_APPLY reload=true stays=true scroll=true baseline=true");
+        } finally {
+            context.runOnClient(client -> {
+                try { BlockLensConfigFiles.save(directory, original); }
+                catch (IOException exception) { throw new AssertionError("Apply reload fixture restoration failed"); }
+                BlockLensRuntime.installConfig(original);
+                BlockLensConfigScreen.show(client, parent);
+            });
+            var reloaded = context.computeOnClient(client -> client.reloadResourcePacks());
+            context.waitFor(client -> reloaded.isDone(), 1200);
+            reloaded.join();
+            context.waitFor(SettingsClientAccess::ready, 1200);
+        }
     }
 
     private static String state(boolean enabled) {
