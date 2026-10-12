@@ -1,10 +1,10 @@
 # Three-version integration
 
-Status: current three-version development contract; not a published release.
+Status: current three-version integration contract. Release availability is recorded on [GitHub Releases](https://github.com/bosatsu25/BlockLens/releases).
 
 ## Supported targets
 
-The current development targets are Minecraft 26.1.2, 26.2 and 26.3, each with an exact-version client-only JAR. Java 25 and Fabric Loader 0.19.5 are required. Fabric API pins are respectively 0.155.2+26.1.2, 0.160.0+26.2 and 0.162.0+26.3. The original 40 capabilities, persisted keys, bit positions and five enabled defaults remain unchanged. The additive #42 development scope has 46 controls and seven enabled defaults, specified in [lightweight-visuals.md](lightweight-visuals.md).
+The current supported targets are Minecraft 26.1.2, 26.2 and 26.3, each with an exact-version client-only JAR. Java 25 and Fabric Loader 0.19.5 are required. Fabric API pins are respectively 0.155.2+26.1.2, 0.160.0+26.2 and 0.162.0+26.3. The current catalog contains 61 independent capabilities and preserves the frozen original 37-control baseline, persisted keys and bit positions. The enabled defaults remain seven; see the [current feature contract](features.md). The historical #42 additive scope had 46 controls, specified in [lightweight-visuals.md](lightweight-visuals.md).
 
 The 26.3 module compiles the modern mc26_2 adapters and loading-overlay test bridge independently against its own dependencies. The complete renderer is not copied. Shared UI and test input uses InputConstants: 26.3 moved from GLFW to SDL, so raw key/button/modifier values do not preserve behavior.
 
@@ -39,9 +39,15 @@ Per-version client results after this fix, current-head CI and screenshots must 
 
 The first Ubuntu 26.3 CI launch failed before tests with "Couldn't find matching GLX visual"; Vulkan fallback also could not initialize in that virtual display. The CI client step selects SDL_VIDEO_FORCE_EGL=1 only for 26.3 under Xvfb so SDL creates the OpenGL context through EGL. Earlier GLFW targets keep their existing context path. The original client step had an eight-minute timeout to preserve failure diagnostics instead of hanging indefinitely in a native startup dialog. CI #342 completed the added Builder and ore-extension tests on all three targets, then exhausted that execution window during M8. The expanded graph now has a twelve-minute client-step timeout; every individual M8 performance, allocation, sample-count and frame-rate requirement remains unchanged. This is test execution configuration and does not itself establish Vulkan support. See [the measured delivery record](remaining-delivery.md).
 
-PR #40's settings redesign was merged at ea488677cbae13ca2f80da685dd9831eace88e7f. Its two-version evidence does not validate this three-version change. Uploaded third-party pack combinations, shaders and Vulkan remain unverified. Release creation and merging are separate actions.
+PR #40's settings redesign was merged at ea488677cbae13ca2f80da685dd9831eace88e7f. Its historical two-version evidence does not validate later three-version changes. Current delivery evidence is recorded below; release creation and merging remain separate actions.
 
 The subsequent Ubuntu launch selected EGL but failed with "Could not load EGL library" before tests. SDL's loader falls back to libEGL.so.1. The 26.3 CI job therefore explicitly installs Ubuntu's libegl1 (including its Mesa EGL dependency) and libgl1-mesa-dri before client startup. This dependency setup is restricted to the ephemeral 26.3 CI runner; local machines and earlier version jobs are unchanged. Hosted client evidence is still required after this environment repair.
+
+## Current delivery evidence
+
+[PR #74](https://github.com/bosatsu25/BlockLens/pull/74) merged at `dfcece0e8c1dab12903cfff82bbe8f9831ec770b` after [all 25 exact-head CI jobs passed](https://github.com/bosatsu25/BlockLens/actions/runs/38204797278). Its merged tree is identical to the tested head. The matrix includes all three full native clients, three connected-ore clients, eight ordinary pinned external profiles, eight connected external profiles, two BBE/Cele controls and the common quality gate. Native settings verify EN/JA, four viewport sizes, GUI scales 1/2, keyboard navigation, save/discard and failed-save recovery. Shader activation/options and actual backend identity are checked; there is no Vulkan row for 26.1.2.
+
+Private six-pack verification passes on all three versions for forward/reverse priority, 29 resource probes, three rendered controls and restoration. Individual material hashes are removed from collected public metadata. These bounded checks do not certify every pack-specific combination, animated/unpinned shaders, BBE with shaders ON or arbitrary complete modpacks. Main integration and release artifact evidence is recorded in [issue #64](https://github.com/bosatsu25/BlockLens/issues/64).
 
 ## Official references
 

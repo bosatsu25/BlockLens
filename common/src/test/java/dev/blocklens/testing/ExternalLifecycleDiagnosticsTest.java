@@ -63,6 +63,25 @@ class ExternalLifecycleDiagnosticsTest {
     }
 
     @Test
+    void worldCloseObservationDoesNotConsumeItsSingleSnapshotDuringLongVisualScenes() throws Exception {
+        try (var diagnostics = new ExternalLifecycleDiagnostics(directory, true, 30, true)) {
+            Path file = directory.resolve(ExternalLifecycleDiagnostics.FILE_NAME);
+            diagnostics.phase("world_ready");
+            Thread.sleep(150);
+            assertFalse(Files.exists(file), "long rendering must not consume the close snapshot");
+            diagnostics.phase("world_close");
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (!Files.exists(file) && System.nanoTime() < deadline) Thread.sleep(10);
+            assertTrue(Files.isRegularFile(file));
+            String text = Files.readString(file, StandardCharsets.US_ASCII);
+            assertTrue(text.contains("stalledPhase=world_close\n"));
+            assertTrue(text.contains("snapshotCount=1\n"));
+            assertTrue(text.contains(":world_ready\n"));
+            assertTrue(text.contains(":world_close\n"));
+        }
+    }
+
+    @Test
     void closeCancelsDaemonWithoutWaitingForTheDeadline() throws Exception {
         var diagnostics = new ExternalLifecycleDiagnostics(directory, true, 60_000);
         diagnostics.phase("world_close");

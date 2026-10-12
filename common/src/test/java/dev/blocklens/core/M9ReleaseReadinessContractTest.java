@@ -103,8 +103,12 @@ final class M9ReleaseReadinessContractTest {
         String release = Files.readString(root().resolve(".github/workflows/release.yml"));
         assertTrue(release.contains("matching ${version} artifact"));
         assertFalse(release.contains("matching 0.4.1 artifact"));
-        assertTrue(english.contains("Development v0.4.5"));
-        assertTrue(japanese.contains("開発版 v0.4.5"));
+        assertTrue(english.contains("**Current implementation:** BlockLens **v0.4.5** provides **"
+                + CapabilityId.values().length + " independently configurable capabilities**"));
+        assertTrue(japanese.contains("**現行実装:** BlockLens **v0.4.5**"));
+        assertTrue(japanese.contains("**独立設定可能な" + CapabilityId.values().length + "機能**"));
+        assertFalse(english.contains("**Current stable release:** BlockLens **v0.4.4**"));
+        assertFalse(japanese.contains("**現在の安定版:** BlockLens **v0.4.4**"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
         assertTrue(properties.contains("v0.2.2 adds the missing Mod Menu settings entrypoint"));
         assertTrue(properties.contains("v0.3.0 shipped 57 capabilities across Minecraft 26.1.2, 26.2 and 26.3"));

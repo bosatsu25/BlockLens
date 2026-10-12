@@ -38,7 +38,7 @@ final class ExternalCompatibilityOracle {
         evidence.setProperty("connectedOreOnly",Boolean.toString(connectedOnly));
         evidence.setProperty("captureMode", (ExternalFrameCapture.required() || (connectedOnly && profile.equals("shader-on")))
                 ? "completed-native-frame" : "fabric-test-capture");
-        try (var lifecycle = ExternalLifecycleDiagnostics.open(output, false)) {
+        try (var lifecycle = ExternalLifecycleDiagnostics.openForWorldClose(output, profile.equals("vulkan"))) {
             Properties manifest = loadManifest(directory);
             require(profile.equals(manifest.getProperty("profile")), "Prepared profile differs");
             require(BlockLensRuntime.minecraftVersion().equals(manifest.getProperty("minecraft")),

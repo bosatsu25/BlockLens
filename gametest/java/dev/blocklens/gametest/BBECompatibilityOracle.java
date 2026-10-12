@@ -30,8 +30,8 @@ final class BBECompatibilityOracle {
             verifyConfiguration();
             try (var world = context.worldBuilder().create()) {
                 context.waitTicks(20);
-                // Freeze only the water background in both kelp samples. The real kelp renderer,
-                // animated/static kelp pair, pixel thresholds and motion checks are unchanged.
+                // Freeze water and vanilla base alpha animation in both cue samples.
+                // Vanilla PNGs/models, the real cue, thresholds and motion checks are unchanged.
                 water.verify();
                 LightweightVisualOracle.verify(context, world);
                 water.verify();

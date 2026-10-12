@@ -124,3 +124,7 @@ The loop must not become an excuse for unrelated refactoring.
 ## 8. Documentation rule
 
 README files are user-facing summaries, not the source of truth. If README and `knowledge/current/` disagree, fix the README; do not silently redefine the product from README text.
+
+## Fresh repository-contract observations
+
+The common JUnit suite reads current repository documentation, workflows and version adapters as well as compiled product classes. Its test task must run on every invocation and cannot restore a cached result for those observations. Java compilation and pure-policy mutation analysis retain their normal incremental behavior. A native Gradle regression first reproduced a false UP-TO-DATE success after changing the README catalog count; after disabling only common:test result reuse/cache, that same incorrect count fails the real readiness contract, and restoring the README passes. This is build-verification behavior, not a client startup/runtime change.

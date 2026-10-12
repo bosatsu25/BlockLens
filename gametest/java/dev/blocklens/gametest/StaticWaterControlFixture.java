@@ -1,11 +1,14 @@
 package dev.blocklens.gametest;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
+import net.minecraft.client.resources.metadata.texture.TextureMetadataSection;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.resources.Identifier;
 
-/** Hold the fluid-texture background constant in both positive and negative kelp motion samples. */
+/** Hold water and vanilla base animation constant in both positive and negative cue-motion samples. */
 final class StaticWaterControlFixture implements AutoCloseable {
     private static final String PACK = "blocklens-static-water-control";
     private final ClientGameTestContext context;
@@ -51,6 +54,27 @@ final class StaticWaterControlFixture implements AutoCloseable {
                         "minecraft", "textures/block/" + name + ".png"));
                 if (resource.isEmpty() || !resource.get().sourcePackId().equals(selected)) {
                     throw new AssertionError("static water control did not win resource priority: " + name);
+                }
+            }
+            for (String name : new String[] {"kelp", "kelp_plant"}) {
+                var id = Identifier.fromNamespaceAndPath("minecraft", "textures/block/" + name + ".png");
+                var resource = c.getResourceManager().getResource(id).orElseThrow();
+                var metadata = c.getResourceManager().getResource(id.withPath(id.getPath() + ".mcmeta"));
+                if (!resource.sourcePackId().equals("vanilla") || metadata.isEmpty()
+                        || !metadata.get().sourcePackId().equals(selected)) {
+                    throw new AssertionError("base kelp control must preserve vanilla PNG provenance");
+                }
+                try {
+                    var animation = resource.metadata().getSection(AnimationMetadataSection.TYPE).orElseThrow();
+                    var frames = animation.frames().orElseThrow();
+                    var texture = resource.metadata().getSection(TextureMetadataSection.TYPE).orElseThrow();
+                    if (frames.size() != 2 || frames.stream().anyMatch(frame -> frame.index() != 0)
+                            || animation.defaultFrameTime() != 2 || animation.interpolatedFrames()
+                            || texture.alphaCutoffBias() != 0.1f) {
+                        throw new AssertionError("base kelp metadata did not resolve the static/alpha contract");
+                    }
+                } catch (IOException failure) {
+                    throw new AssertionError("base kelp metadata could not be verified", failure);
                 }
             }
         });
