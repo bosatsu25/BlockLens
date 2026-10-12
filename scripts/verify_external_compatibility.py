@@ -11,6 +11,7 @@ import struct
 import zipfile
 
 from prepare_external_compatibility import read_lock, validate_pack
+from verify_simplified_evidence import IMAGES as SIMPLIFIED_IMAGES, CHECKS as SIMPLIFIED_CHECKS, verify as verify_simplified
 
 RENDER_PROFILES = ("shader-off", "shader-on", "vulkan", "packs")
 PALETTE_IMAGES = tuple("palette-" + name + ".png" for name in (
@@ -27,7 +28,7 @@ COMPACT_CHECKS = ("actualModelParser", "bothHands", "thirdPerson", "gui", "inher
 DEFAULT_IMAGES = (
     "m3-all13-on.png", "m3-all13-reloaded.png", "m3-all13-off-active-pack.png",
     "m5-pack-off.png", "m5-pack-on.png", "m5-pack-air-control.png",
-) + PALETTE_IMAGES + COMPACT_IMAGES
+) + PALETTE_IMAGES + COMPACT_IMAGES + SIMPLIFIED_IMAGES
 SODIUM_STAGES = (
     "air-control", "explicit-off", "explicit-on", "explicit-restored", "unsupported-off",
     "unsupported-on", "tagged-off", "tagged-on", "tag-removed", "tagged-filtered",
@@ -54,6 +55,7 @@ FAILURE_FILES = (
     "m5-pack-visual/m5-pack-air-control.png", "m5-pack-visual/m5-pack-visual-manifest.txt",
     *(f"pale-oak-visual/{name}" for name in (*PALETTE_IMAGES, "palette-manifest.txt")),
     *(f"compact-model-visual/{name}" for name in (*COMPACT_IMAGES, "compact-manifest.txt")),
+    *(f"simplified-visual/{name}" for name in (*SIMPLIFIED_IMAGES, "simplified-manifest.txt")),
     *(f"sodium-terrain/{name}" for name in (*SODIUM_IMAGES, SODIUM_MANIFEST)),
 )
 
@@ -310,7 +312,10 @@ def verify(directory: Path, minecraft: str, profile: str, pack_input: Path | Non
             raise ValueError("Palette native wood ROI lacks a rendered difference")
         require_value(evidence, "compactModels", "true")
         compact_files = verify_compact(directory, minecraft)
+        require_value(evidence, "simplifiedTerrain", "true")
+        simplified_files = verify_simplified(directory, minecraft)
         images = DEFAULT_IMAGES
+        files.append(simplified_files[0])
         files.append(compact_files[0])
         files += [directory / "m3-visual-manifest.txt", directory / "m5-pack-visual-manifest.txt", palette_file]
         if profile.startswith("shader-"):

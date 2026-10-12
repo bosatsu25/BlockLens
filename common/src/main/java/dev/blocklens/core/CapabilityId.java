@@ -86,7 +86,9 @@ public enum CapabilityId {
 
     COMPACT_BLOCKS("others.compact_blocks", Category.OTHER, false),
     COMPACT_ITEMS("others.compact_items", Category.OTHER, false),
-    COMPACT_TOOLS("others.compact_tools", Category.OTHER, false);
+    COMPACT_TOOLS("others.compact_tools", Category.OTHER, false),
+
+    SIMPLIFIED_TERRAIN("scene.simplified_terrain", Category.OTHER, false);
 
     public enum Category {
         DECORATION,

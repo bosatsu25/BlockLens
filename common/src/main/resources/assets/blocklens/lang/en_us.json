@@ -193,5 +193,7 @@
   "blocklens.capability.compact_items": "Compact items",
   "blocklens.capability.compact_items.description": "Use item-specific display poses, including rods, horns, banners and heads.",
   "blocklens.capability.compact_tools": "Compact weapons and tools",
-  "blocklens.capability.compact_tools.description": "Use compact tool poses, including bow, crossbow, blocking shield, mace, spear and trident states."
+  "blocklens.capability.compact_tools.description": "Use compact tool poses, including bow, crossbow, blocking shield, mace, spear and trident states.",
+  "blocklens.capability.simplified_terrain": "Simplified terrain",
+  "blocklens.capability.simplified_terrain.description": "Replace selected vanilla terrain with opaque dark grain and sparse plants; keep the hide filter independent."
 }

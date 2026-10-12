@@ -19,8 +19,20 @@ class ExternalPreparationTest(unittest.TestCase):
                 self.assertIn("/versions/" + artifact["version_id"] + "/", artifact["url"])
                 self.assertEqual(128, len(bytes.fromhex(artifact["sha512"]).hex()))
                 self.assertEqual(64, len(bytes.fromhex(artifact["sha256"]).hex()))
-        self.assertEqual("LOW", lock["shader"]["profile"])
-        self.assertEqual(14, len(lock["shader"]["options"]))
+        self.assertEqual("LOW_STATIC", lock["shader"]["profile"])
+        self.assertEqual(16, len(lock["shader"]["options"]))
+
+    def test_shader_restoration_fixture_freezes_only_vertex_animation_time(self):
+        shader = compatibility.read_lock()["shader"]
+        self.assertEqual("0.00", shader["options"].get("WAVING_SPEED"))
+        self.assertEqual("2", shader["options"]["SSAO_QUALI_DEFINE"])
+        self.assertNotIn("WAVING_LEAVES", shader["options"])
+        self.assertNotIn("WAVING_FOLIAGE", shader["options"])
+
+    def test_static_shader_fixture_freezes_subpixel_phase_without_disabling_taa(self):
+        options = compatibility.read_lock()["shader"]["options"]
+        self.assertEqual("0", options.get("TAA_JITTER"))
+        self.assertNotIn("TAA_DEFINE", options)
 
     def test_all_six_supplied_pack_inputs_are_byte_pinned(self):
         packs = compatibility.read_lock()["packs"]
