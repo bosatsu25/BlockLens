@@ -114,7 +114,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y libegl1 libgl1-mesa-dri
       - name: Run client GameTest Minecraft ${{ matrix.minecraft }}
-        # The prior full graph took 11m17s; simplified-terrain adds about 4m24s.
+        # The expanded terrain graph measured up to 17m58s; retain bounded headroom.
         # Keep a bounded deadline for the expanded graph; performance guards stay unchanged.
         timeout-minutes: 22
         env:

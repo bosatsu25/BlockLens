@@ -384,15 +384,9 @@ final class SodiumTerrainOracle {
          * stable controls; do not relax its threshold globally.
          */
         private void sameForeground(Capture expected, Capture restored, Capture filtered, String key) {
-            int expectedPixels = 0, restoredPixels = 0, sharedPixels = 0;
-            for (int y = 90; y < 310; y++) for (int x = 90; x < 550; x++) {
-                int blank = filtered.image().getRGB(x, y);
-                boolean before = delta(expected.image().getRGB(x, y), blank) >= DELTA;
-                boolean after = delta(restored.image().getRGB(x, y), blank) >= DELTA;
-                if (before) expectedPixels++;
-                if (after) restoredPixels++;
-                if (before && after) sharedPixels++;
-            }
+            var overlap=dev.blocklens.testing.ForegroundRestoration.measure(
+                    expected.image(),restored.image(),filtered.image(),DELTA);
+            int expectedPixels=overlap.expected(),restoredPixels=overlap.restored(),sharedPixels=overlap.shared();
             int expectedOverlap = expectedPixels == 0 ? 0 : sharedPixels * 1000 / expectedPixels;
             int restoredOverlap = restoredPixels == 0 ? 0 : sharedPixels * 1000 / restoredPixels;
             int colorDifference = different(expected.image(), restored.image());
