@@ -56,6 +56,8 @@ Required verification includes common JUnit/JaCoCo/PIT, three-version build, cli
 settings persistence/failure recovery, keyboard reachability at 320×240 / 640×360 / 854×480 /
 1920×1080, actual English/Japanese framebuffer evidence, JAR structure/size and reproducibility.
 
+The historical M7 five-control visual preset is now constructed explicitly in test-support, independently of product defaults. Its pure regression verifies the exact five source keys; the native oracle retains its independent preset assertion. Test-support classes remain excluded from distributed runtime JARs.
+
 The reviewed three-version baseline adjustment is recorded in [26.3 integration](minecraft-26-3.md); the newly uploaded ZIP
 does not redefine them. CI results must be tied to the current PR head.
 
