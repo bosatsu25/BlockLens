@@ -1,6 +1,9 @@
 package dev.blocklens.gametest;
 import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
+import dev.blocklens.core.BlockLensConfigFiles;
+import dev.blocklens.core.CapabilityId;
+import net.fabricmc.loader.api.FabricLoader;
 import dev.blocklens.fabric.BlockLensConfigScreen;
 import dev.blocklens.testing.PaleOakObjectFrames;
 import java.awt.image.BufferedImage;
@@ -63,7 +66,16 @@ final class PaleOakRenderedScenes {
                 var on=capture(context,output,ROLES[role]+"-on");
                 var region=gui ? GUI : WORLD;
                 require(PaleOakObjectFrames.changed(off,on,air,region),"Rendered pale-oak chroma/grain/foreground absent: "+ROLES[role]);
-                context.runOnClient(c->BlockLensConfigScreen.show(c,null));PaleOakPaletteOracle.saveUiToggle(context);
+                context.runOnClient(c->BlockLensConfigScreen.show(c,null));
+                var combined=offConfig;for(var flag:CapabilityId.values())combined=combined.withEnabled(flag,true);
+                var all=combined;BlockLensConfigFiles.save(FabricLoader.getInstance().getConfigDir(),all);
+                context.runOnClient(c->BlockLensRuntime.installConfig(all));PaleOakPaletteOracle.reload(context);
+                require(BlockLensRuntime.config().enabledMask()==all.enabledMask(),"Object all-feature state not active: "+ROLES[role]);
+                if(gui)openEditor(context,hanging);
+                var allFrame=capture(context,output,ROLES[role]+"-all-features");
+                require(PaleOakObjectFrames.changed(off,allFrame,air,region),"All-enabled object chroma/grain/foreground lost: "+ROLES[role]);
+                context.runOnClient(c->{BlockLensConfigScreen.show(c,null);BlockLensRuntime.installConfig(offConfig.withEnabled(CapabilityId.PALE_OAK_NEUTRAL,true));});
+                PaleOakPaletteOracle.saveUiToggle(context);
                 if(gui) openEditor(context,hanging);
                 var restored=capture(context,output,ROLES[role]+"-restored");
                 require(PaleOakObjectFrames.restored(off,restored,air,region),"Rendered pale-oak restoration failed: "+ROLES[role]);
@@ -71,7 +83,7 @@ final class PaleOakRenderedScenes {
             }
             Files.writeString(output.resolve("palette-objects-manifest.txt"),"minecraft="+BlockLensRuntime.minecraftVersion()
                     +"\nroles=6\nactualBoats=true\nactualSignEntities=true\nactualSignEditors=true\nforegroundRetained=true"
-                    +"\nwoodChroma=true\ngrainRetained=true\noffRestored=true\nblankFixtures=true\n");
+                    +"\nwoodChroma=true\ngrainRetained=true\noffRestored=true\nblankFixtures=true\nallFeatures=true\n");
             System.out.println("BLOCKLENS_PALE_OAK_OBJECTS roles=6 boats=true signs=true editors=true foreground=true grain=true restored=true");
         } finally {
             PaletteSignBackground.hide(false);context.runOnClient(c->BlockLensConfigScreen.show(c,null));server.runCommand("tick unfreeze");

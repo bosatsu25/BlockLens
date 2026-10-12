@@ -8,9 +8,9 @@ import shutil
 import struct
 
 ROLES = ("boat", "chest-boat", "standing-sign", "hanging-sign", "sign-gui", "hanging-sign-gui")
-IMAGES = tuple(f"{role}-{stage}.png" for role in ROLES for stage in ("off", "on", "air", "restored"))
+IMAGES = tuple(f"{role}-{stage}.png" for role in ROLES for stage in ("off", "on", "air", "restored", "all-features"))
 CHECKS = ("actualBoats", "actualSignEntities", "actualSignEditors", "foregroundRetained",
-          "woodChroma", "grainRetained", "offRestored", "blankFixtures")
+          "woodChroma", "grainRetained", "offRestored", "blankFixtures", "allFeatures")
 
 def verify(directory: Path, minecraft: str) -> list[Path]:
     from verify_external_compatibility import properties, require_value

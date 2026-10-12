@@ -14,7 +14,7 @@ class PaletteObjectEvidenceTest(unittest.TestCase):
         for version in ("26.1.2","26.2","26.3"):
             with self.subTest(version=version),tempfile.TemporaryDirectory() as tmp:
                 root=Path(tmp).resolve();self.fixture(root,version)
-                self.assertEqual(25,len(verifier.verify(root,version)))
+                self.assertEqual(31,len(verifier.verify(root,version)))
     def test_each_missing_or_failed_control(self):
         for control in verifier.CHECKS:
             with self.subTest(control=control),tempfile.TemporaryDirectory() as tmp:
@@ -41,6 +41,6 @@ class PaletteObjectEvidenceTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp).resolve();source=root/"source";source.mkdir();self.fixture(source)
             (source/"private-material-hashes.txt").write_text("private")
-            output=root/"output";self.assertEqual(25,verifier.collect(source,"26.3",output))
+            output=root/"output";self.assertEqual(31,verifier.collect(source,"26.3",output))
             self.assertEqual(set(verifier.IMAGES)|{"palette-objects-manifest.txt","SHA256SUMS.txt"},{p.name for p in output.iterdir()})
             with self.assertRaises(ValueError):verifier.collect(source,"26.3",output)

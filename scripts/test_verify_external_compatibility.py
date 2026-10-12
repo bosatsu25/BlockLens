@@ -84,7 +84,7 @@ class ExternalEvidenceTest(unittest.TestCase):
             directory = Path(tmp)
             self.rendering_fixture(directory, "true")
             files = evidence.verify(directory, "26.3", "vulkan")
-            self.assertEqual(141, len(files))
+            self.assertEqual(147, len(files))
             self.assertTrue(set(evidence.DEFAULT_IMAGES).issubset(path.name for path in files))
 
     def test_palette_missing_or_failed_native_proof_cannot_pass_a_backend_row(self):
@@ -407,7 +407,7 @@ class ExternalEvidenceTest(unittest.TestCase):
             directory = Path(tmp)
             self.sodium_fixture(directory)
             files = evidence.verify(directory, "26.3", "shader-on")
-            self.assertEqual(157, len(files))
+            self.assertEqual(163, len(files))
             self.assertEqual(15, sum(path.name.startswith("sodium-") and path.suffix == ".png" for path in files))
             self.assertIn(directory / "sodium-terrain-manifest.properties", files)
 
