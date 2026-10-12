@@ -12,6 +12,13 @@ java {
 
 sourceSets.test.java.srcDir rootProject.file('test-support/java')
 
+// This suite also observes repository files outside its compiled classpath.
+// A cached result cannot establish the current documentation/source contracts.
+tasks.named('test') {
+    outputs.upToDateWhen { false }
+    outputs.doNotCacheIf('Repository filesystem contracts require fresh observation') { true }
+}
+
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.14.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
