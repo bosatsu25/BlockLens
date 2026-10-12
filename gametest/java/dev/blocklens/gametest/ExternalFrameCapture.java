@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.client.Screenshot;
 
-/** Uses completed native frames for the 26.1.2 Sodium screenshot lifecycle exception. */
+/** Captures completed native frames after renderer-specific resize/history settling. */
 final class ExternalFrameCapture {
     private ExternalFrameCapture() { }
 
@@ -32,7 +32,9 @@ final class ExternalFrameCapture {
             });
             // Each GameTest tick yields to the full Minecraft frame. Do not invoke the renderer
             // again outside that frame: Sodium 0.9.2 has already disposed its terrain uniforms.
-            context.waitTicks(2);
+            // Shader history must settle at the capture size, after resizing resets its buffers.
+            int completedFrames="shader-on".equals(System.getProperty("blocklens.test.external.profile")) ? 40 : 2;
+            context.waitTicks(completedFrames);
             CompletableFuture<Path> captured = new CompletableFuture<>();
             context.runOnClient(client -> Screenshot.takeScreenshot(ExternalCaptureTarget.read(client), image -> {
                 try (image) {
@@ -46,7 +48,7 @@ final class ExternalFrameCapture {
             }));
             context.waitFor(client -> captured.isDone(), 200);
             Path result = captured.join();
-            System.out.println("BLOCKLENS_EXTERNAL_FRAME completedNativeFrames=2 width=" + width
+            System.out.println("BLOCKLENS_EXTERNAL_FRAME completedNativeFrames="+completedFrames+" width=" + width
                     + " height=" + height + " file=" + result.getFileName());
             return result;
         } finally {

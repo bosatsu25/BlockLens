@@ -16,7 +16,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-/** Test-only observation of a stalled external-Masa lifecycle; never changes test outcomes. */
+/** Test-only observation of a stalled external-renderer lifecycle; never changes test outcomes. */
 public final class ExternalLifecycleDiagnostics implements AutoCloseable {
     public static final String FILE_NAME = "external-lifecycle-diagnostics.txt";
     private static final int MAX_THREADS = 16;

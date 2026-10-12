@@ -14,7 +14,8 @@
     "CompactModelProbeMixin",
     "CompactDisplayProbeMixin",
     "CompactSubmissionProbeMixin",
-    "SimplifiedTerrainProbeMixin"
+    "SimplifiedTerrainProbeMixin",
+    "PaletteSignBackgroundMixin"
   ],
   "injectors": {
     "defaultRequire": 1

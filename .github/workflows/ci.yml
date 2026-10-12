@@ -452,6 +452,21 @@ jobs:
           path: ${{ steps.compact-models.outputs.path }}
           if-no-files-found: error
           retention-days: 14
+      - name: Collect rendered pale-oak objects
+        id: palette-objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="build/ci/pale-oak-objects-${{ matrix.minecraft }}"
+          python scripts/verify_palette_objects.py --directory "versions/${{ matrix.module }}/build/run/clientGameTest/pale-oak-objects" --minecraft '${{ matrix.minecraft }}' --destination "$target"
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+      - name: Upload rendered pale-oak objects
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blocklens-pale-oak-objects-${{ matrix.minecraft }}
+          path: ${{ steps.palette-objects.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
       - name: Collect native pale-oak palette evidence
         id: pale-oak
         shell: bash
@@ -672,7 +687,7 @@ jobs:
             -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
             -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \
             -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \
-            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' -o -path '*/pale-oak-visual/*' -o -path '*/compact-model-visual/*' -o -path '*/simplified-visual/*' \) \
+            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' -o -path '*/pale-oak-visual/*' -o -path '*/pale-oak-objects/*' -o -path '*/compact-model-visual/*' -o -path '*/simplified-visual/*' \) \
             -exec cp --parents '{}' "$target" \;
       - name: Upload failed Client GameTest diagnostics
         if: failure()

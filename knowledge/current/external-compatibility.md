@@ -84,7 +84,7 @@ The test-only exception therefore reads the framebuffer after two complete nativ
 without issuing another direct renderer invocation. It retains 640 by 360 dimensions, the
 existing GUI/FOV options, and every original M3/M5 image and geometry assertion; it restores
 the previous window and render-target dimensions in `finally`. The evidence records
-`captureMode=completed-native-frame`. Other rows keep Fabric's screenshot path.
+`captureMode=completed-native-frame`. Other rows keep Fabric's screenshot path, except the six auxiliary palette Shader ON scenes that settle40 completed native frames at capture size.
 
 The same run passed both shader profiles on 26.2/26.3, all three Masa profiles and both Vulkan
 profiles. The separate 26.1.2 shader-ON M5 failure measured 862/1000 base retention against the
@@ -251,24 +251,25 @@ python scripts/verify_external_compatibility.py --directory versions/mc26_3/buil
 ```
 
 The result verifier rejects wrong-version, partial, fallback-backend and inactive-shader manifests.
-Rendering profiles retain the six original M3/M5 PNGs and now require six native palette PNGs
-plus their manifest. Each Shader OFF/ON row also requires the fifteen Sodium PNGs and its
-native manifest: 27 PNGs and 32 result files before SHA256SUMS. Vulkan rows require 12 PNGs
-and 16 result files; private-pack rows preserve their six-image/private-input boundary.
-The new palette rows remain pending current-head hosted evidence. The verifier
-checks every required PNG header, dimensions and named result file.
+Rendering profiles require six original M3/M5 images, six palette images, 28 compact images,
+70 simplified-terrain images and 30 boat/sign/editor images (AIR/OFF/ON/restored/all-enabled
+for each of six roles). Vulkan requires140 PNGs and147 result files before SHA256SUMS;
+Shader OFF/ON adds fifteen Sodium images and its manifest, totaling155 PNGs and163 files.
+All relevant native manifests are mandatory, including actual transformed-quad neutral tint
+and all-enabled object composition. Private-pack rows retain their six-image/private-input boundary.
+Current-head hosted results are required after changing any scene or evidence schema.
+The verifier checks every required PNG header, dimensions, named result file and positive flag.
 Every current profile writes
 SHA256SUMS. Its collector copies an explicit allowlist only; original packs,
 mod JARs, configuration directories and arbitrary logs are not result artifacts.
 
-Failed public client rows also retain a bounded partial manifest and the six named M3/M5 PNGs,
-two metric manifests and the fixed external lifecycle diagnostic file, when created. The
-fifteen named Sodium PNGs and its manifest extend that fixed allowlist to 26 possible
-inputs. The collector rejects symlinks, limits images to 4 MiB at 640 by 360,
-the Sodium manifest to 16 KiB and other text to 64 KiB, and writes SHA-256 hashes plus
-`DIAGNOSTIC_STATUS.txt` with `status=failed-or-incomplete`. The acceptance verifier rejects
-that diagnostic directory even if a copied native manifest says `passed`. This artifact is
-for diagnosis and cannot turn a failed row into passing evidence.
+Failed public rows retain only the explicitly named partial external/M3/M5/palette/object/compact/
+terrain/Sodium images and manifests plus the bounded lifecycle diagnostic, when available.
+This includes all30 object frames and their manifest; its allowlist derives from the same
+acceptance names. Symlinks are rejected, images remain <=4 MiB at640x360, Sodium text <=16 KiB
+and other text <=64 KiB. SHA256SUMS and DIAGNOSTIC_STATUS.txt identify failed/incomplete output.
+The acceptance verifier rejects diagnostics regardless of a copied native manifest's status.
+Incomplete or absent frames never certify a rendering profile.
 
 ## Historical lifecycle and five-pack acceptance
 
