@@ -12,11 +12,11 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Current stable release:** BlockLens **v0.4.4** provides **60 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
+> **Current implementation:** BlockLens **v0.4.5** provides **61 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
 >
 > **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
-> **Current development:** 61 current capabilities. The ancient-debris analyzer and optional Masa/Litematica schematic comparison are retired; the original 37 source controls remain intact. The published v0.3.0 artifact is unchanged.
+> **Current catalog:** 61 independent capabilities. Published downloads are listed on [GitHub Releases](https://github.com/bosatsu25/BlockLens/releases). The ancient-debris analyzer and optional Masa/Litematica schematic comparison are retired; the original 37 source controls remain intact. The published v0.3.0 artifact is unchanged.
 
 
 The default-off **Neutral pale oak** control recolors vanilla wood while preserving grain and colored hardware. Saving a change reloads textures; external pack textures take priority. Three modern sign aliases cover 26.2/26.3. See [the palette contract](knowledge/current/native-pack-palette-plan.md).
@@ -29,11 +29,11 @@ The original OptiFine connected-texture border art, the original lowered fire sp
 
 The default-off **Simplified terrain** control gives bounded vanilla terrain an opaque dark-gray style and sparse grass/bush masks. Existing dripleaf, vine, dripstone and leaf-litter states retain their geometry. External resource definitions take priority; world state, collision and solid occlusion remain unchanged. See [the implementation and verification plan](knowledge/current/native-simplified-terrain-plan.md).
 
-## Development v0.4.5: connected ore borders on three Minecraft versions
+## Three Minecraft versions and visible UI tests
 
 Published v0.4.1 fixes closed regular chest brightening on Minecraft 26.3 with exact BBE 1.3.9+mc26.3 and Sodium 0.9.2+mc26.3. BBE optimization remains enabled; trapped/ender/copper/Christmas materials are not substituted. The tested Cele stack adds Iris 1.11.7+mc26.3 and Continuity 3.0.1+26.3 with shaders OFF. BBE plus shaders ON is unverified. Upgrade with one matching BlockLens JAR and retain configuration. Publishing requires the same commit's normal, shader/backend and BBE/Cele matrices; see [the precise compatibility boundary](knowledge/current/cele-bbe-compatibility.md).
 
-The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, four bounded analyzers, two independent scene filters and three advisory Builder Assist tools. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; published v0.4.0 already supports all three targets.
+The current build targets **26.1.2 / 26.2 / 26.3** with 61 independent capabilities and preserves the original 37-control baseline. Visual controls, four bounded analyzers, two independent scene filters and three advisory Builder Assist tools share the settings workflow. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; published v0.4.0 already supports all three targets.
 
 To watch real Minecraft UI automation on Windows, with Java 25 and Gradle 9.5.1 on PATH, run `./scripts/run-ui-tests.ps1` (all three) or `./scripts/run-ui-tests.ps1 -Version 26.3`. The runner opens actual clients sequentially using the built distribution JAR, checks loaded class origins, exits after testing and stops on failure. CI requires ten settings screenshots per target and separate rendering/JAR evidence. See [current version contract, exact dependencies and verification status](knowledge/current/minecraft-26-3.md).
 

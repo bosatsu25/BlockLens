@@ -31,7 +31,7 @@ This follows the source model boundary: fluids, waterlogged-fluid rendering and 
 
 Pure mode/self/limit/normalization/preset/config/draft tests; selected coverage/mutation checks; all-three compile/build/audits with the current user-authorized 200 KiB size limit; real-client block/entity/block-entity OFF/blacklist/whitelist/self and unknown-ID controls; 320x240 English/Japanese draft/save/discard/invalid-input UI evidence; reload/dimension/disconnect restoration; existing visual and analyzer interactions; reproducible outer/inner JARs; independent review and exact-head CI. Source review alone establishes no third-party renderer/shader/backend compatibility; #31 remains separate.
 
-## Work in progress evidence
+## Historical implementation evidence
 
 Before the native oracles were added, the shared gate passed 215 JUnit tests, selected JaCoCo covered 1037 of 1055 lines, and PIT killed 356 of 370 selected mutations. All three build/container audits passed under unchanged budgets: 141290 / 141569 / 141613 bytes. These are interim local results, not final-head CI or completed native verification.
 
