@@ -77,7 +77,9 @@ jobs:
           :versions:${{ matrix.module }}:versionSmokeContract
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
       - name: Run the actual external client configuration
-        timeout-minutes: 12
+        # The expanded static Shader graph passed terrain but exceeded its former 12-minute limit.
+        # This bounds test duration; image and runtime performance gates remain unchanged.
+        timeout-minutes: 16
         run: >-
           xvfb-run -a gradle --stacktrace
           -PclientTestFocus=external
