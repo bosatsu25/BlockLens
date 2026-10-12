@@ -14,15 +14,15 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
 
-## 開発版の対応：Minecraft 3バージョン
+## 対応するMinecraft 3バージョン（26.1.2、26.2、26.3）
 
-開発版は **26.1.2 / 26.2 / 26.3** を対象とし、既存40機能を維持して、表示・快適性の6機能、5つの解析機能、2つの独立した表示フィルター、4つの建築支援を追加します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。PR #40の設定画面再設計はマージ済みです。3版の検証結果はPRの最新コミットに対応するCIで確認してください。公開済みリリースに26.3対応が追加されたという意味ではありません。
+BlockLensは **26.1.2 / 26.2 / 26.3** に対応し、全3バージョンで**独立設定可能な57機能**を提供します。Java 25、Fabric Loader **0.19.5以上**、各版に合ったFabric APIが必要です。ネイティブなカテゴリ別設定画面（**Bキー**または**Mod Menu**から起動可能）で、全57項目を「装飾」「資源」「視認性」「その他」に分類して設定できます。
 
 Windowsで実際のMinecraft画面のUI自動テストを見るには、Java 25とGradle 9.5.1を用意し、`./scripts/run-ui-tests.ps1`（3版すべて）または `./scripts/run-ui-tests.ps1 -Version 26.3` を実行します。ビルドした配布用JARで実クライアントを順番に開き、クラスのロード元を確認してテスト後に終了し、失敗時は停止します。CIでは各版10枚の設定画面画像に加え、描画・JARの検証結果を残します。[正確な依存関係と検証状況](knowledge/current/minecraft-26-3.md)を参照してください。
 
 解析機能は、読み込み済みの古代の残骸・条件を満たす溶岩源・ビーコンや避雷針の範囲・実際に届いた村人の職業場所メモリを表示します。5機能とも初期設定は無効です。半径・マーカー数・最小更新間隔を調整でき、保存・破棄の編集内容を共有します。未読み込みチャンクは走査せず、密集時は複数tickかかり、職業場所メモリが届かない場合は線を推測しません。[正確な動作と処理上限](knowledge/current/world-analyzers.md)を参照してください。
 
-2つの表示フィルターはブロックとエンティティの種類IDを独立した許可・除外リストで指定します。初期設定は無効で、自分のプレイヤー、流体、物理状態、固体の遮蔽を維持します。リスト編集も親画面の保存・破棄を共有します。[仕様と未完了の検証条件](knowledge/current/scene-filter.md)を参照してください。
+2つの表示フィルターはブロックとエンティティの種類IDを独立した許可・除外リストで指定します。初期設定は無効で、自分のプレイヤー、流体、物理状態、固体の遮蔽を維持します。リスト編集も親画面の保存・破棄を共有します。[仕様と検証結果](knowledge/current/scene-filter.md)を参照してください。
 
 ## 建築支援と鉱石拡張
 
@@ -70,7 +70,17 @@ flowchart TB
     CH --> P5[P5 · compatibility / extensions]
 ```
 
-完了済みP0はクローズ済みの **Issue #22** に記録しています。残りの移行は **#42と#34〜#38**、[`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) で管理します。
+完了済みP0はクローズ済みの **Issue #22** に記録しています。計画されていた全マイルストーン（P1〜P5）の移植は **v0.3.0** で完了しました（クローズ済みIssue #31、#34〜#38、#42）。[`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) を参照してください。
+
+## 将来のバージョン方針：Minecraft 26.4 への移行（v0.4.0）
+
+BlockLensはローリング3バージョンサポート方針を採用しています：
+- **現在の安定版（v0.3.0）:** Minecraft **26.1.2**、**26.2**、**26.3** をサポート。
+- **次期目標（v0.4.0）:** MojangからMinecraft **26.4** 正式版が配信されたタイミング（2026年冬予定、現在開発中スナップショット `26.4-snapshot-3`）で移行：
+  1. Minecraft **26.1.2** のサポート終了（レガシーなGLFW/OpenGLフォールバック制約および `versions/mc26_1_2` を削除）。
+  2. Minecraft **26.4** のサポート追加（`versions/mc26_4`）。
+  3. サポート対象を **26.2**、**26.3**、**26.4** の新3バージョン体制へローテーション。
+  4. Mojangから正式版26.4が公開されるまでは、現行の26.1.2 / 26.2 / 26.3（v0.3.0）を安定版として維持。
 
 ## 参照パック raw-source parity
 
@@ -201,14 +211,22 @@ config readの上限、同期一時ファイル書き込みと対応filesystem�
 
 ## Release
 
-**v0.2.2** が最新の公開済み安定版です。対象コミットは`46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`です。
+**v0.3.0** が最新の公開済み安定版です。対象コミットは`df8c62699f06395b0e4ab90ca40ac5e1f8526c57`です。
+
+| Minecraft | 公開JAR | サイズ | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.3.0.jar` | **170,918 B** | `dc08448a96c0d54233aa2acb06f52d0cc93ded64c6c6ac88831bd8860ee3d0fb` |
+| 26.2 | `BlockLens-26.2-v0.3.0.jar` | **171,238 B** | `236a093993005f5020a9b67a000c42f91e154502ed5dc9dff4f41c88dfba1532` |
+| 26.3 | `BlockLens-26.3-v0.3.0.jar` | **171,276 B** | `92d33b79a5498768d9d02c800a9620a5e74c4e7f0485339d78cfb1083882aea6` |
+
+全3バージョン向けに**独立設定可能な57機能**を提供し、実クライアントUIおよび外部互換性検証を完了しています。現行基準は開発時**204,800 B（200 KiB）**、公開上限**204,800 B（200 KiB）**、絶対上限**1,183,432 B**です。
+
+**v0.2.2** は歴史的リリース証拠として維持します。対象コミットは`46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`です。
 
 | Minecraft | 公開JAR | サイズ | SHA-256 |
 | --- | --- | ---: | --- |
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
-
-カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。26.3用の公開リリースはまだありません。現行基準は開発時**204,800 B（200 KiB）**、公開上限**204,800 B（200 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
 
 **v0.2.0** はP0の歴史的リリース証拠として維持します。
 
@@ -228,21 +246,20 @@ release targetは`b440d43904e2a93236549efc571b7cc127622352`です。成功した
 
 成功した`main` CI **#245 / `34768792311`**、commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`から生成され、Release run **#3 / `34769093202`** がCI検証済みJARと`SHA256SUMS.txt`をそのまま公開しました。
 
-## 公開済みv0.2.2の対応環境
+## 公開済みv0.3.0の対応環境
 
 | 項目 | 現在の検証済みcontract |
 | --- | --- |
-| Minecraft | **26.1.2** / **26.2** |
-| Loader | Fabric Loader **0.19.3以上** |
-| Fabric API | **0.155.2+26.1.2** / **0.160.0+26.2** |
+| Minecraft | **26.1.2** / **26.2** / **26.3** |
+| Loader | Fabric Loader **0.19.5以上** |
+| Fabric API | **0.155.2+26.1.2** / **0.160.0+26.2** / **0.162.0+26.3** |
 | Java | **25以上** |
 | 動作側 | **Client only** |
 | Server側BlockLens | 不要 |
-| 検証済みrenderer path | default / **shader-OFF OpenGL** |
-| Shader-ON | 現時点では対応を主張しない |
-| Minecraft 26.2 Vulkan | experimental |
-
-Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31)で、開発版のShader・描画バックエンドの試験結果と、残る第三者パック・描画経路の対応範囲を追跡します。その結果によって、上記の公開済みv0.2.2の確認範囲が変わることはありません。M5のコア実装を扱うIssue #5は完了済みです。
+| 検証済みrenderer path | default / **shader-OFF OpenGL**, **Iris/Sodium Complementary Reimagined r5.9.3 LOW** |
+| Minecraft 26.2 / 26.3 Vulkan | **M3/M5検証済み**（実験的バックエンド） |
+| 任意連携MOD | **Mod Menu 18.0.0**, **Sodium 0.9.2**, **Litematica / MaLiLib**（対象版別ピン固定） |
+| リソースパック | 5個の私有参照パックすべてで検証済み（Issue #31クローズ） |
 
 ## 技術基盤
 
@@ -261,7 +278,7 @@ BlockLensのruntime自体は小さく保ちますが、開発・QA基盤は厳�
 | PIT JUnit adapter | **pitest-junit5-plugin 1.2.3** | JUnit 5 mutation execution |
 | 実Client integration | **Fabric Client GameTest** | 実Minecraft起動/reload/render検証 |
 | Headless graphics | **Xvfb / Ubuntu 24.04** | GitHub Actions上のframebuffer test |
-| CI/CD | **GitHub Actions** | dual-version quality/release pipeline |
+| CI/CD | **GitHub Actions** | three-version quality/release pipeline |
 | Artifact integrity | **SHA-256** | reproducibility、CI/Release byte identity |
 
 Java compileでは`-Xlint:deprecation`、`-Xlint:unchecked`、**`-Werror`**を使用します。
@@ -275,7 +292,7 @@ Java compileでは`-Xlint:deprecation`、`-Xlint:unchecked`、**`-Werror`**を�
 
 ## 実Client検証
 
-両Minecraft versionで **Fabric Client GameTest** をXvfb上で実行します。config round-trip、resource reload、Overworld/Nether遷移、target/state mapping、全機能ON/OFF復元、rendered visual evidence、resource-pack preservation fixture、M8 performance/retention、model resolution、reproducible artifactまで検証対象です。
+3つの対応Minecraftバージョンすべてで **Fabric Client GameTest** をXvfb上で実行します。config round-trip、resource reload、Overworld/Nether遷移、target/state mapping、全機能ON/OFF復元、rendered visual evidence、resource-pack preservation fixture、M8 performance/retention、model resolution、reproducible artifactまで検証対象です。
 
 開発runtimeが37機能を超えても、元の参照パック 37機能は歴史的regression contractとして残します。
 
@@ -288,12 +305,16 @@ flowchart TD
     J --> P[PIT >= 96%]
     P --> B1[26.1.2 build + reproducibility]
     P --> B2[26.2 build + reproducibility]
+    P --> B3[26.3 build + reproducibility]
     B1 --> G1[26.1.2 Client GameTest]
     B2 --> G2[26.2 Client GameTest]
+    B3 --> G3[26.3 Client GameTest]
     G1 --> A1[visual / performance / size evidence]
     G2 --> A2[visual / performance / size evidence]
+    G3 --> A3[visual / performance / size evidence]
     A1 --> GREEN[CI GREEN]
     A2 --> GREEN
+    A3 --> GREEN
     GREEN -->|main pushのみ| REL[Release workflow]
     REL --> VER{tag exists?}
     VER -- yes --> STOP[successful no-op]
@@ -401,4 +422,4 @@ flowchart LR
 
 `knowledge/current/`を正本とし、READMEでは検証済みevidenceを超える主張をしません。
 
-追加6機能と検証条件は[軽量ビジュアル・快適性機能](knowledge/current/lightweight-visuals.md)に記載しています。公開済みv0.2.2は従来の40機能を提供します。
+追加のビジュアル設定項目と検証条件は[軽量ビジュアル・快適性機能](knowledge/current/lightweight-visuals.md)に記載しています。公開済みv0.3.0は全3バージョンで全57機能を提供します。

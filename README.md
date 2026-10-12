@@ -14,15 +14,15 @@ The core design goal is **source/function parity, not byte-for-byte asset bundli
 >
 > **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
 
-## Current development: three Minecraft versions
+## Three supported Minecraft versions (26.1.2, 26.2, 26.3)
 
-The development build targets **26.1.2 / 26.2 / 26.3**, preserving all 40 existing capabilities and adding six independent visual/comfort controls, five bounded analyzers, two independent scene filters and four advisory Builder Assist tools. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. PR #40's native settings redesign is merged. Current-head three-version validation is required; this does not add 26.3 to an already published release.
+BlockLens supports **26.1.2 / 26.2 / 26.3**, providing **57 independently configurable visual and inspection capabilities** across all three targets. Java 25, Fabric Loader **0.19.5+** and the matching Fabric API are required. The native category-based settings screen (accessible via **B-key** or **Mod Menu**) organizes all 57 options into **Decoration, Resources, Visibility, and Other**.
 
 To watch real Minecraft UI automation on Windows, with Java 25 and Gradle 9.5.1 on PATH, run `./scripts/run-ui-tests.ps1` (all three) or `./scripts/run-ui-tests.ps1 -Version 26.3`. The runner opens actual clients sequentially using the built distribution JAR, checks loaded class origins, exits after testing and stops on failure. CI requires ten settings screenshots per target and separate rendering/JAR evidence. See [current version contract, exact dependencies and verification status](knowledge/current/minecraft-26-3.md).
 
 The five analyzers find loaded ancient debris and qualifying source lava, outline beacon/rod ranges, and link actual client villager job-site memories. They default OFF and share numeric radius/marker/interval settings and the existing save/discard draft. Unloaded chunks are skipped, dense scans take multiple ticks, and unavailable villager memory never produces an inferred workstation. See [work limits and exact behavior](knowledge/current/world-analyzers.md).
 
-The two scene filters independently edit block/entity type ID blacklists and whitelists. They default OFF, retain the local player, and preserve fluids, physical state and solid occlusion. List edits share the parent save/discard draft. See [the filter contract and pending verification](knowledge/current/scene-filter.md).
+The two scene filters independently edit block/entity type ID blacklists and whitelists. They default OFF, retain the local player, and preserve fluids, physical state and solid occlusion. List edits share the parent save/discard draft. See [the filter contract and verification details](knowledge/current/scene-filter.md).
 
 ## Builder Assist and ore extensions
 
@@ -74,7 +74,17 @@ flowchart TB
     CH --> P5[P5 · compatibility / extensions]
 ```
 
-Delivered P0 is recorded in closed **Issue #22**. Remaining migration is tracked in **#42 and #34-#38** and [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md).
+Delivered P0 is recorded in closed **Issue #22**. All planned migrations (P1-P5) are completed in **v0.3.0** (closed issues #31, #34-#38, #42). See [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md).
+
+## Future version roadmap: Minecraft 26.4 transition (v0.4.0)
+
+BlockLens maintains a rolling 3-version support model:
+- **Current stable release (v0.3.0):** Supports Minecraft **26.1.2**, **26.2**, and **26.3**.
+- **Next target (v0.4.0):** Upon official general availability of Minecraft **26.4** (scheduled for Winter 2026; currently in development snapshot phase `26.4-snapshot-3`):
+  1. Retire Minecraft **26.1.2** support (removing legacy GLFW/OpenGL fallback constraints and `versions/mc26_1_2`).
+  2. Add Minecraft **26.4** support (`versions/mc26_4`).
+  3. The three supported release targets will become **26.2**, **26.3**, and **26.4**.
+  4. Until the official 26.4 release is published by Mojang, v0.3.0 remains the stable production baseline on 26.1.2, 26.2, and 26.3.
 
 ## Source raw-source parity
 
@@ -205,14 +215,22 @@ Bounded config reads, synchronous temporary-file writes with atomic replacement 
 
 ## Release
 
-**v0.2.2** is the latest published stable release, at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`.
+**v0.3.0** is the latest published stable release, at target `df8c62699f06395b0e4ab90ca40ac5e1f8526c57`.
+
+| Minecraft | Published JAR | Size | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.3.0.jar` | **170,918 B** | `dc08448a96c0d54233aa2acb06f52d0cc93ded64c6c6ac88831bd8860ee3d0fb` |
+| 26.2 | `BlockLens-26.2-v0.3.0.jar` | **171,238 B** | `236a093993005f5020a9b67a000c42f91e154502ed5dc9dff4f41c88dfba1532` |
+| 26.3 | `BlockLens-26.3-v0.3.0.jar` | **171,276 B** | `92d33b79a5498768d9d02c800a9620a5e74c4e7f0485339d78cfb1083882aea6` |
+
+The release ships **57 independently configurable capabilities** across all three Minecraft releases, with full real-client UI and external compatibility verification. Current development and release size ceilings are **204,800 B (200 KiB)**; absolute hard maximum is **1,183,432 B**.
+
+**v0.2.2** is preserved as historical M1-M9 / P0 release evidence, at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`.
 
 | Minecraft | Published JAR | Size | SHA-256 |
 | --- | --- | ---: | --- |
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
-
-The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). A 26.3 release artifact is not yet published. Current development budgets are **204,800 B (200 KiB)** no-growth, **204,800 B (200 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
 
 **v0.2.0** remains historical P0 release evidence.
 
@@ -232,21 +250,20 @@ The release targets `b440d43904e2a93236549efc571b7cc127622352`. Successful main 
 
 The release was produced from successful `main` CI **#245 / `34768792311`** at commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`. Release run **#3 / `34769093202`** published the exact CI-verified JAR bytes plus `SHA256SUMS.txt`.
 
-## Published v0.2.2 environment
+## Published v0.3.0 environment
 
 | Item | Current verified contract |
 | --- | --- |
-| Minecraft | **26.1.2** and **26.2** |
-| Loader | Fabric Loader **0.19.3+** |
-| Fabric API | **0.155.2+26.1.2** / **0.160.0+26.2** |
-| Java | **25+** |
+| Minecraft | **26.1.2**, **26.2**, and **26.3** |
+| Loader | Fabric Loader **0.19.5+** |
+| Fabric API | **0.155.2+26.1.2** / **0.160.0+26.2** / **0.162.0+26.3** |
+| Java | **Java 25+** |
 | Side | **Client only** |
 | Server-side BlockLens | Not required |
-| Verified renderer path | default / **shader-OFF OpenGL** |
-| Shader-ON | not yet claimed as supported |
-| Minecraft 26.2 Vulkan | experimental |
-
-Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31) tracks the development shader/backend matrix and remaining third-party pack and renderer boundaries. Its results do not change the published v0.2.2 environment above. Core M5 Issue #5 is complete.
+| Verified renderer path | default / **shader-OFF OpenGL**, **Iris/Sodium Complementary Reimagined r5.9.3 LOW** |
+| Minecraft 26.2 / 26.3 Vulkan | **M3/M5 verified** (experimental backend) |
+| Optional integrations | **Mod Menu 18.0.0**, **Sodium 0.9.2**, **Litematica / MaLiLib** (pinned per target) |
+| Reference packs | All 5 private reference packs verified (Issue #31 closed) |
 
 ## Technology foundation
 
@@ -265,7 +282,7 @@ BlockLens is intentionally small at runtime, but its engineering and QA foundati
 | PIT JUnit adapter | **pitest-junit5-plugin 1.2.3** | JUnit 5 mutation execution |
 | Real-client integration | **Fabric Client GameTest** | real Minecraft startup/reload/render verification |
 | Headless graphics | **Xvfb / Ubuntu 24.04** | framebuffer tests in GitHub Actions |
-| CI/CD | **GitHub Actions** | dual-version quality/release pipeline |
+| CI/CD | **GitHub Actions** | three-version quality/release pipeline |
 | Artifact integrity | **SHA-256** | reproducibility and CI/release byte identity |
 
 Java compilation uses `-Xlint:deprecation`, `-Xlint:unchecked`, and **`-Werror`**.
@@ -279,7 +296,7 @@ Quality gates remain:
 
 ## Real-client verification
 
-Both supported Minecraft versions run **Fabric Client GameTest** under Xvfb. The gate covers configuration round-trips, resource reload, Overworld/Nether transitions, target/state mapping, full enable/OFF restoration, rendered visual evidence, resource-pack preservation fixtures, M8 performance/retention observations, model resolution, and reproducible artifact checks.
+All three supported Minecraft versions run **Fabric Client GameTest** under Xvfb. The gate covers configuration round-trips, resource reload, Overworld/Nether transitions, target/state mapping, full enable/OFF restoration, rendered visual evidence, resource-pack preservation fixtures, M8 performance/retention observations, model resolution, and reproducible artifact checks.
 
 The original 37-capability source baseline remains a historical regression contract even as the development runtime grows beyond it.
 
@@ -292,12 +309,16 @@ flowchart TD
     J --> P[PIT >= 96%]
     P --> B1[26.1.2 build + reproducibility]
     P --> B2[26.2 build + reproducibility]
+    P --> B3[26.3 build + reproducibility]
     B1 --> G1[26.1.2 Client GameTest]
     B2 --> G2[26.2 Client GameTest]
+    B3 --> G3[26.3 Client GameTest]
     G1 --> A1[visual / performance / size evidence]
     G2 --> A2[visual / performance / size evidence]
+    G3 --> A3[visual / performance / size evidence]
     A1 --> GREEN[CI GREEN]
     A2 --> GREEN
+    A3 --> GREEN
     GREEN -->|main push only| REL[Release workflow]
     REL --> VER{tag exists?}
     VER -- yes --> STOP[successful no-op]
@@ -406,4 +427,4 @@ flowchart LR
 
 `knowledge/current/` is the source of truth. README claims remain bounded by verified evidence.
 
-Additional development controls and their verification gates are documented in [lightweight visual and comfort features](knowledge/current/lightweight-visuals.md). The published v0.2.2 release continues to contain its original 40 capabilities.
+Additional visual controls and their verification gates are documented in [lightweight visual and comfort features](knowledge/current/lightweight-visuals.md). The published v0.3.0 release ships all 57 capabilities across all three supported Minecraft versions.
