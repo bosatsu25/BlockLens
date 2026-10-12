@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.SignBlockEntity;
 /** Actual boat/entity/editor rendering with absent-object, ON and restoration controls. */
 final class PaleOakRenderedScenes {
     private static final BlockPos TARGET=new BlockPos(0,-59,4);
+    private static final double CAMERA_Z=9.5;
     private static final String[] ROLES={"boat","chest-boat","standing-sign","hanging-sign","sign-gui","hanging-sign-gui"};
     private static final PaleOakObjectFrames.Region WORLD=new PaleOakObjectFrames.Region(220,130,420,250);
     private static final PaleOakObjectFrames.Region GUI=new PaleOakObjectFrames.Region(100,60,540,300);
@@ -31,7 +32,7 @@ final class PaleOakRenderedScenes {
                 server.runCommand("kill @e[type=!minecraft:player]");
                 server.runCommand("fill -12 -59 -8 12 -45 20 minecraft:air");
                 server.runCommand("fill -12 -60 -8 12 -60 20 minecraft:black_concrete");
-                server.runCommand("tp @a 0.5 -56.5 11.5 180 25");
+                server.runCommand("tp @a 0.5 -56.5 "+CAMERA_Z+" 180 25");
                 context.waitFor(PaleOakRenderedScenes::clearedSceneReady,200);
                 context.waitTicks(20);
                 BufferedImage air;
@@ -71,7 +72,7 @@ final class PaleOakRenderedScenes {
         if(client.level==null || client.player==null || !client.level.getBlockState(TARGET).isAir()
                 || !client.level.getBlockState(TARGET.above()).isAir()
                 || Math.abs(client.player.getX()-.5)>.01 || Math.abs(client.player.getY()+56.5)>.01
-                || Math.abs(client.player.getZ()-11.5)>.01 || Math.abs(client.player.getXRot()-25)>.01
+                || Math.abs(client.player.getZ()-CAMERA_Z)>.01 || Math.abs(client.player.getXRot()-25)>.01
                 || Math.abs(Math.abs(client.player.getYRot()%360)-180)>.01) return false;
         for(var entity:client.level.entitiesForRendering()) if(!(entity instanceof net.minecraft.world.entity.player.Player)) return false;
         return true;
