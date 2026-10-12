@@ -122,6 +122,8 @@ sourceSets {
     gametest {
         java.srcDir rootProject.file('gametest/java')
         java.srcDir rootProject.file('test-support/java')
+        java.srcDir rootProject.file(blockLensMinecraftVersionValue == '26.3'
+                ? 'gametest/sign-adapters/slots/java' : 'gametest/sign-adapters/legacy/java')
         resources.srcDir rootProject.file('gametest/resources')
         java.srcDir rootProject.file(externalProfile.startsWith('shader-')
                 ? 'external-compat/iris/java' : 'external-compat/base/java')

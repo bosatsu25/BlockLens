@@ -23,7 +23,7 @@ jobs:
   external-client:
     name: ${{ matrix.minecraft }} / ${{ matrix.profile }} / ${{ inputs.connected_only && 'connected ore' || 'visual compatibility' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 36
     strategy:
       fail-fast: false
       matrix:
@@ -86,9 +86,9 @@ jobs:
           :versions:${{ matrix.module }}:versionSmokeContract
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
       - name: Run the actual external client configuration
-        # The expanded static Shader graph passed terrain but exceeded its former 16-minute limit.
+        # The 26.3 graph completed object/terrain/tagged stages but reached22m at stone-hidden.
         # This bounds test duration; image and runtime performance gates remain unchanged.
-        timeout-minutes: 22
+        timeout-minutes: 28
         run: >-
           xvfb-run -a gradle --stacktrace
           -PclientTestFocus=external

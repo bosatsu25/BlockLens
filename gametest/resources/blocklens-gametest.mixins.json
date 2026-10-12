@@ -16,7 +16,8 @@
     "CompactSubmissionProbeMixin",
     "SimplifiedTerrainProbeMixin",
     "ConnectedOreProbeMixin",
-    "ConnectedGeometryModelMixin"
+    "ConnectedGeometryModelMixin",
+    "PaletteSignBackgroundMixin"
   ],
   "injectors": {
     "defaultRequire": 1
