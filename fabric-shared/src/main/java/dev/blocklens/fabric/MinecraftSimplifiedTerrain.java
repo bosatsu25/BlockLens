@@ -157,8 +157,9 @@ public final class MinecraftSimplifiedTerrain {
                     float u=(quad.u(vertex)-original.getU0())/width,v=(quad.v(vertex)-original.getV0())/height;
                     quad.uv(vertex,replacement.getU(u),replacement.getV(v));
                 }
+                quad.tintIndex(-1);quad.color(-1,-1,-1,-1);
                 if(effective==SimplifiedTerrainPolicy.Kind.SURFACE) {
-                    quad.tintIndex(-1);quad.color(-1,-1,-1,-1);quad.chunkLayer(ChunkSectionLayer.SOLID);
+                    quad.chunkLayer(ChunkSectionLayer.SOLID);
                     MinecraftQuadLighting.disableDirectionalShade(quad);
                 }
                 quad.animated(false);return true;

@@ -100,6 +100,9 @@ final class SimplifiedTerrainOracle {
                 int pixels=difference(baseline,enabled);require(pixels>20,"Simplification invisible: "+ROLES[role]);changed+=pixels;
                 require(SimplifiedTerrainProbe.seen(ROLES[role],SimplifiedTerrainPolicy.kind("minecraft",ROLES[role])),
                         "Actual model emission not observed: "+ROLES[role]);
+                var kind=SimplifiedTerrainPolicy.kind("minecraft",ROLES[role]);
+                if(kind!=SimplifiedTerrainPolicy.Kind.CUBE)
+                    require(SimplifiedTerrainProbe.neutral(kind),"Simplified geometry retains biome tint or vertex color: "+ROLES[role]);
                 context.runOnClient(c->require(c.level.getBlockState(TARGET)==state,"Simplification changed world state"));
                 var upper=context.computeOnClient(c->c.level.getBlockState(TARGET.above()));
                 server.runOnServer(srv->{
@@ -170,7 +173,7 @@ final class SimplifiedTerrainOracle {
                 require(stable(externalOff,externalOn,10),"External resource priority overridden: "+externalRoles[role]);
             }
             Files.writeString(output.resolve("simplified-manifest.txt"),"minecraft="+BlockLensRuntime.minecraftVersion()+"\nroles="+ROLES.length
-                    +"\nchangedPixels="+changed+"\nactualEmission=true\nopaque=true\nsparse=true\nstatesPreserved=true\nuiSave=true\nuiDiscard=true\nfailedSave=true"
+                    +"\nchangedPixels="+changed+"\nactualEmission=true\nopaque=true\nsparse=true\nneutralTints=true\nstatesPreserved=true\nuiSave=true\nuiDiscard=true\nfailedSave=true"
                     +"\nreload=true\noffRestored=true\nfilterComposition=true\ncueComposition=true\nallFeatures=true\nexternalPriority=true\n");
             System.out.println("BLOCKLENS_SIMPLIFIED roles="+ROLES.length+" changed="+changed+" actualEmission=true states=true ui=true reload=true external=true");
         } catch(IOException failure) { throw new AssertionError("Simplified evidence failed",failure); }
