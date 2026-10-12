@@ -45,15 +45,16 @@ The setup verifies both hashes before loading an artifact; it never selects a fl
 
 | Minecraft | Iris / release ID | Sodium / release ID | Shader | Profiles |
 | --- | --- | --- | --- | --- |
-| 26.1.2 | 1.11.4 / `sZbVsl2Q` | 0.9.2 / `tZQ3jqnf` | Complementary Reimagined r5.9.3 / `Bqen1mJX` | OpenGL shader-OFF and shader-ON LOW |
-| 26.2 | 1.11.4 / `gxZWWnKH` | 0.9.2 / `xJZxADzI` | Same exact shader ZIP | OpenGL shader-OFF and shader-ON LOW |
-| 26.3 | 1.11.7 / `vTN4NRGW` | 0.9.2 / `bAZQdGpg` | Same exact shader ZIP | OpenGL shader-OFF and shader-ON LOW |
+| 26.1.2 | 1.11.4 / `sZbVsl2Q` | 0.9.2 / `tZQ3jqnf` | Complementary Reimagined r5.9.3 / `Bqen1mJX` | OpenGL shader-OFF and shader-ON LOW_STATIC |
+| 26.2 | 1.11.4 / `gxZWWnKH` | 0.9.2 / `xJZxADzI` | Same exact shader ZIP | OpenGL shader-OFF and shader-ON LOW_STATIC |
+| 26.3 | 1.11.7 / `vTN4NRGW` | 0.9.2 / `bAZQdGpg` | Same exact shader ZIP | OpenGL shader-OFF and shader-ON LOW_STATIC |
 
 These Sodium versions are the exact dependencies declared by the selected Iris releases.
 Complementary r5.9.3 declares all three Minecraft targets. Its LOW profile is a representative
 bounded software-rendering configuration, not a claim about its other presets or frame rate.
-The 14 shader option values come directly from that ZIP's `profile.LOW` declaration and are saved
-in the dependency lock. The native test reads the applied values back through the exact Iris API.
+The original 14 shader options come directly from that ZIP's `profile.LOW` declaration.
+The current `LOW_STATIC` fixture adds `WAVING_SPEED=0.00` and `TAA_JITTER=0` for deterministic restoration;
+all 16 locked values are read back through the exact Iris API. See the static-motion boundary below.
 
 Shader acceptance requires:
 
@@ -61,7 +62,7 @@ Shader acceptance requires:
 - the installed shader ZIP matches its pinned SHA-256;
 - the initialized device reports OpenGL;
 - `IrisApi.getInstance().isShaderPackInUse()` is true in the shader-ON world;
-- the active pack name and all 14 LOW profile options match, including after reload;
+- the active pack name, all 14 LOW options and both static-fixture overrides match, including after reload;
 - the shader-OFF control reports false with the same Iris/Sodium pair;
 - M3 rendered ON/reloaded/OFF and M5 active-pack OFF/ON/air controls pass;
 - the separate Sodium fixture proves explicit/tagged ore emission, unchanged active
@@ -340,3 +341,9 @@ resource/priority validation. Collection removes the third material-hash column 
 raw native proof remains private and is not overwritten. A collected two-column resource report
 cannot substitute for the raw private acceptance proof. Other shader/backend rows need no private
 inputs and keep their existing verification contract.
+
+## Static restoration fixture motion
+
+The original 14 LOW options remain unchanged. The current screenshot-restoration harness additionally pins `WAVING_SPEED=0.00`; the actual loaded Iris option must be verified alongside all 14 LOW values. This freezes shader vertex-animation time without disabling foliage/leaves, SSAO, lighting or shader activation. The pinned shader ZIP remains unmodified. Its `wavingBlocks.glsl` multiplies `frameTimeCounter` by `WAVING_SPEED`, whereas freezing the Minecraft server does not freeze that shader clock. On the three latest failed native Shader ON runs, oak-leaf grain correlation varied from 0.50 to 0.68 despite stable foreground and near-original variance. Raw frames and logs remain preserved. A regression contract first failed on the absent motion-time option. The existing RGB spatial-noise, detail-preservation and missing/flattened/shuffled negative gates remain unchanged. This profile verifies static restoration; animated shader appearance and arbitrary shader settings are separate unverified scope.
+
+The first local frozen-wind 26.3 Shader ON run still failed leaf restoration. Its frames/logs are preserved separately. The shader also varies subpixel projection by `framemod8` in `jitter.glsl`; `TAA_JITTER=0` skips that coordinate shift while leaving TAA itself enabled. Add and verify this second explicit static-fixture option instead of relaxing the spatial/detail gates. The frozen-wind-only attempt is a failed diagnostic experiment, not completion evidence.
