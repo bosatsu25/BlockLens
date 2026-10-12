@@ -71,4 +71,17 @@ final class PaleOakObjectFramesTest {
         assertTrue(PaleOakObjectFrames.changed(off,on,air,REGION));
     }
 
+    @Test void independentSupportWithObjectShadowsCannotContaminateFixedWoodRegion() {
+        var off=image(1);var on=image(2);var air=image(0);
+        for(int y=140;y<160;y++) for(int x=280;x<360;x++) {
+            // The object casts a small support shadow only in the populated scene.
+            off.setRGB(x,y,0xFFAAAABB);air.setRGB(x,y,0xFFBBBBCC);
+            on.setRGB(x,y,0xFFFFEEEE);
+        }
+        assertFalse(PaleOakObjectFrames.changed(off,on,air,REGION));
+        var wood=new PaleOakObjectFrames.Region(295,160,345,220);
+        assertTrue(PaleOakObjectFrames.changed(off,on,air,wood));
+        for(int kind:new int[]{0,1,3,4,5})
+            assertFalse(PaleOakObjectFrames.changed(off,image(kind),air,wood));
+    }
 }

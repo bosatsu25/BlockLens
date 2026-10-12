@@ -22,6 +22,8 @@ final class PaleOakRenderedScenes {
     private static final double HANGING_CAMERA_Z=7.5;
     private static final String[] ROLES={"boat","chest-boat","standing-sign","hanging-sign","sign-gui","hanging-sign-gui"};
     private static final PaleOakObjectFrames.Region WORLD=new PaleOakObjectFrames.Region(220,130,420,250);
+    // Fixed hanging-camera projection excludes the independently highlighted white support.
+    private static final PaleOakObjectFrames.Region HANGING=new PaleOakObjectFrames.Region(286,156,354,204);
     private static final PaleOakObjectFrames.Region GUI=new PaleOakObjectFrames.Region(100,60,540,300);
     private PaleOakRenderedScenes() { }
     static void verify(ClientGameTestContext context,TestSingleplayerContext world,Path parent,BlockLensConfig offConfig) throws IOException {
@@ -64,7 +66,7 @@ final class PaleOakRenderedScenes {
                 context.runOnClient(c->BlockLensConfigScreen.show(c,null));PaleOakPaletteOracle.saveUiToggle(context);
                 if(gui) openEditor(context,hanging);
                 var on=capture(context,output,ROLES[role]+"-on");
-                var region=gui ? GUI : WORLD;
+                var region=gui ? GUI : hanging ? HANGING : WORLD;
                 require(PaleOakObjectFrames.changed(off,on,air,region),"Rendered pale-oak chroma/grain/foreground absent: "+ROLES[role]);
                 context.runOnClient(c->BlockLensConfigScreen.show(c,null));
                 var combined=offConfig;for(var flag:CapabilityId.values())combined=combined.withEnabled(flag,true);
