@@ -4,7 +4,7 @@ Status: settings redesign merged in PR #40; three-version integration is the dev
 
 ## Scope
 
-The native settings screen groups all 57 current BlockLens capabilities into four categories: Decoration (13), Resources (21), Visibility (8), Other (15).
+The native settings screen groups all 61 current BlockLens capabilities into four categories: Decoration (13), Resources (22), Visibility (9), Other (17).
 The original 40 source keys, bit positions and defaults stay unchanged. The six visual/comfort additions, five analyzers, two scene filters and four Builder Assist controls are documented in their current feature specifications. Crying Obsidian,
 Nether Gold Ore and Nether Quartz Ore remain independent Resource options after the original 18.
 

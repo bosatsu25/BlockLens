@@ -1,8 +1,8 @@
-# BlockLens — 現在の60機能 / Current 60 capabilities
+# BlockLens — 現在の61機能 / Current 61 capabilities
 
 Minecraft Java Edition **26.1.2 / 26.2 / 26.3** 向けのクライアント専用機能です。
 各機能は独立して有効・無効を切り替えられ、同時に有効にできます。
-The compiled catalog contains 60 independent capabilities; existing keys, ordering and defaults are preserved.
+The compiled catalog contains 61 independent capabilities; existing keys, ordering and defaults are preserved.
 
 **削除済み:** `analyzer.debris_analyzer` と `builder.schematic_comparison`。既存設定のこれらのキーは無視されます。通常の古代の残骸ハイライト `gaming.ancient_debris` は引き続き利用できます。
 
@@ -24,7 +24,7 @@ The compiled catalog contains 60 independent capabilities; existing keys, orderi
 | 木 | Wood | 木ブロックの軸方向を見分けやすくします。 | 無効 / Disabled |
 | 原木 | Log | 原木の軸方向を見分けやすくします。 | 無効 / Disabled |
 
-## 資源 / Resources（21）
+## 資源 / Resources（22）
 
 添付NewGlowingOresの対象に相当する18種類のバニラ鉱石について、既存の鉱石ハイライトを有効にするとBlockLens独自の発光境界を描画します。鉱石ごとの独立ON/OFFは従来どおりです。元の画像・OptiFine CTMは配布せず、露出面の透明モデルを使用します。隣接ブロック間のCTM連結や外部MOD鉱石までの完全互換は未実装です。
 
@@ -52,6 +52,7 @@ The compiled catalog contains 60 independent capabilities; existing keys, orderi
 | 泣く黒曜石 | Crying Obsidian | 泣く黒曜石を強調表示します。 | 無効 / Disabled |
 | ネザー金鉱石 | Nether Gold Ore | ネザー金鉱石を強調表示します。 | 無効 / Disabled |
 | ネザークォーツ鉱石 | Nether Quartz Ore | ネザークォーツ鉱石を強調表示します。 | 無効 / Disabled |
+| 鉱石の接続枠 | Connected ore borders | 同種の固定立方体モデルの枠を接続します。鉱石の強調も有効にしてください。 | 無効 / Disabled |
 
 ## 見やすさ / Visibility（9）
 
@@ -103,7 +104,7 @@ Open with B or the optional Mod Menu entrypoint. Save and apply persists edits; 
 
 ## 確認範囲 / Verification boundary
 
-一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援とペールオークの白灰色化、3つのコンパクト表示と地形簡略化を追加した構成です。既存機能の設定キー・ビット位置・既定値は維持します。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
+一覧は現行の `CapabilityId` と英語・日本語翻訳に対応します。参照元の37機能に、泣く黒曜石・ネザー金鉱石・ネザークォーツ鉱石の3機能、独立した6機能、4つの解析機能、2つの表示フィルター、3つの建築支援とペールオークの白灰色化、3つのコンパクト表示と地形簡略化、鉱石の接続枠を追加した構成です。既存機能の設定キー・ビット位置・既定値は維持します。削除した解析のビット位置46と設計図比較の位置56は再利用しません。糸表示調整はトリップワイヤーフック、ネザー表示調整は磨かれた玄武岩も対象に含みます。
 
 建築支援はワールド内の設定画面の「開く」、またはキー設定で割り当てた専用キーから開きます。3機能を有効にして「保存して適用」してから使用します。設置・破壊・サーバーへの独自操作は行いません。パターン比較の基準はセッション内だけに保持します。[建築支援の仕様](builder-assist.md)と[鉱石拡張の契約](extension-compatibility.md)を参照してください。
 

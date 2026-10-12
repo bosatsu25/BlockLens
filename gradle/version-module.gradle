@@ -54,6 +54,11 @@ def externalProfile = providers.gradleProperty('externalCompatibilityProfile').o
 if (!(externalProfile in ['none', 'shader-off', 'shader-on', 'vulkan', 'packs'])) {
     throw new GradleException('Unknown external compatibility profile')
 }
+def connectedExternalOnly = providers.gradleProperty('connectedExternalOnly').orElse('false').get()
+if (!(connectedExternalOnly in ['true', 'false']) || (connectedExternalOnly == 'true' &&
+        (clientTestFocus != 'external' || externalProfile == 'packs'))) {
+    throw new GradleException('connectedExternalOnly requires a recorded external renderer profile')
+}
 def externalDirectory = providers.gradleProperty('externalCompatibilityDirectory').orElse('').get()
 if ((clientTestFocus == 'external') != (externalProfile != 'none')) {
     throw new GradleException('External compatibility profiles require clientTestFocus=external')
@@ -73,6 +78,7 @@ tasks.named('runClientGameTest') {
     systemProperty 'blocklens.test.m8.fpsLimit', m8FpsLimit
     systemProperty 'blocklens.test.focus', clientTestFocus
     systemProperty 'blocklens.test.external.profile', externalProfile
+    systemProperty 'blocklens.test.external.connectedOnly', connectedExternalOnly
     if (externalProfile != 'none') {
         File prepared = rootProject.file(externalDirectory)
         def launchDirectory = loom.runs.named('clientGameTest').flatMap { it.runDirectory }

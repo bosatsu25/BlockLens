@@ -691,3 +691,13 @@ jobs:
   bbe-compatibility:
     needs: common-quality
     uses: ./.github/workflows/bbe-compatibility.yml
+
+  connected-compatibility:
+    needs: common-quality
+    uses: ./.github/workflows/external-compatibility.yml
+    with:
+      connected_only: true
+
+  connected-native:
+    needs: common-quality
+    uses: ./.github/workflows/connected-native.yml

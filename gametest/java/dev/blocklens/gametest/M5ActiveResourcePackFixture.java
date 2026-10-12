@@ -20,6 +20,9 @@ public final class M5ActiveResourcePackFixture implements ClientModInitializer {
             throw new IllegalStateException("failed to register M5 active resource-pack fixture: " + PACK_ID);
         }
         SettingsStateReloadOracle.register(container);
+        if(!ResourceLoader.registerBuiltinPack(Identifier.fromNamespaceAndPath("blocklens-gametest","connected-vanilla-control"),container,PackActivationType.NORMAL)){
+            throw new IllegalStateException("Connected vanilla control registration failed");
+        }
         if (!ResourceLoader.registerBuiltinPack(Identifier.fromNamespaceAndPath(
                 "blocklens-gametest", "simplified-external"), container, PackActivationType.NORMAL)) {
             throw new IllegalStateException("Simplified external fixture registration failed");

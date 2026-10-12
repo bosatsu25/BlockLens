@@ -2,18 +2,26 @@ name: External compatibility
 
 on:
   workflow_call:
+    inputs:
+      connected_only:
+        type: boolean
+        default: false
   workflow_dispatch:
+    inputs:
+      connected_only:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: blocklens-external-${{ github.ref }}
+  group: blocklens-external-${{ github.ref }}-${{ inputs.connected_only }}
   cancel-in-progress: true
 
 jobs:
   external-client:
-    name: ${{ matrix.minecraft }} / ${{ matrix.profile }}
+    name: ${{ matrix.minecraft }} / ${{ matrix.profile }} / ${{ inputs.connected_only && 'connected ore' || 'visual compatibility' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -70,6 +78,7 @@ jobs:
         run: >-
           gradle --stacktrace
           -PclientTestFocus=external
+          -PconnectedExternalOnly=${{ inputs.connected_only }}
           -PverifyPackagedRuntime=true
           -PexternalCompatibilityProfile=${{ matrix.profile }}
           -PexternalCompatibilityDirectory=build/external/${{ matrix.minecraft }}-${{ matrix.profile }}
@@ -83,21 +92,22 @@ jobs:
         run: >-
           xvfb-run -a gradle --stacktrace
           -PclientTestFocus=external
+          -PconnectedExternalOnly=${{ inputs.connected_only }}
           -PverifyPackagedRuntime=true
           -PexternalCompatibilityProfile=${{ matrix.profile }}
           -PexternalCompatibilityDirectory=build/external/${{ matrix.minecraft }}-${{ matrix.profile }}
           :versions:${{ matrix.module }}:runClientGameTest
       - name: Verify and collect external evidence
         run: >-
-          python3 scripts/verify_external_compatibility.py
+          python3 scripts/${{ inputs.connected_only && 'verify_connected_external.py' || 'verify_external_compatibility.py' }}
           --directory 'versions/${{ matrix.module }}/build/run/clientGameTest/external-compatibility'
           --minecraft '${{ matrix.minecraft }}' --profile '${{ matrix.profile }}'
-          --destination 'build/ci/external-${{ matrix.minecraft }}-${{ matrix.profile }}'
+          --destination 'build/ci/${{ inputs.connected_only && 'connected' || 'external' }}-${{ matrix.minecraft }}-${{ matrix.profile }}'
       - name: Upload verified external evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: blocklens-external-${{ matrix.minecraft }}-${{ matrix.profile }}
-          path: build/ci/external-${{ matrix.minecraft }}-${{ matrix.profile }}
+          name: blocklens-${{ inputs.connected_only && 'connected' || 'external' }}-${{ matrix.minecraft }}-${{ matrix.profile }}
+          path: build/ci/${{ inputs.connected_only && 'connected' || 'external' }}-${{ matrix.minecraft }}-${{ matrix.profile }}
           if-no-files-found: error
           retention-days: 14
       - name: Collect bounded failure diagnostics
@@ -116,7 +126,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: blocklens-external-failure-${{ matrix.minecraft }}-${{ matrix.profile }}
+          name: blocklens-${{ inputs.connected_only && 'connected' || 'external' }}-failure-${{ matrix.minecraft }}-${{ matrix.profile }}
           path: build/ci/external-failure-${{ matrix.minecraft }}-${{ matrix.profile }}
           if-no-files-found: warn
           retention-days: 14
