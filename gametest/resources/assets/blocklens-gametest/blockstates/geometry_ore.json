@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "shape=0": {
+      "model": "blocklens-gametest:block/geometry_cube"
+    },
+    "shape=1": {
+      "model": "blocklens-gametest:block/geometry_inset"
+    },
+    "shape=2": {
+      "model": "blocklens-gametest:block/geometry_split"
+    },
+    "shape=3": [
+      {
+        "model": "blocklens-gametest:block/geometry_cube"
+      },
+      {
+        "model": "blocklens-gametest:block/geometry_inset"
+      }
+    ],
+    "shape=4": {
+      "model": "blocklens-gametest:block/geometry_unculled"
+    },
+    "shape=5": {
+      "model": "blocklens-gametest:block/geometry_cube"
+    }
+  }
+}

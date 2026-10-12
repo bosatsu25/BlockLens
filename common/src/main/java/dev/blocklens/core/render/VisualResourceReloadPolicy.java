@@ -10,7 +10,8 @@ public final class VisualResourceReloadPolicy {
             | (1L << CapabilityId.COMPACT_BLOCKS.bitPosition())
             | (1L << CapabilityId.COMPACT_ITEMS.bitPosition())
             | (1L << CapabilityId.COMPACT_TOOLS.bitPosition())
-            | (1L << CapabilityId.SIMPLIFIED_TERRAIN.bitPosition());
+            | (1L << CapabilityId.SIMPLIFIED_TERRAIN.bitPosition())
+            | (1L << CapabilityId.CONNECTED_ORE_EDGES.bitPosition());
     public static boolean requiresReload(BlockLensConfig before, BlockLensConfig after) {
         return ((before.enabledMask() ^ after.enabledMask()) & MASK) != 0;
     }

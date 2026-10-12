@@ -1,0 +1,93 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.zip.Deflater
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+
+// Recompress only the controlled generated outer artifact. Entry payloads/debug information stay exact.
+ext.compressOwnedRuntimeArchive = { File archive ->
+    File target=archive.canonicalFile
+    File buildRoot=layout.buildDirectory.get().asFile.canonicalFile
+    if (!archive.absoluteFile.toPath().normalize().equals(target.toPath())
+            || !target.toPath().startsWith(buildRoot.toPath()) || !target.isFile()) {
+        throw new GradleException('Runtime compression requires a regular generated build artifact')
+    }
+    def temporary=Files.createTempFile(target.parentFile.toPath(),'blocklens-compress-','.tmp')
+    try {
+        new ZipFile(target).withCloseable { source ->
+            new ZipOutputStream(Files.newOutputStream(temporary)).withCloseable { output ->
+                output.setLevel(Deflater.BEST_COMPRESSION)
+                int count=0
+                long expanded=0
+                def entries=source.entries()
+                while(entries.hasMoreElements()) {
+                    def original=entries.nextElement()
+                    count++;expanded+=original.size
+                    if(count>4096 || original.size<0 || expanded>8*1024*1024)
+                        throw new GradleException('Owned archive exceeds bounded compression input')
+                    def entry=new ZipEntry(original)
+                    byte[] payload=source.getInputStream(original).withCloseable { input -> input.readAllBytes() }
+                    if(entry.method==ZipEntry.DEFLATED) {
+                        // Known compressed length avoids an unnecessary per-entry data descriptor.
+                        def deflater=new Deflater(Deflater.BEST_COMPRESSION,true)
+                        try {
+                            deflater.setInput(payload);deflater.finish()
+                            byte[] buffer=new byte[8192];long compressed=0
+                            while(!deflater.finished())compressed+=deflater.deflate(buffer)
+                            entry.setCompressedSize(compressed)
+                        } finally { deflater.end() }
+                    }
+                    output.putNextEntry(entry)
+                    output.write(payload)
+                    output.closeEntry()
+                }
+            }
+        }
+        Files.move(temporary,target.toPath(),StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING)
+    } finally {
+        Files.deleteIfExists(temporary)
+    }
+}
+
+tasks.register('runtimeArchiveCompressionContract') {
+    group='verification'
+    description='Preserves every owned ZIP payload/metadata and rejects corrupt/outside input.'
+    doLast {
+        File directory=layout.buildDirectory.dir('compression-contract').get().asFile
+        directory.mkdirs()
+        File archive=new File(directory,'fixture.jar')
+        def expected=['META-INF/':new byte[0], 'empty':new byte[0], 'unicode-鉱石':new byte[4096],
+                'alpha.class':('owned-class-constant-'*4096).getBytes('UTF-8')]
+        new ZipOutputStream(new FileOutputStream(archive)).withCloseable { output ->
+            output.setLevel(Deflater.NO_COMPRESSION)
+            expected.each { name,payload ->
+                def entry=new ZipEntry(name);entry.time=315532800000L;entry.comment='retained metadata'
+                output.putNextEntry(entry);output.write(payload);output.closeEntry()
+            }
+        }
+        long originalSize=archive.length()
+        compressOwnedRuntimeArchive(archive)
+        byte[] first=archive.bytes
+        if(archive.length()>=originalSize)throw new GradleException('Contract payload was not compressed')
+        new ZipFile(archive).withCloseable { source ->
+            if(source.entries().toList()*.name!=expected.keySet().toList())throw new GradleException('Entry order differs')
+            expected.each { name,payload ->
+                def entry=source.getEntry(name)
+                if(entry.comment!='retained metadata' || !Arrays.equals(source.getInputStream(entry).withCloseable { it.readAllBytes() },payload))
+                    throw new GradleException('Entry payload or metadata differs')
+            }
+        }
+        compressOwnedRuntimeArchive(archive)
+        if(!Arrays.equals(first,archive.bytes))throw new GradleException('Repeated compression differs')
+        File corrupt=new File(directory,'corrupt.jar');corrupt.bytes=[1,2,3] as byte[]
+        boolean rejected=false
+        try { compressOwnedRuntimeArchive(corrupt) } catch(java.util.zip.ZipException expectedError) { rejected=true }
+        if(!rejected || !Arrays.equals(corrupt.bytes,[1,2,3] as byte[]))throw new GradleException('Corrupt input changed')
+        rejected=false
+        try { compressOwnedRuntimeArchive(rootProject.file('AGENTS.md')) } catch(GradleException expectedError) { rejected=true }
+        if(!rejected || directory.listFiles().any { it.name.endsWith('.tmp') })throw new GradleException('Compression containment/cleanup failed')
+        logger.lifecycle('BLOCKLENS_ARCHIVE_COMPRESSION payloads=true metadata=true reproducible=true containment=true failureCleanup=true')
+    }
+}
+tasks.named('check') { dependsOn tasks.named('runtimeArchiveCompressionContract') }

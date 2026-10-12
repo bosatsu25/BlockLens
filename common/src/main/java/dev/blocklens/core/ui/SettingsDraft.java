@@ -31,7 +31,7 @@ public final class SettingsDraft {
     /** NewGlowingOres vanilla ore subset; original CTM artwork is not copied. */
     public void enableOreGlowProfile() {
         for (CapabilityId capability : CapabilityId.values()) {
-            if (capability.category() == CapabilityId.Category.RESOURCE
+            if (capability.isResourceHighlight()
                     && capability != CapabilityId.OBSIDIAN
                     && capability != CapabilityId.CRYING_OBSIDIAN) {
                 config = config.withEnabled(capability, true);

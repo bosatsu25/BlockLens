@@ -21,11 +21,16 @@ public final class OreExtensionFixture implements ModInitializer {
     static final String CONFLICTED = "blocklens-gametest:conflicted_ore";
     static final String MANY_STATES = "blocklens-gametest:many_states_ore";
     static final int OVERFLOW_TARGETS = 257;
+    static final String GEOMETRY = "blocklens-gametest:geometry_ore";
 
     @Override
     public void onInitialize() {
         for (String raw : new String[]{EXPLICIT, TAGGED, UNSUPPORTED, CONFLICTED}) register(raw, false);
         register(MANY_STATES, true);
+        var geometryId=Identifier.tryParse(GEOMETRY);
+        Registry.register(BuiltInRegistries.BLOCK,geometryId,new GeometryStates(BlockBehaviour.Properties.of()
+                .setId(ResourceKey.create(Registries.BLOCK,geometryId)).noLootTable()));
+        require(OreHighlightExtensions.register(1,GEOMETRY,"gaming.diamond_ore"),"geometry fixture rejected");
         for (int i = 0; i < OVERFLOW_TARGETS; i++) register(overflowId(i), false);
         require(OreHighlightExtensions.register(1, EXPLICIT, "gaming.diamond_ore"), "explicit API rejected fixture");
         require(OreHighlightExtensions.register(1, EXPLICIT, "gaming.diamond_ore"), "explicit duplicate rejected");
@@ -39,11 +44,27 @@ public final class OreExtensionFixture implements ModInitializer {
 
     static String overflowId(int index) { return "blocklens-gametest:overflow_ore_" + index; }
 
+    /** The collision control intentionally shares the exact baked visual model of shape0. */
+    public static BlockState sharedGeometryBase(BlockState state){
+        return state.getBlock() instanceof GeometryStates
+                && state.getValue(GeometryStates.SHAPE)==5 ? state.setValue(GeometryStates.SHAPE,0) : null;
+    }
+
     private static void register(String raw, boolean manyStates) {
         Identifier id = Identifier.tryParse(raw);
         BlockBehaviour.Properties properties = BlockBehaviour.Properties.of()
                 .setId(ResourceKey.create(Registries.BLOCK, id)).noLootTable();
         Registry.register(BuiltInRegistries.BLOCK, id, manyStates ? new ManyStates(properties) : new Block(properties));
+    }
+
+    private static final class GeometryStates extends Block {
+        private static final IntegerProperty SHAPE=IntegerProperty.create("shape",0,5);
+        private GeometryStates(BlockBehaviour.Properties properties){super(properties);}
+        @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){builder.add(SHAPE);}
+        @Override protected net.minecraft.world.phys.shapes.VoxelShape getCollisionShape(BlockState state,
+                net.minecraft.world.level.BlockGetter level,net.minecraft.core.BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext context){
+            return state.getValue(SHAPE)==5 ? net.minecraft.world.phys.shapes.Shapes.box(0,0,0,1,.5,1) : super.getCollisionShape(state,level,pos,context);
+        }
     }
 
     private static final class ManyStates extends Block {

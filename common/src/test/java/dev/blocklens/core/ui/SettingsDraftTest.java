@@ -18,7 +18,7 @@ final class SettingsDraftTest {
         assertTrue(draft.changed());
         int changed=0;
         for(var id:dev.blocklens.core.CapabilityId.values()) {
-            if(id.category()==dev.blocklens.core.CapabilityId.Category.RESOURCE
+            if(id.isResourceHighlight()
                     && id!=dev.blocklens.core.CapabilityId.OBSIDIAN
                     && id!=dev.blocklens.core.CapabilityId.CRYING_OBSIDIAN) {
                 changed++;

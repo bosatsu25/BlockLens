@@ -14,7 +14,9 @@
     "CompactModelProbeMixin",
     "CompactDisplayProbeMixin",
     "CompactSubmissionProbeMixin",
-    "SimplifiedTerrainProbeMixin"
+    "SimplifiedTerrainProbeMixin",
+    "ConnectedOreProbeMixin",
+    "ConnectedGeometryModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

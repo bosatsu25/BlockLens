@@ -48,6 +48,48 @@ final class ResourceBorderPolicyTest {
                 assertEquals(selected == other, restored.isEnabled(other), other.sourceKey());
             }
         }
-        assertEquals(60, CapabilityId.values().length);
+        assertEquals(61, CapabilityId.values().length);
     }
+    @Test void joinedEdgesAndMissingDiagonalsRetainOnlyRequiredCorners() {
+        assertEquals(255, ResourceBorderPolicy.connectedBorderMask(0));
+        assertEquals(0, ResourceBorderPolicy.connectedBorderMask(255));
+        assertEquals(240, ResourceBorderPolicy.connectedBorderMask(15));
+        assertEquals(252, ResourceBorderPolicy.connectedBorderMask(3));
+        assertEquals(236, ResourceBorderPolicy.connectedBorderMask(3 | 16));
+        assertEquals(255, ResourceBorderPolicy.connectedBorderMask(240));
+    }
+
+    @Test void allEightNeighborCasesProduceExactly47CanonicalBoundaries() {
+        var shapes = new java.util.HashSet<Integer>();
+        for (int neighbors = 0; neighbors < 256; neighbors++) {
+            int border = ResourceBorderPolicy.connectedBorderMask(neighbors);
+            shapes.add(border);
+            for (int side = 0; side < 4; side++) {
+                assertEquals((neighbors & (1 << side)) == 0, (border & (1 << side)) != 0);
+                boolean corner = (neighbors & (1 << side)) == 0
+                        || (neighbors & (1 << ((side + 1) % 4))) == 0
+                        || (neighbors & (1 << (side + 4))) == 0;
+                assertEquals(corner, (border & (1 << (side + 4))) != 0);
+            }
+        }
+        assertEquals(47, shapes.size());
+    }
+
+    @Test void invalidNeighborMasksAreRejected() {
+        for (int mask : new int[] {-1, 256, Integer.MIN_VALUE, Integer.MAX_VALUE}) {
+            assertThrows(IllegalArgumentException.class, () -> ResourceBorderPolicy.connectedBorderMask(mask));
+        }
+    }
+
+    @Test void connectionsAreIndependentAndNeverRegisterAsAnOreMaterial() {
+        var id=CapabilityId.CONNECTED_ORE_EDGES;
+        assertEquals(62,id.bitPosition());assertEquals(CapabilityId.Category.RESOURCE,id.category());
+        assertFalse(id.defaultEnabled());assertFalse(id.isResourceHighlight());assertFalse(ResourceBorderPolicy.supports(id));
+        var defaults=BlockLensConfig.defaults();var enabled=defaults.withEnabled(id,true);
+        assertEquals(defaults.enabledMask()|(1L<<62),enabled.enabledMask());
+        assertEquals(enabled,BlockLensConfigCodec.decode(BlockLensConfigCodec.encode(enabled)));
+        for(var ore:ORES)assertFalse(enabled.isEnabled(ore));
+        assertFalse(new dev.blocklens.core.extension.OreExtensionCatalog().register(1,"example:ore",id.sourceKey()));
+    }
+
 }

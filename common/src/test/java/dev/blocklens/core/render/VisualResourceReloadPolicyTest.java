@@ -12,7 +12,7 @@ final class VisualResourceReloadPolicyTest {
             var changed = original.withEnabled(id, !original.isEnabled(id));
             boolean expected = id == CapabilityId.PALE_OAK_NEUTRAL || id == CapabilityId.COMPACT_BLOCKS
                     || id == CapabilityId.COMPACT_ITEMS || id == CapabilityId.COMPACT_TOOLS
-                    || id == CapabilityId.SIMPLIFIED_TERRAIN;
+                    || id == CapabilityId.SIMPLIFIED_TERRAIN || id == CapabilityId.CONNECTED_ORE_EDGES;
             assertEquals(expected, VisualResourceReloadPolicy.requiresReload(original, changed), id.sourceKey());
             assertEquals(expected, VisualResourceReloadPolicy.requiresReload(changed, original), id.sourceKey());
         }

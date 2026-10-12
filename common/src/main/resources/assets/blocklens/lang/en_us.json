@@ -195,5 +195,7 @@
   "blocklens.capability.compact_tools": "Compact weapons and tools",
   "blocklens.capability.compact_tools.description": "Use compact tool poses, including bow, crossbow, blocking shield, mace, spear and trident states.",
   "blocklens.capability.simplified_terrain": "Simplified terrain",
-  "blocklens.capability.simplified_terrain.description": "Replace selected vanilla terrain with opaque dark grain and sparse plants; keep the hide filter independent."
+  "blocklens.capability.simplified_terrain.description": "Replace selected vanilla terrain with opaque dark grain and sparse plants; keep the hide filter independent.",
+  "blocklens.capability.connected_ore_edges": "Connected ore borders",
+  "blocklens.capability.connected_ore_edges.description": "Connect matching fixed cube faces. Also enable the ore highlight."
 }

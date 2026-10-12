@@ -152,7 +152,7 @@ final class M5DarkAreaVisualOracle {
     private static BlockLensConfig resourceOnly(BlockLensConfig base) {
         BlockLensConfig result = allOff(base);
         for (CapabilityId capability : CapabilityId.values()) {
-            if (capability.category() == CapabilityId.Category.RESOURCE) {
+            if (capability.isResourceHighlight()) {
                 result = result.withEnabled(capability, true);
             }
         }

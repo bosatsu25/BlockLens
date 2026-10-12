@@ -25,7 +25,7 @@ final class M8PerformanceBaselineContractTest {
                 "knowledge/current/performance-strategy.md"));
 
         assertTrue(smoke.contains("M8PerformanceBaselineOracle.verify(context, singleplayer)"));
-        assertTrue(oracle.contains("EXPECTED_CAPABILITIES = 60"));
+        assertTrue(oracle.contains("EXPECTED_CAPABILITIES = 61"));
         for (String family : new String[] {"minecraft:glass", "minecraft:glass_pane", "minecraft:white_concrete",
                 "minecraft:chest", "minecraft:kelp[", "minecraft:kelp_plant"}) {
             assertTrue(oracle.contains(family), "M8 workload excludes added family: " + family);
@@ -39,7 +39,7 @@ final class M8PerformanceBaselineContractTest {
         assertTrue(oracle.contains("client.reloadResourcePacks()"));
         assertTrue(oracle.contains("com.sun.management.ThreadMXBean"));
         assertTrue(oracle.contains("MinecraftTerrainInvalidator::invalidateAll"));
-        assertTrue(oracle.contains("CapabilityId.Category.RESOURCE"));
+        assertTrue(oracle.contains("capability.isResourceHighlight()"));
         assertTrue(oracle.contains("BlockLensConfig defaultConfig = BlockLensConfig.defaults()"));
         assertTrue(oracle.contains("BlockLensConfig allOn = allOn(original)"));
         assertTrue(oracle.contains("defaultAllocatedMedianBytes"));

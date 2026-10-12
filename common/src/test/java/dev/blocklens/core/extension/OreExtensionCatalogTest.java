@@ -50,7 +50,7 @@ final class OreExtensionCatalogTest {
         var catalog = new OreExtensionCatalog();
         int accepted = 0;
         for (CapabilityId capability : CapabilityId.values()) {
-            boolean resource = capability.category() == CapabilityId.Category.RESOURCE;
+            boolean resource = capability.isResourceHighlight();
             assertEquals(resource, catalog.register(1, "example:block_" + capability.ordinal(), capability.sourceKey()));
             if (resource) accepted++;
         }

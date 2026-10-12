@@ -195,5 +195,7 @@
   "blocklens.capability.compact_tools": "コンパクトな武器・道具表示",
   "blocklens.capability.compact_tools.description": "弓・クロスボウ・防御中の盾・メイス・槍・トライデントの状態に合わせて調整します。",
   "blocklens.capability.simplified_terrain": "地形の簡略表示",
-  "blocklens.capability.simplified_terrain.description": "対象の標準地形を暗い不透明面と疎な植物に置き換えます。非表示フィルターとは独立した設定です。"
+  "blocklens.capability.simplified_terrain.description": "対象の標準地形を暗い不透明面と疎な植物に置き換えます。非表示フィルターとは独立した設定です。",
+  "blocklens.capability.connected_ore_edges": "鉱石の接続枠",
+  "blocklens.capability.connected_ore_edges.description": "同種の固定立方体モデルの枠を接続します。鉱石の強調も有効にしてください。"
 }

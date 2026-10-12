@@ -37,7 +37,7 @@ final class ChiseTweaksP0MigrationContractTest {
                 CapabilityId.NETHER_QUARTZ_ORE);
 
         Set<CapabilityId> actual = java.util.Arrays.stream(CapabilityId.values())
-                .filter(capability -> capability.category() == CapabilityId.Category.RESOURCE)
+                .filter(capability -> capability.isResourceHighlight())
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
         assertEquals(expected, actual);
         assertEquals(21, ResourceTargetCatalog.totalBindingCount());
