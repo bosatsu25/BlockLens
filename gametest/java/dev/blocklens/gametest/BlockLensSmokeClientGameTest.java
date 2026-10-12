@@ -32,6 +32,13 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             verifyM8Only(context);
             return;
         }
+        if ("settings".equals(System.getProperty("blocklens.test.focus", "all"))) {
+            context.runOnClient(c -> PackagedRuntimeOracle.verify());
+            SettingsStateReloadOracle.verify(context);
+            ResponsiveSettingsScreenOracle.verify(context);
+            SettingsEditingOracle.verify(context);
+            return;
+        }
         if ("connected".equals(System.getProperty("blocklens.test.focus", "all"))) {
             context.runOnClient(c -> PackagedRuntimeOracle.verify());
             try (TestSingleplayerContext world=context.worldBuilder().create()) {
