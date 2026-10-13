@@ -51,3 +51,9 @@ Both outer and inner SHA-256 values match before and after clean rebuilds. These
 - [Pinned Loader 0.19.5 nested discovery](https://github.com/FabricMC/fabric-loader/blob/0.19.5/src/main/java/net/fabricmc/loader/impl/discovery/ModDiscoverer.java)
 - [Fabric classpath group boundaries](https://docs.fabricmc.net/develop/loom/classpath-groups)
 - [Fabric production-run API](https://docs.fabricmc.net/develop/loom/production-run-tasks)
+
+## v0.4.7 redundant directory metadata
+
+The Resources shortcut addition preserves the user-required 200 KiB ceiling. Outer-archive compression omits a directory record only when it has zero payload, no comment, and a retained non-directory descendant. Files, the owned inner archive and compiled debug bytes stay exact. Intentional empty directories, comments and nonzero directory payloads are retained. Kept entry order and metadata remain deterministic.
+
+The archive contract independently verifies commented/nonempty directory preservation, an uncommented empty directory, deep implicit parents through the JDK ZIP filesystem, all retained file bytes, repeat compression, corrupt/outside-input rejection and cleanup. Three-target local builds measure 200563 / 200605 / 203370 bytes; all resources and 139 / 139 / 143 compiled classes match their normal build outputs exactly. Native packaged client and exact-head hosted gates remain required. This is a download-size optimization, not a startup or render-performance claim.

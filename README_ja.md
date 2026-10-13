@@ -12,9 +12,11 @@ BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジ�
 
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
-> **現行実装:** BlockLens **v0.4.6** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な61機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
+> **現行実装:** BlockLens **v0.4.7** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な61機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。
 >
 > **歴史的release:** BlockLens **v0.1.0** は変更しない参照パック 37機能のrelease baselineです。P0は当時の**100 KiB**制限の下でv0.2.0として公開され、**328 capability-to-target bindings / 322 unique block targets**へ拡張しました。v0.2.2でMod Menu設定入口を追加しました。現行の開発・公開上限は、2026-10-11の指定により**200 KiB / 204,800 B**です。
+
+「資源」には**一括OFF**（資源22項目すべてOFF）と**黒曜石2種ON**（黒曜石・泣く黒曜石だけON、ほかの設定は維持）もあります。編集内容だけを変更するため、**適用**で保存・反映してください。
 
 > **現行カタログ:** 独立設定可能な61機能。[公開済みJAR一覧](https://github.com/bosatsu25/BlockLens/releases)から対象版を選べます。古代の残骸アナライズとMasa/Litematica設計図比較は廃止済みです。source reference由来の37機能は維持し、公開済みv0.3.0には変更を加えません。
 

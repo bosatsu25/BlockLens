@@ -16,6 +16,14 @@ ext.compressOwnedRuntimeArchive = { File archive ->
     def temporary=Files.createTempFile(target.parentFile.toPath(),'blocklens-compress-','.tmp')
     try {
         new ZipFile(target).withCloseable { source ->
+            if(source.size()>4096)throw new GradleException('Owned archive exceeds bounded compression input')
+            def records=source.entries().toList()
+            // ZipFileSystem reconstructs parents of retained files; keep intentional empty dirs,
+            // nonempty directory payloads and comments. No class/resource/debug bytes change.
+            def redundant=records.findAll { record ->
+                record.directory && record.size==0 && !record.comment
+                        && records.any { child -> !child.directory && child.name.startsWith(record.name) }
+            }*.name.toSet()
             new ZipOutputStream(Files.newOutputStream(temporary)).withCloseable { output ->
                 output.setLevel(Deflater.BEST_COMPRESSION)
                 int count=0
@@ -26,6 +34,7 @@ ext.compressOwnedRuntimeArchive = { File archive ->
                     count++;expanded+=original.size
                     if(count>4096 || original.size<0 || expanded>8*1024*1024)
                         throw new GradleException('Owned archive exceeds bounded compression input')
+                    if(redundant.contains(original.name))continue
                     def entry=new ZipEntry(original)
                     byte[] payload=source.getInputStream(original).withCloseable { input -> input.readAllBytes() }
                     if(entry.method==ZipEntry.DEFLATED) {
@@ -58,11 +67,16 @@ tasks.register('runtimeArchiveCompressionContract') {
         directory.mkdirs()
         File archive=new File(directory,'fixture.jar')
         def expected=['META-INF/':new byte[0], 'empty':new byte[0], 'unicode-鉱石':new byte[4096],
-                'alpha.class':('owned-class-constant-'*4096).getBytes('UTF-8')]
+                'alpha.class':('owned-class-constant-'*4096).getBytes('UTF-8'),
+                'assets/':new byte[0], 'assets/demo.class':('owned-resource-'*1024).getBytes('UTF-8'),
+                'assets/data/':[1,2,3] as byte[], 'assets/data/file':[4] as byte[],
+                'assets/commented/':new byte[0], 'assets/commented/file':[5] as byte[],
+                'empty-dir/':new byte[0], 'assets/deep/':new byte[0],
+                'assets/deep/child/':new byte[0], 'assets/deep/child/file':[6] as byte[]]
         new ZipOutputStream(new FileOutputStream(archive)).withCloseable { output ->
             output.setLevel(Deflater.NO_COMPRESSION)
             expected.each { name,payload ->
-                def entry=new ZipEntry(name);entry.time=315532800000L;entry.comment='retained metadata'
+                def entry=new ZipEntry(name);entry.time=315532800000L;entry.comment=name in ['assets/','empty-dir/','assets/deep/','assets/deep/child/'] ? null : 'retained metadata'
                 output.putNextEntry(entry);output.write(payload);output.closeEntry()
             }
         }
@@ -71,12 +85,22 @@ tasks.register('runtimeArchiveCompressionContract') {
         byte[] first=archive.bytes
         if(archive.length()>=originalSize)throw new GradleException('Contract payload was not compressed')
         new ZipFile(archive).withCloseable { source ->
-            if(source.entries().toList()*.name!=expected.keySet().toList())throw new GradleException('Entry order differs')
-            expected.each { name,payload ->
+            def omitted=['assets/','assets/deep/','assets/deep/child/']
+            if(omitted.any { source.getEntry(it)!=null })throw new GradleException('Redundant directory record retained')
+            def retained=expected.findAll { name,payload -> !(name in omitted) }
+            if(source.entries().toList()*.name!=retained.keySet().toList())throw new GradleException('Entry order differs')
+            retained.each { name,payload ->
                 def entry=source.getEntry(name)
-                if(entry.comment!='retained metadata' || !Arrays.equals(source.getInputStream(entry).withCloseable { it.readAllBytes() },payload))
+                if(entry.comment!=(name=='empty-dir/' ? null : 'retained metadata') || !Arrays.equals(source.getInputStream(entry).withCloseable { it.readAllBytes() },payload))
                     throw new GradleException('Entry payload or metadata differs')
             }
+        }
+        java.nio.file.FileSystems.newFileSystem(archive.toPath()).withCloseable { filesystem ->
+            if(!Files.isDirectory(filesystem.getPath('/assets'))
+                    || !Files.isDirectory(filesystem.getPath('/assets/deep/child'))
+                    || !Files.isDirectory(filesystem.getPath('/empty-dir'))
+                    || !Arrays.equals(Files.readAllBytes(filesystem.getPath('/assets/demo.class')),expected['assets/demo.class']))
+                throw new GradleException('Implicit resource directory lookup differs')
         }
         compressOwnedRuntimeArchive(archive)
         if(!Arrays.equals(first,archive.bytes))throw new GradleException('Repeated compression differs')
@@ -87,7 +111,7 @@ tasks.register('runtimeArchiveCompressionContract') {
         rejected=false
         try { compressOwnedRuntimeArchive(rootProject.file('AGENTS.md')) } catch(GradleException expectedError) { rejected=true }
         if(!rejected || directory.listFiles().any { it.name.endsWith('.tmp') })throw new GradleException('Compression containment/cleanup failed')
-        logger.lifecycle('BLOCKLENS_ARCHIVE_COMPRESSION payloads=true metadata=true reproducible=true containment=true failureCleanup=true')
+        logger.lifecycle('BLOCKLENS_ARCHIVE_COMPRESSION payloads=true metadata=true reproducible=true implicitDirectories=true emptyDirectories=true containment=true failureCleanup=true')
     }
 }
 tasks.named('check') { dependsOn tasks.named('runtimeArchiveCompressionContract') }

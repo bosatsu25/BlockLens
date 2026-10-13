@@ -12,9 +12,11 @@ BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**.
 
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
-> **Current implementation:** BlockLens **v0.4.6** provides **61 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
+> **Current implementation:** BlockLens **v0.4.7** provides **61 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.
 >
 > **Historical releases:** BlockLens **v0.1.0** remains the immutable 37-capability source release baseline. P0 shipped in v0.2.0 with **328 capability-to-target bindings / 322 unique block targets** under its historical **100 KiB** budget; v0.2.2 added the Mod Menu entrypoint. Current policy uses a user-authorized **200 KiB / 204,800 B** ceiling for development and release artifacts.
+
+Resources also provides **All OFF** (all 22 Resource controls) and **Obsidian pair ON** (Obsidian and Crying Obsidian only; other settings stay intact). These shortcuts edit the draft; use Apply to save and reflect them.
 
 > **Current catalog:** 61 independent capabilities. Published downloads are listed on [GitHub Releases](https://github.com/bosatsu25/BlockLens/releases). The ancient-debris analyzer and optional Masa/Litematica schematic comparison are retired; the original 37 source controls remain intact. The published v0.3.0 artifact is unchanged.
 

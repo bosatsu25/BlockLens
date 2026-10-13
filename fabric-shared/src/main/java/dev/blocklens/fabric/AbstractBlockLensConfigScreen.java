@@ -36,10 +36,8 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private CapabilityId.Category category = CapabilityId.Category.DECORATION;
     private List<CapabilityId> capabilities = List.of();
     private SettingsLayout layout;
-    private Button discardButton;
-    private Button applyButton;
-    private Button saveButton;
-    private Button orePresetButton;
+    private final List<Button> footerActions = new ArrayList<>();
+    private final List<Button> resourcePresets = new ArrayList<>();
     private boolean saveFailed;
 
     protected AbstractBlockLensConfigScreen(Screen parent, Path configDirectory) {
@@ -54,18 +52,21 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     protected final void init() {
         clearFocus();
         tabs.clear();
-        orePresetButton = null;
+        resourcePresets.clear();
+        footerActions.clear();
         toggles.clear();
         details.clear();
         detailRows.clear();
         capabilities = SettingsCatalog.capabilities(category);
-        layout = SettingsLayout.create(width, height, capabilities.size(), categoryScroll[category.ordinal()]);
+        layout = SettingsLayout.create(width, height, capabilities.size(), categoryScroll[category.ordinal()], 48,
+                category == CapabilityId.Category.RESOURCE);
         int rowHeight = 48;
         for (CapabilityId capability : capabilities) {
             rowHeight = Math.max(rowHeight, 28 + font.wordWrapHeight(
                     Component.translatable(SettingsCatalog.descriptionKey(capability)), layout.contentWidth() - 16));
         }
-        layout = SettingsLayout.create(width, height, capabilities.size(), categoryScroll[category.ordinal()], rowHeight);
+        layout = SettingsLayout.create(width, height, capabilities.size(), categoryScroll[category.ordinal()], rowHeight,
+                category == CapabilityId.Category.RESOURCE);
         categoryScroll[category.ordinal()] = layout.scroll();
         int tabWidth = (layout.contentWidth() - 12) / 4;
         for (CapabilityId.Category candidate : CapabilityId.Category.values()) {
@@ -109,26 +110,34 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
             detailRows.add(index);
         }
         if (category == CapabilityId.Category.RESOURCE) {
-            orePresetButton = addRenderableWidget(Button.builder(
-                    Component.translatable("blocklens.resource.preset.glow"),
-                    ignored -> {
-                        draft.enableOreGlowProfile();
-                        refreshStates();
-                    }).tooltip(Tooltip.create(Component.translatable("blocklens.resource.preset.glow.hint")))
-                    .bounds(layout.left() + 4, 8, Math.min(120, layout.contentWidth() / 2), 20).build());
+            Button.OnPress presetAction = button -> {
+                int index = resourcePresets.indexOf(button);
+                if (index == 0) draft.disableResources();
+                else if (index == 1) draft.enableObsidianPair();
+                else draft.enableOreGlowProfile();
+                refreshStates();
+            };
+            addActions(resourcePresets, "blocklens.resource.preset.", new String[] {"off", "obsidian", "glow"},
+                    62, 4, presetAction);
         }
-        int footerWidth = (layout.contentWidth() - 16) / 3;
-        Button.OnPress action = button -> {
-            if (button == discardButton) onClose(); else save(button == saveButton);
-        };
-        discardButton = addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.discard"),
-                action).bounds(layout.left(), layout.footerY(), footerWidth, 20).build());
-        applyButton = addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.apply"),
-                action).bounds(layout.left() + footerWidth + 8, layout.footerY(), footerWidth, 20).build());
-        saveButton = addRenderableWidget(Button.builder(Component.translatable("blocklens.settings.close"),
-                action).bounds(layout.left() + 2 * (footerWidth + 8), layout.footerY(), footerWidth, 20).build());
+        addActions(footerActions, "blocklens.settings.", new String[] {"discard", "apply", "close"},
+                layout.footerY(), 8, button -> {
+                    int index = footerActions.indexOf(button);
+                    if (index == 0) onClose(); else save(index == 2);
+                });
         positionRows();
         setInitialFocus();
+    }
+
+    private void addActions(List<Button> buttons, String prefix, String[] keys, int y, int gap, Button.OnPress action) {
+        int actionWidth = (layout.contentWidth() - 2 * gap) / 3;
+        for (String name : keys) {
+            String key = prefix + name;
+            Button.Builder builder = Button.builder(Component.translatable(key), action);
+            if (buttons == resourcePresets) builder.tooltip(Tooltip.create(Component.translatable(key + ".hint")));
+            buttons.add(addRenderableWidget(builder.bounds(
+                    layout.left() + buttons.size() * (actionWidth + gap), y, actionWidth, 20).build()));
+        }
     }
 
     private Component state(CapabilityId capability) {
@@ -168,7 +177,8 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     }
 
     private void scrollTo(int scroll) {
-        layout = SettingsLayout.create(width, height, capabilities.size(), scroll, layout.rowHeight());
+        layout = SettingsLayout.create(width, height, capabilities.size(), scroll, layout.rowHeight(),
+                category == CapabilityId.Category.RESOURCE);
         categoryScroll[category.ordinal()] = layout.scroll();
         positionRows();
     }
@@ -181,7 +191,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                 return;
             }
         }
-        setInitialFocus(discardButton);
+        setInitialFocus(footerActions.get(0));
     }
 
     @Override
@@ -193,10 +203,8 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                 int detail = detailRows.indexOf(row);
                 if (detail >= 0) order.add(details.get(detail));
             }
-            if (orePresetButton != null) order.add(orePresetButton);
-            order.add(discardButton);
-            order.add(applyButton);
-            order.add(saveButton);
+            order.addAll(resourcePresets);
+            order.addAll(footerActions);
             int direction = event.hasShiftDown() ? -1 : 1;
             int cursor = order.indexOf(getFocused());
             if (cursor < 0) cursor = direction > 0 ? -1 : 0;
@@ -256,7 +264,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                 layout.footerY() - 2, 0xF4000000);
         super.extractRenderState(extractor, mouseX, mouseY, delta);
         extractor.centeredText(font, title, width / 2, 12, 0xFFFFFFFF);
-        extractor.horizontalLine(layout.left(), layout.left() + layout.contentWidth(), 60, 0x80FFFFFF);
+        extractor.horizontalLine(layout.left(), layout.left() + layout.contentWidth(), layout.listTop() - 4, 0x80FFFFFF);
         for (int index = 0; index < capabilities.size(); index++) {
             if (!layout.visible(index)) continue;
             int y = layout.rowY(index);

@@ -88,6 +88,15 @@ final class SettingsVisualOracle {
                 if (client.font.width(button.getMessage()) > button.getWidth() - 8)
                     throw new AssertionError("Settings footer label does not fit");
             }
+            var actions = ResponsiveSettingsScreenOracle.buttons(screen).stream()
+                    .filter(button -> button.getY() == 62).toList();
+            if (name.endsWith("-resource") || name.endsWith("-compact")) {
+                if (actions.size() != 3) throw new AssertionError("Resources shortcuts missing");
+                for (var button : actions) {
+                    if (client.font.width(button.getMessage()) > button.getWidth() - 8)
+                        throw new AssertionError("Resources shortcut label does not fit");
+                }
+            }
             for (var button : ResponsiveSettingsScreenOracle.buttons(screen)) {
                 if (button.visible && (button.getX() < 0 || button.getY() < 0
                         || button.getX() + button.getWidth() > width

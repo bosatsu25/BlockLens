@@ -11,12 +11,17 @@ public record SettingsLayout(
 
     public static SettingsLayout create(
             int width, int height, int count, int requestedScroll, int requestedRowHeight) {
+        return create(width, height, count, requestedScroll, requestedRowHeight, false);
+    }
+
+    public static SettingsLayout create(
+            int width, int height, int count, int requestedScroll, int requestedRowHeight, boolean resourceActions) {
         if (width < 160 || height < 140 || count < 0 || count > 64) {
             throw new IllegalArgumentException("Settings layout dimensions or item count are invalid");
         }
         int contentWidth = Math.min(620, width - 24);
         int footerY = height - 28;
-        int listTop = 64;
+        int listTop = resourceActions ? 88 : 64;
         int listBottom = footerY - 22;
         int rowHeight = Math.max(42, Math.min(requestedRowHeight, listBottom - listTop));
         int maxScroll = Math.max(0, count * rowHeight - (listBottom - listTop));

@@ -117,7 +117,7 @@
   "blocklens.comfort.increase": "Increase",
   "blocklens.comfort.draft_hint": "Apply in settings to save.",
   "blocklens.comfort.preset.small_handhelds": "Small Handhelds-style (40 / 40 / 50%)",
-  "blocklens.resource.preset.glow": "Glow ores",
+  "blocklens.resource.preset.glow": "Ore glow ON",
   "blocklens.resource.preset.glow.hint": "Enable all 19 ore highlights with native emissive cues. No OptiFine connected-texture artwork is bundled.",
   "blocklens.capability.lava_analyzer": "Lava source analyzer",
   "blocklens.capability.lava_analyzer.description": "Loaded source lava with a known non-source neighbor. Bounded scanning skips unavailable chunks.",
@@ -198,5 +198,9 @@
   "blocklens.capability.simplified_terrain": "Simplified terrain",
   "blocklens.capability.simplified_terrain.description": "Replace selected vanilla terrain with opaque dark grain and sparse plants; keep the hide filter independent.",
   "blocklens.capability.connected_ore_edges": "Connected ore borders",
-  "blocklens.capability.connected_ore_edges.description": "Connect matching fixed cube faces. Also enable the ore highlight."
+  "blocklens.capability.connected_ore_edges.description": "Connect matching fixed cube faces. Also enable the ore highlight.",
+  "blocklens.resource.preset.off": "All OFF",
+  "blocklens.resource.preset.off.hint": "Disable all 22 Resources controls. Apply to save.",
+  "blocklens.resource.preset.obsidian": "Obsidian pair ON",
+  "blocklens.resource.preset.obsidian.hint": "Enable Obsidian and Crying Obsidian; keep other settings. Apply to save."
 }

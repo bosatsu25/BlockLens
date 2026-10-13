@@ -38,7 +38,9 @@ final class SettingsTranslationsTest {
                     "src/main/resources/assets/blocklens/lang/"+locale+".json"));
             for(var key:new String[] {"blocklens.scene.preset.eater",
                     "blocklens.comfort.preset.small_handhelds",
-                    "blocklens.resource.preset.glow","blocklens.resource.preset.glow.hint"}) {
+                    "blocklens.resource.preset.glow","blocklens.resource.preset.glow.hint",
+                    "blocklens.resource.preset.off","blocklens.resource.preset.off.hint",
+                    "blocklens.resource.preset.obsidian","blocklens.resource.preset.obsidian.hint"}) {
                 requireText(text,key);
             }
         }
