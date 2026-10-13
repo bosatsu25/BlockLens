@@ -72,7 +72,8 @@ final class ExternalCompatibilityOracle {
                 evidence.setProperty("shaderPackSha256", manifest.getProperty("shaderSha256"));
             }
             lifecycle.phase("world_create");
-            try (var world = context.worldBuilder().create()) {
+            try (var openedWorld = TestWorlds.create(context)) {
+                var world = openedWorld.world();
                 lifecycle.phase("world_ready");
                 context.waitTicks(30);
                 verifyShader(context, manifest, evidence);

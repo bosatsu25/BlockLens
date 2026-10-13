@@ -1,0 +1,17 @@
+# Client GameTest shutdown
+
+Status: authoritative test-harness contract (Issue #82).
+
+The 26.3 Vulkan main CI at f443a2b repeatedly stopped at world_close. Bounded diagnostics show the render thread waiting for IntegratedServer.halt's server task while the server and test threads wait for Fabric's tick Phaser. This matches the mechanism reported in [Fabric API issue #5623](https://github.com/FabricMC/fabric-api/issues/5623); it is a test-harness failure, not evidence of a settings-button failure.
+
+The repair is test-only and shared across the three targets. Arm one session for the exact integrated server immediately before the official world.close(). A GameTest-only MinecraftServer mixin runs its bounded managedBlock pump directly after processPacketsAndTick returns in runServer, before Fabric's pre/post task-phase synchronization. A queued TickTask is insufficient: ordinary queue eligibility can prevent it from starting before synchronization. Direct invocation removes that dependency.
+
+Completion requires the normal return of IntegratedServer.halt on the actual client/render thread for that same server, recorded by a second GameTest-only mixin. Owner logout can call halt on the server thread and set isRunning false before a later client halt queues cleanup. Neither that early halt nor a cleared client level/server field completes the handshake. Preserve the ordinary Fabric close, persistence, disconnected-state checks and normal process exit.
+
+A pure task guard records start, completion, cancellation, failure and expiry. A 30-second bound releases the pump but expiry is always failure. Close exceptions cancel the pump and clear the armed session without replacing the original exception. This is bounded release, not a claim that every exceptional path completes immediately. No added thread, executor, production mixin or product initialization is permitted. The runtime JAR and 200 KiB budget are unchanged.
+
+Verification covers early owner logout followed by late client halt, exact server identity, client-thread origin, repeated hook calls, expiry, cancellation, unstarted/incomplete tasks and exceptions. Compile/build all three targets; exercise controlled delayed close followed by reopening the same saved world and state retention; require world_closed/passed evidence and process exit in the external Vulkan profile. Existing CI timeouts and acceptance gates remain unchanged.
+
+Implementation uses a shared AutoCloseable holder around the official, non-extendable Fabric context. Its delegate remains unchanged, avoiding the getClientLevel/getConnection API difference between 26.1.2 and newer Fabric targets. Normal, focused, external and BBE test worlds share this close path. Only one session can be armed at a time; an overlapping shutdown is an assertion failure. Both mixins and test-support classes belong exclusively to the GameTest source set and must be absent from release JARs.
+
+The real-client regression creates a fixed diamond block, delays exactly one client tick by 250 ms at each close, and reopens the same save twice to assert the block persists. Callback counts must increase by exactly one per close before the delayed_close marker may be reported. The handshake must finish without expiry and the server must be shut down with the client level unloaded. The callback exists only in the GameTest source set and is inactive outside the three controlled closes.

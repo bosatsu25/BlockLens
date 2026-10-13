@@ -28,6 +28,8 @@ Read these before implementation or review:
 
 22. [`current/settings-ui.md`](current/settings-ui.md) — category-based native settings redesign, editing semantics, shared screen architecture and verification boundaries
 
+23. [`current/client-test-shutdown.md`](current/client-test-shutdown.md) — bounded test-only Fabric world-close task pumping, delayed-close persistence regression and completion requirements
+
 ## Historical-baseline rule
 
 The source M0 documents remain authoritative **historical baseline evidence** for the first 37 capabilities. Post-v0.1.0 additive product work must not rewrite those source facts.
