@@ -3,6 +3,8 @@
   "package": "dev.blocklens.gametest.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "WorldShutdownPumpMixin",
+    "WorldShutdownHaltMixin",
     "FireTransformProbeMixin",
     "HeldTransformProbeMixin",
     "AnalyzerTickProbeMixin",

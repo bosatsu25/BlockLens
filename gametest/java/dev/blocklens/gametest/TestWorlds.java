@@ -1,6 +1,5 @@
 package dev.blocklens.gametest;
 
-import dev.blocklens.testing.ShutdownTaskGuard;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldSave;
@@ -22,20 +21,19 @@ final class TestWorlds {
         @Override public void close() {
             var server = context.computeOnClient(Minecraft::getSingleplayerServer);
             if (server == null) throw new AssertionError("Shutdown requires the live integrated server");
-            var guard = new ShutdownTaskGuard(System::nanoTime, server::isRunning,
-                    server::managedBlock, 30_000_000_000L);
+            var guard = TestWorldShutdown.arm(server);
             boolean succeeded = false;
             try {
-                // No tick/start wait here: the next tick must perform the deferred disconnect.
-                server.execute(guard);
+                // The server wait hook pumps directly; a queued TickTask can miss eligibility.
                 world.close();
                 guard.verifySucceeded();
                 if (!server.isShutdown() || !context.computeOnClient(c -> c.level == null
                         && !c.isLocalServer())) throw new AssertionError("World close was incomplete");
                 succeeded = true;
-                System.out.println("BLOCKLENS_WORLD_CLOSE task=true timeout=false server_stopped=true level_unloaded=true");
+                System.out.println("BLOCKLENS_WORLD_CLOSE task=true client_halt=true timeout=false server_stopped=true level_unloaded=true");
             } finally {
                 if (!succeeded) guard.cancel();
+                TestWorldShutdown.clear(guard);
             }
         }
     }

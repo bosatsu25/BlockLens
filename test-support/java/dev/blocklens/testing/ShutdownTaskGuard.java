@@ -8,7 +8,7 @@ import java.util.function.LongSupplier;
 /** Bounded test-only server task pump. Never bundled in the product JAR. */
 public final class ShutdownTaskGuard implements Runnable {
     private final LongSupplier clock;
-    private final BooleanSupplier running;
+    private final BooleanSupplier awaitingClientHalt;
     private final Consumer<BooleanSupplier> pump;
     private final long startedAt;
     private final long limitNanos;
@@ -18,11 +18,11 @@ public final class ShutdownTaskGuard implements Runnable {
     private volatile boolean timedOut;
     private volatile Throwable failure;
 
-    public ShutdownTaskGuard(LongSupplier clock, BooleanSupplier running,
+    public ShutdownTaskGuard(LongSupplier clock, BooleanSupplier awaitingClientHalt,
             Consumer<BooleanSupplier> pump, long limitNanos) {
         if (limitNanos <= 0) throw new IllegalArgumentException("Shutdown bound must be positive");
         this.clock = Objects.requireNonNull(clock);
-        this.running = Objects.requireNonNull(running);
+        this.awaitingClientHalt = Objects.requireNonNull(awaitingClientHalt);
         this.pump = Objects.requireNonNull(pump);
         this.limitNanos = limitNanos;
         this.startedAt = clock.getAsLong();
@@ -47,7 +47,7 @@ public final class ShutdownTaskGuard implements Runnable {
             timedOut = true;
             return true;
         }
-        return !running.getAsBoolean();
+        return !awaitingClientHalt.getAsBoolean();
     }
 
     public void cancel() { cancelled = true; }
@@ -57,6 +57,6 @@ public final class ShutdownTaskGuard implements Runnable {
         if (timedOut) throw new AssertionError("Shutdown task timed out");
         if (cancelled) throw new AssertionError("Shutdown task cancelled");
         if (!started || !completed) throw new AssertionError("Shutdown task did not complete");
-        if (running.getAsBoolean()) throw new AssertionError("Shutdown server still running");
+        if (awaitingClientHalt.getAsBoolean()) throw new AssertionError("Client halt has not returned");
     }
 }

@@ -24,6 +24,20 @@ class ShutdownTaskGuardTest {
         assertTrue(queue.isEmpty());
     }
 
+    @Test void ownerLogoutMustNotReleasePumpBeforeClientHaltReturns() {
+        var serverRunning = new AtomicBoolean(true);
+        var clientHaltReturned = new AtomicBoolean(false);
+        var queue = new ArrayDeque<Runnable>();
+        var guard = new ShutdownTaskGuard(() -> 0L, () -> !clientHaltReturned.get(), stop -> {
+            while (!stop.getAsBoolean()) queue.remove().run();
+        }, 30);
+        queue.add(() -> serverRunning.set(false));
+        queue.add(() -> clientHaltReturned.set(true));
+        guard.run();
+        assertTrue(clientHaltReturned.get(), "Owner logout must not skip the late client halt task");
+        guard.verifySucceeded();
+    }
+
     @Test void deadlineIsFailureEvenIfPumpReturnsNormally() {
         var time = new AtomicLong();
         var guard = new ShutdownTaskGuard(time::getAndIncrement, () -> true,
@@ -32,7 +46,7 @@ class ShutdownTaskGuardTest {
         assertTrue(assertThrows(AssertionError.class, guard::verifySucceeded).getMessage().contains("timed out"));
     }
 
-    @Test void stoppedServerCompletesWithoutPollingMoreTasks() {
+    @Test void returnedClientHaltCompletesWithoutPollingMoreTasks() {
         var guard = new ShutdownTaskGuard(() -> 0L, () -> false,
                 stop -> assertTrue(stop.getAsBoolean()), 30);
         guard.run();
@@ -69,7 +83,7 @@ class ShutdownTaskGuardTest {
         var guard = new ShutdownTaskGuard(() -> 0L, () -> true, stop -> { }, 30);
         assertThrows(AssertionError.class, guard::verifySucceeded);
         guard.run();
-        assertTrue(assertThrows(AssertionError.class, guard::verifySucceeded).getMessage().contains("still running"));
+        assertTrue(assertThrows(AssertionError.class, guard::verifySucceeded).getMessage().contains("has not returned"));
     }
 
     @Test void invalidDurationIsRejected() {
