@@ -24,6 +24,7 @@ final class SettingsEditingOracle {
     }
 
     static void verify(ClientGameTestContext context) {
+        verifyResourceShortcuts(context);
         context.runOnClient(client -> {
             Screen previous = BlockLensConfigScreen.current(client);
             BlockLensConfig original = BlockLensRuntime.config();
@@ -158,6 +159,104 @@ final class SettingsEditingOracle {
             System.out.println("BLOCKLENS_SETTINGS_EDITING discard=true escape=true persistence=true retry=true apply_stays=true unchanged_no_write=true");
         });
         verifyApplyReload(context);
+    }
+
+    /** Resource shortcuts edit only the local draft and respect Apply's saved baseline. */
+    private static void verifyResourceShortcuts(ClientGameTestContext context) {
+        Screen parent = context.computeOnClient(BlockLensConfigScreen::current);
+        BlockLensConfig original = BlockLensRuntime.config();
+        Path directory = FabricLoader.getInstance().getConfigDir();
+        BlockLensConfig seeded = original.withEnabled(CapabilityId.ANVIL, true)
+                .withEnabled(CapabilityId.BRIGHT_CONCRETE, true)
+                .withEnabled(CapabilityId.DIAMOND_ORE, true)
+                .withEnabled(CapabilityId.CONNECTED_ORE_EDGES, true)
+                .withEnabled(CapabilityId.OBSIDIAN, false)
+                .withEnabled(CapabilityId.CRYING_OBSIDIAN, false);
+        BlockLensConfig cleared = seeded;
+        for (CapabilityId id : CapabilityId.values()) {
+            if (id.category() == CapabilityId.Category.RESOURCE) cleared = cleared.withEnabled(id, false);
+        }
+        final BlockLensConfig allOff = cleared;
+        BlockLensConfig applied = allOff.withEnabled(CapabilityId.OBSIDIAN, true)
+                .withEnabled(CapabilityId.CRYING_OBSIDIAN, true);
+        try {
+            var screen = context.computeOnClient(client -> {
+                try {
+                    BlockLensConfigFiles.save(directory, seeded);
+                    BlockLensRuntime.installConfig(seeded);
+                    var editing = new BlockLensConfigScreen(parent);
+                    BlockLensConfigScreen.show(client, editing);
+                    ResponsiveSettingsScreenOracle.select(editing, CapabilityId.Category.RESOURCE);
+                    editing.keyPressed(new KeyEvent(InputConstants.KEY_END, 0, 0));
+                    press(editing, "blocklens.resource.preset.obsidian");
+                    requireResourceRows(editing, seeded.withEnabled(CapabilityId.OBSIDIAN, true)
+                            .withEnabled(CapabilityId.CRYING_OBSIDIAN, true));
+                    require(ResponsiveSettingsScreenOracle.buttons(editing).get(25).visible,
+                            "Resource shortcut lost scroll");
+                    require(BlockLensRuntime.config().equals(seeded), "Obsidian shortcut applied early");
+                    require(BlockLensConfigFiles.loadOrCreate(directory).equals(seeded),
+                            "Obsidian shortcut saved early");
+                    press(editing, "blocklens.resource.preset.off");
+                    requireResourceRows(editing, allOff);
+                    press(editing, "blocklens.resource.preset.obsidian");
+                    requireResourceRows(editing, applied);
+                    require(BlockLensRuntime.config().equals(seeded), "All-OFF shortcut applied early");
+                    require(BlockLensConfigFiles.loadOrCreate(directory).equals(seeded),
+                            "All-OFF shortcut saved early");
+                    press(editing, "blocklens.settings.apply");
+                    return editing;
+                } catch (IOException exception) { throw new AssertionError("Resource shortcut fixture failed"); }
+            });
+            context.waitFor(SettingsClientAccess::ready, 1200);
+            context.waitTicks(2);
+            context.runOnClient(client -> {
+                try {
+                    require(BlockLensConfigScreen.current(client) == screen, "Resource Apply reload closed settings");
+                    require(ResponsiveSettingsScreenOracle.buttons(screen).get(25).visible,
+                            "Resource Apply reload lost category or scroll");
+                    requireResourceRows(screen, applied);
+                    require(BlockLensRuntime.config().equals(applied), "Resource Apply changed other settings");
+                    require(BlockLensConfigFiles.loadOrCreate(directory).equals(applied),
+                            "Resource Apply did not persist");
+                    press(screen, "blocklens.resource.preset.off");
+                    screen.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE, 0, 0));
+                    require(BlockLensRuntime.config().equals(applied), "Esc undid applied resource shortcuts");
+                    require(BlockLensConfigFiles.loadOrCreate(directory).equals(applied),
+                            "Esc persisted a later resource shortcut");
+                    var reopened = new BlockLensConfigScreen(parent);
+                    BlockLensConfigScreen.show(client, reopened);
+                    ResponsiveSettingsScreenOracle.select(reopened, CapabilityId.Category.RESOURCE);
+                    requireResourceRows(reopened, applied);
+                    press(reopened, "blocklens.resource.preset.off");
+                    press(reopened, "blocklens.settings.discard");
+                    require(BlockLensRuntime.config().equals(applied), "Discard published resource edits");
+                    require(BlockLensConfigFiles.loadOrCreate(directory).equals(applied),
+                            "Discard saved resource edits");
+                } catch (IOException exception) { throw new AssertionError("Resource Apply persistence failed"); }
+            });
+            System.out.println("BLOCKLENS_RESOURCE_SHORTCUTS all_off=22 obsidian_pair=2 other_flags=true draft_only=true apply=true discard=true scroll=true reload=true");
+        } finally {
+            context.runOnClient(client -> {
+                try { BlockLensConfigFiles.save(directory, original); }
+                catch (IOException exception) { throw new AssertionError("Resource fixture restoration failed"); }
+                BlockLensRuntime.installConfig(original);
+                BlockLensConfigScreen.show(client, parent);
+            });
+            var restored = context.computeOnClient(client -> client.reloadResourcePacks());
+            context.waitFor(client -> restored.isDone(), 1200);
+            restored.join();
+            context.waitFor(SettingsClientAccess::ready, 1200);
+        }
+    }
+
+    private static void requireResourceRows(Screen screen, BlockLensConfig expected) {
+        var resources = dev.blocklens.core.ui.SettingsCatalog.capabilities(CapabilityId.Category.RESOURCE);
+        require(resources.size() == 22, "Resource shortcut contract lost a control");
+        var buttons = ResponsiveSettingsScreenOracle.buttons(screen);
+        for (int index = 0; index < resources.size(); index++) {
+            require(buttons.get(4 + index).getMessage().getString().equals(
+                    state(expected.isEnabled(resources.get(index)))), "Resource shortcut changed the wrong row");
+        }
     }
 
     /** Resource-changing Apply must keep the screen and its newly saved baseline after reload. */

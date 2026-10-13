@@ -198,5 +198,9 @@
   "blocklens.capability.simplified_terrain": "地形の簡略表示",
   "blocklens.capability.simplified_terrain.description": "対象の標準地形を暗い不透明面と疎な植物に置き換えます。非表示フィルターとは独立した設定です。",
   "blocklens.capability.connected_ore_edges": "鉱石の接続枠",
-  "blocklens.capability.connected_ore_edges.description": "同種の固定立方体モデルの枠を接続します。鉱石の強調も有効にしてください。"
+  "blocklens.capability.connected_ore_edges.description": "同種の固定立方体モデルの枠を接続します。鉱石の強調も有効にしてください。",
+  "blocklens.resource.preset.off": "一括OFF",
+  "blocklens.resource.preset.off.hint": "資源22項目をすべてOFFにします。適用で保存します。",
+  "blocklens.resource.preset.obsidian": "黒曜石2種ON",
+  "blocklens.resource.preset.obsidian.hint": "黒曜石・泣く黒曜石をONにし、ほかの設定は維持します。適用で保存します。"
 }

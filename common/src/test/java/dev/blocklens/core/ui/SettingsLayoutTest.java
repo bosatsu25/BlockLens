@@ -21,6 +21,22 @@ final class SettingsLayoutTest {
     }
 
     @Test
+    void resourceActionRowStaysSeparateAndAllResourceRowsRemainReachable() {
+        for (int[] size : new int[][] {{320,240},{640,360},{854,480},{1920,1080}}) {
+            var top = SettingsLayout.create(size[0], size[1], 22, 0, 48, true);
+            assertTrue(top.listTop() > 82);
+            assertTrue(top.visible(0));
+            for (int index = 0; index < 22; index++) {
+                var scrolled = SettingsLayout.create(size[0], size[1], 22,
+                        top.scrollToReveal(index), 48, true);
+                assertTrue(scrolled.visible(index));
+                assertTrue(scrolled.rowY(index) >= top.listTop());
+                assertTrue(scrolled.rowY(index) + scrolled.rowHeight() <= top.listBottom());
+            }
+        }
+    }
+
+    @Test
     void scrollingClampsAndCanRevealEveryRow() {
         var top = SettingsLayout.create(320, 240, 21, -50);
         assertEquals(0, top.scroll());

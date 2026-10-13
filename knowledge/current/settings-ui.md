@@ -38,6 +38,16 @@ Settings keys, existing persisted values and rendered capability behavior are pr
 A save failure retains the screen and draft, leaves runtime settings untouched and displays a
 retry/discard message in a reserved area above the footer. No exception details or paths are displayed.
 
+## Resources shortcuts
+
+Resources has a separate row below the category tabs with All OFF, Obsidian pair ON, and the existing Ore glow ON.
+All OFF disables all 22 Resources controls, including Connected Ore Edges. Obsidian pair ON enables only Obsidian and Crying Obsidian while preserving every other flag and option.
+These actions edit the shared local draft only. Apply/Save and close saves the snapshot; Esc/Discard drops edits since the last successful Apply. Repeating an unchanged shortcut does not cause a write.
+The row remains visible while the resource list scrolls. Category and scroll are preserved, all three actions are keyboard reachable, and compact English/Japanese labels must fit without overlapping the title, tabs, list or footer.
+The 200 KiB release ceiling remains unchanged. Outer JAR packaging omits only empty, uncommented directory records that have retained file descendants; every file payload and debug byte stays exact. Intentional empty directories, comments and directory payloads remain intact. The archive contract checks implicit directory lookup via the JDK ZIP filesystem, payload/metadata equality, deterministic repeated bytes and failure cleanup; all three packaged clients must verify runtime resource access.
+
+Issue #80 tracks the three-version native UI and current-head CI verification for this addition.
+
 ## Architecture
 
 SettingsCatalog, SettingsDraft and SettingsLayout contain Minecraft-independent policies in common.

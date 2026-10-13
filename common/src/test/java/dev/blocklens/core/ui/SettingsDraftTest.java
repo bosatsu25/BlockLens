@@ -34,6 +34,91 @@ final class SettingsDraftTest {
     }
 
     @Test
+    void resourceOffDisablesAllTwentyTwoControlsAndPreservesOtherSettings() {
+        var original = BlockLensConfig.defaults().withComfortOptions(new ComfortOptions(2, 43, 58, 91));
+        for (var id : CapabilityId.values()) original = original.withEnabled(id, true);
+        var draft = new SettingsDraft(original);
+        draft.disableResources();
+        int disabled = 0;
+        for (var id : CapabilityId.values()) {
+            if (id.category() == CapabilityId.Category.RESOURCE) {
+                assertFalse(draft.config().isEnabled(id), id.sourceKey());
+                disabled++;
+            } else assertTrue(draft.config().isEnabled(id), id.sourceKey());
+        }
+        assertEquals(22, disabled);
+        assertEquals(original.comfortOptions(), draft.config().comfortOptions());
+        assertEquals(original.analyzerOptions(), draft.config().analyzerOptions());
+        assertEquals(original.sceneFilterOptions(), draft.config().sceneFilterOptions());
+        draft.discard();
+        assertEquals(original, draft.config());
+    }
+
+    @Test
+    void obsidianPairPreservesEnabledAndDisabledFlagsOutsideThePair() {
+        var original = BlockLensConfig.defaults()
+                .withComfortOptions(new ComfortOptions(0, 45, 62, 88))
+                .withEnabled(CapabilityId.DIAMOND_ORE, true)
+                .withEnabled(CapabilityId.CONNECTED_ORE_EDGES, true)
+                .withEnabled(CapabilityId.ANVIL, true);
+        var draft = new SettingsDraft(original);
+        draft.enableObsidianPair();
+        for (var id : CapabilityId.values()) {
+            if (id == CapabilityId.OBSIDIAN || id == CapabilityId.CRYING_OBSIDIAN) {
+                assertTrue(draft.config().isEnabled(id), id.sourceKey());
+            } else assertEquals(original.isEnabled(id), draft.config().isEnabled(id), id.sourceKey());
+        }
+        assertEquals(original.comfortOptions(), draft.config().comfortOptions());
+        draft.discard();
+        assertEquals(original, draft.config());
+    }
+
+    @Test
+    void unchangedAllOffDoesNotCreateAFile() throws IOException {
+        var draft = new SettingsDraft(BlockLensConfig.defaults());
+        draft.disableResources();
+        assertFalse(draft.changed());
+        assertFalse(draft.save(directory));
+        assertFalse(Files.exists(directory.resolve(BlockLensConfigFiles.FILE_NAME)));
+    }
+
+    @Test
+    void repeatedPairDoesNotRewriteAndDiscardKeepsTheAppliedPair() throws IOException {
+        var draft = new SettingsDraft(BlockLensConfig.defaults());
+        draft.enableObsidianPair();
+        assertTrue(draft.save(directory));
+        var applied = draft.config();
+        var file = directory.resolve(BlockLensConfigFiles.FILE_NAME);
+        var time = java.nio.file.attribute.FileTime.fromMillis(1234000);
+        Files.setLastModifiedTime(file, time);
+        draft.enableObsidianPair();
+        assertFalse(draft.save(directory));
+        assertEquals(time, Files.getLastModifiedTime(file));
+        draft.disableResources();
+        draft.discard();
+        assertEquals(applied, draft.config());
+        assertEquals(applied, BlockLensConfigFiles.loadOrCreate(directory));
+    }
+
+    @Test
+    void failedShortcutSavePreservesTheDraftForRetry() throws IOException {
+        var original = BlockLensConfig.defaults().withEnabled(CapabilityId.DIAMOND_ORE, true);
+        var draft = new SettingsDraft(original);
+        draft.disableResources();
+        draft.enableObsidianPair();
+        var expected = original.withEnabled(CapabilityId.DIAMOND_ORE, false)
+                .withEnabled(CapabilityId.OBSIDIAN, true).withEnabled(CapabilityId.CRYING_OBSIDIAN, true);
+        var occupied = directory.resolve("occupied");
+        Files.writeString(occupied, "keep");
+        assertThrows(IOException.class, () -> draft.save(occupied));
+        assertEquals("keep", Files.readString(occupied));
+        assertEquals(expected, draft.config());
+        assertTrue(draft.changed());
+        assertTrue(draft.save(directory));
+        assertEquals(expected, BlockLensConfigFiles.loadOrCreate(directory));
+    }
+
+    @Test
     void editsStayLocalAndCanBeDiscarded() {
         var original = BlockLensConfig.defaults();
         var draft = new SettingsDraft(original);

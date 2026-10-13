@@ -39,6 +39,19 @@ public final class SettingsDraft {
         }
     }
 
+    /** Disables every Resources control, including connected borders, without touching other settings. */
+    public void disableResources() {
+        for (CapabilityId capability : SettingsCatalog.capabilities(CapabilityId.Category.RESOURCE)) {
+            config = config.withEnabled(capability, false);
+        }
+    }
+
+    /** Enables both obsidian controls while preserving every other flag. */
+    public void enableObsidianPair() {
+        config = config.withEnabled(CapabilityId.OBSIDIAN, true)
+                .withEnabled(CapabilityId.CRYING_OBSIDIAN, true);
+    }
+
     public void setComfortOptions(ComfortOptions options) {
         config = config.withComfortOptions(options);
     }
