@@ -90,6 +90,16 @@ flowchart TB
 
 Delivered P0 is recorded in closed **Issue #22**. Remaining migration is tracked in **#42 and #34-#38** and [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md).
 
+## Future version roadmap: Minecraft 26.4 transition (v0.5.0)
+
+BlockLens maintains a rolling 3-version support model:
+- **Current stable release (v0.4.6):** Supports Minecraft **26.1.2**, **26.2**, and **26.3**.
+- **Next major transition:** Upon official general availability of Minecraft **26.4** (scheduled for Winter 2026; currently in development snapshot phase `26.4-snapshot-3`):
+  1. Retire Minecraft **26.1.2** support (removing legacy GLFW/OpenGL fallback constraints and `versions/mc26_1_2`).
+  2. Add Minecraft **26.4** support (`versions/mc26_4`).
+  3. The three supported release targets will become **26.2**, **26.3**, and **26.4**.
+  4. Until the official 26.4 release is published by Mojang, the 26.1.2 / 26.2 / 26.3 matrix remains the authoritative baseline.
+
 ## Source raw-source parity
 
 The original intent is preserved: **all useful behavior represented by the effective source raw source must be represented by BlockLens**. That does not mean copying every source file into the runtime JAR.
@@ -219,6 +229,16 @@ Bounded config reads, synchronous temporary-file writes with atomic replacement 
 
 ## Release
 
+**v0.4.6** is the latest published stable release:
+
+| Minecraft | Published JAR | Size | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.4.6.jar` | **201,937 B** | `e8fa674a35e47f5af938e4a14d473e97d1bbc89f853c8043770cf2dab8be124c` |
+| 26.2 | `BlockLens-26.2-v0.4.6.jar` | **201,978 B** | `8e9791e31fc2caf1e54bba4e6412a46f3fc195fa76b3b72693651f69544e6888` |
+| 26.3 | `BlockLens-26.3-v0.4.6.jar` | **204,715 B** | `fc441bb38923b66361b6c72dd448a516f4685cb800d6d6aa03a32c1b98550a84` |
+
+BlockLens v0.4.6 ships **61 independently configurable capabilities** across Minecraft 26.1.2, 26.2, and 26.3, featuring default-off Visibility settings (applying without screen close), connected ore borders, simplified terrain, and native six-pack profile presets under the user-authorized **200 KiB / 204,800 B** release budget.
+
 **v0.2.2** is a historical published stable release, at target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`.
 
 | Minecraft | Published JAR | Size | SHA-256 |
@@ -226,7 +246,7 @@ Bounded config reads, synchronous temporary-file writes with atomic replacement 
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). Published v0.4.0 includes all three targets; v0.4.1 is published; v0.4.2 adds the palette and v0.4.3 adds compact display; v0.4.4 develops independent terrain simplification. Each new release requires its own main CI and publication gates. Current development budgets are **204,800 B (200 KiB)** no-growth, **204,800 B (200 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
+The category-based settings redesign and three-version support are merged into main, with [all three real-client jobs verified](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404). Current development budgets are **204,800 B (200 KiB)** no-growth, **204,800 B (200 KiB)** release, and **1,183,432 B** absolute; headroom is not a growth target.
 
 **v0.2.0** remains historical P0 release evidence.
 
@@ -246,21 +266,21 @@ The release targets `b440d43904e2a93236549efc571b7cc127622352`. Successful main 
 
 The release was produced from successful `main` CI **#245 / `34768792311`** at commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`. Release run **#3 / `34769093202`** published the exact CI-verified JAR bytes plus `SHA256SUMS.txt`.
 
-## Published v0.2.2 environment
+## Published v0.4.6 environment
 
 | Item | Current verified contract |
 | --- | --- |
-| Minecraft | **26.1.2** and **26.2** |
-| Loader | Fabric Loader **0.19.3+** |
-| Fabric API | **0.155.2+26.1.2** / **0.160.0+26.2** |
-| Java | **25+** |
+| Minecraft | **26.1.2**, **26.2**, and **26.3** |
+| Loader | Fabric Loader **0.19.5+** |
+| Fabric API | **0.155.2+26.1.2** / **0.160.0+26.2** / **0.162.0+26.3** |
+| Java | **Java 25+** |
 | Side | **Client only** |
 | Server-side BlockLens | Not required |
-| Verified renderer path | default / **shader-OFF OpenGL** |
-| Shader-ON | not yet claimed as supported |
-| Minecraft 26.2 Vulkan | experimental |
-
-Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31) tracks the development shader/backend matrix and remaining third-party pack and renderer boundaries. Its results do not change the published v0.2.2 environment above. Core M5 Issue #5 is complete.
+| Verified renderer path | default / **shader-OFF OpenGL**, **Iris/Sodium Complementary Reimagined r5.9.3 LOW** |
+| Minecraft 26.2 / 26.3 Vulkan | **M3/M5 verified** (experimental backend) |
+| BBE Compatibility | **BBE 1.3.9+mc26.3 / Sodium 0.9.2+mc26.3 / Cele stack verified** (shader-OFF) |
+| Optional integrations | **Mod Menu 18.0.0**, **Sodium 0.9.2** |
+| Reference packs | All 6 private reference packs verified (Issue #31 closed) |
 
 ## Technology foundation
 
@@ -306,12 +326,16 @@ flowchart TD
     J --> P[PIT >= 96%]
     P --> B1[26.1.2 build + reproducibility]
     P --> B2[26.2 build + reproducibility]
+    P --> B3[26.3 build + reproducibility]
     B1 --> G1[26.1.2 Client GameTest]
     B2 --> G2[26.2 Client GameTest]
+    B3 --> G3[26.3 Client GameTest]
     G1 --> A1[visual / performance / size evidence]
     G2 --> A2[visual / performance / size evidence]
+    G3 --> A3[visual / performance / size evidence]
     A1 --> GREEN[CI GREEN]
     A2 --> GREEN
+    A3 --> GREEN
     GREEN -->|main push only| REL[Release workflow]
     REL --> VER{tag exists?}
     VER -- yes --> STOP[successful no-op]
@@ -342,7 +366,7 @@ For the stable release:
 1. Install Fabric Loader for the target Minecraft version.
 2. Install the matching Fabric API.
 3. Use Java 25 or later.
-4. Download the matching 26.1.2, 26.2, or 26.3 JAR from the [`v0.4.0` GitHub Release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.0).
+4. Download the matching 26.1.2, 26.2, or 26.3 JAR from the [`v0.4.6` GitHub Release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.6).
 5. Put the JAR in the Minecraft `mods` directory.
 6. Launch the client.
 

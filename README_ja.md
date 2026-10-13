@@ -79,6 +79,16 @@ flowchart TB
 
 完了済みP0はクローズ済みの **Issue #22** に記録しています。残りの移行は **#42と#34〜#38**、[`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) で管理します。
 
+## 将来のバージョン方針：Minecraft 26.4 への移行（v0.5.0）
+
+BlockLensはローリング3バージョンサポート方針を採用しています：
+- **現在の安定版（v0.4.6）:** Minecraft **26.1.2**、**26.2**、**26.3** をサポート。
+- **次期移行目標:** MojangからMinecraft **26.4** 正式版が配信されたタイミング（2026年冬予定、現在開発中スナップショット `26.4-snapshot-3`）で移行：
+  1. Minecraft **26.1.2** のサポート終了（レガシーなGLFW/OpenGLフォールバック制約および `versions/mc26_1_2` を削除）。
+  2. Minecraft **26.4** のサポート追加（`versions/mc26_4`）。
+  3. サポート対象を **26.2**、**26.3**、**26.4** の新3バージョン体制へローテーション。
+  4. Mojangから正式版26.4が公開されるまでは、現行の26.1.2 / 26.2 / 26.3 を安定版として維持。
+
 ## 参照パック raw-source parity
 
 元々の狙いである、**参照パックの有効な生ソースに表現されている機能を全部BlockLensへ取り込む**、という方針は維持しています。ただし「全ファイルをそのままJARへコピーする」という意味ではありません。
@@ -220,6 +230,16 @@ config readの上限、同期一時ファイル書き込みと対応filesystem�
 
 ## Release
 
+**v0.4.6** が最新の公開済み安定版です。
+
+| Minecraft | 公開JAR | サイズ | SHA-256 |
+| --- | --- | ---: | --- |
+| 26.1.2 | `BlockLens-26.1.2-v0.4.6.jar` | **201,937 B** | `e8fa674a35e47f5af938e4a14d473e97d1bbc89f853c8043770cf2dab8be124c` |
+| 26.2 | `BlockLens-26.2-v0.4.6.jar` | **201,978 B** | `8e9791e31fc2caf1e54bba4e6412a46f3fc195fa76b3b72693651f69544e6888` |
+| 26.3 | `BlockLens-26.3-v0.4.6.jar` | **204,715 B** | `fc441bb38923b66361b6c72dd448a516f4685cb800d6d6aa03a32c1b98550a84` |
+
+全3バージョン向けに**独立設定可能な61機能**を提供し、見やすさ項目の画面を閉じない即時適用、鉱石の連続枠線、地形の簡素化、添付6パックのネイティブプロファイルプリセットを、指定された**200 KiB / 204,800 B**上限内で満たしています。
+
 **v0.2.2** は歴史的な公開済み安定版です。対象コミットは`46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`です。
 
 | Minecraft | 公開JAR | サイズ | SHA-256 |
@@ -227,7 +247,7 @@ config readの上限、同期一時ファイル書き込みと対応filesystem�
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。公開済みv0.4.0は3版に対応し、v0.4.1は必須CIを通過して公開済みです。現行基準は開発時**204,800 B（200 KiB）**、公開上限**204,800 B（200 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
+カテゴリ設定画面の再設計と3版対応はmainへマージ済みで、[3版の実クライアント検証が成功](https://github.com/bosatsu25/BlockLens/actions/runs/38012153404)しています。現行基準は開発時**204,800 B（200 KiB）**、公開上限**204,800 B（200 KiB）**、絶対上限**1,183,432 B**です。公開上限の余裕は成長目標ではありません。
 
 **v0.2.0** はP0の歴史的リリース証拠として維持します。
 
@@ -247,21 +267,21 @@ release targetは`b440d43904e2a93236549efc571b7cc127622352`です。成功した
 
 成功した`main` CI **#245 / `34768792311`**、commit `a4b63087004d687c3c8223d0d95c6c95fb2c5156`から生成され、Release run **#3 / `34769093202`** がCI検証済みJARと`SHA256SUMS.txt`をそのまま公開しました。
 
-## 公開済みv0.2.2の対応環境
+## 公開済みv0.4.6の対応環境
 
 | 項目 | 現在の検証済みcontract |
 | --- | --- |
-| Minecraft | **26.1.2** / **26.2** |
-| Loader | Fabric Loader **0.19.3以上** |
-| Fabric API | **0.155.2+26.1.2** / **0.160.0+26.2** |
+| Minecraft | **26.1.2** / **26.2** / **26.3** |
+| Loader | Fabric Loader **0.19.5以上** |
+| Fabric API | **0.155.2+26.1.2** / **0.160.0+26.2** / **0.162.0+26.3** |
 | Java | **25以上** |
 | 動作側 | **Client only** |
 | Server側BlockLens | 不要 |
-| 検証済みrenderer path | default / **shader-OFF OpenGL** |
-| Shader-ON | 現時点では対応を主張しない |
-| Minecraft 26.2 Vulkan | experimental |
-
-Issue [#31](https://github.com/bosatsu25/BlockLens/issues/31)で、開発版のShader・描画バックエンドの試験結果と、残る第三者パック・描画経路の対応範囲を追跡します。その結果によって、上記の公開済みv0.2.2の確認範囲が変わることはありません。M5のコア実装を扱うIssue #5は完了済みです。
+| 検証済みrenderer path | default / **shader-OFF OpenGL**, **Iris/Sodium Complementary Reimagined r5.9.3 LOW** |
+| Minecraft 26.2 / 26.3 Vulkan | **M3/M5検証済み**（実験的バックエンド） |
+| BBE互換性 | **BBE 1.3.9+mc26.3 / Sodium 0.9.2+mc26.3 / Celeスタック検証済み**（shader-OFF） |
+| 任意連携MOD | **Mod Menu 18.0.0**, **Sodium 0.9.2** |
+| リソースパック | 添付6参照パックすべてで検証済み（Issue #31クローズ） |
 
 ## 技術基盤
 
@@ -307,12 +327,16 @@ flowchart TD
     J --> P[PIT >= 96%]
     P --> B1[26.1.2 build + reproducibility]
     P --> B2[26.2 build + reproducibility]
+    P --> B3[26.3 build + reproducibility]
     B1 --> G1[26.1.2 Client GameTest]
     B2 --> G2[26.2 Client GameTest]
+    B3 --> G3[26.3 Client GameTest]
     G1 --> A1[visual / performance / size evidence]
     G2 --> A2[visual / performance / size evidence]
+    G3 --> A3[visual / performance / size evidence]
     A1 --> GREEN[CI GREEN]
     A2 --> GREEN
+    A3 --> GREEN
     GREEN -->|main pushのみ| REL[Release workflow]
     REL --> VER{tag exists?}
     VER -- yes --> STOP[successful no-op]
@@ -343,7 +367,7 @@ Release jobではBlockLensを再buildせず、CIで検証したraw JARそのも�
 1. 対象Minecraft版のFabric Loaderを導入します。
 2. 対応するFabric APIを導入します。
 3. Java 25以上を使用します。
-4. [GitHub Releasesの`v0.4.0`](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.0)から26.1.2、26.2または26.3用JARを取得します。
+4. [GitHub Releasesの`v0.4.6`](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.6)から26.1.2、26.2または26.3用JARを取得します。
 5. JARをMinecraftの`mods`フォルダへ入れます。
 6. clientを起動します。
 
