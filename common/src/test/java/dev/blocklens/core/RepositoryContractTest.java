@@ -52,7 +52,7 @@ final class RepositoryContractTest {
 
         assertTrue(source.contains("implements FabricClientGameTest"));
         assertTrue(source.contains("EXPECTED_CAPABILITY_COUNT = 61"));
-        assertTrue(source.contains("context.worldBuilder().create()"));
+        assertTrue(source.contains("TestWorlds.create(context)"));
         assertTrue(source.contains("persisted.asMap().equals(BlockLensRuntime.config().asMap())"));
         assertTrue(source.contains("MinecraftStateAdapterOracle.verify()"));
         assertTrue(source.contains("MinecraftDecorationTargetOracle.verify()"));

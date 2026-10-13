@@ -28,7 +28,8 @@ final class BBECompatibilityOracle {
         BBEPathProbe.reset();
         try (var water = StaticWaterControlFixture.open(context)) {
             verifyConfiguration();
-            try (var world = context.worldBuilder().create()) {
+            try (var openedWorld = TestWorlds.create(context)) {
+                var world = openedWorld.world();
                 context.waitTicks(20);
                 // Freeze water and vanilla base alpha animation in both cue samples.
                 // Vanilla PNGs/models, the real cue, thresholds and motion checks are unchanged.

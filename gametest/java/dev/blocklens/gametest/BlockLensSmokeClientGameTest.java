@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
-import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.loader.api.FabricLoader;
 
 /** Shared client smoke and integration oracle executed against every supported Minecraft version. */
@@ -20,6 +19,8 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        WorldShutdownOracle.verify(context);
+        if ("shutdown".equals(System.getProperty("blocklens.test.focus", "all"))) return;
         if (Boolean.getBoolean("blocklens.test.bbeCompatibility")) {
             BBECompatibilityOracle.verify(context);
             return;
@@ -42,14 +43,16 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         }
         if ("connected".equals(System.getProperty("blocklens.test.focus", "all"))) {
             context.runOnClient(c -> PackagedRuntimeOracle.verify());
-            try (TestSingleplayerContext world=context.worldBuilder().create()) {
+            try (var openedWorld = TestWorlds.create(context)) {
+                var world = openedWorld.world();
                 context.waitTicks(20); ConnectedOreOracle.verify(context,world);
             }
             return;
         }
         if ("simplified".equals(System.getProperty("blocklens.test.focus", "all"))) {
             context.runOnClient(c -> PackagedRuntimeOracle.verify());
-            try (TestSingleplayerContext world = context.worldBuilder().create()) {
+            try (var openedWorld = TestWorlds.create(context)) {
+                var world = openedWorld.world();
                 context.waitTicks(20);
                 SimplifiedTerrainOracle.verify(context,world);
             }
@@ -57,7 +60,8 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         }
         if ("compact".equals(System.getProperty("blocklens.test.focus", "all"))) {
             context.runOnClient(c -> PackagedRuntimeOracle.verify());
-            try (TestSingleplayerContext world = context.worldBuilder().create()) {
+            try (var openedWorld = TestWorlds.create(context)) {
+                var world = openedWorld.world();
                 context.waitTicks(20);
                 CompactModelsOracle.verify(context, world);
             }
@@ -65,7 +69,8 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         }
         if ("palette".equals(System.getProperty("blocklens.test.focus", "all"))) {
             context.runOnClient(c -> PackagedRuntimeOracle.verify());
-            try (TestSingleplayerContext world = context.worldBuilder().create()) {
+            try (var openedWorld = TestWorlds.create(context)) {
+                var world = openedWorld.world();
                 context.waitTicks(20);
                 PaleOakPaletteOracle.verify(context, world);
             }
@@ -93,7 +98,8 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         SettingsVisualOracle.verify(context);
 
         BlockLensConfig disconnectBaseline=BlockLensRuntime.config();
-        try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
+        try (var openedWorld = TestWorlds.create(context)) {
+            var singleplayer = openedWorld.world();
             context.waitTicks(20);
             context.runOnClient(client -> verifyRuntime("singleplayer world joined", false));
             M3VisualParityOracle.verify(context, singleplayer);
@@ -136,7 +142,8 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         require(Boolean.getBoolean("blocklens.test.packagedRuntime"),"M8 experiments require packaged runtime");
         context.runOnClient(client -> PackagedRuntimeOracle.verify());
         System.out.println("BLOCKLENS_M8_FOCUSED nativeScope=m8 fullGraph=false");
-        try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
+        try (var openedWorld = TestWorlds.create(context)) {
+            var singleplayer = openedWorld.world();
             context.waitTicks(20);
             M8PerformanceBaselineOracle.verify(context, singleplayer);
         }
@@ -147,7 +154,8 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
         context.runOnClient(c->{PackagedRuntimeOracle.verify();verifyRuntime("focused scene client",true);});
         SceneFilterSettingsOracle.verify(context);
         var original=BlockLensRuntime.config();
-        try(TestSingleplayerContext world=context.worldBuilder().create()) {
+        try (var openedWorld = TestWorlds.create(context)) {
+            var world = openedWorld.world();
             context.waitTicks(20);
             SceneFilterRebuildOrderOracle.verify(context);
             SceneFilterVisualOracle.verify(context,world);
