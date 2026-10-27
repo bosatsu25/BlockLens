@@ -688,7 +688,7 @@ jobs:
             -o -path '*/m7-visual/*' -o -path '*/m8-performance/*' \
             -o -path '*/lightweight-visual/*' -o -path '*/analyzer-ui/*' -o -path '*/analyzer-visual/*' \
             -o -path '*/scene-filter-ui/*' -o -path '*/scene-filter-visual/*' \
-            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' -o -path '*/pale-oak-visual/*' -o -path '*/pale-oak-objects/*' -o -path '*/compact-model-visual/*' -o -path '*/simplified-visual/*' \) \
+            -o -path '*/builder-assist/*' -o -path '*/ore-extension-visual/*' -o -path '*/pale-oak-visual/*' -o -path '*/pale-oak-objects/*' -o -path '*/compact-model-visual/*' -o -path '*/simplified-visual/*' -o -path '*/decoration-decals/*' \) \
             -exec cp --parents '{}' "$target" \;
       - name: Upload failed Client GameTest diagnostics
         if: failure()
