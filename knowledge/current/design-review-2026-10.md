@@ -14,7 +14,7 @@ display or behavior difference between Minecraft 26.1.2, 26.2 and 26.3, while be
 | Information parity (what a player can read) | **Was not met**; now met for single-variant models with listed residuals | Face tints sat on hidden faces and had little contrast. Decal grammar in [`pack-information-parity.md`](pack-information-parity.md). |
 | Cross-version behavior | No behavior divergence found; **structural drift risk** | 7 adapter files were identical between the 26.1.2 and 26.2 trees, 2 more nearly so. Now single-sourced and guarded. |
 | "Lighter than the pack" | Artifact size: proven. Load/runtime speed: **not measured** against the pack | See §3. |
-| Full rewrite | **Not justified** | Architecture (pure `common` policy, thin adapters, model wrapper) fits the goal; 426 unit tests, 97% mutation kill rate and per-version client GameTests would be discarded. |
+| Full rewrite | **Not justified** | Architecture (pure `common` policy, thin adapters, model wrapper) fits the goal; 411 unit tests, 98% mutation kill rate and per-version client GameTests would be discarded. |
 
 ## 2. Cross-version structure
 
@@ -58,7 +58,8 @@ So the defensible claims are:
 
 ## 5. Verification of this change
 
-- `:common:qualityGate` locally: 426 tests, 692 mutations with 97% killed, test strength 98%.
+- `:common:qualityGate` (local and hosted CI on the pull request head): 411 tests, 729 mutations with 711
+  (98%) killed, test strength 98%.
 - `scripts/` unit suite: 118 tests.
 - Three-version build, client GameTests (including `DecorationDecalOracle`), artifact budgets and
   shader/backend matrices: pull request CI on the current head.
