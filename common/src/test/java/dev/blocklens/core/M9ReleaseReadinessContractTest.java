@@ -114,10 +114,10 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(properties.contains("v0.3.0 shipped 57 capabilities across Minecraft 26.1.2, 26.2 and 26.3"));
         assertTrue(properties.contains("v0.4.0 keeps 55"));
 
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=204800"));
-        assertTrue(properties.contains("runtime_jar_release_budget_bytes=204800"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=256000"));
+        assertTrue(properties.contains("runtime_jar_release_budget_bytes=256000"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("user-facing product ceiling is now 200 KiB"));
+        assertTrue(properties.contains("user-facing product ceiling is now 250 KiB"));
 
         assertTrue(english.contains("v0.1.0"));
         assertTrue(japanese.contains("v0.1.0"));

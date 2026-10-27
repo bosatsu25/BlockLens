@@ -455,7 +455,7 @@ tasks.register('verifyRuntimeJarBudget') {
         }
         if (bytes > runtimeReleaseBudgetBytes) {
             throw new GradleException(
-                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; 200 KiB release budget is ${runtimeReleaseBudgetBytes} bytes.")
+                    "BlockLens ${blockLensMinecraftVersionValue} runtime JAR is ${bytes} bytes; 250 KiB release budget is ${runtimeReleaseBudgetBytes} bytes.")
         }
         if (bytes > runtimeBaselineBytes) {
             throw new GradleException(

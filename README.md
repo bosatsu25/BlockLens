@@ -333,8 +333,8 @@ The Release job does not rebuild BlockLens. It promotes the exact verified raw C
 - P0 measured development maximum: **96,257 B**
 - P0 growth over v0.1.0 baseline: **924 B maximum**
 - historical v0.1.0 / P0 release budget: **100 KiB / 102,400 B**
-- current reviewed development no-growth guard: **200 KiB / 204,800 B**
-- current product release ceiling: **200 KiB / 204,800 B**
+- current reviewed development no-growth guard: **250 KiB / 256,000 B** (raised from 200 KiB on 2026-10-27)
+- current product release ceiling: **250 KiB / 256,000 B**
 - source-pack `<50%` absolute hard maximum remains unchanged
 
 Size reduction is never allowed to remove functional parity, tests, compatibility evidence, or safety gates.

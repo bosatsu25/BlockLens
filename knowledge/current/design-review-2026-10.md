@@ -51,9 +51,10 @@ So the defensible claims are:
    structural checks (as in `VersionAdapterSingleSourceContractTest`) for new guards.
 3. **Anvil arrow.** The source's top-face arrow is not reproduced because its world direction depends on
    an unverified vanilla UV rotation; verify against the vanilla model before adding it.
-4. **Scope vs "lightweight".** The product grew from 37 to 61 capabilities and the JAR ceiling from 100 to
-   200 KiB. This is an explicit product decision, but the original motivation was a lighter pack; keep
-   size and the pack-vs-mod measurement in view when adding capabilities.
+4. **Scope vs "lightweight".** The product grew from 37 to 61 capabilities and the JAR ceiling from 100 KiB
+   to 200 KiB, and on 2026-10-27 to 250 KiB for the decal layer (the compacted layer adds about 6.3 KB; v0.4.7
+   left only 1.4 KB under 200 KiB on 26.3). These are explicit product decisions, but the original
+   motivation was a lighter pack; keep size and the pack-vs-mod measurement in view when adding capabilities.
 
 ## 5. Verification of this change
 

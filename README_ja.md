@@ -334,8 +334,8 @@ Release jobではBlockLensを再buildせず、CIで検証したraw JARそのも�
 - P0開発実測最大: **96,257 B**
 - v0.1.0 baselineからP0の最大増加: **924 B**
 - 歴史的v0.1.0 / P0のrelease budget: **100 KiB / 102,400 B**
-- 現行のレビュー済み開発基準: **200 KiB / 204,800 B**
-- 現行の製品公開上限: **200 KiB / 204,800 B**
+- 現行のレビュー済み開発基準: **250 KiB / 256,000 B**（2026-10-27に200 KiBから引き上げ）
+- 現行の製品公開上限: **250 KiB / 256,000 B**
 - source-pack `<50%` absolute hard maximumも維持
 
 容量削減のためにfunctional parity、test、compatibility evidence、安全gateを落とすことは禁止します。

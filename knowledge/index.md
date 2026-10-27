@@ -65,6 +65,6 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 - [Bounded ore extensions](current/extension-compatibility.md) — versioned registration, synchronized tags and retained terrain-model limits.
 - [External compatibility](current/external-compatibility.md) — exact Shader/Vulkan matrix and retired historical Masa evidence, private pack evidence and actual-backend checks.
 - [Optional Sodium terrain adapter](current/sodium-terrain-compatibility.md) — exact version gating, retained ore models, block-filter precedence and native emission/image controls.
-- [Remaining delivery and revised size contract](current/remaining-delivery.md) — user-authorized 200 KiB limit, preserved gates and evidence links.
+- [Remaining delivery and revised size contract](current/remaining-delivery.md) — size contract history (200 KiB from 2026-10-11, now 250 KiB from 2026-10-27), preserved gates and evidence links.
 
 - [Supplied-pack parity reassessment](current/supplied-pack-parity-reassessment.md) — six-input audit, shared renderer, fail-closed evidence and remaining native behavior gaps.
