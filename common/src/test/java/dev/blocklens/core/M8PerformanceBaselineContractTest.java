@@ -99,8 +99,8 @@ final class M8PerformanceBaselineContractTest {
     @Test
     void modelRetentionIsMeasuredAtBakeTimeAndLazyOverlayLookupStaysOffTheHotPath() throws IOException {
         for (String module : SupportedVersionFixtures.MODULES) {
-            Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), module);
-            String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
+            String plugin = Files.readString(SupportedVersionFixtures.adapterSource(
+                    root(), module, "MinecraftDecorationModelPlugin.java"));
             String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
 
             assertTrue(plugin.contains("RETAINED_CAPABILITY_SLOTS.addAndGet(count)"));
@@ -203,9 +203,9 @@ final class M8PerformanceBaselineContractTest {
 
         assertTrue(properties.contains("runtime_jar_source_pack_bytes=2366865"));
         assertTrue(properties.contains("runtime_jar_hard_max_bytes=1183432"));
-        assertTrue(properties.contains("runtime_jar_baseline_bytes=204800"));
-        assertTrue(properties.contains("runtime_jar_release_budget_bytes=204800"));
-        assertTrue(properties.contains("user-facing product ceiling is now 200 KiB"));
+        assertTrue(properties.contains("runtime_jar_baseline_bytes=256000"));
+        assertTrue(properties.contains("runtime_jar_release_budget_bytes=256000"));
+        assertTrue(properties.contains("user-facing product ceiling is now 250 KiB"));
 
         assertTrue(versionModule.contains("writeRuntimeJarSizeReport"));
         assertTrue(versionModule.contains("runtime-jar-size.txt"));

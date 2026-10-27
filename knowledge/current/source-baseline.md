@@ -154,6 +154,32 @@ Therefore the baseline policy is fail-closed:
 
 M0 does not claim that every final BlockLens pixel must copy the original pack. It freezes the source user value, target/state semantics, gated source roots, and reference configuration so the implementation can be tested for parity while using a smaller and more maintainable runtime design.
 
+## Observed archive revisions
+
+The same source pack has been supplied as three different archives. None supersedes this baseline.
+
+| Label (neutral) | SHA-256 | Bytes | Entries | Recorded in |
+| --- | --- | ---: | --- | --- |
+| `reference-source-mc26.1.2.zip` | `36e5c5bba4e77f05b8c22d549593dfb95e8aebc7bfebdba57e229257b46640ef` | 2,366,865 | 4,535 files | this document (M0 baseline) |
+| `source-1.21.7-v2.zip` | `174a952ef9d385c8a72b9f8509e51ca59dfa5a4cff618d91a4d8d75fa38aaced` | 3,865,945 | 4,744 ZIP entries | [`source-raw-parity-audit.md`](source-raw-parity-audit.md) |
+| `source-1.21.7-v2-r2.zip` (2026-10-27) | `070bc338936f89320408e7b78bb6f74856917f5944deecc1a1b52390f5363616` | 3,527,738 | 4,744 ZIP entries (4,537 files) | this section |
+
+Comparison of the 2026-10-27 archive against the frozen contract:
+
+- 37 RPO condition keys; 337 sidecars, 336 effective gates.
+- 36 of 37 `direct_path_set_sha256` values in [`capability-contract.tsv`](capability-contract.tsv) match exactly.
+  `deco.slabs` differs only by the orphan `blockstates/pale_oak_slab.rpo`, which gates no file; the effective
+  `pale_oak_slab.json.rpo` gate is unchanged. This is the 337/336 residue already explained by the raw audit.
+- Two entries carry no capability: a `desktop.ini` under `textures/block/trapdoor/` and a `pack.mcmeta`
+  edited on 2026-06-26 to declare formats 64–84. `pack.png` is 835,942 B and accounts for most of the
+  size difference. Its preset (`respackopts.json5`, version 7) sets all 37 keys to `false`.
+- Per-file content equality with the M0 archive cannot be proven: BlockLens keeps no per-file source
+  hashes, by the licensing posture above. Path-set and gate equality are proven.
+
+Conclusion: no capability, target or state delta; the M0 contract and the five-key reference preset stay
+authoritative. Information-level parity with this pack's visuals is specified in
+[`pack-information-parity.md`](pack-information-parity.md).
+
 ## Baseline change policy
 
 If either source hash changes, do not silently overwrite this baseline.

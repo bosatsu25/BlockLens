@@ -10,7 +10,7 @@ Published stable release: **[v0.3.0](https://github.com/bosatsu25/BlockLens/rele
 
 Historical published release: [v0.2.2](https://github.com/bosatsu25/BlockLens/releases/tag/v0.2.2), target `46ae5ccb1e60c92acd796acb0e2b10e740f9dcfc`, shipping 40 capabilities for 26.1.2 / 26.2.
 
-Current size policy is **204,800 B (200 KiB)** for both development and release gates, explicitly authorized by the user on 2026-10-11. The **1,183,432 B** absolute ceiling and runtime/quality guards are unchanged. Older 100/140/150 KiB limits and measurements below are historical evidence. See [remaining-delivery.md](remaining-delivery.md).
+Current size policy is **256,000 B (250 KiB)** for both development and release gates, explicitly authorized by the user on 2026-10-27 for the pack-level decal layer (previously 204,800 B / 200 KiB from 2026-10-11). The **1,183,432 B** absolute ceiling and runtime/quality guards are unchanged. Older 100/140/150 KiB limits and measurements below are historical evidence. See [remaining-delivery.md](remaining-delivery.md).
 
 ## Future target migration: Minecraft 26.4 & 26.1.2 deprecation (v0.4.0)
 
@@ -69,8 +69,8 @@ Every future change must preserve, unless deliberately revised with evidence:
 - current JUnit / JaCoCo / PIT thresholds without silent relaxation
 - v0.1.0 historical icon-inclusive baseline: **95,333 B**
 - published v0.2.0 cross-platform baseline: **96,257 B**
-- current user-authorized development ceiling: **204,800 B**
-- **200 KiB** release ceiling
+- current user-authorized development ceiling: **256,000 B**
+- **250 KiB** release ceiling
 - source-pack **<50%** absolute requirement
 
 Performance and artifact size remain continuous gates rather than deferred cleanup tasks.

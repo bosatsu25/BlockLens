@@ -54,6 +54,12 @@ The authoritative state/target evidence remains `capability-map.md` and `capabil
 
 ## 3. BlockLens procedural visual grammar
 
+> **Superseded for single-variant models (2026-10-27).** Decoration cues are now drawn as clean-room
+> decals that carry the source pack's information on every relevant face; see
+> [`pack-information-parity.md`](pack-information-parity.md). The tint grammar below remains the
+> fallback for weighted, multipart and externally wrapped models, and stained glass keeps its
+> solid-layer behavior. The evidence in §7 describes the tint grammar at the time it was recorded.
+
 BlockLens does not copy the source pack's textures into the runtime JAR. It keeps the currently baked Minecraft/active-resource-pack model as the base and applies procedural render information to it.
 
 Current shared cue policy:

@@ -12,6 +12,15 @@ Private six-pack checks pass all three native clients:29 resource probes,2 prior
 
 A subsequent documentation-head replay in [CI38207924264](https://github.com/bosatsu25/BlockLens/actions/runs/38207924264) preserves BBE static-background, Shader palette-count and Vulkan world-close failures. [PR75](https://github.com/bosatsu25/BlockLens/pull/75) strengthens those visual fixtures and diagnostic contracts with unchanged production behavior and acceptance thresholds; [BBE evidence](cele-bbe-compatibility.md) and [palette evidence](palette-rendered-evidence.md) distinguish native results from unfinished verification. Current exact-head gates and closure are recorded in [issue64](https://github.com/bosatsu25/BlockLens/issues/64); older successful runs never replace them.
 
+## Size contract revision — 2026-10-27
+
+The user raised the development and release ceiling from 200 KiB to **250 KiB (256000 bytes)** for
+the pack-level decoration decal layer ([pack-information-parity.md](pack-information-parity.md)).
+v0.4.7 left 4.2 / 4.2 / 1.4 KB under 200 KiB on 26.1.2 / 26.2 / 26.3; the first decal build added about
+12.3 KB (212805 / 212889 / 215628 bytes); the compacted layer (one table-driven class, one glyph strip)
+measures 206943 bytes on 26.2 and 209609 bytes on 26.3 in hosted CI, about 6.3 KB over v0.4.7. The source-pack absolute ceiling (1183432 bytes), debug information and every
+other gate are unchanged. This is a product decision, not a size or performance improvement.
+
 ## Historical delivery baseline
 
 ## Scope and authority

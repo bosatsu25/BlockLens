@@ -8,6 +8,10 @@ The compiled catalog contains 61 independent capabilities; existing keys and ord
 
 ## 向き・状態 / Orientation and state（13）
 
+元パックと同じ情報を見える面に出すため、単一バリアントのモデルでは独自生成の目印（矢印・軸のレール・枠・ハーフブロックの継ぎ目）を現在のテクスチャの上に描きます。彩釉テラコッタは6面すべてに矢印、原木・木・フロッグライトは軸の色（X赤・Y緑・Z青）、ハーフブロックは元パックと同じ面に枠を表示します。それ以外のモデルでは従来の色付けを使います。[情報パリティの仕様](pack-information-parity.md)を参照してください。
+
+Single-variant models carry clean-room decals (arrows, axis rails, frames, slab seams) over the active texture so the source pack's information shows on every relevant face; other models keep the tint cue. See [pack information parity](pack-information-parity.md).
+
 | 日本語 | English | 動作 | 初期設定 |
 | --- | --- | --- | --- |
 | 金床 | Anvil | 金床の向きを見分けやすくします。 | 無効 / Disabled |

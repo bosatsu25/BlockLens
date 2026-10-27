@@ -91,6 +91,14 @@ Own the equivalent 26.2-specific boundary.
 
 Do not copy product policy into this project merely because an API signature differs.
 
+### Shared Fabric roots
+
+Fabric glue that compiles unchanged on several lines is not copied into version trees. It lives in
+`fabric-shared/src/main/java` (all lines) or `fabric-shared/src/pre26_3/java` (26.1.2 and 26.2; selected
+in `gradle/version-module.gradle`). The same split applies to GameTest bridges (`gametest/pre26_3/java`).
+`VersionAdapterSingleSourceContractTest` enforces it; see [`architecture.md`](architecture.md). When 26.1.2
+retires, deleting its version tree and dropping it from the pre-26.3 selection is the whole adapter change.
+
 ### `versions/mc26_3`
 
 Own pinned Minecraft 26.3 / Fabric API 0.162.0+26.3 metadata and the small lighting compatibility boundary. Compile the modern adapters and loading-overlay test bridge from mc26_2 against 26.3 independently. Shared input code uses Minecraft InputConstants rather than GLFW numeric values because 26.3 uses SDL. Java 25 and Loader 0.19.5 are the current baseline. See [26.3 integration](minecraft-26-3.md).

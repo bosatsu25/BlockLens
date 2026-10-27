@@ -12,7 +12,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Zero-scan model-bake integration for the 26.1.2 all-capability BlockLens pipeline. */
+/** Zero-scan model-bake integration shared by every supported Minecraft line. */
 public final class MinecraftDecorationModelPlugin {
     private static final CapabilityId[] CAPABILITIES = CapabilityId.values();
     private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.bitPosition();

@@ -25,7 +25,7 @@ BlockLens **v0.3.0** expands product coverage to **57 independently configurable
 | 26.1.2 | `BlockLens-26.1.2-v0.2.2.jar` | **102,607 B** | `132312d74c1b160795a22a8dd1afa97c61eef3ced8b181c1b2eddc052f0a28e5` |
 | 26.2 | `BlockLens-26.2-v0.2.2.jar` | **102,644 B** | `4e9dbf5bfb4971c7a30e8c69a37240b3637a35b0c25475e5cfdc584195e6f11f` |
 
-Current gates are the user-authorized **204,800 B (200 KiB)** development and product release ceiling, and **1,183,432 B** absolute ceiling. Historical 100 KiB statements below describe v0.1.0/v0.2.0, not current policy. External shader/pack/Vulkan combinations remain #31; M8 diagnostic implementation is merged through PR #45/#47, while #43 completed its measured test-environment exception, retaining the unproven historical cause. See [roadmap.md](roadmap.md).
+Current gates are the user-authorized **256,000 B (250 KiB)** development and product release ceiling (raised from 200 KiB on 2026-10-27), and **1,183,432 B** absolute ceiling. Historical 100 KiB statements below describe v0.1.0/v0.2.0, not current policy. External shader/pack/Vulkan combinations remain #31; M8 diagnostic implementation is merged through PR #45/#47, while #43 completed its measured test-environment exception, retaining the unproven historical cause. See [roadmap.md](roadmap.md).
 
 Current packaging permits exactly one owned `blocklens-runtime` container with exact compiled-byte, metadata and recursive privacy audits; see [runtime-packaging.md](runtime-packaging.md). The historical blanket nested-JAR prohibition below is replaced only for this owned container. Third-party dependency containers remain forbidden.
 

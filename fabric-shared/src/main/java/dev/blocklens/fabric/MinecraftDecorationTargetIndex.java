@@ -1,6 +1,7 @@
 package dev.blocklens.fabric;
 
 import dev.blocklens.api.OreHighlightExtensions;
+import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.BlockLensTargetCatalog;
 import dev.blocklens.core.state.TargetCapabilityIndex;
@@ -9,7 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 
 /**
- * Resolves the exact current target catalog to session-local 26.2 raw block ids.
+ * Resolves the exact current target catalog to session-local raw block ids.
  *
  * <p>The historical class name is retained while M4-M7 converges on the already-verified M3 model
  * pipeline. Each raw block id stores a composable capability bit-set, so overlaps are intentional.</p>
@@ -37,7 +38,8 @@ public final class MinecraftDecorationTargetIndex {
         }
         Block block = BuiltInRegistries.BLOCK.getValue(id);
         if (block == null || !id.equals(BuiltInRegistries.BLOCK.getKey(block))) {
-            throw new IllegalStateException("BlockLens M0 target is not registered in Minecraft 26.2: " + id);
+            throw new IllegalStateException("BlockLens M0 target is not registered in Minecraft "
+                    + BlockLensRuntime.minecraftVersion() + ": " + id);
         }
         return block;
     }

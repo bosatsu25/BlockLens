@@ -17,7 +17,7 @@ final class ModMenuConfigEntrypointContractTest {
         for (String version : VERSIONS) {
             Path module = root.resolve("versions").resolve(version);
             String metadata = Files.readString(module.resolve("src/main/resources/fabric.mod.json"));
-            String adapter = Files.readString(SupportedVersionFixtures.sourceRoot(root, version).resolve("BlockLensModMenu.java"));
+            String adapter = Files.readString(SupportedVersionFixtures.adapterSource(root, version, "BlockLensModMenu.java"));
 
             assertTrue(metadata.contains("\"modmenu\""), version);
             assertTrue(metadata.contains("dev.blocklens.fabric.BlockLensModMenu"), version);

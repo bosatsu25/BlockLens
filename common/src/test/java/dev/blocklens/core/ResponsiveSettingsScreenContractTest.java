@@ -16,11 +16,13 @@ final class ResponsiveSettingsScreenContractTest {
     void bothAdaptersExposeTheSameBoundedResizeAwareSettingsSurface() throws IOException {
         for (String module : SupportedVersionFixtures.MODULES) {
             String screen = Files.readString(SupportedVersionFixtures.sourceRoot(root(), module).resolve("BlockLensConfigScreen.java"));
-            String client = Files.readString(SupportedVersionFixtures.sourceRoot(root(), module).resolve("BlockLensClient.java"));
+            String entrypoint = Files.readString(SupportedVersionFixtures.sourceRoot(root(), module).resolve("BlockLensClient.java"));
+            String client = Files.readString(SupportedVersionFixtures.sharedSource(root(), "BlockLensClientBootstrap.java"));
             assertTrue(screen.contains("extends AbstractBlockLensConfigScreen"));
             assertTrue(screen.contains("protected void showParent(Screen parent)"));
             assertTrue(client.contains("KeyMappingHelper.registerKeyMapping(OPEN_SETTINGS)"));
             assertTrue(client.contains("ClientTickEvents.END_CLIENT_TICK.register"));
+            assertTrue(entrypoint.contains("BlockLensClientBootstrap.initialize("));
         }
     }
 
