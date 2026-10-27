@@ -74,8 +74,12 @@ step and panel structure.
 - `scripts/test_decoration_glyphs.py` and the CI clean-room step regenerate the strip bytes exactly.
 - `DecorationDecalOracle` runs on 26.1.2, 26.2 and 26.3 clients: a top-down camera checks arrow direction
   for all four facings, rail orientation and legend color for all three axes, and that only top and
-  double slabs mark their upper face.
+  double slabs mark their upper face. The arrow is read by matching the largest changed region against
+  the shipped glyph in each rotation (IoU at least 0.6, margin 0.15); a mismatch logs the scores and a
+  coarse mask, and the CI failure artifact keeps the `decoration-decals` captures.
 - Existing M3/M7/M5/terrain oracles keep their thresholds.
+- The oracle adds about 40 s to each normal client run. 26.3 already measured 21m17s of the former
+  22-minute step, so normal client steps get 27 minutes inside 36-minute jobs; no threshold changes.
 
 Size: the decal layer is one table-driven class with no enum switch maps, and one sprite instead of six,
 to keep its artifact cost small. This contract makes no performance-improvement claim. Decals add one extra emission of the decorated
