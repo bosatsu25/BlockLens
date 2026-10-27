@@ -69,6 +69,10 @@ final class M9ReleaseReadinessContractTest {
         assertTrue(plan.contains("scripts/plan_ci.py"));
         assertTrue(plan.contains("check_name=verified%20%2F%20full%20matrix"));
         assertTrue(plan.contains("git rev-parse 'HEAD^{tree}'"), "reuse requires the identical tree");
+        assertTrue(plan.contains("releases/latest"), "a main push is judged on the changes since the latest release");
+        assertFalse(plan.contains("github.event.before"), "a replaced pending run must not lose its merge");
+        assertTrue(ci.contains("group: blocklens-ci-${{ github.event_name == 'workflow_dispatch' && 'manual-' || '' }}${{ github.ref }}"),
+                "manual runs must not replace a pending main push");
 
         String release = job(ci, "release");
         assertTrue(release.contains("needs.plan.outputs.release == 'true'"));

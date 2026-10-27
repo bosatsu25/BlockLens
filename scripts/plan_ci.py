@@ -41,8 +41,13 @@ def next_version(base, tags):
     return f"{major}.{minor}.{max([patch] + [value + 1 for value in used])}"
 
 
-def plan(event, ref, draft, paths, pre_verified, base, tags):
-    """Returns (full, release, version) for one CI run."""
+def plan(event, ref, draft, paths, pre_verified, base, tags, released=False):
+    """Returns (full, release, version) for one CI run.
+
+    For a main push, paths are the changes since the latest release, not since the previous push, so
+    a merge whose run was replaced while pending is published by the next run; released means the
+    pushed commit is already part of the latest release (for example a re-run after publishing).
+    """
     on_main_push = event == "push" and ref == "refs/heads/main"
     documentation = docs_only(paths)
     if event == "workflow_dispatch":
@@ -50,10 +55,10 @@ def plan(event, ref, draft, paths, pre_verified, base, tags):
     elif event == "pull_request":
         full = not draft and not documentation
     elif on_main_push:
-        full = not documentation and not pre_verified
+        full = not documentation and not pre_verified and not released
     else:
         full = True
-    release = on_main_push and not documentation
+    release = on_main_push and not documentation and not released
     return full, release, next_version(base, tags) if release else ""
 
 
@@ -68,13 +73,15 @@ def main():
     parser.add_argument("--event", required=True)
     parser.add_argument("--ref", required=True)
     parser.add_argument("--draft", default="false")
-    parser.add_argument("--paths-file", help="one changed path per line")
+    parser.add_argument("--paths-file", help="one changed path per line (main push: since the latest release)")
     parser.add_argument("--pre-verified", default="false")
     parser.add_argument("--base-version", required=True)
     parser.add_argument("--tags-file", help="one tag per line")
+    parser.add_argument("--released", default="false", help="the pushed commit is in the latest release")
     args = parser.parse_args()
     full, release, version = plan(args.event, args.ref, args.draft == "true", read_lines(args.paths_file),
-                                  args.pre_verified == "true", args.base_version, read_lines(args.tags_file))
+                                  args.pre_verified == "true", args.base_version, read_lines(args.tags_file),
+                                  args.released == "true")
     print(f"full={'true' if full else 'false'}")
     print(f"release={'true' if release else 'false'}")
     print(f"version={version}")

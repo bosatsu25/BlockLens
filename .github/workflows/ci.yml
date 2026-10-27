@@ -15,7 +15,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: blocklens-ci-${{ github.ref }}
+  # Main pushes run one at a time, so each plans its version after the previous release. A newer
+  # pending push replaces an older pending one; nothing is lost, because plan compares against the
+  # latest release, not the previous push. Manual runs never publish and get their own group so they
+  # cannot replace a pending push.
+  group: blocklens-ci-${{ github.event_name == 'workflow_dispatch' && 'manual-' || '' }}${{ github.ref }}
   # Superseded pull request runs are cancelled; a main run is never cut off mid-release.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -25,7 +29,8 @@ jobs:
   # - a main merge whose tree equals a pull request head that already passed "verified / full
   #   matrix": build the release JARs without repeating the client matrices;
   # - everything else: the full matrix.
-  # Every non-documentation push to main publishes the next free patch version.
+  # Every push to main that changed more than documentation since the latest release publishes the
+  # next free patch version.
   plan:
     name: plan / verification scope
     runs-on: ubuntu-24.04
@@ -52,18 +57,29 @@ jobs:
           EVENT: ${{ github.event_name }}
           DRAFT: ${{ github.event.pull_request.draft || false }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          BEFORE: ${{ github.event.before }}
           AFTER: ${{ github.sha }}
         run: |
           set -euo pipefail
           : > changed.txt
           pre_verified=false
+          released=false
           if [[ "$EVENT" == "pull_request" ]]; then
             gh api --paginate "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --jq '.[].filename' > changed.txt
-          elif [[ "$EVENT" == "push" && -n "$BEFORE" && ! "$BEFORE" =~ ^0+$ ]]; then
-            gh api "repos/${REPOSITORY}/compare/${BEFORE}...${AFTER}" --jq '.files[].filename' > changed.txt
           fi
           if [[ "$EVENT" == "push" ]]; then
+            # Changes since the latest release, so a merge whose pending run was replaced is still
+            # published. Without a release the list stays empty, which never counts as docs-only.
+            if latest="$(gh api "repos/${REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null)"; then
+              gh api "repos/${REPOSITORY}/compare/${latest}...${AFTER}" \
+                --jq '.status, ((.files // [])[].filename)' > compare.txt
+              status="$(head -n 1 compare.txt)"
+              if [[ "$status" == "identical" || "$status" == "behind" ]]; then
+                released=true
+              else
+                tail -n +2 compare.txt > changed.txt
+              fi
+              echo "Latest release $latest: $status, $(wc -l < changed.txt) files changed since" >> "$GITHUB_STEP_SUMMARY"
+            fi
             head="$(gh api "repos/${REPOSITORY}/commits/${AFTER}/pulls" \
               --jq '[.[] | select(.merged_at != null)][0].head.sha // empty')"
             if [[ -n "$head" ]]; then
@@ -80,7 +96,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE=1 python3 scripts/plan_ci.py \
             --event "$EVENT" --ref "$GITHUB_REF" --draft "$DRAFT" --paths-file changed.txt \
             --pre-verified "$pre_verified" --base-version "$(sed -n 's/^mod_version=//p' gradle.properties)" \
-            --tags-file tags.txt | tee -a "$GITHUB_OUTPUT" "$GITHUB_STEP_SUMMARY"
+            --tags-file tags.txt --released "$released" | tee -a "$GITHUB_OUTPUT" "$GITHUB_STEP_SUMMARY"
 
   common-quality:
     name: common / JUnit + JaCoCo + PIT

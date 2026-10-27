@@ -319,7 +319,7 @@ flowchart TD
     REL --> CLEAN[古いReleaseのJARを削除]
 ```
 
-ドキュメント以外を変更するmainへのマージごとに、Releaseが自動で公開されます。バージョンは`gradle.properties`の`mod_version`系列で空いている最初のpatchです（例: v0.4.7の次はv0.4.8）。新しいminor系列を始めるときは`mod_version`を上げます。release JARは検証済みtreeをそのバージョンで再buildしたもので、同じpackaging auditとsize budgetを通ります。決定的buildのため、classは検証済みのものと同一です。マージ後のtreeが`verified / full matrix`に成功したPR headと同じなら、client matrixは再実行しません。ドラフトPRとドキュメントのみのPRはcommon gateだけを実行し、ドラフトを解除するとfull matrixが始まります。JARと`SHA256SUMS.txt`を持つのは最新のReleaseだけです。
+mainへのマージごとに、最新のRelease以降にドキュメント以外の変更があればReleaseが自動で公開されます。バージョンは`gradle.properties`の`mod_version`系列で空いている最初のpatchです（例: v0.4.7の次はv0.4.8）。新しいminor系列を始めるときは`mod_version`を上げます。release JARは検証済みtreeをそのバージョンで再buildしたもので、同じpackaging auditとsize budgetを通ります。決定的buildのため、classは検証済みのものと同一です。マージ後のtreeが`verified / full matrix`に成功したPR headと同じなら、client matrixは再実行しません。ドラフトPRとドキュメントのみのPRはcommon gateだけを実行し、ドラフトを解除するとfull matrixが始まります。JARと`SHA256SUMS.txt`を持つのは最新のReleaseだけです。
 
 ## Artifact size history
 

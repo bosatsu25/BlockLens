@@ -15,6 +15,13 @@ per run:
 | Ready pull request, `ready_for_review`, manual run | full | no |
 | Push to main whose tree equals a merged PR head with a successful `verified / full matrix` | reused, not repeated | yes |
 | Any other push to main | full | yes, after `verified / full matrix` |
+| Push to main already contained in the latest release (for example a re-run) | skipped | no |
+
+For a push to main, "documentation-only" is judged on the changes since the latest release, not
+since the previous push. Main runs are serialized (`blocklens-ci-refs/heads/main`), and GitHub
+replaces an older pending run with a newer one; the newer run still publishes the replaced merge's
+code because it compares against the release. Manual runs use their own group and never replace a
+pending push.
 
 The common gate (JUnit, JaCoCo, PIT, script tests, clean-room asset checks) always runs, because
 repository contracts read README and `knowledge/current`. Superseded pull request runs are

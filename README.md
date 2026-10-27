@@ -318,7 +318,7 @@ flowchart TD
     REL --> CLEAN[remove JARs from older releases]
 ```
 
-Every merge to main that changes more than documentation publishes a release automatically. The version is the first free patch on the `mod_version` line in `gradle.properties` (for example v0.4.8 after v0.4.7); raise `mod_version` to start a new minor line. The release JARs are rebuilt from the verified tree with that version and pass the same packaging audit and size budgets; the deterministic build keeps their classes identical to the verified ones. When the merged tree equals a pull request head whose `verified / full matrix` check passed, the client matrices are not repeated. Draft and documentation-only pull requests run only the common gate; marking a draft ready starts the full matrix. Only the latest release keeps its JARs and `SHA256SUMS.txt`.
+Every merge to main publishes a release automatically when more than documentation changed since the latest release. The version is the first free patch on the `mod_version` line in `gradle.properties` (for example v0.4.8 after v0.4.7); raise `mod_version` to start a new minor line. The release JARs are rebuilt from the verified tree with that version and pass the same packaging audit and size budgets; the deterministic build keeps their classes identical to the verified ones. When the merged tree equals a pull request head whose `verified / full matrix` check passed, the client matrices are not repeated. Draft and documentation-only pull requests run only the common gate; marking a draft ready starts the full matrix. Only the latest release keeps its JARs and `SHA256SUMS.txt`.
 
 ## Artifact size history
 

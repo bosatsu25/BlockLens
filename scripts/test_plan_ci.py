@@ -59,6 +59,15 @@ class PlanTest(unittest.TestCase):
     def test_documentation_merge_publishes_nothing(self):
         self.assertEqual((False, False, ""), plan("push", MAIN, False, DOCS, False, "0.4.7", ["v0.4.7"]))
 
+    def test_documentation_merge_publishes_code_that_a_replaced_run_left_unreleased(self):
+        # Paths are the changes since the latest release, so they include the code merge whose
+        # pending run this documentation merge replaced; the unverified tree runs the full matrix.
+        self.assertEqual((True, True, "0.4.8"), plan("push", MAIN, False, CODE + DOCS, False, "0.4.7", ["v0.4.7"]))
+
+    def test_commit_already_in_the_latest_release_publishes_nothing(self):
+        self.assertEqual((False, False, ""), plan("push", MAIN, False, [], False, "0.4.7", ["v0.4.7"], True))
+        self.assertEqual((False, False, ""), plan("push", MAIN, False, CODE, True, "0.4.7", ["v0.4.7"], True))
+
     def test_manual_run_is_always_full_and_never_releases(self):
         self.assertEqual((True, False, ""), plan("workflow_dispatch", MAIN, False, [], False, "0.4.7", []))
 
