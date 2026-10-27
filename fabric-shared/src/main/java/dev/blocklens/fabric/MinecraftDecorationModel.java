@@ -3,12 +3,16 @@ package dev.blocklens.fabric;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.VisualGeometryKey;
+import dev.blocklens.core.render.DecalProjection;
+import dev.blocklens.core.render.DecorationDecal;
+import dev.blocklens.core.render.DecorationGlyph;
 import dev.blocklens.core.render.DecorationQuadFace;
 import dev.blocklens.core.render.DecorationQuadInstruction;
 import dev.blocklens.core.render.DecorationRenderDescriptor;
 import dev.blocklens.core.render.NetherTweaksVisualCue;
 import dev.blocklens.core.render.ResourceHighlightCue;
 import dev.blocklens.core.render.ResourceBorderPolicy;
+import dev.blocklens.core.render.FaceDecalTable;
 import dev.blocklens.core.render.FaceInstructionTable;
 import dev.blocklens.core.render.RetainedValue;
 import dev.blocklens.core.render.VisibilityRenderPolicy;
@@ -17,6 +21,7 @@ import dev.blocklens.core.state.SemanticState;
 import dev.blocklens.core.state.VisibilityStateKind;
 import java.util.Objects;
 import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
@@ -29,6 +34,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.data.AtlasIds;
@@ -53,8 +59,13 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private final long oreBorderMask;
     private final int oreBorderTint;
 
+    private static final Identifier[] DECAL_SPRITES = decalSprites();
+
     private final Object[] descriptors;
     private final long[] descriptorBits;
+    // Shared per (capability, state); present only when the wrapped model is one fixed variant.
+    private final FaceDecalTable @Nullable [] decalTables;
+    private final long decalMask;
     private final long representedRenderableMask;
     private final @Nullable NetherTweaksVisualCue netherCue;
     private final SemanticState netherState;
@@ -84,6 +95,11 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         int borderTint = 0;
         boolean foundNether = false;
         SemanticState capturedNetherState = SemanticState.empty();
+        // Decals re-emit the wrapped geometry; only a single fixed variant guarantees the second
+        // emission matches the first. Weighted, multipart and other wrappers keep the tint cue.
+        boolean decalCapable = wrapped.getClass() == SingleVariant.class;
+        FaceDecalTable[] decals = null;
+        long decalBits = 0L;
 
         for (int i = 0; i < count; i++) {
             CapabilityId capability = Objects.requireNonNull(capabilities[i], "capability");
@@ -106,6 +122,15 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
                 descriptors[i] = DecorationQuadInstruction.emissiveTint(0xFFFFFFFF);
             } else if (DecorationStateKind.isDecorationCapability(capability)) {
                 descriptors[i] = FaceInstructionTable.compile(DecorationRenderDescriptor.of(capability, state));
+                FaceDecalTable decalTable = decalCapable
+                        ? FaceDecalTable.compile(DecorationRenderDescriptor.of(capability, state)) : null;
+                if (decalTable != null && !decalTable.isEmpty()) {
+                    if (decals == null) {
+                        decals = new FaceDecalTable[count];
+                    }
+                    decals[i] = decalTable;
+                    decalBits |= bit;
+                }
             } else if (VisibilityStateKind.isVisibilityCapability(capability)) {
                 descriptors[i] = VisibilityRenderPolicy.describeEnabled(capability, state).cue().instruction();
             } else if (capability.isResourceHighlight()) {
@@ -133,6 +158,17 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         this.connectedOrePart=borders==0L || wrapped.getClass()!=SingleVariant.class ? null : new RetainedValue<>();
         this.oreBorderMask = borders;
         this.oreBorderTint = borderTint;
+        this.decalTables = decals;
+        this.decalMask = decalBits;
+    }
+
+    private static Identifier[] decalSprites() {
+        DecorationGlyph[] glyphs = DecorationGlyph.values();
+        Identifier[] sprites = new Identifier[glyphs.length];
+        for (DecorationGlyph glyph : glyphs) {
+            sprites[glyph.ordinal()] = Identifier.fromNamespaceAndPath("blocklens", glyph.texturePath());
+        }
+        return sprites;
     }
 
     boolean wraps(BlockStateModel model) {
@@ -157,6 +193,9 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
                 && BlockLensRuntime.config().isEnabled(CapabilityId.CONNECTED_ORE_EDGES);
         int[] cubeFaces = connected ? new int[2] : null;
         boolean netherEnabled = netherCue != null && (enabledCapabilities & NETHER_TWEAKS_BIT) != 0L;
+        // A decoration drawn as a decal keeps the active texture's colors instead of tinting it.
+        long decalCapabilities = enabledCapabilities & decalMask;
+        long tintCapabilities = enabledCapabilities & ~decalCapabilities;
         emitter.pushTransform(quad -> {
             if(cubeFaces != null) {
                 Direction direction=quad.cullFace();
@@ -167,7 +206,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             if (netherEnabled) {
                 quad.multiplyColor(netherCue.frameArgb());
             }
-            applyNonNetherInstructions(quad, enabledCapabilities);
+            applyNonNetherInstructions(quad, tintCapabilities);
             return true;
         });
         try {
@@ -177,7 +216,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
 
         if (netherEnabled) {
-            emitNetherOverlay(emitter, level, pos, state, random, cullTest, enabledCapabilities);
+            emitNetherOverlay(emitter, level, pos, state, random, cullTest, tintCapabilities);
         }
         if ((enabledCapabilities & LIGHTWEIGHT_OVERLAY_MASK) != 0L) {
             emitLightweightOverlay(emitter, level, pos, state, random, cullTest, enabledCapabilities);
@@ -186,6 +225,87 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             emitOreBorder(emitter, level, pos, state, random, cullTest,
                     cubeFaces==null ? -1 : cubeFaces[0]&~cubeFaces[1]);
         }
+        if (decalCapabilities != 0L) {
+            emitDecals(emitter, level, pos, state, random, cullTest, decalCapabilities);
+        }
+    }
+
+    /**
+     * Re-emits the wrapped single-variant geometry once more as decal quads: each kept quad gets
+     * the face's clean-room glyph mapped onto its own bounds, lifted just above the surface.
+     * Culled faces stay culled because the same cull test is applied.
+     */
+    private void emitDecals(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos,
+            BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest, long decalCapabilities) {
+        var atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS);
+        Function<Identifier, TextureAtlasSprite> sprites = atlas::getSprite;
+        emitter.pushTransform(quad -> applyDecal(quad, sprites, decalCapabilities));
+        try {
+            super.emitQuads(emitter, level, pos, state, random, cullTest);
+        } finally {
+            emitter.popTransform();
+        }
+    }
+
+    private boolean applyDecal(MutableQuadView quad, Function<Identifier, TextureAtlasSprite> sprites,
+            long decalCapabilities) {
+        DecorationQuadFace face = face(quad.nominalFace());
+        if (face == DecorationQuadFace.NONE || decalTables == null) {
+            return false;
+        }
+        DecorationDecal decal = DecorationDecal.NONE;
+        for (int i = 0; i < decalTables.length && !decal.present(); i++) {
+            FaceDecalTable table = decalTables[i];
+            if (table != null && (decalCapabilities & descriptorBits[i]) != 0L) {
+                decal = table.decal(face);
+            }
+        }
+        if (!decal.present()) {
+            return false;
+        }
+        Identifier spriteId = DECAL_SPRITES[decal.glyph().ordinal()];
+        TextureAtlasSprite sprite = sprites.apply(spriteId);
+        if (!spriteId.equals(sprite.contents().name())) {
+            return false; // Never draw the missing-texture checkerboard over a block.
+        }
+        float minRight = Float.POSITIVE_INFINITY, maxRight = Float.NEGATIVE_INFINITY;
+        float minDown = Float.POSITIVE_INFINITY, maxDown = Float.NEGATIVE_INFINITY;
+        for (int vertex = 0; vertex < 4; vertex++) {
+            float right = DecalProjection.right(face, quad.x(vertex), quad.y(vertex), quad.z(vertex));
+            float down = DecalProjection.down(face, quad.x(vertex), quad.y(vertex), quad.z(vertex));
+            minRight = Math.min(minRight, right);
+            maxRight = Math.max(maxRight, right);
+            minDown = Math.min(minDown, down);
+            maxDown = Math.max(maxDown, down);
+        }
+        float width = maxRight - minRight;
+        float height = maxDown - minDown;
+        if (width < 1.0E-4F || height < 1.0E-4F) {
+            return false;
+        }
+        int turns = decal.quarterTurns();
+        float u0 = sprite.getU0(), du = sprite.getU1() - u0;
+        float v0 = sprite.getV0(), dv = sprite.getV1() - v0;
+        float offsetX = DecalProjection.normalX(face) * DecalProjection.SURFACE_OFFSET;
+        float offsetY = DecalProjection.normalY(face) * DecalProjection.SURFACE_OFFSET;
+        float offsetZ = DecalProjection.normalZ(face) * DecalProjection.SURFACE_OFFSET;
+        for (int vertex = 0; vertex < 4; vertex++) {
+            float x = quad.x(vertex), y = quad.y(vertex), z = quad.z(vertex);
+            float s = (DecalProjection.right(face, x, y, z) - minRight) / width;
+            float t = (DecalProjection.down(face, x, y, z) - minDown) / height;
+            quad.uv(vertex, u0 + DecalProjection.glyphU(turns, s, t) * du,
+                    v0 + DecalProjection.glyphV(turns, s, t) * dv);
+            quad.pos(vertex, x + offsetX, y + offsetY, z + offsetZ);
+        }
+        int argb = decal.argb();
+        quad.color(argb, argb, argb, argb);
+        quad.tintIndex(-1);
+        quad.animated(false);
+        quad.chunkLayer(ChunkSectionLayer.CUTOUT);
+        quad.emissive(true);
+        MinecraftQuadLighting.disableDirectionalShade(quad);
+        quad.ambientOcclusion(TriState.FALSE);
+        return true;
     }
 
     private void emitNetherOverlay(
