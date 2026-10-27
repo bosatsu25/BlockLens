@@ -13,6 +13,7 @@ base {
 def blockLensArtifactVersion = project.version.toString()
 def blockLensMinecraftVersionValue = blockLensMinecraftVersion.toString()
 def blockLensLoaderVersionValue = rootProject.loader_version.toString()
+def blockLensUsesPre26_3ItemRenderer = blockLensMinecraftVersionValue in ['26.1.2', '26.2']
 def runtimeSourcePackBytes = Long.parseLong(rootProject.runtime_jar_source_pack_bytes.toString())
 def runtimeHardMaxBytes = Long.parseLong(rootProject.runtime_jar_hard_max_bytes.toString())
 def runtimeBaselineBytes = Long.parseLong(rootProject.runtime_jar_baseline_bytes.toString())
@@ -117,6 +118,10 @@ sourceSets {
     // on the classpath does not make assets/blocklens visible to Minecraft's ResourceManager.
     main {
         java.srcDir rootProject.file('fabric-shared/src/main/java')
+        // Item-in-hand submission and quad diffuse shading changed in 26.3; older lines share one bridge.
+        if (blockLensUsesPre26_3ItemRenderer) {
+            java.srcDir rootProject.file('fabric-shared/src/pre26_3/java')
+        }
         resources.srcDir project(':common').file('src/main/resources')
     }
     gametest {
@@ -124,6 +129,9 @@ sourceSets {
         java.srcDir rootProject.file('test-support/java')
         java.srcDir rootProject.file(blockLensMinecraftVersionValue == '26.3'
                 ? 'gametest/sign-adapters/slots/java' : 'gametest/sign-adapters/legacy/java')
+        if (blockLensUsesPre26_3ItemRenderer) {
+            java.srcDir rootProject.file('gametest/pre26_3/java')
+        }
         resources.srcDir rootProject.file('gametest/resources')
         java.srcDir rootProject.file(externalProfile.startsWith('shader-')
                 ? 'external-compat/iris/java' : 'external-compat/base/java')

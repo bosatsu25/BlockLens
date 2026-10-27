@@ -23,8 +23,8 @@ final class SharedTerrainRendererContractTest {
             assertFalse(Files.exists(ROOT.resolve("versions/" + module
                     + "/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java")), module);
         }
-        for (String adapter : List.of("versions/mc26_1_2/src/main/java",
-                "versions/mc26_2/src/compat/java", "versions/mc26_3/src/main/java")) {
+        for (String adapter : List.of(SupportedVersionFixtures.SHARED_PRE_26_3,
+                "versions/mc26_3/src/main/java")) {
             assertTrue(Files.isRegularFile(ROOT.resolve(adapter
                     + "/dev/blocklens/fabric/MinecraftQuadLighting.java")), adapter);
         }

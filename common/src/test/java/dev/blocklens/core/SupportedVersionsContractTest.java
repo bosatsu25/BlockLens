@@ -69,8 +69,8 @@ final class SupportedVersionsContractTest {
         assertTrue(modern.contains("MinecraftQuadLighting.disableDirectionalShade(quad)"));
         assertTrue(modern.contains("quad.emissive(true)"));
         assertTrue(modern.contains("quad.ambientOcclusion(TriState.FALSE)"));
-        String older = Files.readString(root().resolve("versions/mc26_2/src/compat/java/"
-                + "dev/blocklens/fabric/MinecraftQuadLighting.java"));
+        String older = Files.readString(root().resolve(SupportedVersionFixtures.SHARED_PRE_26_3
+                + "/dev/blocklens/fabric/MinecraftQuadLighting.java"));
         String newer = Files.readString(root().resolve("versions/mc26_3/src/main/java/"
                 + "dev/blocklens/fabric/MinecraftQuadLighting.java"));
         assertTrue(older.contains("quad.diffuseShade(false)"));

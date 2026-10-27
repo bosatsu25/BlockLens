@@ -97,7 +97,7 @@ final class RepositoryContractTest {
         roots.add(directory);
         Path moduleRoot = root().resolve("versions").resolve(module);
         roots.add(moduleRoot.resolve("src/gametest"));
-        roots.add(moduleRoot.resolve("src/compat/gametest"));
+        roots.add(root().resolve(SupportedVersionFixtures.GAMETEST_PRE_26_3));
         var allowed = java.util.Set.of("SettingsClientAccess.java", "FireTransformProbeMixin.java",
                 "HeldTransformProbeMixin.java", "SceneRenderAccess.java", "ExternalBackendProbe.java",
                 "ExternalCaptureTarget.java");
@@ -144,10 +144,12 @@ final class RepositoryContractTest {
                 "common/src/main/java/dev/blocklens/core/render/NetherTweaksTargetCatalog.java"));
         String config = Files.readString(root().resolve(
                 "common/src/main/java/dev/blocklens/core/BlockLensConfig.java"));
-        String v2612 = Files.readString(root().resolve(
-                "versions/mc26_1_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationTargetIndex.java"));
-        String v262 = Files.readString(root().resolve(
-                "versions/mc26_2/src/main/java/dev/blocklens/fabric/MinecraftDecorationTargetIndex.java"));
+        String targetIndex = Files.readString(
+                SupportedVersionFixtures.sharedSource(root(), "MinecraftDecorationTargetIndex.java"));
+        for (String module : SupportedVersionFixtures.MODULES) {
+            assertFalse(Files.exists(SupportedVersionFixtures.sourceRoot(root(), module)
+                    .resolve("MinecraftDecorationTargetIndex.java")), module);
+        }
 
         assertFalse(Files.exists(decorationPolicy),
                 "test-only M3 policy wrapper must not return to the runtime JAR");
@@ -178,10 +180,8 @@ final class RepositoryContractTest {
         assertTrue(unifiedCatalog.contains("NetherTweaksTargetCatalog.targets(capability)"));
         assertTrue(config.contains("private final long enabledMask"));
         assertTrue(config.contains("public long enabledMask()"));
-        assertTrue(v2612.contains("BlockLensTargetCatalog.targets(capability)"));
-        assertTrue(v262.contains("BlockLensTargetCatalog.targets(capability)"));
-        assertTrue(v2612.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
-        assertTrue(v262.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
+        assertTrue(targetIndex.contains("BlockLensTargetCatalog.targets(capability)"));
+        assertTrue(targetIndex.contains("TargetCapabilityIndex.builder(BuiltInRegistries.BLOCK.size())"));
         assertFalse(catalog.contains("endsWith(\"_stairs\")"),
                 "exact target scope must not silently broaden by suffix");
     }
@@ -189,9 +189,10 @@ final class RepositoryContractTest {
     @Test
     void unifiedModelPipelineRemainsZeroScanAndHasPrimitiveOffFastPath() throws IOException {
         for (String module : SupportedVersionFixtures.MODULES) {
-            Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), module);
-            String client = Files.readString(sourceRoot.resolve("BlockLensClient.java"));
-            String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
+            String client = Files.readString(SupportedVersionFixtures.adapterSource(
+                    root(), module, "BlockLensClientBootstrap.java"));
+            String plugin = Files.readString(SupportedVersionFixtures.adapterSource(
+                    root(), module, "MinecraftDecorationModelPlugin.java"));
             String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
 
             assertTrue(client.contains("MinecraftDecorationModelPlugin.register()"));
@@ -293,7 +294,7 @@ final class RepositoryContractTest {
                 root().resolve("common/src/main/java"),
                 root().resolve("versions/mc26_1_2/src/main/java"),
                 root().resolve("versions/mc26_2/src/main/java"),
-                root().resolve("versions/mc26_2/src/compat/java"),
+                root().resolve(SupportedVersionFixtures.SHARED_PRE_26_3),
                 root().resolve("versions/mc26_3/src/main/java"),
                 root().resolve("fabric-shared/src/main/java"))) {
             try (var paths = Files.walk(sourceRoot)) {

@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
 
-/** Minecraft 26.2 BlockState -> common semantic-state boundary for all BlockLens capabilities. */
+/** Shared BlockState -> common semantic-state boundary for every supported Minecraft line. */
 public final class MinecraftStateAdapter {
     private MinecraftStateAdapter() {
     }

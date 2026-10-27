@@ -99,8 +99,8 @@ final class M8PerformanceBaselineContractTest {
     @Test
     void modelRetentionIsMeasuredAtBakeTimeAndLazyOverlayLookupStaysOffTheHotPath() throws IOException {
         for (String module : SupportedVersionFixtures.MODULES) {
-            Path sourceRoot = SupportedVersionFixtures.sourceRoot(root(), module);
-            String plugin = Files.readString(sourceRoot.resolve("MinecraftDecorationModelPlugin.java"));
+            String plugin = Files.readString(SupportedVersionFixtures.adapterSource(
+                    root(), module, "MinecraftDecorationModelPlugin.java"));
             String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
 
             assertTrue(plugin.contains("RETAINED_CAPABILITY_SLOTS.addAndGet(count)"));

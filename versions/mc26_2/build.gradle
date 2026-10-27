@@ -8,11 +8,6 @@ ext.blockLensFabricApiVersion = rootProject.fabric_api_26_2
 
 apply from: rootProject.file('gradle/version-module.gradle')
 
-sourceSets.main.java.srcDir 'src/compat/java'
-
 dependencies {
     compileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
 }
-
-// Pre-26.3 item renderer probe stays in the matching test adapter.
-sourceSets.gametest.java.srcDir 'src/compat/gametest'
