@@ -10,6 +10,8 @@ Clean-room glowing ore edges use a generated six-face, translucent-border overla
 
 BlockLens is a **client-side visual inspection mod for Minecraft Java Edition**. It makes block orientation and state, resources, fine geometry and Nether materials easier to distinguish through 61 independently configurable visual and inspection capabilities. See the [complete current feature list](knowledge/current/features.md).
 
+Orientation controls draw clean-room decals over the active texture: glazed terracotta shows an arrow on all six faces, logs/wood/froglights show axis-colored rails and frames, and slabs mark the same faces as the original pack. See [pack information parity](knowledge/current/pack-information-parity.md).
+
 The core design goal is **source/function parity, not byte-for-byte asset bundling**. If a set of raw blockstate/model/texture files describes one logical visual capability, BlockLens represents that behavior as compiled target catalogs, semantic state, and bounded procedural rendering.
 
 > **Current implementation:** BlockLens **v0.4.7** provides **61 independently configurable capabilities** for Minecraft **26.1.2**, **26.2**, and **26.3**, including world analyzers, scene filters, builder assist, ore extensions, and optional Mod Menu / Sodium integration.

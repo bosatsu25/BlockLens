@@ -10,6 +10,8 @@
 
 BlockLensは、Minecraft Java Edition向けの**クライアント専用ビジュアル検査MOD**です。ブロックの向き・状態、資源、細かな形状、ネザーの素材を見分けやすくする61機能を、それぞれ独立して設定できます。[現在の全機能一覧](knowledge/current/features.md)を参照してください。
 
+向き・状態の機能は、現在のテクスチャの上に独自生成の目印を描きます。彩釉テラコッタは6面すべてに矢印、原木・木・フロッグライトは軸の色のレールと枠、ハーフブロックは元パックと同じ面に枠を表示します。[情報パリティの仕様](knowledge/current/pack-information-parity.md)を参照してください。
+
 設計上の目的は、**raw assetのbyte-for-byte同梱ではなく、source/function parity（元ソースが持つ有用な機能の完全再現）**です。複数のblockstate/model/textureが1つの論理機能を表している場合、BlockLensではそれをcompiled target catalog、semantic state、boundedなprocedural renderingへ圧縮します。
 
 > **現行実装:** BlockLens **v0.4.7** はMinecraft **26.1.2** / **26.2** / **26.3**向けに**独立設定可能な61機能**、ワールドアナライザー、表示フィルター、建築支援、鉱石拡張、Mod MenuおよびSodium連携を提供します。

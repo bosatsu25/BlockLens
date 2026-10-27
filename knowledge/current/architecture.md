@@ -98,6 +98,20 @@ Only 26.1.2-specific Fabric/Minecraft glue:
 
 Equivalent boundary for 26.2. Do not duplicate product policy merely because mapped APIs differ.
 
+### Fabric source roots (single-source rule, 2026-10-27)
+
+| Root | Compiled for | Holds |
+| --- | --- | --- |
+| `fabric-shared/src/main/java` | 26.1.2, 26.2, 26.3 | renderer, state adapter, model plugin, target index, client bootstrap, Mod Menu bridge, settings UI |
+| `fabric-shared/src/pre26_3/java` | 26.1.2, 26.2 | item-in-hand and diffuse-shade bridges replaced in 26.3 |
+| `versions/mc26_2/src/main/java` | 26.2, 26.3 | modern API bridges (`gui.screen()`, `LevelExtractor`, submit APIs) |
+| `versions/mc26_1_2/src/main/java` | 26.1.2 | legacy API bridges |
+| `versions/mc26_3/src/main/java` | 26.3 | 26.3-only bridges (SDL item submission, shade direction, BBE) |
+
+`VersionAdapterSingleSourceContractTest` fails when two version roots hold identical code (comments
+and whitespace ignored), when a version root shadows a shared class, or when a version bridge exceeds
+60 lines. Each version's `BlockLensClient` only supplies the Minecraft version identity.
+
 The mc26_3 module reuses the modern mc26_2 adapters and test bridge, with independent dependency/metadata pins, version-specific lighting and first-person item submission bridges. Product policy and the complete renderer are shared. See [26.3 integration](minecraft-26-3.md).
 
 ## 4. Core module boundaries
@@ -278,6 +292,13 @@ with base-model identity validation; extension discovery never runs per frame. A
 uses the existing Resource cue and Scene Filter composition. Details and compatibility
 boundaries are authoritative in [builder-assist.md](builder-assist.md) and
 [extension-compatibility.md](extension-compatibility.md).
+
+## Decoration decals (2026-10-27)
+
+The shared renderer draws decoration cues as clean-room decal quads over single-variant models and
+keeps the tint grammar as fallback. Policy (`DecorationDecalPolicy`, `FaceDecalTable`) and projection
+math (`DecalProjection`) are pure `common` code; the adapter only reads vertex positions and writes UVs.
+See [`pack-information-parity.md`](pack-information-parity.md).
 
 ## Shared terrain implementation (2026-10-12 refactor)
 

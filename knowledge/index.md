@@ -30,6 +30,10 @@ Read these before implementation or review:
 
 23. [`current/client-test-shutdown.md`](current/client-test-shutdown.md) — bounded test-only Fabric world-close task pumping, delayed-close persistence regression and completion requirements
 
+24. [`current/pack-information-parity.md`](current/pack-information-parity.md) — current decoration decal grammar that carries the source pack's information on every relevant face, fallback rules and residual differences
+
+25. [`current/design-review-2026-10.md`](current/design-review-2026-10.md) — design review against the original resource pack: parity levels, cross-version structure, performance claims and open recommendations
+
 ## Historical-baseline rule
 
 The source M0 documents remain authoritative **historical baseline evidence** for the first 37 capabilities. Post-v0.1.0 additive product work must not rewrite those source facts.
