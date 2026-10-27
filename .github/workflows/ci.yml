@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - main
+    # ready_for_review starts the full matrix when a draft is promoted.
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches:
       - main
@@ -14,9 +16,72 @@ permissions:
 
 concurrency:
   group: blocklens-ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded pull request runs are cancelled; a main run is never cut off mid-release.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Decides the verification scope (scripts/plan_ci.py):
+  # - draft or documentation-only pull requests: common quality gate only;
+  # - a main merge whose tree equals a pull request head that already passed "verified / full
+  #   matrix": build the release JARs without repeating the client matrices;
+  # - everything else: the full matrix.
+  # Every non-documentation push to main publishes the next free patch version.
+  plan:
+    name: plan / verification scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+    outputs:
+      full: ${{ steps.plan.outputs.full }}
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Plan verification and release
+        id: plan
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          DRAFT: ${{ github.event.pull_request.draft || false }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          : > changed.txt
+          pre_verified=false
+          if [[ "$EVENT" == "pull_request" ]]; then
+            gh api --paginate "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --jq '.[].filename' > changed.txt
+          elif [[ "$EVENT" == "push" && -n "$BEFORE" && ! "$BEFORE" =~ ^0+$ ]]; then
+            gh api "repos/${REPOSITORY}/compare/${BEFORE}...${AFTER}" --jq '.files[].filename' > changed.txt
+          fi
+          if [[ "$EVENT" == "push" ]]; then
+            head="$(gh api "repos/${REPOSITORY}/commits/${AFTER}/pulls" \
+              --jq '[.[] | select(.merged_at != null)][0].head.sha // empty')"
+            if [[ -n "$head" ]]; then
+              head_tree="$(gh api "repos/${REPOSITORY}/git/commits/${head}" --jq '.tree.sha')"
+              verified="$(gh api "repos/${REPOSITORY}/commits/${head}/check-runs?check_name=verified%20%2F%20full%20matrix" \
+                --jq '[.check_runs[] | select(.conclusion == "success")] | length')"
+              if [[ "$head_tree" == "$(git rev-parse 'HEAD^{tree}')" && "$verified" -gt 0 ]]; then
+                pre_verified=true
+              fi
+              echo "Merged pull request head $head: tree match=$([[ "$head_tree" == "$(git rev-parse 'HEAD^{tree}')" ]] && echo yes || echo no), verified runs=$verified" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+          gh api --paginate "repos/${REPOSITORY}/tags?per_page=100" --jq '.[].name' > tags.txt
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/plan_ci.py \
+            --event "$EVENT" --ref "$GITHUB_REF" --draft "$DRAFT" --paths-file changed.txt \
+            --pre-verified "$pre_verified" --base-version "$(sed -n 's/^mod_version=//p' gradle.properties)" \
+            --tags-file tags.txt | tee -a "$GITHUB_OUTPUT" "$GITHUB_STEP_SUMMARY"
+
   common-quality:
     name: common / JUnit + JaCoCo + PIT
     runs-on: ubuntu-24.04
@@ -50,7 +115,8 @@ jobs:
 
   version-build:
     name: ${{ matrix.minecraft }} / build + client smoke + budget
-    needs: common-quality
+    needs: [plan, common-quality]
+    if: needs.plan.outputs.full == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 36
     strategy:
@@ -699,21 +765,199 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-  # Release listens to this workflow: a failed/unfinished matrix cannot authorize publication.
+  # A failed or unfinished matrix job skips "verified / full matrix" and so blocks release.
   external-compatibility:
-    needs: common-quality
+    needs: [plan, common-quality]
+    if: needs.plan.outputs.full == 'true'
     uses: ./.github/workflows/external-compatibility.yml
 
   bbe-compatibility:
-    needs: common-quality
+    needs: [plan, common-quality]
+    if: needs.plan.outputs.full == 'true'
     uses: ./.github/workflows/bbe-compatibility.yml
 
   connected-compatibility:
-    needs: common-quality
+    needs: [plan, common-quality]
+    if: needs.plan.outputs.full == 'true'
     uses: ./.github/workflows/external-compatibility.yml
     with:
       connected_only: true
 
   connected-native:
-    needs: common-quality
+    needs: [plan, common-quality]
+    if: needs.plan.outputs.full == 'true'
     uses: ./.github/workflows/connected-native.yml
+
+  # Runs only when every required job succeeded; a later main merge of the same tree reuses it.
+  verified:
+    name: verified / full matrix
+    needs: [plan, common-quality, version-build, external-compatibility, bbe-compatibility,
+            connected-compatibility, connected-native]
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Record full verification
+        run: echo "Full matrix passed for ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # The published JARs: the verified tree rebuilt with the release version. The deterministic
+  # build makes the classes identical to the verified ones; only the version metadata differs.
+  release-build:
+    name: ${{ matrix.minecraft }} / release JAR
+    needs: [plan, common-quality]
+    if: needs.plan.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - module: mc26_1_2
+            minecraft: '26.1.2'
+          - module: mc26_2
+            minecraft: '26.2'
+          - module: mc26_3
+            minecraft: '26.3'
+    env:
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Gradle 9.5.1
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          gradle-version: '9.5.1'
+      - name: Build, audit and budget the v${{ needs.plan.outputs.version }} JAR for Minecraft ${{ matrix.minecraft }}
+        run: >-
+          gradle --stacktrace -Pmod_version="$VERSION"
+          :versions:${{ matrix.module }}:build
+          :versions:${{ matrix.module }}:versionSmokeContract
+          :versions:${{ matrix.module }}:verifyRuntimeJarBudget
+      - name: Stage the release JAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t jars < <(find "versions/${{ matrix.module }}/build/libs" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print)
+          if [[ "${#jars[@]}" -ne 1 ]]; then
+            echo "Expected exactly one runtime JAR, found ${#jars[@]}" >&2
+            printf '%s\n' "${jars[@]}" >&2
+            exit 1
+          fi
+          mkdir -p dist
+          cp "${jars[0]}" "dist/BlockLens-${{ matrix.minecraft }}-v${VERSION}.jar"
+      - name: Upload release JAR
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ matrix.minecraft }}
+          path: dist/BlockLens-${{ matrix.minecraft }}-v${{ needs.plan.outputs.version }}.jar
+          if-no-files-found: error
+          retention-days: 3
+
+  release:
+    name: publish GitHub Release
+    needs: [plan, verified, release-build]
+    # Published only after this run's release JARs built and either this run's full matrix or the
+    # merged pull request's full matrix on the identical tree passed.
+    if: >-
+      !cancelled() &&
+      needs.plan.outputs.release == 'true' &&
+      needs.release-build.result == 'success' &&
+      (needs.verified.result == 'success' ||
+       (needs.plan.outputs.full == 'false' && needs.verified.result == 'skipped'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    concurrency:
+      group: blocklens-release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download release JARs
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download "$GITHUB_RUN_ID" --repo "$REPOSITORY" --pattern 'release-*' --dir downloaded
+          mkdir -p dist
+          find downloaded -type f -name 'BlockLens-*.jar' -exec cp '{}' dist/ \;
+          ls -l dist
+      - name: Validate, checksum and write notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline="$(sed -n 's/^runtime_jar_baseline_bytes=//p' gradle.properties)"
+          release_budget="$(sed -n 's/^runtime_jar_release_budget_bytes=//p' gradle.properties)"
+          hard_max="$(sed -n 's/^runtime_jar_hard_max_bytes=//p' gradle.properties)"
+          {
+            echo "BlockLens v${VERSION} for Minecraft Java Edition 26.1.2, 26.2 and 26.3 (Fabric, Java 25+). Install the one JAR that matches your Minecraft version."
+            echo
+            echo "| Minecraft | JAR | Size |"
+            echo "| --- | --- | ---: |"
+          } > dist/NOTES.md
+          for minecraft in 26.1.2 26.2 26.3; do
+            jar="dist/BlockLens-${minecraft}-v${VERSION}.jar"
+            bytes="$(stat -c%s "$jar")"
+            if (( bytes > baseline || bytes > release_budget || bytes > hard_max )); then
+              echo "$jar is $bytes bytes, above baseline $baseline, release budget $release_budget or hard maximum $hard_max" >&2
+              exit 1
+            fi
+            meta="$(unzip -p "$jar" fabric.mod.json)"
+            grep -Fq "\"version\": \"${VERSION}+mc${minecraft}\"" <<< "$meta"
+            grep -Fq "\"minecraft\": \"=${minecraft}\"" <<< "$meta"
+            grep -Fq '"environment": "client"' <<< "$meta"
+            entries="$(unzip -Z1 "$jar")"
+            grep -Fxq 'assets/blocklens/icon.png' <<< "$entries"
+            echo "| ${minecraft} | \`BlockLens-${minecraft}-v${VERSION}.jar\` | ${bytes} B |" >> dist/NOTES.md
+          done
+          (cd dist && sha256sum BlockLens-*.jar > SHA256SUMS.txt)
+          {
+            echo
+            echo "Verified commit: ${GITHUB_SHA}. SHA-256 hashes are in SHA256SUMS.txt. Only the latest release carries JARs."
+          } >> dist/NOTES.md
+          cat dist/NOTES.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+          if gh release view "$tag" --repo "$REPOSITORY" >/dev/null 2>&1; then
+            echo "GitHub Release $tag already exists; no duplicate release will be created." >&2
+            exit 1
+          fi
+          gh release create "$tag" --repo "$REPOSITORY" --target "$GITHUB_SHA" \
+            --title "BlockLens v${VERSION}" --notes-file dist/NOTES.md --generate-notes \
+            dist/BlockLens-26.1.2-v${VERSION}.jar dist/BlockLens-26.2-v${VERSION}.jar \
+            dist/BlockLens-26.3-v${VERSION}.jar dist/SHA256SUMS.txt
+          mapfile -t assets < <(gh release view "$tag" --repo "$REPOSITORY" --json assets --jq '.assets[].name' | sort)
+          expected="BlockLens-26.1.2-v${VERSION}.jar BlockLens-26.2-v${VERSION}.jar BlockLens-26.3-v${VERSION}.jar SHA256SUMS.txt"
+          if [[ "${assets[*]}" != "$expected" ]]; then
+            echo "Published assets differ: ${assets[*]}" >&2
+            exit 1
+          fi
+          echo "Published $tag -> $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove JARs from previous releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+          gh api --paginate "repos/${REPOSITORY}/releases?per_page=100" \
+            --jq ".[] | select(.tag_name != \"${tag}\") | .assets[] | select(.name | test(\"\\\\.jar$|^SHA256SUMS\\\\.txt$\")) | \"\\(.id) \\(.name)\"" \
+            | while read -r id name; do
+                gh api -X DELETE "repos/${REPOSITORY}/releases/assets/${id}"
+                echo "- removed ${name}" >> "$GITHUB_STEP_SUMMARY"
+              done

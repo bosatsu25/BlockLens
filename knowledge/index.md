@@ -34,6 +34,8 @@ Read these before implementation or review:
 
 25. [`current/design-review-2026-10.md`](current/design-review-2026-10.md) — design review against the original resource pack: parity levels, cross-version structure, performance claims and open recommendations
 
+26. [`current/ci-release.md`](current/ci-release.md) — CI verification scope per event, reuse of a verified PR tree on merge, and automatic patch releases that keep JARs only on the latest release
+
 ## Historical-baseline rule
 
 The source M0 documents remain authoritative **historical baseline evidence** for the first 37 capabilities. Post-v0.1.0 additive product work must not rewrite those source facts.

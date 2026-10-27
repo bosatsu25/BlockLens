@@ -39,12 +39,13 @@ final class M9ReleaseReadinessContractTest {
     }
 
     @Test
-    void releaseWorkflowPublishesOnlyTheExactSuccessfulMainCiArtifacts() throws IOException {
-        String release = Files.readString(root().resolve(".github/workflows/release.yml"));
+    void mainMergePublishesOnlyAfterTheFullMatrixPassedOnTheSameTree() throws IOException {
         String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
+        assertFalse(Files.exists(root().resolve(".github/workflows/release.yml")),
+                "release runs inside CI so it can depend on the verification jobs directly");
 
         // An independent successful workflow is insufficient: both compatibility
-        // matrices must be required jobs in the same release-authorizing CI run.
+        // matrices must be required jobs in the same verification run.
         assertTrue(ci.contains("uses: ./.github/workflows/bbe-compatibility.yml"),
                 "publishing CI omits the optimized chest rendering paths");
         assertTrue(ci.contains("uses: ./.github/workflows/external-compatibility.yml"),
@@ -56,41 +57,52 @@ final class M9ReleaseReadinessContractTest {
             assertFalse(required.contains("continue-on-error:"));
         }
 
-        assertTrue(release.contains("workflow_run:"));
-        assertTrue(release.contains("- CI"));
-        assertTrue(release.contains("github.event.workflow_run.conclusion == 'success'"));
-        assertTrue(release.contains("github.event.workflow_run.head_branch == 'main'"));
-        assertTrue(release.contains("github.event.workflow_run.event == 'push'"));
-        assertTrue(release.contains("actions: read"));
+        String verified = job(ci, "verified");
+        assertTrue(verified.contains("name: verified / full matrix"));
+        for (String required : new String[] {"common-quality", "version-build", "external-compatibility",
+                "bbe-compatibility", "connected-compatibility", "connected-native"}) {
+            assertTrue(verified.contains(required), "verified must require " + required);
+        }
+        assertFalse(verified.contains("always()"), "verified succeeds only when every required job succeeded");
+
+        String plan = job(ci, "plan");
+        assertTrue(plan.contains("scripts/plan_ci.py"));
+        assertTrue(plan.contains("check_name=verified%20%2F%20full%20matrix"));
+        assertTrue(plan.contains("git rev-parse 'HEAD^{tree}'"), "reuse requires the identical tree");
+
+        String release = job(ci, "release");
+        assertTrue(release.contains("needs.plan.outputs.release == 'true'"));
+        assertTrue(release.contains("needs.release-build.result == 'success'"));
+        assertTrue(release.contains("needs.verified.result == 'success'"));
+        assertTrue(release.contains("needs.plan.outputs.full == 'false' && needs.verified.result == 'skipped'"));
+        assertTrue(release.contains("!cancelled()"));
         assertTrue(release.contains("contents: write"));
-        assertTrue(release.contains("ref: ${{ github.event.workflow_run.head_sha }}"));
-        assertTrue(release.contains("RUN_ID: ${{ github.event.workflow_run.id }}"));
-        assertTrue(ci.contains("archive: false"));
-        assertTrue(release.contains("Download the exact raw JAR artifacts produced by successful CI"));
-        assertTrue(release.contains("/actions/artifacts/${id}/zip"));
-        assertTrue(release.contains("curl --fail --location --silent --show-error"));
-        assertTrue(release.contains("dist/raw-26.1.2.jar"));
-        assertTrue(release.contains("dist/raw-26.2.jar"));
-        assertFalse(release.contains("gh run download"));
-        assertTrue(release.contains("gh release view"));
         assertTrue(release.contains("gh release create"));
+        assertTrue(release.contains("--target \"$GITHUB_SHA\""));
+        assertTrue(release.contains("no duplicate release"));
         assertTrue(release.contains("runtime_jar_baseline_bytes"));
         assertTrue(release.contains("runtime_jar_release_budget_bytes"));
         assertTrue(release.contains("runtime_jar_hard_max_bytes"));
         assertTrue(release.contains("SHA256SUMS.txt"));
         assertTrue(release.contains("assets/blocklens/icon.png"));
-        assertTrue(release.contains("no duplicate release"));
+        assertTrue(release.contains("Remove JARs from previous releases"));
+        assertFalse(ci.substring(0, ci.indexOf("\njobs:")).contains("contents: write"),
+                "only the release job may write repository contents");
 
-        assertTrue(release.contains("40 independently configurable capabilities"));
-        assertTrue(release.contains("61 independently configurable capabilities"));
-        assertTrue(release.contains("3 native, read-only Builder Assist tools"));
-        assertFalse(release.contains("5 Bounded World Analyzers"));
-        assertFalse(release.contains("Litematica Comparison"));
-        assertTrue(release.contains("37-capability source baseline"));
-        assertTrue(release.contains("Crying Obsidian, Nether Gold Ore, and Nether Quartz Ore"));
-        assertTrue(release.contains("Tripwire Hook coverage in String Tweaks"));
-        assertTrue(release.contains("Polished Basalt coverage in Nether Tweaks"));
-        assertFalse(release.contains("with **37 independently configurable capabilities**"));
+        String releaseBuild = job(ci, "release-build");
+        assertTrue(releaseBuild.contains("-Pmod_version=\"$VERSION\""));
+        assertTrue(releaseBuild.contains("versionSmokeContract"));
+        assertTrue(releaseBuild.contains("verifyRuntimeJarBudget"));
+    }
+
+    private static String job(String workflow, String id) {
+        int start = workflow.indexOf("\n  " + id + ":\n");
+        assertTrue(start >= 0, "missing CI job " + id);
+        int end = workflow.indexOf("\n  ", start + id.length() + 4);
+        while (end >= 0 && workflow.charAt(end + 3) == ' ') {
+            end = workflow.indexOf("\n  ", end + 1);
+        }
+        return end < 0 ? workflow.substring(start) : workflow.substring(start, end);
     }
 
     @Test
@@ -99,10 +111,8 @@ final class M9ReleaseReadinessContractTest {
         String english = Files.readString(root().resolve("README.md"));
         String japanese = Files.readString(root().resolve("README_ja.md"));
 
+        // The base of the automatic patch line: a main merge publishes the first free v0.4.N >= 0.4.7.
         assertTrue(properties.contains("mod_version=0.4.7"));
-        String release = Files.readString(root().resolve(".github/workflows/release.yml"));
-        assertTrue(release.contains("matching ${version} artifact"));
-        assertFalse(release.contains("matching 0.4.1 artifact"));
         assertTrue(english.contains("**Current implementation:** BlockLens **v0.4.7** provides **"
                 + CapabilityId.values().length + " independently configurable capabilities**"));
         assertTrue(japanese.contains("**現行実装:** BlockLens **v0.4.7**"));
