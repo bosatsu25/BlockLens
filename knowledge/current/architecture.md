@@ -296,8 +296,8 @@ boundaries are authoritative in [builder-assist.md](builder-assist.md) and
 ## Decoration decals (2026-10-27)
 
 The shared renderer draws decoration cues as clean-room decal quads over single-variant models and
-keeps the tint grammar as fallback. Policy (`DecorationDecalPolicy`, `FaceDecalTable`) and projection
-math (`DecalProjection`) are pure `common` code; the adapter only reads vertex positions and writes UVs.
+keeps the tint grammar as fallback. Policy, interned per-face tables and projection math are one pure,
+table-driven `common` class (`DecorationDecals`); the adapter only reads vertex positions and writes UVs.
 See [`pack-information-parity.md`](pack-information-parity.md).
 
 ## Shared terrain implementation (2026-10-12 refactor)

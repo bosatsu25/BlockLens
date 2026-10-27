@@ -1,21 +1,22 @@
-"""Regression guard for the clean-room decoration decal glyphs."""
+"""Regression guard for the clean-room decoration decal glyph strip."""
 import re
 import unittest
 
-from generate_decoration_glyphs import GLYPHS, OUTPUT, ROOT, SIZE, png
+from generate_decoration_glyphs import GLYPHS, OUTPUT, ROOT, SIZE, STRIP, png, strip_pixel
 
 
 class DecorationGlyphsTest(unittest.TestCase):
-    def test_committed_glyphs_are_reproducible_from_the_generator(self):
-        for name, pixel in GLYPHS.items():
-            self.assertEqual(png(pixel), (OUTPUT / f"{name}.png").read_bytes(), name)
+    def test_committed_strip_is_reproducible_from_the_generator(self):
+        self.assertEqual(png(strip_pixel, SIZE * len(GLYPHS)), (OUTPUT / STRIP).read_bytes())
 
-    def test_generator_matches_the_java_glyph_catalog(self):
-        source = (ROOT / "common/src/main/java/dev/blocklens/core/render/DecorationGlyph.java").read_text()
-        body = source[source.index("public enum DecorationGlyph {"):source.index("public static final int PIXELS")]
-        names = {name.lower() for name in re.findall(r"^\s+([A-Z_]+)[,;]", body, re.MULTILINE)}
-        self.assertEqual(set(GLYPHS), names)
-        self.assertIn(f"PIXELS = {SIZE};", source)
+    def test_generator_matches_the_java_glyph_ids(self):
+        source = (ROOT / "common/src/main/java/dev/blocklens/core/render/DecorationDecals.java").read_text()
+        ids = dict(re.findall(r"public static final int ([A-Z_]+) = (\d+);", source))
+        for index, name in enumerate(GLYPHS):
+            self.assertEqual(str(index), ids[name.upper()], name)
+        self.assertEqual(str(len(GLYPHS)), ids["GLYPHS"])
+        self.assertEqual(str(SIZE), ids["GLYPH_PIXELS"])
+        self.assertIn(f'SPRITE = "block/cue/{STRIP[:-4]}"', source)
 
     def test_arrow_points_to_row_zero_and_is_mirror_symmetric(self):
         arrow = GLYPHS["arrow"]

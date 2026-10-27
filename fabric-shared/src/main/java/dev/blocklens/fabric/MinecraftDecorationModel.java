@@ -3,16 +3,13 @@ package dev.blocklens.fabric;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.VisualGeometryKey;
-import dev.blocklens.core.render.DecalProjection;
-import dev.blocklens.core.render.DecorationDecal;
-import dev.blocklens.core.render.DecorationGlyph;
+import dev.blocklens.core.render.DecorationDecals;
 import dev.blocklens.core.render.DecorationQuadFace;
 import dev.blocklens.core.render.DecorationQuadInstruction;
 import dev.blocklens.core.render.DecorationRenderDescriptor;
 import dev.blocklens.core.render.NetherTweaksVisualCue;
 import dev.blocklens.core.render.ResourceHighlightCue;
 import dev.blocklens.core.render.ResourceBorderPolicy;
-import dev.blocklens.core.render.FaceDecalTable;
 import dev.blocklens.core.render.FaceInstructionTable;
 import dev.blocklens.core.render.RetainedValue;
 import dev.blocklens.core.render.VisibilityRenderPolicy;
@@ -21,7 +18,6 @@ import dev.blocklens.core.state.SemanticState;
 import dev.blocklens.core.state.VisibilityStateKind;
 import java.util.Objects;
 import java.util.ArrayList;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
@@ -59,12 +55,12 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private final long oreBorderMask;
     private final int oreBorderTint;
 
-    private static final Identifier[] DECAL_SPRITES = decalSprites();
+    private static final Identifier DECAL_SPRITE = Identifier.fromNamespaceAndPath("blocklens", DecorationDecals.SPRITE);
 
     private final Object[] descriptors;
     private final long[] descriptorBits;
-    // Shared per (capability, state); present only when the wrapped model is one fixed variant.
-    private final FaceDecalTable @Nullable [] decalTables;
+    // Interned per (capability, state); present only when the wrapped model is one fixed variant.
+    private final long @Nullable [][] decalTables;
     private final long decalMask;
     private final long representedRenderableMask;
     private final @Nullable NetherTweaksVisualCue netherCue;
@@ -98,7 +94,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         // Decals re-emit the wrapped geometry; only a single fixed variant guarantees the second
         // emission matches the first. Weighted, multipart and other wrappers keep the tint cue.
         boolean decalCapable = wrapped.getClass() == SingleVariant.class;
-        FaceDecalTable[] decals = null;
+        long[][] decals = null;
         long decalBits = 0L;
 
         for (int i = 0; i < count; i++) {
@@ -122,11 +118,11 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
                 descriptors[i] = DecorationQuadInstruction.emissiveTint(0xFFFFFFFF);
             } else if (DecorationStateKind.isDecorationCapability(capability)) {
                 descriptors[i] = FaceInstructionTable.compile(DecorationRenderDescriptor.of(capability, state));
-                FaceDecalTable decalTable = decalCapable
-                        ? FaceDecalTable.compile(DecorationRenderDescriptor.of(capability, state)) : null;
-                if (decalTable != null && !decalTable.isEmpty()) {
+                long[] decalTable = decalCapable
+                        ? DecorationDecals.table(DecorationRenderDescriptor.of(capability, state)) : null;
+                if (decalTable != null && !DecorationDecals.isEmpty(decalTable)) {
                     if (decals == null) {
-                        decals = new FaceDecalTable[count];
+                        decals = new long[count][];
                     }
                     decals[i] = decalTable;
                     decalBits |= bit;
@@ -160,15 +156,6 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         this.oreBorderTint = borderTint;
         this.decalTables = decals;
         this.decalMask = decalBits;
-    }
-
-    private static Identifier[] decalSprites() {
-        DecorationGlyph[] glyphs = DecorationGlyph.values();
-        Identifier[] sprites = new Identifier[glyphs.length];
-        for (DecorationGlyph glyph : glyphs) {
-            sprites[glyph.ordinal()] = Identifier.fromNamespaceAndPath("blocklens", glyph.texturePath());
-        }
-        return sprites;
     }
 
     boolean wraps(BlockStateModel model) {
@@ -237,9 +224,12 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
      */
     private void emitDecals(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos,
             BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest, long decalCapabilities) {
-        var atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS);
-        Function<Identifier, TextureAtlasSprite> sprites = atlas::getSprite;
-        emitter.pushTransform(quad -> applyDecal(quad, sprites, decalCapabilities));
+        TextureAtlasSprite sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS)
+                .getSprite(DECAL_SPRITE);
+        if (!DECAL_SPRITE.equals(sprite.contents().name())) {
+            return; // Never draw the missing-texture checkerboard over a block.
+        }
+        emitter.pushTransform(quad -> applyDecal(quad, sprite, decalCapabilities));
         try {
             super.emitQuads(emitter, level, pos, state, random, cullTest);
         } finally {
@@ -247,57 +237,51 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
     }
 
-    private boolean applyDecal(MutableQuadView quad, Function<Identifier, TextureAtlasSprite> sprites,
-            long decalCapabilities) {
+    private boolean applyDecal(MutableQuadView quad, TextureAtlasSprite sprite, long decalCapabilities) {
         DecorationQuadFace face = face(quad.nominalFace());
         if (face == DecorationQuadFace.NONE || decalTables == null) {
             return false;
         }
-        DecorationDecal decal = DecorationDecal.NONE;
-        for (int i = 0; i < decalTables.length && !decal.present(); i++) {
-            FaceDecalTable table = decalTables[i];
-            if (table != null && (decalCapabilities & descriptorBits[i]) != 0L) {
-                decal = table.decal(face);
+        int f = face.ordinal();
+        long decal = DecorationDecals.NONE;
+        for (int i = 0; i < decalTables.length && decal == DecorationDecals.NONE; i++) {
+            if (decalTables[i] != null && (decalCapabilities & descriptorBits[i]) != 0L) {
+                decal = decalTables[i][f];
             }
         }
-        if (!decal.present()) {
+        if (decal == DecorationDecals.NONE) {
             return false;
-        }
-        Identifier spriteId = DECAL_SPRITES[decal.glyph().ordinal()];
-        TextureAtlasSprite sprite = sprites.apply(spriteId);
-        if (!spriteId.equals(sprite.contents().name())) {
-            return false; // Never draw the missing-texture checkerboard over a block.
         }
         float minRight = Float.POSITIVE_INFINITY, maxRight = Float.NEGATIVE_INFINITY;
         float minDown = Float.POSITIVE_INFINITY, maxDown = Float.NEGATIVE_INFINITY;
         for (int vertex = 0; vertex < 4; vertex++) {
-            float right = DecalProjection.right(face, quad.x(vertex), quad.y(vertex), quad.z(vertex));
-            float down = DecalProjection.down(face, quad.x(vertex), quad.y(vertex), quad.z(vertex));
+            float right = DecorationDecals.right(f, quad.x(vertex), quad.y(vertex), quad.z(vertex));
+            float down = DecorationDecals.down(f, quad.x(vertex), quad.y(vertex), quad.z(vertex));
             minRight = Math.min(minRight, right);
             maxRight = Math.max(maxRight, right);
             minDown = Math.min(minDown, down);
             maxDown = Math.max(maxDown, down);
         }
-        float width = maxRight - minRight;
-        float height = maxDown - minDown;
+        float width = maxRight - minRight, height = maxDown - minDown;
         if (width < 1.0E-4F || height < 1.0E-4F) {
             return false;
         }
-        int turns = decal.quarterTurns();
+        // One vertical strip holds every glyph; stay a hair inside the cell to avoid sampling a neighbour.
+        int turns = DecorationDecals.quarterTurns(decal);
         float u0 = sprite.getU0(), du = sprite.getU1() - u0;
-        float v0 = sprite.getV0(), dv = sprite.getV1() - v0;
-        float offsetX = DecalProjection.normalX(face) * DecalProjection.SURFACE_OFFSET;
-        float offsetY = DecalProjection.normalY(face) * DecalProjection.SURFACE_OFFSET;
-        float offsetZ = DecalProjection.normalZ(face) * DecalProjection.SURFACE_OFFSET;
+        float cell = (sprite.getV1() - sprite.getV0()) / DecorationDecals.GLYPHS;
+        float v0 = sprite.getV0() + DecorationDecals.glyph(decal) * cell + cell / 1024.0F;
+        float dv = cell - cell / 512.0F;
+        float offset = DecorationDecals.SURFACE_OFFSET;
         for (int vertex = 0; vertex < 4; vertex++) {
             float x = quad.x(vertex), y = quad.y(vertex), z = quad.z(vertex);
-            float s = (DecalProjection.right(face, x, y, z) - minRight) / width;
-            float t = (DecalProjection.down(face, x, y, z) - minDown) / height;
-            quad.uv(vertex, u0 + DecalProjection.glyphU(turns, s, t) * du,
-                    v0 + DecalProjection.glyphV(turns, s, t) * dv);
-            quad.pos(vertex, x + offsetX, y + offsetY, z + offsetZ);
+            float s = (DecorationDecals.right(f, x, y, z) - minRight) / width;
+            float t = (DecorationDecals.down(f, x, y, z) - minDown) / height;
+            quad.uv(vertex, u0 + DecorationDecals.glyphU(turns, s, t) * du, v0 + DecorationDecals.glyphV(turns, s, t) * dv);
+            quad.pos(vertex, x + DecorationDecals.normalX(f) * offset, y + DecorationDecals.normalY(f) * offset,
+                    z + DecorationDecals.normalZ(f) * offset);
         }
-        int argb = decal.argb();
+        int argb = DecorationDecals.argb(decal);
         quad.color(argb, argb, argb, argb);
         quad.tintIndex(-1);
         quad.animated(false);

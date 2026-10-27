@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate or verify the original decoration decal glyph PNGs (no third-party pixels)."""
+"""Generate or verify the original decoration decal glyph strip (no third-party pixels)."""
 import argparse
 from pathlib import Path
 import struct
@@ -8,6 +8,7 @@ import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "common/src/main/resources/assets/blocklens/textures/block/cue"
+STRIP = "decal_glyphs.png"
 SIZE = 32
 WHITE = (255, 255, 255, 255)
 CONTOUR = (32, 32, 32, 255)
@@ -34,6 +35,7 @@ def arrow(x, y):
     return CLEAR
 
 
+# Order matches DecorationDecals glyph ids; glyph g occupies rows [32g, 32g + 32) of the strip.
 GLYPHS = {
     "inset_frame": lambda x, y: WHITE if ring(x, y) in (2, 3) else CLEAR,
     "edge_frame": lambda x, y: WHITE if ring(x, y) <= 1 else CLEAR,
@@ -48,13 +50,17 @@ def chunk(tag, data):
     return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data))
 
 
-def png(pixel):
+def strip_pixel(x, y):
+    return list(GLYPHS.values())[y // SIZE](x, y % SIZE)
+
+
+def png(pixel, height=SIZE):
     rows = bytearray()
-    for y in range(SIZE):
+    for y in range(height):
         rows.append(0)
         for x in range(SIZE):
             rows.extend(pixel(x, y))
-    header = struct.pack(">IIBBBBB", SIZE, SIZE, 8, 6, 0, 0, 0)
+    header = struct.pack(">IIBBBBB", SIZE, height, 8, 6, 0, 0, 0)
     return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header)
             + chunk(b"IDAT", zlib.compress(bytes(rows), 9)) + chunk(b"IEND", b""))
 
@@ -63,19 +69,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="fail if committed PNGs differ")
     args = parser.parse_args()
-    expected = {f"{name}.png": png(pixel) for name, pixel in GLYPHS.items()}
+    expected = png(strip_pixel, SIZE * len(GLYPHS))
     if args.check:
-        present = {path.name for path in OUTPUT.glob("*.png")}
-        if present != set(expected):
-            sys.exit(f"glyph set differs: {sorted(present)} != {sorted(expected)}")
-        for name, data in expected.items():
-            if (OUTPUT / name).read_bytes() != data:
-                sys.exit(f"{name} differs from generator")
-        print(f"BLOCKLENS_DECORATION_GLYPHS exactPixels=true glyphs={len(expected)}")
+        present = sorted(path.name for path in OUTPUT.iterdir())
+        if present != [STRIP]:
+            sys.exit(f"glyph directory differs: {present}")
+        if (OUTPUT / STRIP).read_bytes() != expected:
+            sys.exit(f"{STRIP} differs from generator")
+        print(f"BLOCKLENS_DECORATION_GLYPHS exactPixels=true glyphs={len(GLYPHS)}")
         return
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    for name, data in expected.items():
-        (OUTPUT / name).write_bytes(data)
+    (OUTPUT / STRIP).write_bytes(expected)
 
 
 if __name__ == "__main__":
