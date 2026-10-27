@@ -35,6 +35,10 @@ final class DecorationDecalContractTest {
         assertTrue(model.contains("quad.chunkLayer(ChunkSectionLayer.CUTOUT);"));
         assertTrue(model.contains("DecorationDecals.SURFACE_OFFSET"));
         assertFalse(model.contains("level.getBlockState(pos)"), "decals never inspect world state");
+        String decal = model.substring(model.indexOf("private boolean applyDecal("),
+                model.indexOf("private void emitNetherOverlay("));
+        assertFalse(decal.contains("emissive(") || decal.contains("disableDirectionalShade")
+                || decal.contains("ambientOcclusion("), "decals keep the base face's lighting, as pack textures do");
         for (String module : SupportedVersionFixtures.MODULES) {
             assertFalse(Files.exists(SupportedVersionFixtures.sourceRoot(root(), module)
                     .resolve("MinecraftDecorationModel.java")), module);

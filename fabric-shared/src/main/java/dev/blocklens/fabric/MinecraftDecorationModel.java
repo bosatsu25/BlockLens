@@ -286,9 +286,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         quad.tintIndex(-1);
         quad.animated(false);
         quad.chunkLayer(ChunkSectionLayer.CUTOUT);
-        quad.emissive(true);
-        MinecraftQuadLighting.disableDirectionalShade(quad);
-        quad.ambientOcclusion(TriState.FALSE);
+        // Keep the base face's lighting (block/sky light, directional shade, AO), as a texture in the
+        // source pack would be lit: the decal darkens in darkness instead of glowing.
         return true;
     }
 
