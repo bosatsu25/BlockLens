@@ -23,7 +23,7 @@ jobs:
   external-client:
     name: ${{ matrix.minecraft }} / ${{ matrix.profile }} / ${{ inputs.connected_only && 'connected ore' || 'visual compatibility' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 36
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -96,8 +96,10 @@ jobs:
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
       - name: Run the actual external client configuration
         # The 26.3 graph completed object/terrain/tagged stages but reached22m at stone-hidden.
-        # This bounds test duration; image and runtime performance gates remain unchanged.
-        timeout-minutes: 28
+        # Shader ON steps then took 15-27 minutes, and 26.2 connected Shader ON hit 28 minutes while
+        # still capturing frames. This bounds test duration; image and runtime performance gates
+        # remain unchanged.
+        timeout-minutes: 35
         run: >-
           xvfb-run -a gradle --stacktrace
           -PclientTestFocus=external

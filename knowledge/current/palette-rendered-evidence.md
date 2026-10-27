@@ -15,12 +15,14 @@ pass. The earlier10m22s local26.3 static Shader graph used the previous24-object
 and157 result files; it is historical evidence, not validation of the expanded30-image schema.
 Fresh full external evidence must contain163 files. No input-pack material hashes are published.
 Require final-head full hosted normal/Shader/Vulkan/BBE CI; normal steps remain22 minutes/30-minute
-jobs, while expanded external steps use28 minutes/36-minute jobs. Durations measure test workload,
+jobs, while expanded external steps use35 minutes/45-minute jobs (28/36 before 2026-10-27). Durations measure test workload,
 not runtime performance improvement.
 
 Each of the six object/editor roles now receives a saved, reloaded all-capabilities-enabled pass. The active mask is checked before capture, and the same foreground, chroma and spatial-grain oracle applies. Other flags are restored before the original OFF restoration. The strict native manifest requiresallFeatures=true and all six additional frames. Fresh three-version native validation has passed; current-head full hosted CI remains required.
 
 Hosted CI38197558645 at81e67fb passes13/14 jobs; only26.3 Shader ON reaches22 minutes. Preserved SHA256/CRC-verified diagnostics show all six object scenes and fourteen terrain roles complete; the Sodium manifest has successful tagged-restoration/reload checks and stage=stone-hidden,status=started. This is unfinished graph work, not a passing row or evidence of a repaired cleanup stall. Give the expanded six-all-enabled-scene graph a bounded28-minute external step and36-minute job. Preserve every image/detail/runtime-performance threshold and require new-head full CI.
+
+2026-10-27: hosted Shader ON external and connected steps measured 15-27 minutes across the last seven full runs, and CI 40458760747 (c140369) stopped 26.2 connected Shader ON at the 28-minute bound while it was still capturing frames (`completedNativeFrames=40` every ~9 s, server ticks 20-28 s behind). The bound is now a 35-minute step in a 45-minute job; every threshold is unchanged.
 
 ## Blank-editor time control
 
