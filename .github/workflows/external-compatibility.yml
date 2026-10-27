@@ -68,7 +68,16 @@ jobs:
           test "${#drivers[@]}" -eq 1
           export VK_DRIVER_FILES="${drivers[0]}"
           echo "VK_DRIVER_FILES=$VK_DRIVER_FILES" >> "$GITHUB_ENV"
-          xvfb-run -a vulkaninfo --summary
+          # The Xvfb display started by xvfb-run occasionally refuses the first connection
+          # (XCB error 1) before any test runs; a missing or broken device still fails all attempts.
+          for attempt in 1 2 3; do
+            if xvfb-run -a vulkaninfo --summary; then
+              exit 0
+            fi
+            echo "::warning::vulkaninfo could not reach the Xvfb display (attempt $attempt of 3)"
+            sleep 2
+          done
+          exit 1
       - name: Prepare exact external dependency bytes
         run: >-
           python3 scripts/prepare_external_compatibility.py
