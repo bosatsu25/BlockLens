@@ -50,12 +50,16 @@ final class SupportedVersionsContractTest {
 
     @Test
     void releaseArtifactSelectionAndChecksumsIncludeEverySupportedVersion() throws IOException {
-        String release = Files.readString(root().resolve(".github/workflows/release.yml"));
+        String ci = Files.readString(root().resolve(".github/workflows/ci.yml"));
+        String releaseBuild = ci.substring(ci.indexOf("\n  release-build:\n"), ci.indexOf("\n  release:\n"));
+        String release = ci.substring(ci.indexOf("\n  release:\n"));
         for (String version : VERSIONS) {
-            assertTrue(release.contains("resolve_name '" + version + "'"), version);
-            assertTrue(release.contains("dist/raw-" + version + ".jar"), version);
-            assertTrue(release.contains("BlockLens-" + version + "-v${version}.jar"), version);
+            String module = "mc" + version.replace('.', '_');
+            assertTrue(releaseBuild.contains("- module: " + module), version);
+            assertTrue(releaseBuild.contains("minecraft: '" + version + "'"), version);
+            assertTrue(release.contains("dist/BlockLens-" + version + "-v${VERSION}.jar"), version);
         }
+        assertTrue(release.contains("for minecraft in " + String.join(" ", VERSIONS) + "; do"));
     }
 
     @Test

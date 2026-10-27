@@ -23,7 +23,7 @@ jobs:
   external-client:
     name: ${{ matrix.minecraft }} / ${{ matrix.profile }} / ${{ inputs.connected_only && 'connected ore' || 'visual compatibility' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 36
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -68,7 +68,16 @@ jobs:
           test "${#drivers[@]}" -eq 1
           export VK_DRIVER_FILES="${drivers[0]}"
           echo "VK_DRIVER_FILES=$VK_DRIVER_FILES" >> "$GITHUB_ENV"
-          xvfb-run -a vulkaninfo --summary
+          # The Xvfb display started by xvfb-run occasionally refuses the first connection
+          # (XCB error 1) before any test runs; a missing or broken device still fails all attempts.
+          for attempt in 1 2 3; do
+            if xvfb-run -a vulkaninfo --summary; then
+              exit 0
+            fi
+            echo "::warning::vulkaninfo could not reach the Xvfb display (attempt $attempt of 3)"
+            sleep 2
+          done
+          exit 1
       - name: Prepare exact external dependency bytes
         run: >-
           python3 scripts/prepare_external_compatibility.py
@@ -87,8 +96,10 @@ jobs:
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
       - name: Run the actual external client configuration
         # The 26.3 graph completed object/terrain/tagged stages but reached22m at stone-hidden.
-        # This bounds test duration; image and runtime performance gates remain unchanged.
-        timeout-minutes: 28
+        # Shader ON steps then took 15-27 minutes, and 26.2 connected Shader ON hit 28 minutes while
+        # still capturing frames. This bounds test duration; image and runtime performance gates
+        # remain unchanged.
+        timeout-minutes: 35
         run: >-
           xvfb-run -a gradle --stacktrace
           -PclientTestFocus=external
