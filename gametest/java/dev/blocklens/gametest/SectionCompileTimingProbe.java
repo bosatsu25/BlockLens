@@ -76,6 +76,10 @@ public final class SectionCompileTimingProbe {
         return SCENE_COUNT.sum() + OTHER_COUNT.sum();
     }
 
+    static long lastReturnNanos() {
+        return LAST_RETURN.get();
+    }
+
     static Snapshot end() {
         capture = false;
         return new Snapshot(SCENE_COUNT.sum(), SCENE_WALL.sum(), SCENE_CPU.sum(), SCENE_ALLOCATED.sum(),

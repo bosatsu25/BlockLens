@@ -42,9 +42,10 @@ final class PackCostComparisonOracle {
     private static final int[][] ORDERS = {{0, 1, 2}, {1, 2, 0}, {2, 0, 1}, {0, 2, 1}, {2, 1, 0}, {1, 0, 2}};
     private static final int PACK_EQUIVALENT_CAPABILITIES = 37;
     private static final int RELOAD_TIMEOUT_TICKS = 1200;
-    private static final int SETTLE_TICKS = 40;
-    private static final int QUIET_TICKS = 10;
-    private static final int REBUILD_TIMEOUT_TICKS = 600;
+    // GameTest ticks are not paced in real time, so compile quiescence is judged on the wall clock.
+    private static final long QUIET_NANOS = 1_000_000_000L;
+    private static final long SCENE_QUIET_NANOS = 3_000_000_000L;
+    private static final long COMPILE_TIMEOUT_NANOS = 180_000_000_000L;
     private static final int FRAME_TICKS = 60;
     private static final int MIN_FRAMES = 20;
     private static final int FPS_LIMIT = 60;
@@ -85,7 +86,8 @@ final class PackCostComparisonOracle {
             context.runOnClient(c -> c.options.framerateLimit().set(FPS_LIMIT));
             context.runOnClient(c -> M8FrameTimeProbe.install());
             buildScene(world);
-            context.waitTicks(20);
+            // Block, light and chunk updates from the scene finish before anything is measured.
+            awaitCompileQuiet(context, SCENE_QUIET_NANOS, "scene build", false);
 
             // One discarded pass per condition warms class loading and JIT for every path.
             for (int condition = 0; condition < CONDITIONS.length; condition++) {
@@ -135,19 +137,9 @@ final class PackCostComparisonOracle {
         int[] atlas = context.computeOnClient(PackCostComparisonOracle::blockAtlas);
         boolean marker = context.computeOnClient(c -> hasSprite(c, TWIN_MARKER));
 
-        SectionCompileTimingProbe.begin();
         long start = System.nanoTime();
-        context.runOnClient(MinecraftTerrainInvalidator::invalidateAll);
-        long seen = -1;
-        int quiet = 0;
-        for (int tick = 0; tick < REBUILD_TIMEOUT_TICKS && quiet < QUIET_TICKS; tick++) {
-            context.waitTicks(1);
-            long completed = SectionCompileTimingProbe.completed();
-            quiet = completed == seen && completed > 0 ? quiet + 1 : 0;
-            seen = completed;
-        }
-        SectionCompileTimingProbe.Snapshot compile = SectionCompileTimingProbe.end();
-        require(quiet >= QUIET_TICKS, "section compilation did not settle for " + CONDITIONS[condition]);
+        SectionCompileTimingProbe.Snapshot compile = awaitCompileQuiet(context, QUIET_NANOS,
+                CONDITIONS[condition] + " rebuild", true);
 
         context.runOnClient(c -> {
             // Test bookkeeping only: keeps the measurement window out of AFK throttling.
@@ -178,8 +170,33 @@ final class PackCostComparisonOracle {
         pending.join();
         long elapsed = System.nanoTime() - start;
         context.waitFor(SettingsClientAccess::ready, RELOAD_TIMEOUT_TICKS);
-        context.waitTicks(SETTLE_TICKS);
+        // The reload's own terrain rebuild finishes before the measured rebuild starts.
+        awaitCompileQuiet(context, QUIET_NANOS, "reload", false);
         return elapsed;
+    }
+
+    /**
+     * Captures section compiles until none has returned for {@code quietNanos}, optionally after
+     * invalidating all terrain. Fails with the observed counts if compilation never settles.
+     */
+    private static SectionCompileTimingProbe.Snapshot awaitCompileQuiet(ClientGameTestContext context,
+            long quietNanos, String phase, boolean invalidate) {
+        SectionCompileTimingProbe.begin();
+        long start = System.nanoTime();
+        if (invalidate) context.runOnClient(MinecraftTerrainInvalidator::invalidateAll);
+        while (true) {
+            context.waitTicks(1);
+            long now = System.nanoTime();
+            long last = Math.max(start, SectionCompileTimingProbe.lastReturnNanos());
+            boolean compiled = !invalidate || SectionCompileTimingProbe.completed() > 0;
+            if (compiled && now - last >= quietNanos) return SectionCompileTimingProbe.end();
+            if (now - start > COMPILE_TIMEOUT_NANOS) {
+                var snapshot = SectionCompileTimingProbe.end();
+                throw new AssertionError("Pack-cost comparison: section compilation did not settle after " + phase
+                        + ": scene=" + snapshot.sceneCompiles() + " other=" + snapshot.otherCompiles()
+                        + " incomplete=" + snapshot.incomplete());
+            }
+        }
     }
 
     /** Block atlas size from one sprite's extent; texture APIs differ less than atlas accessors. */
