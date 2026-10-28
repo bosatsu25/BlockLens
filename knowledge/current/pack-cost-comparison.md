@@ -113,4 +113,35 @@ is inside every condition's reload and is not separated.
 
 ## 6. Results
 
-Pending the first CI run of this contract.
+Run [40636447544](https://github.com/bosatsu25/BlockLens/actions/runs/40636447544) on `f1bd5d4`:
+structural twin, hosted `ubuntu-24.04` runners, Mesa llvmpipe software rendering, 60 FPS limit.
+Medians of six rounds; Δ is the condition minus `baseline`. "Lower" verdicts held in all six rounds.
+
+| Metric | 26.1.2 pack Δ / BlockLens Δ | 26.2 pack Δ / BlockLens Δ | 26.3 pack Δ / BlockLens Δ | Verdict |
+| --- | ---: | ---: | ---: | --- |
+| Resource reload (ms) | +59.7 / +2.7 | +103.2 / +8.9 | +372.3 / −50.2 | BlockLens lower on 26.1.2 and 26.3; 26.2 no consistent difference |
+| Java heap after reload + GC (MiB) | +5.4 / +0.1 | +6.8 / −0.0 | +7.5 / +0.1 | BlockLens lower on all three |
+| Block atlas RGBA with mips (MiB) | +21.31 / 0 | +21.31 / 0 | +21.31 / 0 | deterministic: 2048×2048 → 4096×2048 with the pack |
+| Scene compile CPU per section (ms) | +0.75 / +1.59 | +1.50 / +2.98 | +1.20 / +2.73 | **pack lower on all three** |
+| Scene compile allocation per section (KiB) | +165.9 / +115.8 | +165.9 / +115.8 | +165.9 / +115.8 | BlockLens lower on all three |
+| Whole-view rebuild (ms) | +18.8 / +18.3 | +4.4 / +17.2 | −0.8 / +3.5 | pack lower on 26.2; otherwise no consistent difference |
+| Main render pass median (ms) | +24.3 / +11.9 | +22.4 / +13.9 | +33.3 / +16.3 | BlockLens lower on all three (software rendering) |
+
+Baselines: reload 1.10 / 1.11 / 1.55 s; compile CPU 6.35 / 9.46 / 9.46 ms per section; main pass
+42.0 / 44.2 / 45.0 ms. BlockLens' own sprites take 302,080 B of the atlas at mip 0 in every condition.
+
+What the claim rules allow:
+
+- **Loading and memory: BlockLens is lighter.** The pack doubles the block atlas (+21.3 MiB of RGBA
+  texture with mips; atlas packing depends only on texture dimensions, which the twin reproduces
+  exactly, so this holds for the source archive), keeps 5–7.5 MiB more heap and adds 60–370 ms to
+  every resource reload, one of which happens at startup. Enabling the 37 capabilities adds no
+  measurable reload time or heap and leaves the atlas unchanged.
+- **Chunk meshing: BlockLens is heavier.** Its compile CPU per decorated section is 1.6–3.0 ms
+  (25–32 %) above baseline, about twice the pack's 0.75–1.5 ms, in every round on every line. It
+  allocates about 50 KiB less per section than the pack. The decal layer's second emission and the
+  per-quad transforms are the likely cause; this has not been profiled yet.
+- **Frame time:** on software rendering the pack's main-pass cost is about twice BlockLens'. Twin
+  elements are canonical full cubes, so a fill-rate-bound rasterizer may overstate the pack here,
+  and llvmpipe is not a player GPU. This is relative runner evidence, not an FPS claim.
+- Respackopts is not included (§1): the real pack's load cost is at least the measured `pack` value.
