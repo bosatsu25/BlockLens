@@ -56,7 +56,7 @@ final class PackCostComparisonOracle {
     static void verify(ClientGameTestContext context, TestSingleplayerContext world) {
         String source = System.getProperty("blocklens.test.packCost.source", "twin");
         require(source.equals("twin") || source.equals("source"), "pack-cost source must be twin or source");
-        Path input = Path.of(require(System.getProperty("blocklens.test.packCost.pack"), "pack-cost pack path"));
+        Path input = Path.of(requireProperty("blocklens.test.packCost.pack"));
         Path gameDir = FabricLoader.getInstance().getGameDir();
         Path output = gameDir.resolve("pack-cost");
         BlockLensConfig originalConfig = BlockLensRuntime.config();
@@ -73,8 +73,8 @@ final class PackCostComparisonOracle {
             Files.copy(input, resourcepacks.resolve(STAGED), StandardCopyOption.REPLACE_EXISTING);
             String packId = "file/" + STAGED;
             context.runOnClient(c -> c.getResourcePackRepository().reload());
-            require(context.computeOnClient(c -> c.getResourcePackRepository().getAvailableIds().contains(packId)),
-                    "staged pack was not discovered");
+            boolean discovered = context.computeOnClient(c -> c.getResourcePackRepository().getAvailableIds().contains(packId));
+            require(discovered, "staged pack was not discovered");
 
             BlockLensConfig off = originalConfig, mod = originalConfig;
             for (CapabilityId capability : CapabilityId.values()) {
@@ -308,7 +308,8 @@ final class PackCostComparisonOracle {
         }
     }
 
-    private static String require(String value, String name) {
+    private static String requireProperty(String name) {
+        String value = System.getProperty(name);
         require(value != null && !value.isBlank(), name + " is required");
         return value;
     }
