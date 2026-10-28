@@ -91,5 +91,88 @@ class SummarizePackCostTest(unittest.TestCase):
         self.assertEqual(oracle.count("{0, 1, 2}, {1, 2, 0}, {2, 0, 1}, {0, 2, 1}, {2, 1, 0}, {1, 0, 2}"), 1)
 
 
+SAMPLE_TEXT = """jdk.ExecutionSample {
+  startTime = 07:16:50.945 (2026-10-28)
+  sampledThread = "Worker-Main-1" (javaThreadId = 30)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoCalculator.compute(MutableQuadViewImpl) line: 3
+    dev.blocklens.fabric.MinecraftDecorationModel.emitDecals(QuadEmitter, BlockPos) line: 234
+    dev.blocklens.fabric.MinecraftDecorationModel.emitQuads(QuadEmitter, BlockPos) line: 216
+    net.minecraft.client.renderer.chunk.SectionCompiler.compile(SectionPos) line: 90
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 07:16:50.946 (2026-10-28)
+  sampledThread = "Worker-Main-2" (javaThreadId = 31)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    dev.blocklens.fabric.MinecraftDecorationModel.applyNonNetherInstructions(MutableQuadView, long) line: 456
+    dev.blocklens.fabric.MinecraftDecorationModel.lambda$emitQuads$0(int[], MutableQuadView) line: 196
+    dev.blocklens.fabric.MinecraftDecorationModel.emitQuads(QuadEmitter, BlockPos) line: 200
+    net.minecraft.client.renderer.chunk.SectionCompiler.compile(SectionPos) line: 90
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 07:16:50.947 (2026-10-28)
+  sampledThread = "Render thread" (javaThreadId = 1)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.util.HashMap.get(Object) line: 556
+  ]
+}
+"""
+
+
+class CompileProfileTest(unittest.TestCase):
+    def test_parses_jfr_print_text(self):
+        samples = list(summary.parse_samples(SAMPLE_TEXT.splitlines()))
+        self.assertEqual([thread for thread, _ in samples], ["Worker-Main-1", "Worker-Main-2", "Render thread"])
+        self.assertEqual(samples[0][1][1], "dev.blocklens.fabric.MinecraftDecorationModel.emitDecals")
+        self.assertEqual(len(samples[0][1]), 4, "a truncation marker is not a frame")
+
+    def test_innermost_blocklens_path_owns_the_sample(self):
+        model = "dev.blocklens.fabric.MinecraftDecorationModel."
+        compile_frame = summary.COMPILE_FRAME
+        cases = {
+            "decals": ["indigo.AoCalculator.compute", model + "lambda$emitDecals$2", model + "emitDecals",
+                       model + "emitQuads", compile_frame],
+            "baseTransform": [model + "lambda$emitQuads$0", model + "emitQuads", compile_frame],
+            "oreBorder": [model + "lambda$emitOreBorder$5", model + "emitOreBorder", compile_frame],
+            "netherOverlay": [model + "emitNetherOverlay", model + "emitQuads", compile_frame],
+            "wrappedEmission": ["indigo.AoCalculator.compute", model + "emitQuads", compile_frame],
+            # Helper frames inside a path belong to that path.
+            "decals ": ["dev.blocklens.core.render.DecorationDecals.right", model + "face",
+                        model + "applyDecal", model + "lambda$emitDecals$1", compile_frame],
+            "blocklensOther": ["dev.blocklens.fabric.MinecraftStateAdapter.state", compile_frame],
+            "otherCompile": ["net.minecraft.client.renderer.block.LiquidBlockRenderer.tesselate", compile_frame],
+        }
+        for expected, frames in cases.items():
+            self.assertEqual(summary.classify(frames), expected.strip(), expected)
+        self.assertIsNone(summary.classify(["java.util.HashMap.get"]), "outside section compiles")
+
+    def test_profile_reads_every_condition_through_the_jfr_tool(self):
+        directory = Path(tempfile.mkdtemp())
+        (directory / "fixture.txt").write_text(SAMPLE_TEXT, encoding="utf-8")
+        tool = directory / "jfr"
+        tool.write_text(f"#!/bin/sh\ncat '{directory / 'fixture.txt'}'\n", encoding="utf-8")
+        tool.chmod(0o755)
+        for condition in summary.CONDITIONS:
+            (directory / f"profile-{condition}-0.jfr").write_bytes(b"")
+        result = summary.profile(directory, str(tool))
+        self.assertEqual(result["mod"]["samples"], 3)
+        self.assertEqual(result["mod"]["compileSamples"], 2)
+        self.assertEqual(result["mod"]["paths"]["decals"], 1)
+        self.assertEqual(result["mod"]["paths"]["baseTransform"], 1)
+        text = summary.profile_markdown("26.3", result)
+        self.assertIn("| mod | 2 | 50.0 % | 0.0 % | 0.0 % | 0.0 % | 50.0 % |", text)
+        (directory / "profile-pack-0.jfr").unlink()
+        with self.assertRaises(summary.InvalidRun):
+            summary.profile(directory, str(tool))
+
+
 if __name__ == "__main__":
     unittest.main()

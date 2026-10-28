@@ -57,7 +57,7 @@ jobs:
           python3 scripts/summarize_pack_cost.py
           --directory 'versions/${{ matrix.module }}/build/run/clientGameTest/pack-cost'
           --minecraft '${{ matrix.minecraft }}' --destination 'build/ci/pack-cost-${{ matrix.minecraft }}'
-          --step-summary "$GITHUB_STEP_SUMMARY"
+          --step-summary "$GITHUB_STEP_SUMMARY" --jfr "$JAVA_HOME/bin/jfr"
       - name: Upload the comparison
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

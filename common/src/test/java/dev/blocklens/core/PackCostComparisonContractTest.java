@@ -68,6 +68,7 @@ final class PackCostComparisonContractTest {
         assertTrue(workflow.contains("scripts/pack_structure_twin.py compare"), "twin structure must match the source");
         assertTrue(workflow.contains("-PverifyPackagedRuntime=true -PclientTestFocus=pack-cost"));
         assertTrue(workflow.contains("scripts/summarize_pack_cost.py"));
+        assertTrue(workflow.contains("--jfr \"$JAVA_HOME/bin/jfr\""), "the compile profile must be summarized");
         String ci = read(".github/workflows/ci.yml");
         assertTrue(ci.contains("uses: ./.github/workflows/pack-cost.yml"));
 

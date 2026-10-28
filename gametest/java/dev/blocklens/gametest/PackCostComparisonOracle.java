@@ -13,11 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 import javax.imageio.ImageIO;
+import jdk.jfr.Recording;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.loader.api.FabricLoader;
@@ -49,6 +51,8 @@ final class PackCostComparisonOracle {
     private static final int FRAME_TICKS = 60;
     private static final int MIN_FRAMES = 20;
     private static final int FPS_LIMIT = 60;
+    // Unmeasured rebuilds per condition sampled with JFR to attribute compile cost to code paths.
+    private static final int PROFILE_PASSES = 3;
     // Scene: x/z -32..31, y -60..-53, i.e. 4 x 1 x 4 sections in a flat world.
     private static final int SCENE_SECTIONS = 16;
 
@@ -101,6 +105,9 @@ final class PackCostComparisonOracle {
                             .at(round, position));
                 }
             }
+            for (int condition = 0; condition < CONDITIONS.length; condition++) {
+                profile(context, condition, configs[condition], originalPacks, packId, output);
+            }
             long modSpritePixels = context.computeOnClient(PackCostComparisonOracle::modSpritePixels);
             int mipLevels = context.computeOnClient(c -> c.options.mipmapLevels().get());
             int renderDistance = context.computeOnClient(c -> c.options.renderDistance().get());
@@ -124,7 +131,7 @@ final class PackCostComparisonOracle {
         require(BlockLensRuntime.config().enabledMask() == originalConfig.enabledMask(), "config was not restored");
     }
 
-    private static Sample measure(ClientGameTestContext context, int condition, BlockLensConfig config,
+    private static void select(ClientGameTestContext context, int condition, BlockLensConfig config,
             List<String> originalPacks, String packId) {
         context.runOnClient(c -> {
             List<String> selected = new ArrayList<>(originalPacks);
@@ -132,6 +139,27 @@ final class PackCostComparisonOracle {
             c.getResourcePackRepository().setSelected(selected);
             BlockLensRuntime.installConfig(config);
         });
+    }
+
+    /** Samples compile threads during unmeasured rebuilds; timings above never include JFR. */
+    private static void profile(ClientGameTestContext context, int condition, BlockLensConfig config,
+            List<String> originalPacks, String packId, Path output) throws IOException {
+        select(context, condition, config, originalPacks, packId);
+        reload(context);
+        for (int pass = 0; pass < PROFILE_PASSES; pass++) {
+            try (Recording recording = new Recording()) {
+                recording.enable("jdk.ExecutionSample").withPeriod(Duration.ofMillis(1)).withStackTrace();
+                recording.start();
+                awaitCompileQuiet(context, QUIET_NANOS, CONDITIONS[condition] + " profile", true);
+                recording.stop();
+                recording.dump(output.resolve("profile-" + CONDITIONS[condition] + "-" + pass + ".jfr"));
+            }
+        }
+    }
+
+    private static Sample measure(ClientGameTestContext context, int condition, BlockLensConfig config,
+            List<String> originalPacks, String packId) {
+        select(context, condition, config, originalPacks, packId);
         long reloadNanos = reload(context);
         require(MinecraftDecorationModelPlugin.isModelPipelineReady(), "model pipeline not ready after reload");
         int[] atlas = context.computeOnClient(PackCostComparisonOracle::blockAtlas);
@@ -307,6 +335,7 @@ final class PackCostComparisonOracle {
                 + "conditions=" + String.join(",", CONDITIONS) + "\n"
                 + "packEquivalentCapabilities=" + PACK_EQUIVALENT_CAPABILITIES + "\n"
                 + "rounds=" + ORDERS.length + "\n"
+                + "profilePasses=" + PROFILE_PASSES + "\n"
                 + "sceneSections=" + SCENE_SECTIONS + "\n"
                 + "sceneBlocks=" + (64 * 64 * 8) + "\n"
                 + "fpsLimit=" + FPS_LIMIT + "\n"

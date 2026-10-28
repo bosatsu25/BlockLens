@@ -9,8 +9,10 @@ rounds a chance agreement has probability 2/64 (two-sided sign test, p = 0.031).
 import argparse
 import csv
 import json
+import collections
 import shutil
 import statistics
+import subprocess
 import sys
 from pathlib import Path
 
@@ -29,6 +31,23 @@ METRICS = (
     ("rebuild", "Whole-view rebuild until the last compile returns", "ms", lambda s: s["rebuildNanos"] / 1e6),
     ("frame", "Main render pass median", "ms", lambda s: s["frameMedianNanos"] / 1e6),
 )
+
+
+# Compile-thread profile (unmeasured JFR passes): each sample belongs to the innermost BlockLens
+# code path on its stack, so a decal quad's lighting counts as decal cost, not as base geometry.
+COMPILE_FRAME = "net.minecraft.client.renderer.chunk.SectionCompiler.compile"
+MODEL_PREFIX = "dev.blocklens.fabric.MinecraftDecorationModel."
+PATHS = {
+    "emitDecals": "decals", "applyDecal": "decals",
+    "emitOreBorder": "oreBorder", "connectedNeighbors": "oreBorder", "fixedOrePart": "oreBorder",
+    "emitNetherOverlay": "netherOverlay", "fillColor": "netherOverlay",
+    "lookupInteriorOverlay": "netherOverlay", "lookupBandOverlay": "netherOverlay",
+    "emitLightweightOverlay": "lightweightOverlay",
+    "applyNonNetherInstructions": "baseTransform", "applyInstruction": "baseTransform",
+    "unitCubeFace": "baseTransform",
+}
+CATEGORIES = ("decals", "oreBorder", "netherOverlay", "lightweightOverlay", "baseTransform",
+              "wrappedEmission", "blocklensOther", "otherCompile")
 
 
 class InvalidRun(ValueError):
@@ -116,6 +135,92 @@ def summarize(manifest, samples):
     return result
 
 
+def parse_samples(lines):
+    """Yields (thread, frames leaf-first) for each jdk.ExecutionSample in `jfr print` text."""
+    thread, frames, in_stack = None, [], False
+    for raw in lines:
+        line = raw.strip()
+        if line == "jdk.ExecutionSample {":
+            thread, frames, in_stack = None, [], False
+        elif line.startswith("sampledThread = "):
+            thread = line.split('"')[1] if '"' in line else line
+        elif line == "stackTrace = [":
+            in_stack = True
+        elif in_stack and line == "]":
+            in_stack = False
+        elif in_stack and line != "...":
+            frames.append(line.split("(", 1)[0])
+        elif line == "}" and thread is not None:
+            yield thread, frames
+            thread = None
+
+
+def classify(frames):
+    """The innermost BlockLens code path of one compile sample, or None outside section compiles.
+
+    Helper frames (face lookups, DecorationDecals math) are skipped: the sample belongs to the
+    nearest enclosing path, or to the wrapper's own emission when no overlay path encloses it.
+    """
+    if COMPILE_FRAME not in frames:
+        return None
+    blocklens = False
+    for frame in frames:
+        if frame.startswith(MODEL_PREFIX):
+            method = frame[len(MODEL_PREFIX):]
+            core = method.split("$")[1] if method.startswith("lambda$") else method
+            if method.startswith("lambda$emitQuads$"):
+                return "baseTransform"
+            if core in PATHS:
+                return PATHS[core]
+            if method == "emitQuads":
+                return "wrappedEmission"
+        blocklens = blocklens or frame.startswith("dev.blocklens.")
+    return "blocklensOther" if blocklens else "otherCompile"
+
+
+def profile(directory, jfr):
+    """Per condition: compile samples, path shares and the hottest leaf methods."""
+    result = {}
+    for condition in CONDITIONS:
+        files = sorted(directory.glob(f"profile-{condition}-*.jfr"))
+        if not files:
+            raise InvalidRun(f"missing JFR profile for {condition}")
+        counts, leaves, total = collections.Counter(), collections.Counter(), 0
+        for path in files:
+            with subprocess.Popen([jfr, "print", "--events", "jdk.ExecutionSample", "--stack-depth", "256",
+                                   str(path)], stdout=subprocess.PIPE, text=True) as process:
+                for _, frames in parse_samples(process.stdout):
+                    total += 1
+                    category = classify(frames)
+                    if category is not None:
+                        counts[category] += 1
+                        leaves[frames[0] if frames else "?"] += 1
+            if process.returncode != 0:
+                raise InvalidRun(f"jfr could not read {path.name}")
+        compile_samples = sum(counts.values())
+        if compile_samples == 0:
+            raise InvalidRun(f"no section compile samples for {condition}")
+        result[condition] = {"samples": total, "compileSamples": compile_samples,
+                             "paths": {c: counts[c] for c in CATEGORIES}, "hottest": leaves.most_common(8)}
+    return result
+
+
+def profile_markdown(minecraft, result):
+    lines = [f"### Compile-thread profile — Minecraft {minecraft}", "",
+             "Share of section-compile samples by innermost BlockLens path (unmeasured JFR passes, 1 ms).", "",
+             "| Condition | Compile samples | " + " | ".join(CATEGORIES) + " |",
+             "| --- | ---: |" + " ---: |" * len(CATEGORIES)]
+    for condition, item in result.items():
+        total = item["compileSamples"]
+        shares = " | ".join(f"{100 * item['paths'][c] / total:.1f} %" for c in CATEGORIES)
+        lines.append(f"| {condition} | {total:,} | {shares} |")
+    for condition, item in result.items():
+        lines += ["", f"Hottest leaf methods ({condition}): "
+                  + "; ".join(f"`{name.rsplit('.', 2)[-2]}.{name.rsplit('.', 1)[-1]}` {count}"
+                              for name, count in item["hottest"])]
+    return "\n".join(lines) + "\n"
+
+
 def markdown(summary):
     fmt = lambda value: f"{value:,.2f}"
     lines = [f"### Pack vs BlockLens cost — Minecraft {summary['minecraft']} ({summary['source']})", "",
@@ -142,12 +247,15 @@ def main(argv=None):
     parser.add_argument("--minecraft", required=True)
     parser.add_argument("--destination", required=True, type=Path)
     parser.add_argument("--step-summary", type=Path)
+    parser.add_argument("--jfr", help="JDK jfr tool; summarizes the compile-thread profile when given")
     args = parser.parse_args(argv)
     try:
         manifest = read_manifest(args.directory / "pack-cost-comparison.txt")
         if manifest["minecraft"] != args.minecraft:
             raise InvalidRun("manifest is for a different Minecraft version")
         summary = summarize(manifest, read_samples(args.directory / "pack-cost-samples.csv"))
+        if args.jfr:
+            summary["profile"] = profile(args.directory, args.jfr)
     except (InvalidRun, OSError, KeyError, ValueError, ZeroDivisionError) as error:
         print(f"invalid pack-cost run: {error}", file=sys.stderr)
         return 1
@@ -155,6 +263,10 @@ def main(argv=None):
     for name in ("pack-cost-comparison.txt", "pack-cost-samples.csv"):
         shutil.copyfile(args.directory / name, args.destination / name)
     text = markdown(summary)
+    if "profile" in summary:
+        text += "\n" + profile_markdown(summary["minecraft"], summary["profile"])
+        for path in sorted(args.directory.glob("profile-*.jfr")):
+            shutil.copyfile(path, args.destination / path.name)
     (args.destination / "summary.md").write_text(text, encoding="utf-8")
     (args.destination / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     if args.step_summary:

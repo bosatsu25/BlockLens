@@ -79,6 +79,12 @@ twice. Per condition and round:
 4. sample the main render pass for 60 ticks at a 60 FPS limit;
 5. read Java heap use after two `System.gc()` calls.
 
+After the measured rounds, three unmeasured rebuilds per condition run under a JFR execution-sample
+recording (1 ms, full stacks). The summary assigns every section-compile sample to the innermost
+BlockLens code path on its stack (decals, ore border, Nether overlay, lightweight overlay, base
+transform, the wrapper's own emission, other compile work), so the lighting of a decal quad counts
+as decal cost. The recordings are part of the artifact; no timing in §4 is taken while JFR runs.
+
 Only invalid measurement fails the job: missing scene compiles, too few frames, a block atlas that
 changes between rounds of the same condition, a pack that does not grow the atlas, BlockLens
 changing the atlas, twin sprites present without the pack, or packs/config not restored.

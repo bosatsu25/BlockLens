@@ -90,6 +90,8 @@ tasks.named('runClientGameTest') {
     if (clientTestFocus == 'pack-cost') {
         systemProperty 'blocklens.test.packCost.pack', rootProject.file(packCostPack).absolutePath
         systemProperty 'blocklens.test.packCost.source', packCostSource
+        // Compile stacks run deeper than JFR's default 64 frames; the profile needs the whole stack.
+        jvmArgs '-XX:FlightRecorderOptions:stackdepth=256'
     }
     if (externalProfile != 'none') {
         File prepared = rootProject.file(externalDirectory)

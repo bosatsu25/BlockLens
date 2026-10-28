@@ -183,23 +183,28 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         // A decoration drawn as a decal keeps the active texture's colors instead of tinting it.
         long decalCapabilities = enabledCapabilities & decalMask;
         long tintCapabilities = enabledCapabilities & ~decalCapabilities;
-        emitter.pushTransform(quad -> {
-            if(cubeFaces != null) {
-                Direction direction=quad.cullFace();
-                if(direction==null) cubeFaces[1]=63;
-                else if(unitCubeFace(quad,direction)) cubeFaces[0]|=1<<direction.ordinal();
-                else cubeFaces[1]|=1<<direction.ordinal();
-            }
-            if (netherEnabled) {
-                quad.multiplyColor(netherCue.frameArgb());
-            }
-            applyNonNetherInstructions(quad, tintCapabilities);
-            return true;
-        });
-        try {
+        if (cubeFaces == null && !netherEnabled && tintCapabilities == 0L) {
+            // Decal-only cues leave the base geometry untouched: no per-quad transform at all.
             super.emitQuads(emitter, level, pos, state, random, cullTest);
-        } finally {
-            emitter.popTransform();
+        } else {
+            emitter.pushTransform(quad -> {
+                if(cubeFaces != null) {
+                    Direction direction=quad.cullFace();
+                    if(direction==null) cubeFaces[1]=63;
+                    else if(unitCubeFace(quad,direction)) cubeFaces[0]|=1<<direction.ordinal();
+                    else cubeFaces[1]|=1<<direction.ordinal();
+                }
+                if (netherEnabled) {
+                    quad.multiplyColor(netherCue.frameArgb());
+                }
+                applyNonNetherInstructions(quad, tintCapabilities);
+                return true;
+            });
+            try {
+                super.emitQuads(emitter, level, pos, state, random, cullTest);
+            } finally {
+                emitter.popTransform();
+            }
         }
 
         if (netherEnabled) {
