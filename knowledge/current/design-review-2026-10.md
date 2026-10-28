@@ -13,7 +13,7 @@ display or behavior difference between Minecraft 26.1.2, 26.2 and 26.3, while be
 | Catalog parity (keys, targets, states) | Proven | 37 keys / 323 bindings, `SourceRawParityContractTest`. |
 | Information parity (what a player can read) | **Was not met**; now met for single-variant models with listed residuals | Face tints sat on hidden faces and had little contrast. Decal grammar in [`pack-information-parity.md`](pack-information-parity.md). |
 | Cross-version behavior | No behavior divergence found; **structural drift risk** | 7 adapter files were identical between the 26.1.2 and 26.2 trees, 2 more nearly so. Now single-sourced and guarded. |
-| "Lighter than the pack" | Artifact size, load and memory: **measured lighter**. Chunk meshing: **BlockLens heavier** | Head-to-head on all three lines in [`pack-cost-comparison.md`](pack-cost-comparison.md) §6; see §3. |
+| "Lighter than the pack" | Artifact size, load and memory: **measured lighter**. Chunk meshing: was heavier; **no measurable difference** since decal quads are cached | Head-to-head on all three lines in [`pack-cost-comparison.md`](pack-cost-comparison.md) §6; see §3. |
 | Full rewrite | **Not justified** | Architecture (pure `common` policy, thin adapters, model wrapper) fits the goal; 411 unit tests, 98% mutation kill rate and per-version client GameTests would be discarded. |
 
 ## 2. Cross-version structure
@@ -32,31 +32,38 @@ shadowing, and on version bridges over 60 lines. The planned 26.1.2 retirement b
 A resource pack's cost is paid at load (parse 3,135 extra JSON files and stitch 1,020 extra sprites into
 the block atlas) and is zero per frame afterwards. BlockLens avoids that load work
 and atlas memory, but adds work when chunk sections are meshed with a feature enabled: a quad transform
-per wrapped block and, for decals, one extra emission of the decorated block's own quads.
+per wrapped block for tints and, for decals, replaying the block's cached decal quads, which are still lit
+and buffered per block.
 
 So the defensible claims are:
 
 - runtime JAR ~0.1–0.2 MB vs 2.4–3.9 MB archives (measured per version in CI);
 - no source-pack JSON parsing or sprite stitching at startup/reload (structural, contract-tested);
 - measured head-to-head ([`pack-cost-comparison.md`](pack-cost-comparison.md) §6, structural twin, all three
-  lines): the pack doubles the block atlas (+21.3 MiB with mips), keeps 5–7.5 MiB more heap and adds
-  60–370 ms per resource reload, while enabling BlockLens' 37 capabilities adds none of these;
-- **not** "faster than the pack" overall: BlockLens' compile CPU per decorated chunk section is about twice the
-  pack's overhead (+1.6–3.0 ms versus +0.75–1.5 ms) in every round on every line. M8 could not show this:
-  its "rebuild" figure is the fixed 30-tick settle window (about 1.5 s on every line), not compile work.
+  lines): the pack doubles the block atlas (+21.3 MiB with mips), keeps 4.9–7.5 MiB more heap and adds
+  60–370 ms per resource reload on 26.1.2 and 26.3, while enabling BlockLens' 37 capabilities adds none
+  of these;
+- chunk meshing at parity, **not** "faster than the pack": since the decal quads are encoded once per model,
+  BlockLens' compile CPU per decorated chunk section (+0.87–1.60 ms) shows no consistent difference from the
+  pack's (+0.87–1.44 ms) on any line, and it allocates 118 KiB less per section. Before that change it was
+  about twice the pack's overhead in every round on every line. M8 could not show either: its "rebuild"
+  figure is the fixed 30-tick settle window (about 1.5 s on every line), not compile work.
 
 ## 4. Open recommendations
 
 1. **Capability mask headroom.** `CapabilityId.bitPosition()` uses bits 0–62 with 46 and 56 reserved; only
    bit 63 remains. The capability after next overflows the 64-bit mask. Move the runtime mask and codec to
-   a two-word or `long[]` mask before adding capability 63.
+   a two-word or `long[]` mask before adding capability 63. `CapabilityIdTest` now fails before an
+   overflowing capability can alias bit 0.
 2. **Source-text contract tests.** Many tests assert exact Java source strings. They protected verified
    decisions, but a pure file move required editing eight test files. Prefer behavior-level or
    structural checks (as in `VersionAdapterSingleSourceContractTest`) for new guards.
 3. **Anvil arrow.** The source's top-face arrow is not reproduced because its world direction depends on
    an unverified vanilla UV rotation; verify against the vanilla model before adding it.
-4. **Meshing cost.** Profile and reduce the decal layer's chunk-meshing CPU (second emission and per-quad
-   transforms) until its per-section overhead is at or below the pack's, using `pack-cost` as the gate.
+4. **Meshing cost.** Done. The JFR profile put decals at 6–10 % of compile samples; encoding decal quads
+   once per model brought them to 2.5–3.5 % and per-section compile CPU to parity with the pack on all three
+   lines ([`pack-cost-comparison.md`](pack-cost-comparison.md) §6). Keep `pack-cost` as the gate when
+   changing the model wrapper.
 5. **Scope vs "lightweight".** The product grew from 37 to 61 capabilities and the JAR ceiling from 100 KiB
    to 200 KiB, and on 2026-10-27 to 250 KiB for the decal layer (the compacted layer adds about 6.3 KB; v0.4.7
    left only 1.4 KB under 200 KiB on 26.3). These are explicit product decisions, but the original

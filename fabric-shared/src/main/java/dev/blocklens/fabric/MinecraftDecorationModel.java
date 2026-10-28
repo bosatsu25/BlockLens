@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.util.TriState;
@@ -56,6 +59,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private final int oreBorderTint;
 
     private static final Identifier DECAL_SPRITE = Identifier.fromNamespaceAndPath("blocklens", DecorationDecals.SPRITE);
+    private static final Direction[] DIRECTIONS = Direction.values();
+    private static final int UNCULLED = DIRECTIONS.length;
 
     private final Object[] descriptors;
     private final long[] descriptorBits;
@@ -66,6 +71,9 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private final @Nullable NetherTweaksVisualCue netherCue;
     private final SemanticState netherState;
 
+    // Decal quads depend only on this fixed geometry, the enabled decal cues and the glyph sprite, so
+    // they are encoded once and replayed per block instead of re-emitting and re-mapping the model.
+    private volatile @Nullable DecalMeshes decalMeshes;
     private volatile @Nullable BlockStateModel netherInteriorOverlay;
     private volatile @Nullable BlockStateModel netherBandOverlay;
     private volatile boolean interiorLookupAttempted;
@@ -223,9 +231,10 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
     }
 
     /**
-     * Re-emits the wrapped single-variant geometry once more as decal quads: each kept quad gets
-     * the face's clean-room glyph mapped onto its own bounds, lifted just above the surface.
-     * Culled faces stay culled because the same cull test is applied.
+     * Draws the decal quads of the wrapped single-variant geometry: each quad gets the face's
+     * clean-room glyph mapped onto its own bounds, lifted just above the surface. The quads are
+     * encoded once per (enabled decal cues, glyph sprite) and grouped by cull face, so culled faces
+     * stay culled exactly as when the model itself is emitted with the same cull test.
      */
     private void emitDecals(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos,
             BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest, long decalCapabilities) {
@@ -234,12 +243,51 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         if (!DECAL_SPRITE.equals(sprite.contents().name())) {
             return; // Never draw the missing-texture checkerboard over a block.
         }
-        emitter.pushTransform(quad -> applyDecal(quad, sprite, decalCapabilities));
-        try {
-            super.emitQuads(emitter, level, pos, state, random, cullTest);
-        } finally {
-            emitter.popTransform();
+        DecalMeshes meshes = decalMeshes;
+        // The sprite identity check rebuilds after any atlas change instead of keeping stale UVs.
+        if (meshes == null || meshes.capabilities() != decalCapabilities || meshes.sprite() != sprite) {
+            meshes = encodeDecals(level, pos, state, random, sprite, decalCapabilities);
+            decalMeshes = meshes;
         }
+        Mesh[] byCullFace = meshes.byCullFace();
+        for (int i = 0; i < byCullFace.length; i++) {
+            Mesh mesh = byCullFace[i];
+            if (mesh != null && !cullTest.test(i == UNCULLED ? null : DIRECTIONS[i])) {
+                mesh.outputTo(emitter);
+            }
+        }
+    }
+
+    private DecalMeshes encodeDecals(BlockAndTintGetter level, BlockPos pos, BlockState state,
+            RandomSource random, TextureAtlasSprite sprite, long decalCapabilities) {
+        MutableMesh[] groups = new MutableMesh[UNCULLED + 1];
+        QuadEmitter[] emitters = new QuadEmitter[UNCULLED + 1];
+        QuadEmitter source = Renderer.get().mutableMesh().emitter();
+        source.pushTransform(quad -> {
+            if (applyDecal(quad, sprite, decalCapabilities)) {
+                Direction cullFace = quad.cullFace();
+                int group = cullFace == null ? UNCULLED : cullFace.ordinal();
+                if (groups[group] == null) {
+                    groups[group] = Renderer.get().mutableMesh();
+                    emitters[group] = groups[group].emitter();
+                }
+                emitters[group].copyFrom(quad).emit();
+            }
+            return false; // Only the grouped copies are kept.
+        });
+        try {
+            super.emitQuads(source, level, pos, state, random, direction -> false);
+        } finally {
+            source.popTransform();
+        }
+        Mesh[] byCullFace = new Mesh[UNCULLED + 1];
+        for (int i = 0; i < groups.length; i++) {
+            byCullFace[i] = groups[i] == null ? null : groups[i].immutableCopy();
+        }
+        return new DecalMeshes(decalCapabilities, sprite, byCullFace);
+    }
+
+    private record DecalMeshes(long capabilities, TextureAtlasSprite sprite, @Nullable Mesh[] byCullFace) {
     }
 
     private boolean applyDecal(MutableQuadView quad, TextureAtlasSprite sprite, long decalCapabilities) {

@@ -1,6 +1,8 @@
 # Native three-version delivery and historical implementation evidence
 
-## Current delivery — v0.4.5
+## Delivery record — v0.4.5
+
+Releases after v0.4.7 are published automatically from every verified main merge ([ci-release.md](ci-release.md)); the latest release and its per-version JARs are listed on [GitHub Releases](https://github.com/bosatsu25/BlockLens/releases). This section remains the v0.4.5 record.
 
 The current catalog has61 independent capabilities on26.1.2/26.2/26.3, retaining the frozen original37 controls and defaults. [Features](features.md) lists every current control. Removed debris-analyzer and Masa schematic-comparison decisions supersede the historical delivery below; their reserved bit positions are not reused. Native compact models, simplified terrain, pale-oak block/item/boat/sign/editor palette, scene filters and independent default-OFF connected ore borders are implemented. Shared lossless model/archive refactoring preserves the public behavior and debug information.
 
