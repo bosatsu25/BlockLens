@@ -38,8 +38,10 @@ So the defensible claims are:
 
 - runtime JAR ~0.1–0.2 MB vs 2.4–3.9 MB archives (measured per version in CI);
 - no source-pack JSON parsing or sprite stitching at startup/reload (structural, contract-tested);
-- **not** "faster than the pack" at load or while rendering: no head-to-head measurement exists. M8 bounds
-  BlockLens against regressions only. Adding a pack-vs-mod M8 scenario is the prerequisite for that claim.
+- **not** "faster than the pack" at load or while rendering until a head-to-head measurement says so. M8 bounds
+  BlockLens against regressions only, and its "rebuild" figure is the fixed 30-tick settle window
+  (about 1.5 s on every line), not compile work. The head-to-head contract is now
+  [`pack-cost-comparison.md`](pack-cost-comparison.md); claims follow its results and rules only.
 
 ## 4. Open recommendations
 
