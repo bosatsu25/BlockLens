@@ -10,7 +10,9 @@ import java.util.Objects;
 /** Native BlockLens configuration independent of Minecraft/Fabric APIs. */
 public final class BlockLensConfig {
     private final EnumMap<CapabilityId, Boolean> enabled;
+    // Bits 0-63 and 64-127 of the enabled-capability mask (CapabilityId.bitPosition()).
     private final long enabledMask;
+    private final long enabledMaskHigh;
     private final ComfortOptions comfortOptions;
     private final AnalyzerOptions analyzerOptions;
     private final SceneFilterOptions sceneFilterOptions;
@@ -21,13 +23,14 @@ public final class BlockLensConfig {
         this.analyzerOptions = Objects.requireNonNull(analyzerOptions, "analyzerOptions");
         this.comfortOptions = Objects.requireNonNull(comfortOptions, "comfortOptions");
         this.sceneFilterOptions = Objects.requireNonNull(sceneFilterOptions, "sceneFilterOptions");
-        long mask = 0L;
+        long[] words = new long[2];
         for (CapabilityId capability : CapabilityId.values()) {
             if (Boolean.TRUE.equals(enabled.get(capability))) {
-                mask |= bit(capability);
+                set(words, capability.bitPosition());
             }
         }
-        this.enabledMask = mask;
+        this.enabledMask = words[0];
+        this.enabledMaskHigh = words[1];
     }
 
     public static BlockLensConfig defaults() {
@@ -52,12 +55,32 @@ public final class BlockLensConfig {
     }
 
     public boolean isEnabled(CapabilityId capability) {
-        return (enabledMask & bit(Objects.requireNonNull(capability, "capability"))) != 0L;
+        return isSet(enabledMask, enabledMaskHigh, Objects.requireNonNull(capability, "capability").bitPosition());
     }
 
-    /** Immutable primitive capability mask for render/runtime hot paths. */
+    /**
+     * Word 0 (bits 0–63) of the enabled-capability mask, for render/runtime hot paths. Combine it
+     * only with {@link CapabilityId#renderBit()}; capabilities past bit 63 are in
+     * {@link #enabledMaskHigh()}.
+     */
     public long enabledMask() {
         return enabledMask;
+    }
+
+    /** Word 1 (bits 64–127) of the enabled-capability mask. */
+    public long enabledMaskHigh() {
+        return enabledMaskHigh;
+    }
+
+    /** Number of enabled capabilities across both mask words. */
+    public int enabledCount() {
+        return Long.bitCount(enabledMask) + Long.bitCount(enabledMaskHigh);
+    }
+
+    /** Whether both configs enable exactly the same capabilities, ignoring the other option groups. */
+    public boolean sameCapabilities(BlockLensConfig other) {
+        Objects.requireNonNull(other, "other");
+        return enabledMask == other.enabledMask && enabledMaskHigh == other.enabledMaskHigh;
     }
 
     public BlockLensConfig withEnabled(CapabilityId capability, boolean value) {
@@ -95,7 +118,7 @@ public final class BlockLensConfig {
         if (!(obj instanceof BlockLensConfig other)) {
             return false;
         }
-        return this.enabledMask == other.enabledMask
+        return sameCapabilities(other)
                 && this.comfortOptions.equals(other.comfortOptions)
                 && this.analyzerOptions.equals(other.analyzerOptions)
                 && this.sceneFilterOptions.equals(other.sceneFilterOptions);
@@ -103,19 +126,30 @@ public final class BlockLensConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabledMask, comfortOptions, analyzerOptions, sceneFilterOptions);
+        return Objects.hash(enabledMask, enabledMaskHigh, comfortOptions, analyzerOptions, sceneFilterOptions);
     }
 
     public Map<CapabilityId, Boolean> asMap() {
         return Collections.unmodifiableMap(enabled);
     }
 
-    private static long bit(CapabilityId capability) {
-        int ordinal = capability.bitPosition();
-        if (ordinal >= Long.SIZE) {
-            throw new IllegalStateException("BlockLens capability count exceeds 64-bit config mask capacity");
+    /** Sets {@code position} in the two-word mask {@code words}. */
+    static void set(long[] words, int position) {
+        checkPosition(position);
+        words[position >>> 6] |= 1L << (position & 63);
+    }
+
+    /** Whether {@code position} is set in the two-word mask {@code (low, high)}. */
+    static boolean isSet(long low, long high, int position) {
+        checkPosition(position);
+        return ((position < Long.SIZE ? low : high) & (1L << (position & 63))) != 0L;
+    }
+
+    private static void checkPosition(int position) {
+        if (position < 0 || position >= CapabilityId.MASK_BITS) {
+            throw new IllegalStateException("Capability bit " + position + " exceeds the "
+                    + CapabilityId.MASK_BITS + "-bit config mask");
         }
-        return 1L << ordinal;
     }
 }
 

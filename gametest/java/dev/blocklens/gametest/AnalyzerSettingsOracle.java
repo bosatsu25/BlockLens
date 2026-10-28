@@ -72,7 +72,7 @@ final class AnalyzerSettingsOracle {
                             press(parent,"blocklens.settings.close");
                             require(BlockLensRuntime.config().analyzerOptions().equals(expected),"numeric save lost edits");
                             require(BlockLensConfigFiles.loadOrCreate(directory).analyzerOptions().equals(expected),"numeric disk state differs");
-                            require(BlockLensRuntime.config().enabledMask()==original.enabledMask(),"numeric save changed capability bits");
+                            require(BlockLensRuntime.config().sameCapabilities(original),"numeric save changed capability bits");
                         } else {
                             parent.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE,0,0));
                             require(Arrays.equals(baseline,Files.readAllBytes(file)),"discard wrote numeric edits");

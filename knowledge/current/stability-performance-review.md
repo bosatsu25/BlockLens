@@ -42,7 +42,7 @@ Draft changes are not applied to the running renderer until the config file is s
 - the M5 active-resource-pack oracle keeps its **950‰** preservation requirement and tolerates only a two-pixel raster-edge neighborhood when comparing the same base geometry; exact intersection and IoU remain recorded separately;
 - failed Client GameTest jobs upload the client log and available M3/M5/M7/M8 evidence;
 - M8 now measures OFF, default, and all-40 configurations and includes representative Decoration, Resource, Visibility, and Other targets;
-- the 64-bit capability-mask capacity is an executable test invariant;
+- the two-word (128-bit) capability-mask capacity and the 64-bit render word are executable test invariants;
 - source contracts require both version adapters to retain the same responsive surface and compact descriptor storage.
 
 ## Local verification evidence

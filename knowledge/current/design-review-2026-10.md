@@ -51,10 +51,13 @@ So the defensible claims are:
 
 ## 4. Open recommendations
 
-1. **Capability mask headroom.** `CapabilityId.bitPosition()` uses bits 0–62 with 46 and 56 reserved; only
-   bit 63 remains. The capability after next overflows the 64-bit mask. Move the runtime mask and codec to
-   a two-word or `long[]` mask before adding capability 63. `CapabilityIdTest` now fails before an
-   overflowing capability can alias bit 0.
+1. **Capability mask headroom.** Done. `BlockLensConfig` keeps the enabled mask in two words (bits 0–127;
+   `CapabilityId.MASK_BITS`), so capabilities can be appended past bit 63. The config file was never the
+   limit: it stores source keys, not bits. Render paths (target index, model wrappers, reload policy) still
+   combine word 0 only and take bits from `CapabilityId.renderBit()`, which refuses positions past 63
+   instead of letting `1L << 64` alias bit 0. Bit 63 is therefore the last one a capability that binds
+   block targets can use; `CapabilityRenderBitContractTest` rejects raw `1L << bitPosition()` in any
+   source tree, and the GameTest oracles compare configs with `sameCapabilities`.
 2. **Source-text contract tests.** Many tests assert exact Java source strings. They protected verified
    decisions, but a pure file move required editing eight test files. Prefer behavior-level or
    structural checks (as in `VersionAdapterSingleSourceContractTest`) for new guards.

@@ -119,7 +119,7 @@ final class SceneFilterSettingsOracle {
                             click(parent,button(parent,"blocklens.settings.close"));
                             require(BlockLensRuntime.config().sceneFilterOptions().equals(expected),"filter save lost valid edits or accepted invalid list");
                             require(BlockLensConfigFiles.loadOrCreate(directory).sceneFilterOptions().equals(expected),"filter disk state differs");
-                            require(BlockLensRuntime.config().enabledMask()==original.enabledMask(),"list save altered independent toggles");
+                            require(BlockLensRuntime.config().sameCapabilities(original),"list save altered independent toggles");
                             require(BlockLensRuntime.config().analyzerOptions().equals(original.analyzerOptions()),"list save altered analyzers");
                         } else {
                             parent.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE,0,0));

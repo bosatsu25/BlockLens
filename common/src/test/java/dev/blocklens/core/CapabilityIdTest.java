@@ -3,6 +3,7 @@ package dev.blocklens.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumMap;
@@ -45,18 +46,33 @@ final class CapabilityIdTest {
     }
 
     @Test
-    void everyCapabilityOwnsADistinctBitOfTheSixtyFourBitMask() {
-        // Two reserved bits sit below the newest capabilities, so the count alone cannot catch an
-        // overflow: Java masks shift distances, and bit 64 would silently alias bit 0.
-        long seen = 0L;
+    void everyCapabilityOwnsADistinctBitOfTheTwoWordMask() {
+        assertEquals(128, CapabilityId.MASK_BITS);
+        long[] seen = new long[2];
         for (CapabilityId capability : CapabilityId.values()) {
             int bit = capability.bitPosition();
-            assertTrue(bit >= 0 && bit < Long.SIZE, capability + " has no bit left in the 64-bit mask");
-            assertEquals(0L, seen & (1L << bit), capability + " shares bit " + bit);
-            seen |= 1L << bit;
+            assertTrue(bit >= 0 && bit < CapabilityId.MASK_BITS, capability + " is outside the mask");
+            assertFalse(BlockLensConfig.isSet(seen[0], seen[1], bit), capability + " shares bit " + bit);
+            BlockLensConfig.set(seen, bit);
         }
-        assertEquals(0L, seen & ((1L << 46) | (1L << 56)), "reserved retired bits must stay unused");
-        assertEquals(1, Long.SIZE - Long.bitCount(seen) - 2, "exactly one free bit remains (63)");
+        assertEquals(0L, seen[0] & ((1L << 46) | (1L << 56)), "reserved retired bits must stay unused");
+        assertEquals(CapabilityId.values().length, Long.bitCount(seen[0]) + Long.bitCount(seen[1]));
+    }
+
+    @Test
+    void renderBitsStayInWordZeroAndNeverAlias() {
+        // Java masks shift distances, so 1L << 64 would silently be bit 0: renderBit() must refuse.
+        for (CapabilityId capability : CapabilityId.values()) {
+            assertEquals(capability.bitPosition() < Long.SIZE, capability.hasRenderBit(), capability.name());
+            if (capability.hasRenderBit()) {
+                assertEquals(1L << capability.bitPosition(), capability.renderBit(), capability.name());
+            }
+        }
+        assertEquals(1L, CapabilityId.renderBit(0));
+        assertEquals(Long.MIN_VALUE, CapabilityId.renderBit(63));
+        assertThrows(IllegalStateException.class, () -> CapabilityId.renderBit(64));
+        assertThrows(IllegalStateException.class, () -> CapabilityId.renderBit(-1));
+        assertTrue(CapabilityId.ANVIL.hasRenderBit());
     }
 
     @Test

@@ -110,7 +110,7 @@ All 13 capabilities remain independent.
 
 A target may participate in multiple BlockLens capabilities elsewhere in the product. Target indexing therefore stores a capability bit-set rather than a mutually exclusive single value.
 
-The native config remains the source of enable/disable truth. `BlockLensConfig` also exposes an immutable 64-bit enabled mask for hot-path checks; this is a runtime optimization only and does not change config-file semantics.
+The native config remains the source of enable/disable truth. `BlockLensConfig` also exposes the immutable enabled mask (two 64-bit words; render hot paths read word 0 through `CapabilityId.renderBit()`); this is a runtime optimization only and does not change config-file semantics.
 
 ## 6. Compatibility / rendering-state contract
 

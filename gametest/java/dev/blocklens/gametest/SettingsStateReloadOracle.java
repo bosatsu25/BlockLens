@@ -2,6 +2,7 @@ package dev.blocklens.gametest;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
+import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.fabric.BlockLensConfigScreen;
@@ -39,7 +40,7 @@ final class SettingsStateReloadOracle {
         String originalOption = context.computeOnClient(client -> client.options.languageCode);
         List<String> originalPacks = context.computeOnClient(client ->
                 List.copyOf(client.getResourcePackRepository().getSelectedIds()));
-        long baseline = BlockLensRuntime.config().enabledMask();
+        BlockLensConfig baseline = BlockLensRuntime.config();
         boolean expectedObsidian = !BlockLensRuntime.config().isEnabled(CapabilityId.OBSIDIAN);
         try {
             context.runOnClient(client -> {
@@ -93,7 +94,7 @@ final class SettingsStateReloadOracle {
                     screen.resize(screen.width, screen.height);
                     require(lastToggle(screen).visible, "Reload lost the category scroll");
                     verifyDraft(screen, expectedObsidian);
-                    require(BlockLensRuntime.config().enabledMask() == baseline, "Reload applied draft edits");
+                    require(BlockLensRuntime.config().sameCapabilities(baseline), "Reload applied draft edits");
                     screen.onClose();
                 });
             }
@@ -108,7 +109,7 @@ final class SettingsStateReloadOracle {
             });
             reload(context);
         }
-        require(BlockLensRuntime.config().enabledMask() == baseline, "State oracle changed runtime config");
+        require(BlockLensRuntime.config().sameCapabilities(baseline), "State oracle changed runtime config");
         System.out.println("BLOCKLENS_SETTINGS_STATE locales=en_us,ja_jp reload=true scale=1,2 draft=true scroll=true");
     }
 

@@ -115,7 +115,7 @@ final class ConnectedOreOracle {
             context.runOnClient(c->require(c.level.getBlockState(new BlockPos(0,-59,4))==physical,"Filter changed physical ore state"));
             var all=off;for(var id:CapabilityId.values())all=all.withEnabled(id,true);
             persistAndReload(context,configDirectory,all);
-            require(BlockLensRuntime.config().enabledMask()==all.enabledMask(),"All-feature reload did not apply complete configuration");
+            require(BlockLensRuntime.config().sameCapabilities(all),"All-feature reload did not apply complete configuration");
             clear(world,0);install(context,all,0);var allAir=capture(context,output,"all-features-air");
             place(world,0,"minecraft:diamond_ore","minecraft:diamond_ore",2);
             var allLegacy=all.withEnabled(CapabilityId.CONNECTED_ORE_EDGES,false);

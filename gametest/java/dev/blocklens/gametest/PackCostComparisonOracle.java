@@ -128,7 +128,7 @@ final class PackCostComparisonOracle {
         }
         require(originalPacks.equals(context.computeOnClient(c -> List.copyOf(c.getResourcePackRepository().getSelectedIds()))),
                 "selected packs were not restored");
-        require(BlockLensRuntime.config().enabledMask() == originalConfig.enabledMask(), "config was not restored");
+        require(BlockLensRuntime.config().sameCapabilities(originalConfig), "config was not restored");
     }
 
     private static void select(ClientGameTestContext context, int condition, BlockLensConfig config,

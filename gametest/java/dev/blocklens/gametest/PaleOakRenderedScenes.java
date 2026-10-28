@@ -73,7 +73,7 @@ final class PaleOakRenderedScenes {
                 var combined=offConfig;for(var flag:CapabilityId.values())combined=combined.withEnabled(flag,true);
                 var all=combined;BlockLensConfigFiles.save(FabricLoader.getInstance().getConfigDir(),all);
                 context.runOnClient(c->BlockLensRuntime.installConfig(all));PaleOakPaletteOracle.reload(context);
-                require(BlockLensRuntime.config().enabledMask()==all.enabledMask(),"Object all-feature state not active: "+ROLES[role]);
+                require(BlockLensRuntime.config().sameCapabilities(all),"Object all-feature state not active: "+ROLES[role]);
                 if(gui)openEditor(context,hanging);
                 var allFrame=capture(context,output,ROLES[role]+"-all-features");
                 require(PaleOakObjectFrames.changed(off,allFrame,air,region),"All-enabled object chroma/grain/foreground lost: "+ROLES[role]);

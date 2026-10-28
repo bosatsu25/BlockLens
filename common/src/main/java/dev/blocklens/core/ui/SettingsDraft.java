@@ -61,7 +61,7 @@ public final class SettingsDraft {
     public void setSceneFilterOptions(SceneFilterOptions options) { config = config.withSceneFilterOptions(options); }
 
     public boolean changed() {
-        return config.enabledMask() != baseline.enabledMask()
+        return !config.sameCapabilities(baseline)
                 || !config.comfortOptions().equals(baseline.comfortOptions())
                 || !config.analyzerOptions().equals(baseline.analyzerOptions())
                 || !config.sceneFilterOptions().equals(baseline.sceneFilterOptions());

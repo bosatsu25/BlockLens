@@ -198,7 +198,7 @@ final class LightweightVisualOracle {
             server.runCommand("setblock -6 -59 1 minecraft:netherrack");
             server.runCommand("setblock 6 -59 1 minecraft:diamond_ore");
             BlockLensConfig allOn = all(original, true);
-            require(Long.bitCount(allOn.enabledMask()) == 46, "all-46 fixture excludes a capability");
+            require(allOn.enabledCount() == 46, "all-46 fixture excludes a capability");
             install(context, allOn);
             server.runCommand("effect give @a minecraft:fire_resistance infinite 0 true");
             server.runOnServer(srv -> srv.getPlayerList().getPlayers().forEach(player -> {

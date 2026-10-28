@@ -171,7 +171,7 @@ public final class MinecraftSimplifiedTerrain {
                 BlockState state,RandomSource random) {
             Object key=wrapped.createGeometryKey(level,pos,state,random);
             return key==null || !BlockLensRuntime.config().isEnabled(CapabilityId.SIMPLIFIED_TERRAIN)
-                    ? key : new VisualGeometryKey(key,1L << CapabilityId.SIMPLIFIED_TERRAIN.bitPosition());
+                    ? key : new VisualGeometryKey(key,CapabilityId.SIMPLIFIED_TERRAIN.renderBit());
         }
     }
 }

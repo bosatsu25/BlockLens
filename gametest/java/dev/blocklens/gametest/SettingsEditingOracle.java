@@ -42,10 +42,10 @@ final class SettingsEditingOracle {
                 ResponsiveSettingsScreenOracle.select(screen, CapabilityId.Category.DECORATION);
                 require(firstToggle(screen).getMessage().getString().equals(state(!original.isEnabled(CapabilityId.ANVIL))),
                         "Category change lost a draft edit");
-                require(BlockLensRuntime.config().enabledMask() == original.enabledMask(), "Draft applied too early");
+                require(BlockLensRuntime.config().sameCapabilities(original), "Draft applied too early");
                 press(screen, "blocklens.settings.discard");
                 require(BlockLensConfigScreen.current(client) == previous, "Discard did not return to parent");
-                require(BlockLensConfigFiles.loadOrCreate(configDirectory).enabledMask() == original.enabledMask(),
+                require(BlockLensConfigFiles.loadOrCreate(configDirectory).sameCapabilities(original),
                         "Discard persisted edits");
 
                 // Ore-source shortcut modifies the draft only and excludes non-ore obsidian toggles.
@@ -57,10 +57,10 @@ final class SettingsEditingOracle {
                 long enabledOreRows=ResponsiveSettingsScreenOracle.buttons(screen).subList(4,25).stream()
                         .filter(button->button.getMessage().getString().equals(enabledLabel)).count();
                 require(enabledOreRows==19,"glow preset did not activate exactly nineteen ores");
-                require(BlockLensRuntime.config().enabledMask()==original.enabledMask(),
+                require(BlockLensRuntime.config().sameCapabilities(original),
                         "ore shortcut published its draft before Save");
                 press(screen, "blocklens.settings.discard");
-                require(BlockLensRuntime.config().enabledMask()==original.enabledMask(),
+                require(BlockLensRuntime.config().sameCapabilities(original),
                         "ore shortcut discard changed the published config");
 
                 screen = new BlockLensConfigScreen(previous);
@@ -68,7 +68,7 @@ final class SettingsEditingOracle {
                 pressFirstToggle(screen);
                 screen.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE, 0, 0));
                 require(BlockLensConfigScreen.current(client) == previous, "Esc did not return to parent");
-                require(BlockLensRuntime.config().enabledMask() == original.enabledMask(), "Esc applied edits");
+                require(BlockLensRuntime.config().sameCapabilities(original), "Esc applied edits");
 
                 screen = new BlockLensConfigScreen(previous);
                 BlockLensConfigScreen.show(client, screen);
@@ -79,8 +79,8 @@ final class SettingsEditingOracle {
                         .withEnabled(CapabilityId.OBSIDIAN, !original.isEnabled(CapabilityId.OBSIDIAN));
                 press(screen, "blocklens.settings.close");
                 require(BlockLensConfigScreen.current(client) == previous, "Save did not return to parent");
-                require(BlockLensRuntime.config().enabledMask() == expected.enabledMask(), "Save lost category edits");
-                require(BlockLensConfigFiles.loadOrCreate(configDirectory).enabledMask() == expected.enabledMask(),
+                require(BlockLensRuntime.config().sameCapabilities(expected), "Save lost category edits");
+                require(BlockLensConfigFiles.loadOrCreate(configDirectory).sameCapabilities(expected),
                         "Persisted edits differ from the runtime");
 
                 screen = new BlockLensConfigScreen(previous);
@@ -113,7 +113,7 @@ final class SettingsEditingOracle {
                 pressFirstToggle(failing);
                 press(failing, "blocklens.settings.apply");
                 require(BlockLensConfigScreen.current(client) == failing, "Save failure closed the screen");
-                require(BlockLensRuntime.config().enabledMask() == original.enabledMask(), "Save failure applied edits");
+                require(BlockLensRuntime.config().sameCapabilities(original), "Save failure applied edits");
                 require(Files.readString(occupied).equals("keep"), "Save failure overwrote an existing file");
                 failing.resize(320, 240);
                 require(firstToggle(failing).getMessage().getString().equals(state(!original.isEnabled(CapabilityId.ANVIL))),

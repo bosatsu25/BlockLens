@@ -4,6 +4,7 @@ import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.NetherTweaksVisualCue;
 import dev.blocklens.core.state.SemanticState;
 import dev.blocklens.core.state.TargetCapabilityIndex;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
@@ -14,8 +15,10 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /** Zero-scan model-bake integration shared by every supported Minecraft line. */
 public final class MinecraftDecorationModelPlugin {
-    private static final CapabilityId[] CAPABILITIES = CapabilityId.values();
-    private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.bitPosition();
+    // Target masks hold mask word 0 only; capabilities past bit 63 never bind a target.
+    private static final CapabilityId[] CAPABILITIES = Arrays.stream(CapabilityId.values())
+            .filter(CapabilityId::hasRenderBit).toArray(CapabilityId[]::new);
+    private static final long NETHER_TWEAKS_BIT = CapabilityId.NETHER_TWEAKS.renderBit();
     private static final AtomicInteger WRAPPED_MODELS = new AtomicInteger();
     private static final AtomicInteger RETAINED_CAPABILITY_SLOTS = new AtomicInteger();
     private static final AtomicInteger MAX_CAPABILITIES_PER_MODEL = new AtomicInteger();
@@ -80,7 +83,7 @@ public final class MinecraftDecorationModelPlugin {
         SemanticState[] semanticStates = new SemanticState[count];
         int cursor = 0;
         for (CapabilityId capability : CAPABILITIES) {
-            long bit = 1L << capability.bitPosition();
+            long bit = capability.renderBit();
             if ((targetMask & bit) == 0L) {
                 continue;
             }

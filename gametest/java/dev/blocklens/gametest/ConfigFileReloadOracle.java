@@ -29,7 +29,7 @@ final class ConfigFileReloadOracle {
         try {
             String originalText = Files.readString(configPath, StandardCharsets.UTF_8);
             BlockLensConfig changed = invertEveryCapability(originalRuntime);
-            require(changed.enabledMask() != originalRuntime.enabledMask(),
+            require(!changed.sameCapabilities(originalRuntime),
                     "reload acceptance config must differ from the initial runtime mask");
 
             try {
@@ -47,7 +47,7 @@ final class ConfigFileReloadOracle {
                 BlockLensConfig reloaded = BlockLensRuntime.reloadConfig(configDirectory);
                 require(reloaded.asMap().equals(changed.asMap()),
                         "runtime reload did not publish the persisted native config");
-                require(BlockLensRuntime.config().enabledMask() == changed.enabledMask(),
+                require(BlockLensRuntime.config().sameCapabilities(changed),
                         "runtime enabled mask differs after native config reload");
                 require(BlockLensRuntime.minecraftVersion().equals(originalVersion),
                         "native config reload changed runtime Minecraft version identity");

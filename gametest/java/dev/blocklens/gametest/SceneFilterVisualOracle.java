@@ -212,7 +212,7 @@ final class SceneFilterVisualOracle {
             var allOff=read(capture(context,output,"all55-off"));
             var combined=all(original,true).withAnalyzerOptions(options).withSceneFilterOptions(SceneFilterOptions.defaults().withEntityPreset(0)
                     .withMode(0,SceneFilterOptions.Mode.BLACKLIST).withList(0,false,"minecraft:stone"));
-            require(Long.bitCount(combined.enabledMask())==CapabilityId.values().length,
+            require(combined.enabledCount()==CapabilityId.values().length,
                     "all-capability scene filter fixture incomplete");
             install(context,combined);
             combined(context,output,"all55-on",allOff);

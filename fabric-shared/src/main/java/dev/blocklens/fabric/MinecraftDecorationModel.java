@@ -45,10 +45,10 @@ import org.jspecify.annotations.Nullable;
 
 /** Shared baked-model wrapper shared by the M3-M7 rendering families. */
 final class MinecraftDecorationModel extends WrapperBlockStateModel {
-    private static final long NETHER_TWEAKS_BIT = 1L << CapabilityId.NETHER_TWEAKS.bitPosition();
+    private static final long NETHER_TWEAKS_BIT = CapabilityId.NETHER_TWEAKS.renderBit();
 
-    private static final long LIGHTWEIGHT_OVERLAY_MASK = (1L << CapabilityId.GLASS_HIGHLIGHT.bitPosition())
-            | (1L << CapabilityId.KELP_HIGHLIGHT.bitPosition());
+    private static final long LIGHTWEIGHT_OVERLAY_MASK = CapabilityId.GLASS_HIGHLIGHT.renderBit()
+            | CapabilityId.KELP_HIGHLIGHT.renderBit();
     private final @Nullable RetainedValue<BlockStateModel> lightweightOverlay;
     private final @Nullable RetainedValue<BlockStateModel> oreBorderOverlay;
     private final @Nullable RetainedValue<BlockStateModel> connectedOreBorderOverlay;
@@ -108,7 +108,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         for (int i = 0; i < count; i++) {
             CapabilityId capability = Objects.requireNonNull(capabilities[i], "capability");
             SemanticState state = Objects.requireNonNull(semanticStates[i], "semanticState");
-            long bit = 1L << capability.bitPosition();
+            long bit = capability.renderBit();
 
             if (capability == CapabilityId.NETHER_TWEAKS) {
                 if (netherCue == null) {
@@ -386,7 +386,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
 
     private void emitLightweightOverlay(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos,
             BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest, long enabled) {
-        ExtraModelKey<BlockStateModel> key = (enabled & (1L << CapabilityId.KELP_HIGHLIGHT.bitPosition())) != 0L
+        ExtraModelKey<BlockStateModel> key = (enabled & CapabilityId.KELP_HIGHLIGHT.renderBit()) != 0L
                 ? LightweightOverlayModels.KELP : state.getBlock() instanceof IronBarsBlock
                 ? LightweightOverlayModels.PANE : LightweightOverlayModels.GLASS;
         BlockStateModel overlay = lookupLightweightOverlay(key);
