@@ -42,7 +42,21 @@ final class CapabilityIdTest {
         assertEquals(9L, counts.get(CapabilityId.Category.OUTLINE));
         assertEquals(17L, counts.get(CapabilityId.Category.OTHER));
         assertEquals(61, CapabilityId.values().length);
-        assertTrue(CapabilityId.values().length <= Long.SIZE, "capability mask exhausted");
+    }
+
+    @Test
+    void everyCapabilityOwnsADistinctBitOfTheSixtyFourBitMask() {
+        // Two reserved bits sit below the newest capabilities, so the count alone cannot catch an
+        // overflow: Java masks shift distances, and bit 64 would silently alias bit 0.
+        long seen = 0L;
+        for (CapabilityId capability : CapabilityId.values()) {
+            int bit = capability.bitPosition();
+            assertTrue(bit >= 0 && bit < Long.SIZE, capability + " has no bit left in the 64-bit mask");
+            assertEquals(0L, seen & (1L << bit), capability + " shares bit " + bit);
+            seen |= 1L << bit;
+        }
+        assertEquals(0L, seen & ((1L << 46) | (1L << 56)), "reserved retired bits must stay unused");
+        assertEquals(1, Long.SIZE - Long.bitCount(seen) - 2, "exactly one free bit remains (63)");
     }
 
     @Test

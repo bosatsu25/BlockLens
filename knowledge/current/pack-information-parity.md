@@ -47,9 +47,11 @@ step and panel structure.
 
 ## 3. Composition and fallback
 
-- Decals are drawn only when the wrapped model is exactly one fixed variant (`SingleVariant`). The
-  second emission must reproduce the first geometry; weighted variants, multipart models and other
-  mods' wrappers (for example Simplified Terrain's) keep the M3 tint for that capability.
+- Decals are drawn only when the wrapped model is exactly one fixed variant (`SingleVariant`): its
+  geometry never changes, so the decal quads are encoded once per (enabled decal cues, glyph sprite),
+  grouped by cull face, and replayed per block under the same cull test. A different glyph sprite
+  (any atlas change) rebuilds them. Weighted variants, multipart models and other mods' wrappers (for
+  example Simplified Terrain's) keep the M3 tint for that capability.
 - A capability drawn as a decal is not also tinted. Other cues on the same block (Nether Tweaks, glass
   highlights, resource highlights) compose as before.
 - Decals are lifted 1/256 block along the face normal, above the Nether band (0.03/16) and ore border
@@ -64,7 +66,7 @@ step and panel structure.
 | --- | --- | --- |
 | Anvil | The source draws an arrow on the top texture; BlockLens outlines the facing faces. | The arrow's world direction depends on the vanilla `template_anvil` top-face UV rotation, which is not verified from source data. A wrong arrow would report a false state. |
 | Stairs, trapdoors | The source uses dashed edge marks inside 32×32 textures; BlockLens outlines each quad. | Same information (step/panel structure plus the existing shape/facing legend) with one shared glyph. |
-| Weighted/multipart or wrapped models | Tint fallback. | A second emission could otherwise pick different geometry. |
+| Weighted/multipart or wrapped models | Tint fallback. | Their geometry can differ per block, so encoded decal quads could disagree with it. |
 
 ## 5. Verification
 
@@ -82,5 +84,6 @@ step and panel structure.
   22-minute step, so normal client steps get 27 minutes inside 36-minute jobs; no threshold changes.
 
 Size: the decal layer is one table-driven class with no enum switch maps, and one sprite instead of six,
-to keep its artifact cost small. This contract makes no performance-improvement claim. Decals add one extra emission of the decorated
-block's own quads only while a decoration capability is enabled; M8 guards remain the regression bound.
+to keep its artifact cost small. Decals add one cut-out quad per decorated face only while a decoration
+capability is enabled; their meshing cost against the source pack is measured by
+[`pack-cost-comparison.md`](pack-cost-comparison.md).
