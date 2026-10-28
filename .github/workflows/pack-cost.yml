@@ -35,7 +35,9 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: '9.5.1'
-          # Read-only: only version-build and release-build write the Gradle cache (ci-release.md).
+          # One shared basic cache, saved only by the common gate that every Gradle job waits for
+          # (knowledge/current/ci-release.md).
+          cache-provider: basic
           cache-read-only: true
       - name: Install Mesa
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libegl1 libgl1-mesa-dri
