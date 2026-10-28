@@ -305,26 +305,20 @@ The original 37-capability source baseline remains a historical regression contr
 
 ```mermaid
 flowchart TD
-    PR[Pull Request] --> U[JUnit]
-    U --> J[JaCoCo >= 96%]
-    J --> P[PIT >= 96%]
-    P --> B1[26.1.2 build + reproducibility]
-    P --> B2[26.2 build + reproducibility]
-    B1 --> G1[26.1.2 Client GameTest]
-    B2 --> G2[26.2 Client GameTest]
-    G1 --> A1[visual / performance / size evidence]
-    G2 --> A2[visual / performance / size evidence]
-    A1 --> GREEN[CI GREEN]
-    A2 --> GREEN
-    GREEN -->|main push only| REL[Release workflow]
-    REL --> VER{tag exists?}
-    VER -- yes --> STOP[successful no-op]
-    VER -- no --> RAW[download exact raw CI JARs]
-    RAW --> SHA[revalidate + SHA256SUMS]
-    SHA --> PUB[GitHub Release]
+    EV[Pull request / push to main] --> PLAN[plan: verification scope]
+    EV --> Q[common: JUnit + JaCoCo + PIT]
+    PLAN -->|draft PR or docs only| Q
+    PLAN -->|ready PR, unverified main push, manual run| FULL[3 client GameTests + shader/Vulkan/BBE/connected matrices]
+    FULL --> VER[verified / full matrix]
+    PLAN -->|main merge of a verified PR tree| REUSE[reuse that PR's verified result]
+    PLAN -->|main push, not docs only| RB[release JARs: next free v0.4.N]
+    VER --> REL[publish GitHub Release]
+    REUSE --> REL
+    RB --> REL
+    REL --> CLEAN[remove JARs from older releases]
 ```
 
-The Release job does not rebuild BlockLens. It promotes the exact verified raw CI JARs, rechecks metadata/icon/size, and publishes checksums.
+Every merge to main publishes a release automatically when more than documentation changed since the latest release. The version is the first free patch on the `mod_version` line in `gradle.properties` (for example v0.4.8 after v0.4.7); raise `mod_version` to start a new minor line. The release JARs are rebuilt from the verified tree with that version and pass the same packaging audit and size budgets; the deterministic build keeps their classes identical to the verified ones. When the merged tree equals a pull request head whose `verified / full matrix` check passed, the client matrices are not repeated. Draft and documentation-only pull requests run only the common gate; marking a draft ready starts the full matrix. Only the latest release keeps its JARs and `SHA256SUMS.txt`.
 
 ## Artifact size history
 
@@ -346,7 +340,7 @@ For the stable release:
 1. Install Fabric Loader for the target Minecraft version.
 2. Install the matching Fabric API.
 3. Use Java 25 or later.
-4. Download the matching 26.1.2, 26.2, or 26.3 JAR from the [`v0.4.0` GitHub Release](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.0).
+4. Download the matching 26.1.2, 26.2, or 26.3 JAR from the [latest GitHub Release](https://github.com/bosatsu25/BlockLens/releases/latest).
 5. Put the JAR in the Minecraft `mods` directory.
 6. Launch the client.
 

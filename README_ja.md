@@ -306,26 +306,20 @@ Java compileでは`-Xlint:deprecation`、`-Xlint:unchecked`、**`-Werror`**を�
 
 ```mermaid
 flowchart TD
-    PR[Pull Request] --> U[JUnit]
-    U --> J[JaCoCo >= 96%]
-    J --> P[PIT >= 96%]
-    P --> B1[26.1.2 build + reproducibility]
-    P --> B2[26.2 build + reproducibility]
-    B1 --> G1[26.1.2 Client GameTest]
-    B2 --> G2[26.2 Client GameTest]
-    G1 --> A1[visual / performance / size evidence]
-    G2 --> A2[visual / performance / size evidence]
-    A1 --> GREEN[CI GREEN]
-    A2 --> GREEN
-    GREEN -->|main pushのみ| REL[Release workflow]
-    REL --> VER{tag exists?}
-    VER -- yes --> STOP[successful no-op]
-    VER -- no --> RAW[exact raw CI JARを取得]
-    RAW --> SHA[再検証 + SHA256SUMS]
-    SHA --> PUB[GitHub Release]
+    EV[Pull request / mainへのpush] --> PLAN[plan: 検証範囲の判定]
+    EV --> Q[common: JUnit + JaCoCo + PIT]
+    PLAN -->|ドラフトPR / ドキュメントのみ| Q
+    PLAN -->|レビュー可能なPR / 未検証のmain push / 手動実行| FULL[3版Client GameTest + shader/Vulkan/BBE/connected matrix]
+    FULL --> VER[verified / full matrix]
+    PLAN -->|検証済みPRと同じtreeのmainマージ| REUSE[そのPRの検証結果を再利用]
+    PLAN -->|ドキュメント以外のmain push| RB[release JAR: 次の空きv0.4.N]
+    VER --> REL[GitHub Release公開]
+    REUSE --> REL
+    RB --> REL
+    REL --> CLEAN[古いReleaseのJARを削除]
 ```
 
-Release jobではBlockLensを再buildせず、CIで検証したraw JARそのものを昇格させ、metadata/icon/sizeを再確認してchecksumを公開します。
+mainへのマージごとに、最新のRelease以降にドキュメント以外の変更があればReleaseが自動で公開されます。バージョンは`gradle.properties`の`mod_version`系列で空いている最初のpatchです（例: v0.4.7の次はv0.4.8）。新しいminor系列を始めるときは`mod_version`を上げます。release JARは検証済みtreeをそのバージョンで再buildしたもので、同じpackaging auditとsize budgetを通ります。決定的buildのため、classは検証済みのものと同一です。マージ後のtreeが`verified / full matrix`に成功したPR headと同じなら、client matrixは再実行しません。ドラフトPRとドキュメントのみのPRはcommon gateだけを実行し、ドラフトを解除するとfull matrixが始まります。JARと`SHA256SUMS.txt`を持つのは最新のReleaseだけです。
 
 ## Artifact size history
 
@@ -347,7 +341,7 @@ Release jobではBlockLensを再buildせず、CIで検証したraw JARそのも�
 1. 対象Minecraft版のFabric Loaderを導入します。
 2. 対応するFabric APIを導入します。
 3. Java 25以上を使用します。
-4. [GitHub Releasesの`v0.4.0`](https://github.com/bosatsu25/BlockLens/releases/tag/v0.4.0)から26.1.2、26.2または26.3用JARを取得します。
+4. [最新のGitHub Release](https://github.com/bosatsu25/BlockLens/releases/latest)から26.1.2、26.2または26.3用JARを取得します。
 5. JARをMinecraftの`mods`フォルダへ入れます。
 6. clientを起動します。
 
