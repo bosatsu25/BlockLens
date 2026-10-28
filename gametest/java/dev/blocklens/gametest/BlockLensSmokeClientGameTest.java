@@ -33,6 +33,10 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             verifyM8Only(context);
             return;
         }
+        if ("pack-cost".equals(System.getProperty("blocklens.test.focus", "all"))) {
+            verifyPackCostOnly(context);
+            return;
+        }
         if ("settings".equals(System.getProperty("blocklens.test.focus", "all"))) {
             context.runOnClient(c -> PackagedRuntimeOracle.verify());
             SettingsStateReloadOracle.verify(context);
@@ -147,6 +151,16 @@ public final class BlockLensSmokeClientGameTest implements FabricClientGameTest 
             var singleplayer = openedWorld.world();
             context.waitTicks(20);
             M8PerformanceBaselineOracle.verify(context, singleplayer);
+        }
+    }
+
+    private static void verifyPackCostOnly(ClientGameTestContext context) {
+        require(Boolean.getBoolean("blocklens.test.packagedRuntime"), "Pack-cost comparison requires packaged runtime");
+        context.runOnClient(client -> PackagedRuntimeOracle.verify());
+        try (var openedWorld = TestWorlds.create(context)) {
+            var world = openedWorld.world();
+            context.waitTicks(20);
+            PackCostComparisonOracle.verify(context, world);
         }
     }
 

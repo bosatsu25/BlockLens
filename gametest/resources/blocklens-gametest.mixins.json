@@ -9,6 +9,7 @@
     "HeldTransformProbeMixin",
     "AnalyzerTickProbeMixin",
     "SectionCompileAllocationProbeMixin",
+    "SectionCompileTimingProbeMixin",
     "SodiumTerrainProbeMixin",
     "SodiumTerrainVisitProbeMixin",
     "BBETerrainProbeMixin",

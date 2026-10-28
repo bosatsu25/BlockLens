@@ -48,8 +48,15 @@ if (!(m8FpsLimit in ['30', '60', '120'])) {
     throw new GradleException('m8FpsLimit must be 30, 60 or 120')
 }
 def clientTestFocus = providers.gradleProperty('clientTestFocus').orElse('all').get()
-if (!(clientTestFocus in ['all', 'shutdown', 'scene', 'm8', 'external', 'palette', 'compact', 'simplified', 'connected', 'settings'])) {
-    throw new GradleException('clientTestFocus must be all, shutdown, scene, m8, external, palette, compact, simplified, connected or settings')
+if (!(clientTestFocus in ['all', 'shutdown', 'scene', 'm8', 'external', 'palette', 'compact', 'simplified', 'connected', 'settings', 'pack-cost'])) {
+    throw new GradleException('clientTestFocus must be all, shutdown, scene, m8, external, palette, compact, simplified, connected, settings or pack-cost')
+}
+// Pack-vs-mod comparison input: the generated structural twin in CI, or the pinned source pack in
+// a private local run (packCostSource=source); see knowledge/current/pack-cost-comparison.md.
+def packCostPack = providers.gradleProperty('packCostPack').orElse('').get()
+def packCostSource = providers.gradleProperty('packCostSource').orElse('twin').get()
+if ((clientTestFocus == 'pack-cost') != !packCostPack.isBlank() || !(packCostSource in ['twin', 'source'])) {
+    throw new GradleException('clientTestFocus=pack-cost requires packCostPack, and packCostSource must be twin or source')
 }
 def externalProfile = providers.gradleProperty('externalCompatibilityProfile').orElse('none').get()
 if (!(externalProfile in ['none', 'shader-off', 'shader-on', 'vulkan', 'packs'])) {
@@ -80,6 +87,12 @@ tasks.named('runClientGameTest') {
     systemProperty 'blocklens.test.focus', clientTestFocus
     systemProperty 'blocklens.test.external.profile', externalProfile
     systemProperty 'blocklens.test.external.connectedOnly', connectedExternalOnly
+    if (clientTestFocus == 'pack-cost') {
+        systemProperty 'blocklens.test.packCost.pack', rootProject.file(packCostPack).absolutePath
+        systemProperty 'blocklens.test.packCost.source', packCostSource
+        // Compile stacks run deeper than JFR's default 64 frames; the profile needs the whole stack.
+        jvmArgs '-XX:FlightRecorderOptions:stackdepth=256'
+    }
     if (externalProfile != 'none') {
         File prepared = rootProject.file(externalDirectory)
         def launchDirectory = loom.runs.named('clientGameTest').flatMap { it.runDirectory }

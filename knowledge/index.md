@@ -36,6 +36,8 @@ Read these before implementation or review:
 
 26. [`current/ci-release.md`](current/ci-release.md) — CI verification scope per event, reuse of a verified PR tree on merge, and automatic patch releases that keep JARs only on the latest release
 
+27. [`current/pack-cost-comparison.md`](current/pack-cost-comparison.md) — pack-vs-mod load, memory, meshing and frame cost comparison on all three lines, the clean-room structural twin of the source pack, and the claim rules
+
 ## Historical-baseline rule
 
 The source M0 documents remain authoritative **historical baseline evidence** for the first 37 capabilities. Post-v0.1.0 additive product work must not rewrite those source facts.

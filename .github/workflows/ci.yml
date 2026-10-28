@@ -804,11 +804,16 @@ jobs:
     if: needs.plan.outputs.full == 'true'
     uses: ./.github/workflows/connected-native.yml
 
+  pack-cost:
+    needs: [plan, common-quality]
+    if: needs.plan.outputs.full == 'true'
+    uses: ./.github/workflows/pack-cost.yml
+
   # Runs only when every required job succeeded; a later main merge of the same tree reuses it.
   verified:
     name: verified / full matrix
     needs: [plan, common-quality, version-build, external-compatibility, bbe-compatibility,
-            connected-compatibility, connected-native]
+            connected-compatibility, connected-native, pack-cost]
     if: needs.plan.outputs.full == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 2

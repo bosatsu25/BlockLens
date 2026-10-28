@@ -60,7 +60,7 @@ final class M9ReleaseReadinessContractTest {
         String verified = job(ci, "verified");
         assertTrue(verified.contains("name: verified / full matrix"));
         for (String required : new String[] {"common-quality", "version-build", "external-compatibility",
-                "bbe-compatibility", "connected-compatibility", "connected-native"}) {
+                "bbe-compatibility", "connected-compatibility", "connected-native", "pack-cost"}) {
             assertTrue(verified.contains(required), "verified must require " + required);
         }
         assertFalse(verified.contains("always()"), "verified succeeds only when every required job succeeded");
