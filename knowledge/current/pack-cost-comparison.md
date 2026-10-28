@@ -64,7 +64,8 @@ sizes only.
 ## 3. Procedure
 
 `PackCostComparisonOracle` (focus `pack-cost`, packaged runtime) builds a 64 × 8 × 64 flat-world
-scene of pack-equivalent targets (glazed terracotta in four facings, logs/wood/froglights in three
+scene on a non-ticking floor with random ticks off (covered grass would otherwise keep recompiling
+it) of pack-equivalent targets (glazed terracotta in four facings, logs/wood/froglights in three
 axes, bottom/top/double slabs, stairs, trapdoors, anvil, beehive, campfire, grindstone, fence
 gates, stained glass, ores, obsidian, ancient debris, the outline and Nether Tweaks blocks), exactly
 16 sections, viewed top-down. One discarded pass per condition warms class loading and JIT. Six

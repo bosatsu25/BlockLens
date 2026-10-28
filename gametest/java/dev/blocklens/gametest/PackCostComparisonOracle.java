@@ -233,6 +233,8 @@ final class PackCostComparisonOracle {
         var server = world.getServer();
         server.runCommand("gamerule minecraft:advance_time false");
         server.runCommand("gamerule minecraft:advance_weather false");
+        // Random ticks turn covered grass into dirt for minutes and keep recompiling the scene.
+        server.runCommand("gamerule minecraft:random_tick_speed 0");
         server.runCommand("time set noon");
         server.runCommand("weather clear");
         server.runCommand("gamemode spectator @a");
@@ -253,6 +255,7 @@ final class PackCostComparisonOracle {
                 "copper_ore", "lapis_ore", "redstone_ore", "deepslate_iron_ore", "obsidian", "ancient_debris",
                 "blue_ice", "dead_brain_coral_block", "powder_snow", "sculk_catalyst", "netherrack",
                 "basalt[axis=y]", "blackstone", "nether_bricks"};
+        server.runCommand("fill -32 -61 -32 31 -61 31 minecraft:smooth_quartz");
         for (int z = -32; z < 32; z++) {
             for (int x = -32; x < 32; x += 4) {
                 String block = blocks[Math.floorMod(x / 4 + z * 5, blocks.length)];
