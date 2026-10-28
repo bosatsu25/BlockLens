@@ -116,7 +116,11 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: '9.5.1'
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          # The only writer of the shared basic Gradle cache: every other Gradle job needs this job,
+          # so it restores an entry that already holds the Fabric build dependencies
+          # (knowledge/current/ci-release.md).
+          cache-provider: basic
+          cache-read-only: false
       # The discovery suite covers sanitizer, external compatibility, source-pack audit,
       # and clean-room render asset helper regressions without duplicated invocations.
       - name: Verify clean-room generated render assets
@@ -159,7 +163,8 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: '9.5.1'
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-provider: basic
+          cache-read-only: true
       - name: Build and verify Minecraft ${{ matrix.minecraft }}
         run: >-
           gradle --stacktrace
@@ -855,6 +860,8 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: '9.5.1'
+          cache-provider: basic
+          cache-read-only: true
       - name: Build, audit and budget the v${{ needs.plan.outputs.version }} JAR for Minecraft ${{ matrix.minecraft }}
         run: >-
           gradle --stacktrace -Pmod_version="$VERSION"

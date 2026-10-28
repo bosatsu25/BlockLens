@@ -34,7 +34,10 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: '9.5.1'
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          # One shared basic cache, saved only by the common gate that every Gradle job waits for
+          # (knowledge/current/ci-release.md).
+          cache-provider: basic
+          cache-read-only: true
       - name: Test exact dependency validation and authored water control
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_*bbe*.py' -v
       - name: Prepare inspected public dependencies and synthetic settings

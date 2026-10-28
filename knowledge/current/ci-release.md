@@ -1,6 +1,6 @@
 # CI scope and automatic release
 
-Status: current (2026-10-27). Supersedes the `workflow_run` Release workflow described in
+Status: current (2026-10-27; Gradle cache 2026-10-28). Supersedes the `workflow_run` Release workflow described in
 `release-readiness.md`, which skipped every merge after v0.4.7 because the version never changed.
 
 ## Verification scope
@@ -30,6 +30,32 @@ cancelled; a main run is never cancelled while it may publish.
 `verified / full matrix` succeeds only when the common gate, the three client GameTest jobs and the
 shader/Vulkan, BBE/Cele, connected-ore and native connected-ore matrices all succeed. The check run
 on a pull request head is what a later main merge of the same tree reuses.
+
+## Gradle cache and dependency downloads
+
+Every Gradle job uses one shared Gradle cache entry from setup-gradle's basic provider: `~/.gradle/caches`
+and `~/.gradle/wrapper`, keyed only by the hash of the build files (`**/*.gradle*`), with no restore
+keys.
+
+- `common-quality` is the only job that saves it (`cache-read-only: false`). Every other Gradle job in
+  `ci.yml` needs `common-quality`, so it starts after the entry exists and restores it with
+  `cache-read-only: true`. Every Gradle invocation first resolves the Fabric Loom plugin classpath,
+  including `mercury`, where every observed timeout occurred, and the common gate also configures the
+  three version modules, so the entry holds what each job used to download.
+- An unchanged build restores the entry, so no job downloads again what it holds. A build-file
+  change starts one new entry, which only `common-quality` downloads. A dependency bumped
+  only in `gradle.properties` keeps the old entry, and each job downloads the new artifact itself.
+- Gradle's default download timeouts stay. Longer ones (60 s, 5 tentatives) were tried and did not
+  prevent the same failure; it only arrived after 21 minutes instead of 7–17.
+- `scripts/test_ci_gradle_cache.py` fails if a job leaves the basic provider, if another job saves,
+  or if a Gradle job stops needing `common-quality`.
+
+Why (2026-10-28): with the enhanced provider every job saved its own Gradle User Home entry of about
+1 GB, keyed by job, matrix and commit, so one full run wrote about 28 GB against GitHub's 10 GB
+per-repository limit. Least-recently-used eviction removed the shared dependency entries. A job made
+read-only still restored its own older entry first, whose dependencies were gone. Jobs then fetched
+everything from `maven.fabricmc.net`, where `mercury-0.4.3.jar` timed out before any test ran in at
+least nine jobs.
 
 ## Release
 
