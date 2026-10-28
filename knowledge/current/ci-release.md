@@ -1,6 +1,6 @@
 # CI scope and automatic release
 
-Status: current (2026-10-27). Supersedes the `workflow_run` Release workflow described in
+Status: current (2026-10-27; Gradle cache and download settings 2026-10-28). Supersedes the `workflow_run` Release workflow described in
 `release-readiness.md`, which skipped every merge after v0.4.7 because the version never changed.
 
 ## Verification scope
@@ -30,6 +30,23 @@ cancelled; a main run is never cancelled while it may publish.
 `verified / full matrix` succeeds only when the common gate, the three client GameTest jobs and the
 shader/Vulkan, BBE/Cele, connected-ore and native connected-ore matrices all succeed. The check run
 on a pull request head is what a later main merge of the same tree reuses.
+
+## Gradle cache and dependency downloads
+
+GitHub keeps at most 10 GB of Actions cache per repository and evicts the least recently used
+entries. Each job's Gradle User Home entry is about 1 GB, and setup-gradle keys it by job, matrix
+and commit, so when every job saved, one full run wrote about 28 GB. The shared downloaded-dependency
+entry was evicted, and every job fetched all Fabric artifacts from `maven.fabricmc.net` again; on
+2026-10-28 reads of `mercury-0.4.3.jar` timed out in at least seven client jobs before any test ran.
+
+- Only `version-build` (non-pull-request runs) and `release-build` (main) save the Gradle cache. Every
+  other Gradle job, including the common gate and all compatibility, connected-ore and pack-cost
+  matrices, sets `cache-read-only: true` and restores the most recent entry of the branch or main.
+- `gradle.properties` raises Gradle's download patience: 60 s connect and read timeouts (default 30 s)
+  and 5 tentatives from a 2 s backoff (default 3 from 1 s), after which Gradle disables the repository
+  for the build. A host that does not answer still fails after about 5.5 minutes per artifact.
+- `scripts/test_ci_gradle_cache.py` fails if another job starts saving the cache or a setting falls back
+  to Gradle's default.
 
 ## Release
 

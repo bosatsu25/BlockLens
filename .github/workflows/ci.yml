@@ -116,7 +116,8 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: '9.5.1'
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          # Tests read the Gradle cache that version-build and release-build write (ci-release.md).
+          cache-read-only: true
       # The discovery suite covers sanitizer, external compatibility, source-pack audit,
       # and clean-room render asset helper regressions without duplicated invocations.
       - name: Verify clean-room generated render assets
