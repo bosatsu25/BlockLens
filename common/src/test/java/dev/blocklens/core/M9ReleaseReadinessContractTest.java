@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 final class M9ReleaseReadinessContractTest {
@@ -117,10 +118,18 @@ final class M9ReleaseReadinessContractTest {
 
         // The base of the automatic patch line: a main merge publishes the first free v0.4.N >= 0.4.7.
         assertTrue(properties.contains("mod_version=0.4.7"));
-        assertTrue(english.contains("**Current implementation:** BlockLens **v0.4.7** provides **"
+        // Every merge publishes a new patch, so the README names the minor line and links the latest
+        // release instead of pinning a patch version that the next merge makes stale.
+        String latest = "[GitHub Releases](https://github.com/bosatsu25/BlockLens/releases/latest)";
+        String englishCurrent = line(english, "> **Current implementation:**");
+        String japaneseCurrent = line(japanese, "> **現行実装:**");
+        assertTrue(englishCurrent.contains("BlockLens on the **0.4** line (latest patch: " + latest + ") provides **"
                 + CapabilityId.values().length + " independently configurable capabilities**"));
-        assertTrue(japanese.contains("**現行実装:** BlockLens **v0.4.7**"));
-        assertTrue(japanese.contains("**独立設定可能な" + CapabilityId.values().length + "機能**"));
+        assertTrue(japaneseCurrent.contains("BlockLens **0.4系**（最新パッチは" + latest + "）"));
+        assertTrue(japaneseCurrent.contains("**独立設定可能な" + CapabilityId.values().length + "機能**"));
+        for (String current : List.of(englishCurrent, japaneseCurrent)) {
+            assertFalse(current.matches(".*v\\d+\\.\\d+\\.\\d+.*"), "a pinned patch version goes stale: " + current);
+        }
         assertFalse(english.contains("**Current stable release:** BlockLens **v0.4.4**"));
         assertFalse(japanese.contains("**現在の安定版:** BlockLens **v0.4.4**"));
         assertTrue(properties.contains("v0.1.0 is the published 37-capability source baseline"));
@@ -171,5 +180,10 @@ final class M9ReleaseReadinessContractTest {
             assertTrue(document.contains("source-raw-parity-audit.md"));
             assertTrue(document.contains("chisetweaks-migration.md"));
         }
+    }
+
+    private static String line(String text, String prefix) {
+        return text.lines().filter(candidate -> candidate.startsWith(prefix)).findFirst()
+                .orElseThrow(() -> new AssertionError("missing line starting with " + prefix));
     }
 }
