@@ -2,6 +2,7 @@ package dev.blocklens.core.render;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -347,6 +348,108 @@ final class DecorationLinesTest {
         assertEquals(u1 - 0.25F / 1024, uvs[4], 1.0E-7F);
         DecorationLines.uvs(new Line(UP, 0, 4, 4, 5, 5, true, DecorationLines.AMBER), u0, u1, v0, v1, uvs);
         assertEquals(u0 + 0.25F * 4 / 16, uvs[0], 1.0E-7F, "a single cell runs along s");
+    }
+
+    @Test
+    void linesFitTheVanillaShapesAndNotAReshapedBlock() {
+        for (Facing facing : FACINGS) {
+            for (Half half : List.of(Half.BOTTOM, Half.TOP)) {
+                for (StairShape shape : SHAPES) {
+                    var surfaces = new DecorationLines.Surfaces();
+                    boolean[] solid = DecorationLines.solid(facing.ordinal() - 1, half == Half.TOP, shape);
+                    for (int octant = 0; octant < 8; octant++) {
+                        if (!solid[octant]) continue;
+                        int x = (octant & 1) * 8, y = (octant >> 1 & 1) * 8, z = (octant >> 2 & 1) * 8;
+                        box(surfaces, x, y, z, x + 8, y + 8, z + 8);
+                    }
+                    assertTrue(DecorationLines.fits(stairs(facing, half, shape), surfaces), facing + "/" + half + "/" + shape);
+                }
+                for (boolean open : new boolean[] {false, true}) {
+                    int[] panel = trapdoorPanel(facing, half, open, 3);
+                    var vanilla = new DecorationLines.Surfaces();
+                    box(vanilla, panel);
+                    assertTrue(DecorationLines.fits(trapdoor(facing, half, open), vanilla), facing + "/" + half + "/" + open);
+                    var thin = new DecorationLines.Surfaces();
+                    box(thin, trapdoorPanel(facing, half, open, 1));
+                    assertFalse(DecorationLines.fits(trapdoor(facing, half, open), thin),
+                            "a 1/16 panel leaves the 3/16 marks in the air: " + facing + "/" + half + "/" + open);
+                }
+            }
+        }
+        Line[] straight = stairs(Facing.EAST, Half.BOTTOM, StairShape.STRAIGHT);
+        assertFalse(DecorationLines.fits(straight, new DecorationLines.Surfaces()), "no geometry, no lines");
+        var slab = new DecorationLines.Surfaces();
+        box(slab, 0, 0, 0, 16, 8, 16);
+        assertFalse(DecorationLines.fits(straight, slab), "a slab model under stairs lacks the step");
+        assertTrue(DecorationLines.fits(new Line[0], slab));
+    }
+
+    @Test
+    void surfacesCoverOnlyWholeCellsOfAxisAlignedQuadsOnTheSixteenthGrid() {
+        Line top = new Line(UP, 0, 0, 0, 16, 1, false, DecorationLines.GREEN);
+        Line[] row = {top};
+        var exact = new DecorationLines.Surfaces();
+        exact.add(UP, new float[] {0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0});
+        assertTrue(DecorationLines.fits(row, exact));
+        var nearlyOnGrid = new DecorationLines.Surfaces();
+        nearlyOnGrid.add(UP, new float[] {0, 0.99999994F, 1, 1, 0.99999994F, 1, 1, 0.99999994F, 0.9375F, 0, 0.99999994F, 0.9375F});
+        assertTrue(DecorationLines.fits(row, nearlyOnGrid), "bake rounding still lands on the grid; UP's bottom row is the south edge");
+        var offGrid = new DecorationLines.Surfaces();
+        offGrid.add(UP, new float[] {0, 0.97F, 0, 0, 0.97F, 1, 1, 0.97F, 1, 1, 0.97F, 0});
+        assertFalse(DecorationLines.fits(new Line[] {new Line(UP, 0, 0, 0, 1, 1, false, DecorationLines.GREEN)}, offGrid));
+        var tilted = new DecorationLines.Surfaces();
+        tilted.add(UP, new float[] {0, 1, 0, 0, 1, 1, 1, 0.5F, 1, 1, 0.5F, 0});
+        assertFalse(DecorationLines.fits(row, tilted), "a sloped quad is not a face plane");
+        var skewed = new DecorationLines.Surfaces();
+        skewed.add(UP, new float[] {0.5F, 1, 0, 0, 1, 0.5F, 0.5F, 1, 1, 1, 1, 0.5F});
+        assertFalse(DecorationLines.fits(new Line[] {new Line(UP, 0, 7, 7, 9, 9, false, DecorationLines.GREEN)}, skewed),
+                "a diamond is not an axis-aligned rectangle");
+        var partial = new DecorationLines.Surfaces();
+        partial.add(UP, new float[] {0, 1, 0.96875F, 0, 1, 1, 0.5F, 1, 1, 0.5F, 1, 0.96875F});
+        assertFalse(DecorationLines.fits(row, partial), "half a cell is not a covered cell");
+        var wrongFace = new DecorationLines.Surfaces();
+        wrongFace.add(DOWN, new float[] {0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0});
+        wrongFace.add(6, new float[] {0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0});
+        wrongFace.add(-1, new float[] {0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0});
+        assertFalse(DecorationLines.fits(row, wrongFace), "a quad covers only its own face's planes");
+        var deep = new DecorationLines.Surfaces();
+        deep.add(UP, new float[] {0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0});
+        assertFalse(DecorationLines.fits(new Line[] {new Line(UP, 15, 0, 0, 1, 1, false, DecorationLines.GREEN)}, deep),
+                "the plane at the opposite boundary is outside the face's depths");
+        var east = new DecorationLines.Surfaces();
+        east.add(EAST, new float[] {1, 0.25F, 1, 1, 0, 1, 1, 0, 0.5F, 1, 0.25F, 0.5F});
+        assertTrue(DecorationLines.fits(new Line[] {new Line(EAST, 0, 0, 0, 8, 4, false, DecorationLines.GREEN)}, east),
+                "east: screen right is north, so z 1 to 0.5 is s 0 to 8");
+        assertFalse(DecorationLines.fits(new Line[] {new Line(EAST, 0, 8, 0, 9, 4, false, DecorationLines.GREEN)}, east));
+        assertFalse(DecorationLines.fits(new Line[] {new Line(EAST, 0, 0, 4, 8, 5, false, DecorationLines.GREEN)}, east));
+    }
+
+    /** The panel box in sixteenths of a trapdoor {@code thickness} sixteenths thick. */
+    private static int[] trapdoorPanel(Facing facing, Half half, boolean open, int thickness) {
+        if (!open) {
+            return half == Half.TOP ? new int[] {0, 16 - thickness, 0, 16, 16, 16} : new int[] {0, 0, 0, 16, thickness, 16};
+        }
+        return switch (facing) {
+            case NORTH -> new int[] {0, 0, 16 - thickness, 16, 16, 16};
+            case SOUTH -> new int[] {0, 0, 0, 16, 16, thickness};
+            case EAST -> new int[] {0, 0, 0, thickness, 16, 16};
+            default -> new int[] {16 - thickness, 0, 0, 16, 16, 16};
+        };
+    }
+
+    private static void box(DecorationLines.Surfaces surfaces, int[] box) {
+        box(surfaces, box[0], box[1], box[2], box[3], box[4], box[5]);
+    }
+
+    /** The six faces of a box given in sixteenths, as a baked model emits them. */
+    private static void box(DecorationLines.Surfaces surfaces, int x0, int y0, int z0, int x1, int y1, int z1) {
+        float a = x0 / 16.0F, b = y0 / 16.0F, c = z0 / 16.0F, d = x1 / 16.0F, e = y1 / 16.0F, f = z1 / 16.0F;
+        surfaces.add(UP, new float[] {a, e, c, a, e, f, d, e, f, d, e, c});
+        surfaces.add(DOWN, new float[] {a, b, f, a, b, c, d, b, c, d, b, f});
+        surfaces.add(NORTH, new float[] {d, e, c, d, b, c, a, b, c, a, e, c});
+        surfaces.add(SOUTH, new float[] {a, e, f, a, b, f, d, b, f, d, e, f});
+        surfaces.add(WEST, new float[] {a, e, c, a, b, c, a, b, f, a, e, f});
+        surfaces.add(EAST, new float[] {d, e, f, d, b, f, d, b, c, d, e, c});
     }
 
     /** Cells in world space, doubled sixteenths so cell centers are integers: face|dashed|argb|x,y,z. */

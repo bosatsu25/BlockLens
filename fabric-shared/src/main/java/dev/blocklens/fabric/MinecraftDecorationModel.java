@@ -163,7 +163,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         int[] cubeFaces = connected ? new int[2] : null;
         boolean netherEnabled = netherLayer != null && (enabledCapabilities & NETHER_TWEAKS_BIT) != 0L;
         // A decoration drawn as a decal keeps the active texture's colors instead of tinting it.
-        long decalCapabilities = decalLayer == null ? 0L : enabledCapabilities & decalLayer.mask();
+        long decalCapabilities = decalLayer == null ? 0L
+                : enabledCapabilities & decalLayer.mask(this, level, pos, state, random);
         long tintCapabilities = enabledCapabilities & ~decalCapabilities;
         if (cubeFaces == null && !netherEnabled && tintCapabilities == 0L) {
             // Decal-only cues leave the base geometry untouched: no per-quad transform at all.

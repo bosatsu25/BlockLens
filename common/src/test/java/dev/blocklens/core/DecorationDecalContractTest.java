@@ -29,7 +29,7 @@ final class DecorationDecalContractTest {
         assertTrue(model.contains("boolean decalCapable = wrapped.getClass() == SingleVariant.class;"));
         assertTrue(model.contains("long[] decalTable = decalCapable ? DecorationDecals.table(descriptor) : null;"));
         assertTrue(model.contains("DecorationLines.Line[] lineSet = decalCapable ? DecorationLines.lines(descriptor) : null;"));
-        assertTrue(model.contains("long decalCapabilities = decalLayer == null ? 0L : enabledCapabilities & decalLayer.mask();"));
+        assertTrue(model.contains("enabledCapabilities & decalLayer.mask(this, level, pos, state, random);"));
         assertTrue(model.contains("long tintCapabilities = enabledCapabilities & ~decalCapabilities;"));
         assertTrue(model.contains("applyNonNetherInstructions(quad, tintCapabilities)"));
         assertTrue(model.contains("decalLayer.emit(this, emitter, level, pos, state, random, cullTest, decalCapabilities)"));
@@ -45,6 +45,9 @@ final class DecorationDecalContractTest {
         assertTrue(layer.contains("DecorationLines.vertices(line, positions);"));
         assertTrue(layer.contains("DecorationLines.uvs(line, sprite.getU0(), sprite.getU1(), sprite.getV0(), sprite.getV1(), uvs);"));
         assertTrue(layer.contains("out.cullFace(boundary ? direction : null);"));
+        // Lines assume the vanilla shape: a cue whose lines leave the model's own quads keeps its tint.
+        assertTrue(layer.contains("fittedMask = mask & ~unfittedLines(model, level, pos, state, random);"));
+        assertTrue(layer.contains("!DecorationLines.fits(lines[i], surfaces)"));
         assertTrue(layer.contains("{Direction.NORTH, Direction.EAST, Direction.SOUTH,\n            Direction.WEST, Direction.UP, Direction.DOWN}"),
                 "line faces are numbered like DecorationQuadFace");
         assertFalse(layer.contains("getBlockState("), "decals never inspect world state");

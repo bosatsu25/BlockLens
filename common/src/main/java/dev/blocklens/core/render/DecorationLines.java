@@ -308,6 +308,89 @@ public final class DecorationLines {
     }
 
     /**
+     * Whether every line lies on {@code surfaces}. Lines assume the vanilla shape; a resource pack
+     * that reshapes the block (a thinner trapdoor, say) leaves some off its quads, and the cue then
+     * keeps its tint rather than drawing marks in the air.
+     */
+    public static boolean fits(Line[] lines, Surfaces surfaces) {
+        for (Line line : lines) {
+            boolean[] covered = surfaces.planes[line.face() * UNITS + line.depth()];
+            if (covered == null) return false;
+            for (int t = line.bottom(); t < line.top(); t++) {
+                for (int s = line.left(); s < line.right(); s++) {
+                    if (!covered[t * UNITS + s]) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /** The sixteenth cells of a block's face planes that its quads cover, fed one quad at a time. */
+    public static final class Surfaces {
+        private static final float GRID_TOLERANCE = 1.0E-3F;
+        private final boolean[][] planes = new boolean[FACES * UNITS][];
+
+        /**
+         * Records one quad on {@code face} given as x, y, z (in blocks) of its four vertices. Only an
+         * axis-aligned rectangle in a sixteenth plane covers anything, and only the cells wholly inside it.
+         */
+        public void add(int face, float[] positions) {
+            if (face < 0 || face >= FACES) return;
+            int normalAxis = axis(face);
+            int rightAxis = axis(DecorationDecals.screenRight(face)), upAxis = axis(DecorationDecals.screenUp(face));
+            int depth = -1;
+            float minS = Float.POSITIVE_INFINITY, maxS = Float.NEGATIVE_INFINITY;
+            float minT = Float.POSITIVE_INFINITY, maxT = Float.NEGATIVE_INFINITY;
+            float[] s = new float[4], t = new float[4];
+            for (int vertex = 0; vertex < 4; vertex++) {
+                int plane = sixteenth(UNITS - unit(face, positions[3 * vertex + normalAxis] * UNITS));
+                if (plane < 0 || plane >= UNITS || vertex > 0 && plane != depth) return;
+                depth = plane;
+                s[vertex] = unit(DecorationDecals.screenRight(face), positions[3 * vertex + rightAxis] * UNITS);
+                t[vertex] = unit(DecorationDecals.screenUp(face), positions[3 * vertex + upAxis] * UNITS);
+                minS = Math.min(minS, s[vertex]);
+                maxS = Math.max(maxS, s[vertex]);
+                minT = Math.min(minT, t[vertex]);
+                maxT = Math.max(maxT, t[vertex]);
+            }
+            for (int vertex = 0; vertex < 4; vertex++) {
+                boolean cornerS = Math.abs(s[vertex] - minS) < GRID_TOLERANCE || Math.abs(s[vertex] - maxS) < GRID_TOLERANCE;
+                boolean cornerT = Math.abs(t[vertex] - minT) < GRID_TOLERANCE || Math.abs(t[vertex] - maxT) < GRID_TOLERANCE;
+                if (!cornerS || !cornerT) return; // Not an axis-aligned rectangle in this frame.
+            }
+            int left = Math.max(0, (int) Math.ceil(minS - GRID_TOLERANCE));
+            int right = Math.min(UNITS, (int) Math.floor(maxS + GRID_TOLERANCE));
+            int bottom = Math.max(0, (int) Math.ceil(minT - GRID_TOLERANCE));
+            int top = Math.min(UNITS, (int) Math.floor(maxT + GRID_TOLERANCE));
+            boolean[] covered = planes[face * UNITS + depth];
+            if (covered == null) {
+                covered = planes[face * UNITS + depth] = new boolean[UNITS * UNITS];
+            }
+            for (int row = bottom; row < top; row++) {
+                for (int column = left; column < right; column++) {
+                    covered[row * UNITS + column] = true;
+                }
+            }
+        }
+
+        /** The frame coordinate, in sixteenths, of a world coordinate along {@code direction}'s axis. */
+        private static float unit(int direction, float sixteenths) {
+            int n = component(direction, axis(direction));
+            return n > 0 ? sixteenths : UNITS - sixteenths;
+        }
+
+        private static int axis(int direction) {
+            return DecorationDecals.normalX(direction) != 0 ? 0 : DecorationDecals.normalY(direction) != 0 ? 1 : 2;
+        }
+
+        /** The whole sixteenth {@code value} rounds to, or -1 when it is off the grid. */
+        private static int sixteenth(float value) {
+            int rounded = Math.round(value);
+            return Math.abs(value - rounded) < GRID_TOLERANCE ? rounded : -1;
+        }
+    }
+
+    /**
      * Fills {@code positions} with x, y, z (in blocks) of the line's corners in vanilla order: top-left,
      * bottom-left, bottom-right, top-right as seen from outside, lifted by
      * {@link DecorationDecals#SURFACE_OFFSET} along the face normal.

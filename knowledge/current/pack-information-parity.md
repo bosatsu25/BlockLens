@@ -55,6 +55,10 @@ whole quads.
   grouped by cull face, and replayed per block under the same cull test. A different glyph sprite
   (any atlas change) rebuilds them. Weighted variants, multipart models and other mods' wrappers (for
   example Simplified Terrain's) keep the M3 tint for that capability.
+- Stairs and trapdoor lines assume the vanilla shape. On first use the decal layer reads the wrapped
+  model's own quads once (`DecorationLines.Surfaces`) and draws a cue's lines only if every line lies on
+  them; a resource pack that reshapes the block (a 1/16 trapdoor, say) keeps that cue's tint instead of
+  marks floating off the geometry.
 - A capability drawn as a decal is not also tinted. Other cues on the same block (Nether Tweaks, glass
   highlights, resource highlights) compose as before.
 - Decals are lifted 1/256 block along the face normal, above the Nether band (0.03/16) and ore border
@@ -128,8 +132,9 @@ on trapdoors.
   table for glazed terracotta, axis/slab semantics, packing and interning; mutation-gated),
   `DecorationLinesTest` (the drawings of straight, inner and outer stairs and of closed and open
   trapdoors, turning with `facing`, mirroring between left and right, flipping between halves, no
-  overlapping lines, dashes only on full faces, vertex winding and lift, glyph coordinates;
-  mutation-gated) and `DecorationDecalContractTest` (renderer wiring, glyph strip structure).
+  overlapping lines, dashes only on full faces, lines fitting every vanilla shape and not a thinner
+  trapdoor, surface coverage only from axis-aligned quads on the sixteenth grid, vertex winding and
+  lift, glyph coordinates; mutation-gated) and `DecorationDecalContractTest` (renderer wiring, glyph strip structure).
 - `scripts/test_decoration_glyphs.py` and the CI clean-room step regenerate the strip bytes exactly.
 - `DecorationDecalOracle` runs on 26.1.2, 26.2 and 26.3 clients: a top-down camera checks arrow direction
   for all four facings, rail orientation and legend color for all three axes, and that only top and
