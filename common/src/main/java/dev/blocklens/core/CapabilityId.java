@@ -99,6 +99,12 @@ public enum CapabilityId {
         OTHER
     }
 
+    /**
+     * Capacity of the enabled-capability mask: two 64-bit words. Word 0 (bits 0–63) is the one the
+     * target index and model wrappers read on render paths; see {@link #renderBit()}.
+     */
+    public static final int MASK_BITS = 2 * Long.SIZE;
+
     private static final Map<String, CapabilityId> BY_SOURCE_KEY;
 
     static {
@@ -107,6 +113,9 @@ public enum CapabilityId {
             CapabilityId previous = byKey.put(capability.sourceKey, capability);
             if (previous != null) {
                 throw new IllegalStateException("Duplicate source key: " + capability.sourceKey);
+            }
+            if (capability.bitPosition() >= MASK_BITS) {
+                throw new IllegalStateException(capability + " exceeds the " + MASK_BITS + "-bit capability mask");
             }
         });
         BY_SOURCE_KEY = Collections.unmodifiableMap(byKey);
@@ -126,6 +135,27 @@ public enum CapabilityId {
     public int bitPosition() {
         int position = ordinal();
         return position < 46 ? position : position < 55 ? position + 1 : position + 2;
+    }
+
+    /**
+     * This capability's bit in mask word 0 ({@link BlockLensConfig#enabledMask()}), which the target
+     * index and model wrappers combine on render paths. A capability past bit 63 has no such bit, and
+     * asking for one fails instead of letting {@code 1L << 64} alias bit 0.
+     */
+    public long renderBit() {
+        return renderBit(bitPosition());
+    }
+
+    static long renderBit(int position) {
+        if (position < 0 || position >= Long.SIZE) {
+            throw new IllegalStateException("Capability bit " + position + " is outside the 64-bit render mask");
+        }
+        return 1L << position;
+    }
+
+    /** Whether this capability fits mask word 0, so render paths can use {@link #renderBit()}. */
+    public boolean hasRenderBit() {
+        return bitPosition() < Long.SIZE;
     }
 
     public String sourceKey() {

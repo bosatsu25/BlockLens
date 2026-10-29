@@ -6,12 +6,12 @@ import dev.blocklens.core.CapabilityId;
 /** Texture/model decode policies are installed only after a successful saved edit. */
 public final class VisualResourceReloadPolicy {
     private VisualResourceReloadPolicy() { }
-    private static final long MASK = (1L << CapabilityId.PALE_OAK_NEUTRAL.bitPosition())
-            | (1L << CapabilityId.COMPACT_BLOCKS.bitPosition())
-            | (1L << CapabilityId.COMPACT_ITEMS.bitPosition())
-            | (1L << CapabilityId.COMPACT_TOOLS.bitPosition())
-            | (1L << CapabilityId.SIMPLIFIED_TERRAIN.bitPosition())
-            | (1L << CapabilityId.CONNECTED_ORE_EDGES.bitPosition());
+    private static final long MASK = CapabilityId.PALE_OAK_NEUTRAL.renderBit()
+            | CapabilityId.COMPACT_BLOCKS.renderBit()
+            | CapabilityId.COMPACT_ITEMS.renderBit()
+            | CapabilityId.COMPACT_TOOLS.renderBit()
+            | CapabilityId.SIMPLIFIED_TERRAIN.renderBit()
+            | CapabilityId.CONNECTED_ORE_EDGES.renderBit();
     public static boolean requiresReload(BlockLensConfig before, BlockLensConfig after) {
         return ((before.enabledMask() ^ after.enabledMask()) & MASK) != 0;
     }

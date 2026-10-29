@@ -44,7 +44,7 @@ final class M7FullParityOracle {
 
             BlockLensConfig allOn = withAllEnabled(original, true);
             require(enabledCount(allOn) == 40, "full-parity all-on config must enable 40 capabilities");
-            require(BlockLensConfigCodec.decode(BlockLensConfigCodec.encode(allOn)).enabledMask() == allOn.enabledMask(),
+            require(BlockLensConfigCodec.decode(BlockLensConfigCodec.encode(allOn)).sameCapabilities(allOn),
                     "all-on config round-trip changed enabled mask");
 
             install(allOn);

@@ -2,6 +2,7 @@ package dev.blocklens.gametest;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
+import dev.blocklens.core.BlockLensConfig;
 import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.analyzer.AnalyzerCatalog;
@@ -27,7 +28,7 @@ final class ResponsiveSettingsScreenOracle {
     static void verify(ClientGameTestContext context) {
         context.runOnClient(client -> {
             Screen previous = BlockLensConfigScreen.current(client);
-            long baseline = BlockLensRuntime.config().enabledMask();
+            BlockLensConfig baseline = BlockLensRuntime.config();
             BlockLensConfigScreen screen = new BlockLensConfigScreen(previous);
             try {
                 BlockLensConfigScreen.show(client, screen);
@@ -38,7 +39,7 @@ final class ResponsiveSettingsScreenOracle {
                         verifySize(screen, size[0], size[1], category);
                     }
                 }
-                require(BlockLensRuntime.config().enabledMask() == baseline, "Navigation applied edits");
+                require(BlockLensRuntime.config().sameCapabilities(baseline), "Navigation applied edits");
                 System.out.println("BLOCKLENS_RESPONSIVE_SETTINGS sizes=320x240,640x360,854x480,1920x1080"
                         + " categories=4 capabilities=" + CapabilityId.values().length
                         + " keyboard_reachable=true bounded=true");

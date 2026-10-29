@@ -59,11 +59,8 @@ public final class TargetCapabilityIndex {
     }
 
     private static long bit(CapabilityId capability) {
-        int ordinal = capability.bitPosition();
-        if (ordinal >= Long.SIZE) {
-            throw new IllegalStateException("CapabilityId count exceeds 64-bit target index capacity");
-        }
-        return 1L << ordinal;
+        // Targets are indexed in mask word 0; a capability past bit 63 cannot bind one.
+        return capability.renderBit();
     }
 
     public static final class Builder {

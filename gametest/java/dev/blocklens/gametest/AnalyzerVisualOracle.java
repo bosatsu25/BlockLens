@@ -97,7 +97,7 @@ final class AnalyzerVisualOracle {
             setMemory(context,true,false);
             var combinedOff=read(capture(context,output,"all50-off"));
             var all=all(original,true).withAnalyzerOptions(options);
-            require(Long.bitCount(all.enabledMask())==50,"all-capability fixture incomplete");
+            require(all.enabledCount()==50,"all-capability fixture incomplete");
             install(context,all);
             context.waitFor(c->AnalyzerClient.engine().markers().stream().map(m->m.kind()).distinct().count()==4,600);
             sample(context,evidence,"all50",false);

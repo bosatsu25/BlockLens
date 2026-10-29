@@ -75,7 +75,7 @@ final class ComfortSettingsOracle {
                         require(BlockLensRuntime.config().comfortOptions().equals(expected), "save lost numeric edits");
                         require(BlockLensConfigFiles.loadOrCreate(directory).comfortOptions().equals(expected),
                                 "numeric disk configuration differs from UI");
-                        require(BlockLensRuntime.config().enabledMask() == original.enabledMask(),
+                        require(BlockLensRuntime.config().sameCapabilities(original),
                                 "numeric-only save altered toggles");
                     } else {
                         parent.keyPressed(new KeyEvent(InputConstants.KEY_ESCAPE, 0, 0));

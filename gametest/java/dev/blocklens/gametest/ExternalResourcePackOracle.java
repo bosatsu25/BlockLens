@@ -105,7 +105,7 @@ final class ExternalResourcePackOracle {
         }
         require(originalPacks.equals(context.computeOnClient(client ->
                 List.copyOf(client.getResourcePackRepository().getSelectedIds()))), "Selected packs were not restored");
-        require(BlockLensRuntime.config().enabledMask() == originalConfig.enabledMask(), "Config was not restored");
+        require(BlockLensRuntime.config().sameCapabilities(originalConfig), "Config was not restored");
         Files.writeString(output.resolve("external-packs-restoration.txt"),
                 "packCount=6\nprobesPerOrder=29\npriorityChangedSources=6\nselectedPacksRestored=true\nconfigRestored=true\n",
                 StandardCharsets.UTF_8);
