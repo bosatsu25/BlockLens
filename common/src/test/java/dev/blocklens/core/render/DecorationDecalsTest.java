@@ -296,31 +296,25 @@ final class DecorationDecalsTest {
     }
 
     @Test
-    void stairsAndTrapdoorsOutlineEveryFaceInTheirLegend() {
-        int[] stairColors = {0xFF30E030, 0xFF30E0E0, 0xFF5090FF, 0xFFFF9030, 0xFFFF40FF};
+    void stairsAndTrapdoorsLeaveGlyphDecalsToTheirLines() {
         StairShape[] shapes = {StairShape.STRAIGHT, StairShape.INNER_LEFT, StairShape.INNER_RIGHT,
                 StairShape.OUTER_LEFT, StairShape.OUTER_RIGHT};
-        for (int i = 0; i < shapes.length; i++) {
-            for (Half half : List.of(Half.BOTTOM, Half.TOP)) {
-                for (int face : FACES) {
-                    assertFrame(decal(CapabilityId.STAIRS, SemanticState.stairs(Facing.EAST, half, shapes[i]), face),
-                            stairColors[i]);
-                }
-            }
-        }
-        assertEquals(NONE, decal(CapabilityId.STAIRS, SemanticState.empty(), UP));
-        int[] trapdoorColors = {DecorationDecals.AXIS_Z, DecorationDecals.AXIS_X, DecorationDecals.DIRECTION,
-                DecorationDecals.AXIS_Y};
         Facing[] facings = {Facing.NORTH, Facing.EAST, Facing.SOUTH, Facing.WEST};
-        for (int i = 0; i < facings.length; i++) {
-            for (boolean open : new boolean[] {false, true}) {
-                for (int face : FACES) {
-                    assertFrame(decal(CapabilityId.TRAPDOOR, SemanticState.trapdoor(facings[i], Half.TOP, open), face),
-                            trapdoorColors[i]);
+        for (Half half : List.of(Half.BOTTOM, Half.TOP)) {
+            for (StairShape shape : shapes) {
+                var stairs = DecorationRenderDescriptor.of(CapabilityId.STAIRS, SemanticState.stairs(Facing.EAST, half, shape));
+                assertTrue(DecorationDecals.isEmpty(DecorationDecals.table(stairs)), shape + "/" + half);
+                assertTrue(DecorationLines.lines(stairs).length > 0, shape + "/" + half);
+            }
+            for (Facing facing : facings) {
+                for (boolean open : new boolean[] {false, true}) {
+                    var trapdoor = DecorationRenderDescriptor.of(CapabilityId.TRAPDOOR,
+                            SemanticState.trapdoor(facing, half, open));
+                    assertTrue(DecorationDecals.isEmpty(DecorationDecals.table(trapdoor)), facing + "/" + open);
+                    assertTrue(DecorationLines.lines(trapdoor).length > 0, facing + "/" + open);
                 }
             }
         }
-        assertEquals(NONE, decal(CapabilityId.TRAPDOOR, SemanticState.empty(), UP));
     }
 
     @Test
@@ -444,7 +438,8 @@ final class DecorationDecalsTest {
             float[] positions = {0, 1, 0, 1, 1, 0, 1, 1, 0.5F, 0, 1, 0.5F};
             float[] uvs = new float[8];
             long decal = DecorationDecals.decal(ARROW, turns, 0xFFFFFFFF);
-            assertTrue(DecorationDecals.layout(4, decal, positions, 0, 1, 0, 6, uvs));
+            // One unit of v per glyph cell.
+            assertTrue(DecorationDecals.layout(4, decal, positions, 0, 1, 0, DecorationDecals.GLYPHS, uvs));
             for (int vertex = 0; vertex < 4; vertex++) {
                 float x = vertex == 1 || vertex == 2 ? 1 : 0;
                 float z = vertex >= 2 ? 0.5F : 0;

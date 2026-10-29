@@ -27,7 +27,8 @@ final class DecorationDecalContractTest {
         String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
         String layer = Files.readString(SupportedVersionFixtures.sharedSource(root(), "MinecraftDecalLayer.java"));
         assertTrue(model.contains("boolean decalCapable = wrapped.getClass() == SingleVariant.class;"));
-        assertTrue(model.contains("DecorationDecals.table(DecorationRenderDescriptor.of(capability, state))"));
+        assertTrue(model.contains("long[] decalTable = decalCapable ? DecorationDecals.table(descriptor) : null;"));
+        assertTrue(model.contains("DecorationLines.Line[] lineSet = decalCapable ? DecorationLines.lines(descriptor) : null;"));
         assertTrue(model.contains("long decalCapabilities = decalLayer == null ? 0L : enabledCapabilities & decalLayer.mask();"));
         assertTrue(model.contains("long tintCapabilities = enabledCapabilities & ~decalCapabilities;"));
         assertTrue(model.contains("applyNonNetherInstructions(quad, tintCapabilities)"));
@@ -39,6 +40,13 @@ final class DecorationDecalContractTest {
         assertTrue(layer.contains("DecorationDecals.layout(f, decal, positions,"));
         // The decal geometry is the wrapped model's own, emitted once with nothing culled.
         assertTrue(layer.contains("model.emitWrapped(source, level, pos, state, random, direction -> false);"));
+        // Stairs and trapdoor lines come from DecorationLines, unit-tested in common, and keep the
+        // same cull rule as base quads: a line in the block boundary is culled with its face.
+        assertTrue(layer.contains("DecorationLines.vertices(line, positions);"));
+        assertTrue(layer.contains("DecorationLines.uvs(line, sprite.getU0(), sprite.getU1(), sprite.getV0(), sprite.getV1(), uvs);"));
+        assertTrue(layer.contains("out.cullFace(boundary ? direction : null);"));
+        assertTrue(layer.contains("{Direction.NORTH, Direction.EAST, Direction.SOUTH,\n            Direction.WEST, Direction.UP, Direction.DOWN}"),
+                "line faces are numbered like DecorationQuadFace");
         assertFalse(layer.contains("getBlockState("), "decals never inspect world state");
         assertFalse(layer.contains("emissive(") || layer.contains("disableDirectionalShade")
                 || layer.contains("ambientOcclusion("), "decals keep the base face's lighting, as pack textures do");
@@ -71,7 +79,18 @@ final class DecorationDecalContractTest {
                 boolean arrow = y / cell == DecorationDecals.ARROW;
                 assertTrue(argb == 0xFFFFFFFF || (argb >>> 24) == 0 || (arrow && argb == 0xFF202020),
                         "only tintable white, transparency and the arrow contour at " + x + "," + y);
-                assertEquals(strip.getRGB(x, y), strip.getRGB(cell - 1 - x, y), "glyphs are mirror symmetric");
+                if (y / cell != DecorationDecals.LINES) {
+                    assertEquals(strip.getRGB(x, y), strip.getRGB(cell - 1 - x, y), "glyphs are mirror symmetric");
+                }
+            }
+        }
+        // The line glyph: an opaque upper half, and below it one dash per odd sixteenth of the cell,
+        // so a dashed line keeps an absolute phase along its length.
+        int lines = DecorationDecals.LINES * cell;
+        for (int y = 0; y < cell; y++) {
+            for (int x = 0; x < cell; x++) {
+                boolean opaque = y < cell / 2 || (x * 16 / cell) % 2 == 1;
+                assertEquals(opaque, strip.getRGB(x, lines + y) == 0xFFFFFFFF, "line glyph at " + x + "," + y);
             }
         }
         int rails = DecorationDecals.RAILS * cell;

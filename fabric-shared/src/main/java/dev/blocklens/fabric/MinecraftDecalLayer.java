@@ -1,6 +1,7 @@
 package dev.blocklens.fabric;
 
 import dev.blocklens.core.render.DecorationDecals;
+import dev.blocklens.core.render.DecorationLines;
 import dev.blocklens.core.render.DecorationQuadFace;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
@@ -22,27 +23,34 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Decal quads of one single-variant decoration model: each quad of the wrapped geometry gets the
- * face's clean-room glyph mapped onto its own bounds, lifted just above the surface. The quads are
- * encoded once per (enabled decal cues, glyph sprite) and grouped by cull face, so culled faces
- * stay culled exactly as when the model itself is emitted with the same cull test.
+ * face's clean-room glyph mapped onto its own bounds, lifted just above the surface, and stairs and
+ * trapdoors add the state-derived lines of {@link DecorationLines}. The quads are encoded once per
+ * (enabled decal cues, glyph sprite) and grouped by cull face, so culled faces stay culled exactly
+ * as when the model itself is emitted with the same cull test.
  */
 final class MinecraftDecalLayer {
     private static final Identifier DECAL_SPRITE = Identifier.fromNamespaceAndPath("blocklens", DecorationDecals.SPRITE);
     private static final Direction[] DIRECTIONS = Direction.values();
     private static final int UNCULLED = DIRECTIONS.length;
+    /** Indexed by DecorationQuadFace ordinal, the face numbering of DecorationLines. */
+    private static final Direction[] FACE_DIRECTIONS = {Direction.NORTH, Direction.EAST, Direction.SOUTH,
+            Direction.WEST, Direction.UP, Direction.DOWN};
 
-    // Indexed like the owning model's capabilities; tables are interned per (capability, state).
+    // Indexed like the owning model's capabilities; tables and lines are interned per (capability, state).
     private final long[] capabilityBits;
     private final long[] @Nullable [] tables;
+    private final DecorationLines.Line[] @Nullable [] lines;
     private final long mask;
 
     // Decal quads depend only on the fixed geometry, the enabled decal cues and the glyph sprite, so
     // they are encoded once and replayed per block instead of re-emitting and re-mapping the model.
     private volatile @Nullable DecalMeshes decalMeshes;
 
-    MinecraftDecalLayer(long[] capabilityBits, long[] @Nullable [] tables, long mask) {
+    MinecraftDecalLayer(long[] capabilityBits, long[] @Nullable [] tables, DecorationLines.Line[] @Nullable [] lines,
+            long mask) {
         this.capabilityBits = capabilityBits;
         this.tables = tables;
+        this.lines = lines;
         this.mask = mask;
     }
 
@@ -83,12 +91,7 @@ final class MinecraftDecalLayer {
         source.pushTransform(quad -> {
             if (applyDecal(quad, sprite, decalCapabilities, positions, uvs)) {
                 Direction cullFace = quad.cullFace();
-                int group = cullFace == null ? UNCULLED : cullFace.ordinal();
-                if (groups[group] == null) {
-                    groups[group] = Renderer.get().mutableMesh();
-                    emitters[group] = groups[group].emitter();
-                }
-                emitters[group].copyFrom(quad).emit();
+                group(groups, emitters, cullFace == null ? UNCULLED : cullFace.ordinal()).copyFrom(quad).emit();
             }
             return false; // Only the grouped copies are kept.
         });
@@ -96,6 +99,13 @@ final class MinecraftDecalLayer {
             model.emitWrapped(source, level, pos, state, random, direction -> false);
         } finally {
             source.popTransform();
+        }
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i] != null && (decalCapabilities & capabilityBits[i]) != 0L) {
+                for (DecorationLines.Line line : lines[i]) {
+                    emitLine(line, sprite, groups, emitters, positions, uvs);
+                }
+            }
         }
         Mesh[] byCullFace = new Mesh[UNCULLED + 1];
         for (int i = 0; i < groups.length; i++) {
@@ -105,6 +115,35 @@ final class MinecraftDecalLayer {
     }
 
     private record DecalMeshes(long capabilities, TextureAtlasSprite sprite, @Nullable Mesh[] byCullFace) {
+    }
+
+    private static QuadEmitter group(MutableMesh[] groups, QuadEmitter[] emitters, int group) {
+        if (groups[group] == null) {
+            groups[group] = Renderer.get().mutableMesh();
+            emitters[group] = groups[group].emitter();
+        }
+        return emitters[group];
+    }
+
+    /** A line on a face plane: culled with the face when it lies in the block boundary, never otherwise. */
+    private static void emitLine(DecorationLines.Line line, TextureAtlasSprite sprite, MutableMesh[] groups,
+            QuadEmitter[] emitters, float[] positions, float[] uvs) {
+        Direction direction = FACE_DIRECTIONS[line.face()];
+        boolean boundary = line.depth() == 0;
+        QuadEmitter out = group(groups, emitters, boundary ? direction.ordinal() : UNCULLED);
+        DecorationLines.vertices(line, positions);
+        DecorationLines.uvs(line, sprite.getU0(), sprite.getU1(), sprite.getV0(), sprite.getV1(), uvs);
+        for (int vertex = 0; vertex < 4; vertex++) {
+            out.pos(vertex, positions[3 * vertex], positions[3 * vertex + 1], positions[3 * vertex + 2]);
+            out.uv(vertex, uvs[2 * vertex], uvs[2 * vertex + 1]);
+        }
+        int argb = line.argb();
+        out.color(argb, argb, argb, argb);
+        // cullFace also sets the nominal face, so it goes first.
+        out.cullFace(boundary ? direction : null);
+        out.nominalFace(direction);
+        out.chunkLayer(ChunkSectionLayer.CUTOUT);
+        out.emit();
     }
 
     private boolean applyDecal(MutableQuadView quad, TextureAtlasSprite sprite, long decalCapabilities,

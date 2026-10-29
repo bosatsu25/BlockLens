@@ -298,6 +298,9 @@ boundaries are authoritative in [builder-assist.md](builder-assist.md) and
 The shared renderer draws decoration cues as clean-room decal quads over single-variant models and
 keeps the tint grammar as fallback. Policy, interned per-face tables and projection math are one pure,
 table-driven `common` class (`DecorationDecals`); the adapter only reads vertex positions and writes UVs.
+Stairs and trapdoors draw state-derived lines instead (`DecorationLines`, 2026-10-29): the interned line
+rectangles, their vertices and glyph coordinates are computed in `common`, and `MinecraftDecalLayer` only
+copies them into its cached meshes with the face's cull rule.
 See [`pack-information-parity.md`](pack-information-parity.md).
 
 ## Shared terrain implementation (2026-10-12 refactor)

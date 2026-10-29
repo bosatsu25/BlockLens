@@ -30,8 +30,9 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 /**
  * Rendered proof that decoration decals carry the source pack's information, read from the face
  * a player actually sees: a top-down camera looks at one block at a time, so only its UP face is
- * visible. Arrow direction, rail orientation, axis color and slab-face semantics are decided from
- * the ON-vs-OFF pixel difference, which isolates the decal from the active texture.
+ * visible. Arrow direction, rail orientation, axis color, slab-face semantics, the stairs' back edge
+ * and hidden step and the trapdoor's handle and hinges are decided from the ON-vs-OFF pixel
+ * difference, which isolates the decal from the active texture.
  */
 final class DecorationDecalOracle {
     private static final int WIDTH = 640;
@@ -41,6 +42,10 @@ final class DecorationDecalOracle {
     private static final int SETTLE_TICKS = 30;
     private static final int MIN_DECAL_PIXELS = 120;
     private static final int MAX_ABSENT_PIXELS = 20;
+    // A dashed sixteenth-wide line crosses about seven dashes; a solid edge crosses as one run.
+    private static final int MIN_DASH_RUNS = 5;
+    private static final int MIN_GREEN_PIXELS = 40;
+    private static final int MIN_HINGE_PIXELS = 8;
     // Away from the other oracle scenes so their blocks and thresholds stay untouched.
     private static final String TARGET = "40 -59 40";
     private static final String GLYPH_STRIP = "/assets/blocklens/textures/block/cue/decal_glyphs.png";
@@ -131,6 +136,40 @@ final class DecorationDecalOracle {
             require(bottom.count() <= MAX_ABSENT_PIXELS, "bottom slab must not mark its upper face");
             require(top.count() >= MIN_DECAL_PIXELS, "top slab must mark its upper face");
             require(doubled.count() * 10 >= top.count() * 13, "double slab must show the double frame");
+
+            // Stairs: an upside-down stair shows its full base face from above, drawn as the source
+            // pack draws it: amber outline, green on the edge toward facing, the hidden step dashed.
+            String[][] stairs = {{"north", "up"}, {"east", "right"}, {"south", "down"}, {"west", "left"}};
+            for (String[] stair : stairs) {
+                Mask mask = decal(context, singleplayer, outputDir, off, CapabilityId.STAIRS,
+                        "stone_stairs[facing=" + stair[0] + ",half=top,shape=straight]", "stairs-" + stair[0]);
+                boolean horizontal = stair[1].equals("up") || stair[1].equals("down");
+                String green = mask.side(mask.greenPixels());
+                int dashes = mask.maxRuns(horizontal, HALF_WINDOW - 12, HALF_WINDOW + 12);
+                manifest.append("stairs.").append(stair[0]).append(" green=").append(green).append(" dashRuns=")
+                        .append(dashes).append(" count=").append(mask.count()).append('\n');
+                require(mask.count() >= MIN_DECAL_PIXELS, "stairs lines missing for facing=" + stair[0]);
+                require(green.equals(stair[1]), "stairs facing=" + stair[0] + " must draw green toward "
+                        + stair[1] + " on screen but drew it " + green);
+                require(dashes >= MIN_DASH_RUNS, "stairs facing=" + stair[0]
+                        + " must dash the hidden step edge across the middle: runs=" + dashes);
+            }
+
+            // Trapdoors: a handle on the edge toward facing, two hinges on the edge it pivots on.
+            String[][] trapdoors = {{"north", "up"}, {"east", "right"}};
+            for (String[] trapdoor : trapdoors) {
+                Mask mask = decal(context, singleplayer, outputDir, off, CapabilityId.TRAPDOOR,
+                        "birch_trapdoor[facing=" + trapdoor[0] + ",half=bottom,open=false]", "trapdoor-" + trapdoor[0]);
+                String handle = mask.side(mask.changed());
+                int hinges = mask.components(Mask.opposite(trapdoor[1]));
+                manifest.append("trapdoor.").append(trapdoor[0]).append(" handle=").append(handle)
+                        .append(" hinges=").append(hinges).append(" count=").append(mask.count()).append('\n');
+                require(mask.count() >= MIN_DECAL_PIXELS, "trapdoor marks missing for facing=" + trapdoor[0]);
+                require(handle.equals(trapdoor[1]), "trapdoor facing=" + trapdoor[0] + " must carry its handle "
+                        + trapdoor[1] + " on screen but it sits " + handle);
+                require(hinges == 2, "trapdoor facing=" + trapdoor[0] + " must show two hinges on its pivot edge: "
+                        + hinges);
+            }
             Files.writeString(outputDir.resolve("decoration-decals-manifest.txt"), manifest.toString(),
                     StandardCharsets.UTF_8);
         } catch (IOException exception) {
@@ -258,8 +297,8 @@ final class DecorationDecalOracle {
         }
     }
 
-    /** Pixels inside the centered window whose color changed between OFF and ON. */
-    private record Mask(boolean[] changed, long red, long green, long blue, int count) {
+    /** Pixels inside the centered window whose color changed between OFF and ON, with their ON color. */
+    private record Mask(boolean[] changed, int[] colors, long red, long green, long blue, int count) {
         private static final String[] DIRECTIONS = {"up", "right", "down", "left"};
         private static final int GRID = DecorationDecals.GLYPH_PIXELS;
         private static final double MIN_ARROW_MATCH = 0.6;
@@ -267,6 +306,7 @@ final class DecorationDecalOracle {
 
         static Mask of(BufferedImage off, BufferedImage on) {
             boolean[] changed = new boolean[4 * HALF_WINDOW * HALF_WINDOW];
+            int[] colors = new int[changed.length];
             long red = 0, green = 0, blue = 0;
             int count = 0;
             for (int y = 0; y < 2 * HALF_WINDOW; y++) {
@@ -275,6 +315,7 @@ final class DecorationDecalOracle {
                     int b = on.getRGB(WIDTH / 2 - HALF_WINDOW + x, HEIGHT / 2 - HALF_WINDOW + y);
                     int delta = Math.abs(((a >>> 16) & 255) - ((b >>> 16) & 255))
                             + Math.abs(((a >>> 8) & 255) - ((b >>> 8) & 255)) + Math.abs((a & 255) - (b & 255));
+                    colors[y * 2 * HALF_WINDOW + x] = b;
                     if (delta >= PIXEL_DELTA) {
                         changed[y * 2 * HALF_WINDOW + x] = true;
                         red += (b >>> 16) & 255;
@@ -284,7 +325,97 @@ final class DecorationDecalOracle {
                     }
                 }
             }
-            return new Mask(changed, red, green, blue, count);
+            return new Mask(changed, colors, red, green, blue, count);
+        }
+
+        /** Changed pixels whose ON color is clearly green. */
+        boolean[] greenPixels() {
+            boolean[] green = new boolean[changed.length];
+            for (int i = 0; i < changed.length; i++) {
+                int r = (colors[i] >>> 16) & 255, g = (colors[i] >>> 8) & 255, b = colors[i] & 255;
+                green[i] = changed[i] && g > r + 40 && g > b + 40;
+            }
+            return green;
+        }
+
+        /** Screen side of the window center where {@code pixels} gather, or "center"/"none". */
+        String side(boolean[] pixels) {
+            long sumX = 0, sumY = 0;
+            int n = 0;
+            for (int i = 0; i < pixels.length; i++) {
+                if (!pixels[i]) continue;
+                sumX += i % (2 * HALF_WINDOW);
+                sumY += i / (2 * HALF_WINDOW);
+                n++;
+            }
+            if (n < MIN_GREEN_PIXELS) return "none";
+            double dx = (double) sumX / n - HALF_WINDOW, dy = (double) sumY / n - HALF_WINDOW;
+            if (Math.max(Math.abs(dx), Math.abs(dy)) < 3) return "center";
+            return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
+        }
+
+        /** Most runs of changed pixels along any row (or column) in {@code [from, to)}. */
+        int maxRuns(boolean rows, int from, int to) {
+            int size = 2 * HALF_WINDOW;
+            int best = 0;
+            for (int line = from; line < to; line++) {
+                int runs = 0;
+                boolean inside = false;
+                for (int along = 0; along < size; along++) {
+                    boolean hit = changed[rows ? line * size + along : along * size + line];
+                    if (hit && !inside) runs++;
+                    inside = hit;
+                }
+                best = Math.max(best, runs);
+            }
+            return best;
+        }
+
+        static String opposite(String direction) {
+            return switch (direction) {
+                case "up" -> "down";
+                case "down" -> "up";
+                case "left" -> "right";
+                default -> "left";
+            };
+        }
+
+        /** 8-connected groups of at least {@link #MIN_HINGE_PIXELS} changed pixels in the half of the window on {@code side}. */
+        int components(String side) {
+            int size = 2 * HALF_WINDOW;
+            boolean[] half = new boolean[changed.length];
+            for (int i = 0; i < changed.length; i++) {
+                int x = i % size, y = i / size;
+                boolean inside = switch (side) {
+                    case "up" -> y < HALF_WINDOW;
+                    case "down" -> y >= HALF_WINDOW;
+                    case "left" -> x < HALF_WINDOW;
+                    default -> x >= HALF_WINDOW;
+                };
+                half[i] = inside && changed[i];
+            }
+            int groups = 0;
+            int[] queue = new int[half.length];
+            for (int start = 0; start < half.length; start++) {
+                if (!half[start]) continue;
+                int head = 0, tail = 0;
+                queue[tail++] = start;
+                half[start] = false;
+                while (head < tail) {
+                    int i = queue[head++];
+                    int x = i % size, y = i / size;
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dx = -1; dx <= 1; dx++) {
+                            int nx = x + dx, ny = y + dy;
+                            if (nx < 0 || ny < 0 || nx >= size || ny >= size || !half[ny * size + nx]) continue;
+                            half[ny * size + nx] = false;
+                            queue[tail++] = ny * size + nx;
+                        }
+                    }
+                }
+                if (tail >= MIN_HINGE_PIXELS) groups++;
+            }
+            return groups;
         }
 
         int occupiedRows() {

@@ -4,6 +4,7 @@ import dev.blocklens.core.BlockLensRuntime;
 import dev.blocklens.core.CapabilityId;
 import dev.blocklens.core.render.VisualGeometryKey;
 import dev.blocklens.core.render.DecorationDecals;
+import dev.blocklens.core.render.DecorationLines;
 import dev.blocklens.core.render.DecorationQuadFace;
 import dev.blocklens.core.render.DecorationQuadInstruction;
 import dev.blocklens.core.render.DecorationRenderDescriptor;
@@ -78,6 +79,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         // emission matches the first. Weighted, multipart and other wrappers keep the tint cue.
         boolean decalCapable = wrapped.getClass() == SingleVariant.class;
         long[][] decals = null;
+        DecorationLines.Line[][] lines = null;
         long decalBits = 0L;
 
         for (int i = 0; i < count; i++) {
@@ -99,14 +101,17 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             } else if (capability == CapabilityId.BRIGHT_CONCRETE) {
                 descriptors[i] = DecorationQuadInstruction.emissiveTint(0xFFFFFFFF);
             } else if (DecorationStateKind.isDecorationCapability(capability)) {
-                descriptors[i] = FaceInstructionTable.compile(DecorationRenderDescriptor.of(capability, state));
-                long[] decalTable = decalCapable
-                        ? DecorationDecals.table(DecorationRenderDescriptor.of(capability, state)) : null;
-                if (decalTable != null && !DecorationDecals.isEmpty(decalTable)) {
+                var descriptor = DecorationRenderDescriptor.of(capability, state);
+                descriptors[i] = FaceInstructionTable.compile(descriptor);
+                long[] decalTable = decalCapable ? DecorationDecals.table(descriptor) : null;
+                DecorationLines.Line[] lineSet = decalCapable ? DecorationLines.lines(descriptor) : null;
+                if (decalTable != null && (!DecorationDecals.isEmpty(decalTable) || lineSet.length > 0)) {
                     if (decals == null) {
                         decals = new long[count][];
+                        lines = new DecorationLines.Line[count][];
                     }
                     decals[i] = decalTable;
+                    lines[i] = lineSet;
                     decalBits |= bit;
                 }
             } else if (VisibilityStateKind.isVisibilityCapability(capability)) {
@@ -129,7 +134,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
         this.representedRenderableMask = represented;
         this.lightweightOverlay = (represented & LIGHTWEIGHT_OVERLAY_MASK) == 0L ? null : new RetainedValue<>();
-        this.decalLayer = decals == null ? null : new MinecraftDecalLayer(descriptorBits, decals, decalBits);
+        this.decalLayer = decals == null ? null : new MinecraftDecalLayer(descriptorBits, decals, lines, decalBits);
         this.netherLayer = netherCue == null ? null : new MinecraftNetherLayer(netherCue, netherState);
         this.oreBorderLayer = borders == 0L ? null : new MinecraftOreBorderLayer(wrapped, borders, borderTint);
     }

@@ -13,7 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * information with clean-room glyphs (see {@code knowledge/current/pack-information-parity.md}):
  * glazed terracotta arrows on all faces in the source template's rotations, axis-colored frames
  * and rails, slab frames on the face that meets the block boundary, and outlines on the faces the
- * tint grammar selects for the other cues. Stained glass has no decal.</p>
+ * tint grammar selects for the other cues. Stairs and trapdoors draw state-derived line work
+ * instead ({@link DecorationLines}); stained glass has no decal.</p>
  *
  * <p>Glyph rotation is expressed in a fixed viewer frame per face (screen-right x screen-up is the
  * outward normal) and applied to vertex positions, never model UVs. A decal is a packed long:
@@ -30,7 +31,9 @@ public final class DecorationDecals {
     public static final int ARROW = 3;
     public static final int SEAM_FRAME = 4;
     public static final int DOUBLE_FRAME = 5;
-    public static final int GLYPHS = 6;
+    /** Opaque upper half for solid lines, striped lower half for dashed ones (see {@link DecorationLines}). */
+    public static final int LINES = 6;
+    public static final int GLYPHS = 7;
     public static final int GLYPH_PIXELS = 32;
     /** One vertical strip in the block atlas; glyph g occupies rows [32g, 32g + 32). */
     public static final String SPRITE = "block/cue/decal_glyphs";
@@ -62,9 +65,6 @@ public final class DecorationDecals {
     private static final int[] FACE_AXIS = {3, 1, 3, 1, 2, 2};
     // Indexed by enum ordinal minus one (index 0 of each enum is NONE).
     private static final int[] AXIS_COLORS = {AXIS_X, AXIS_Y, AXIS_Z};
-    private static final int[] STAIR_COLORS = {0xFF30E030, 0xFF30E0E0, 0xFF5090FF, 0xFFFF9030, 0xFFFF40FF};
-    /** Same four-color facing legend as the trapdoor tint grammar: N blue, E red, S yellow, W green. */
-    private static final int[] TRAPDOOR_COLORS = {AXIS_Z, AXIS_X, DIRECTION, AXIS_Y};
     private static final int FACES = DecorationQuadFace.values().length;
     private static final ConcurrentHashMap<Long, long[]> INTERNED = new ConcurrentHashMap<>();
 
@@ -171,14 +171,8 @@ public final class DecorationDecals {
                 default -> NONE;
             };
         }
-        if (cue == DecorationVisualCue.STAIRS_STATE_MARKER) {
-            int shape = state.stairShape().ordinal();
-            return shape == 0 ? NONE : decal(INSET_FRAME, 0, STAIR_COLORS[shape - 1]);
-        }
-        if (cue == DecorationVisualCue.TRAPDOOR_STATE_MARKER) {
-            return front < 0 ? NONE : decal(INSET_FRAME, 0, TRAPDOOR_COLORS[front]);
-        }
-        return NONE; // Stained glass keeps only its solid-layer behavior.
+        // Stairs and trapdoors draw DecorationLines; stained glass keeps only its solid-layer behavior.
+        return NONE;
     }
 
     /**
