@@ -85,6 +85,11 @@ recording (1 ms, full stacks). The summary assigns every section-compile sample 
 BlockLens code path on its stack (decals, ore border, Nether overlay, lightweight overlay, base
 transform, the wrapper's own emission, other compile work), so the lighting of a decal quad counts
 as decal cost. The recordings are part of the artifact; no timing in §4 is taken while JFR runs.
+Overlay paths are told apart by renderer class (`MinecraftDecalLayer`, `MinecraftOreBorderLayer`,
+`MinecraftNetherLayer`); within `MinecraftDecorationModel` the tint transform, the lightweight overlay
+and the wrapped emission are told apart by method. Since the 2026-10-29 layer split, sorting base quads
+into unit-cube faces for connected ore borders counts as ore-border cost; profiles of earlier heads
+counted it as base transform.
 
 Only invalid measurement fails the job: missing scene compiles, too few frames, a block atlas that
 changes between rounds of the same condition, a pack that does not grow the atlas, BlockLens

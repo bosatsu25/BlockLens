@@ -1,5 +1,6 @@
 package dev.blocklens.core.render;
 
+import dev.blocklens.core.state.SemanticState;
 import java.util.Map;
 import java.util.Objects;
 
@@ -68,6 +69,29 @@ public record NetherTweaksVisualCue(
 
     public boolean hasUpperBand() {
         return upperBandArgb != NO_BAND;
+    }
+
+    /**
+     * Interior fill of {@code face}. A pillar block (axis X, Y or Z) takes the up fill on its two end
+     * faces and the side fill elsewhere; other blocks use the up, down and side fills by face.
+     */
+    public int fillArgb(SemanticState.Axis axis, DecorationQuadFace face) {
+        Objects.requireNonNull(axis, "axis");
+        Objects.requireNonNull(face, "face");
+        if (axis != SemanticState.Axis.NONE) {
+            boolean endFace = switch (axis) {
+                case X -> face == DecorationQuadFace.EAST || face == DecorationQuadFace.WEST;
+                case Y -> face == DecorationQuadFace.UP || face == DecorationQuadFace.DOWN;
+                case Z -> face == DecorationQuadFace.NORTH || face == DecorationQuadFace.SOUTH;
+                case NONE -> false;
+            };
+            return endFace ? upFillArgb : sideFillArgb;
+        }
+        return switch (face) {
+            case UP -> upFillArgb;
+            case DOWN -> downFillArgb;
+            default -> sideFillArgb;
+        };
     }
 
     public static NetherTweaksVisualCue forTarget(String minecraftPath) {

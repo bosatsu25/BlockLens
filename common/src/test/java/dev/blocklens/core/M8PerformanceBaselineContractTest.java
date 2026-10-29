@@ -102,6 +102,7 @@ final class M8PerformanceBaselineContractTest {
             String plugin = Files.readString(SupportedVersionFixtures.adapterSource(
                     root(), module, "MinecraftDecorationModelPlugin.java"));
             String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
+            String nether = Files.readString(SupportedVersionFixtures.sharedSource(root(), "MinecraftNetherLayer.java"));
 
             assertTrue(plugin.contains("RETAINED_CAPABILITY_SLOTS.addAndGet(count)"));
             assertTrue(plugin.contains("MAX_CAPABILITIES_PER_MODEL.accumulateAndGet(count, Math::max)"));
@@ -109,16 +110,17 @@ final class M8PerformanceBaselineContractTest {
             assertTrue(plugin.contains("public static int maxCapabilitiesPerWrappedModel()"));
             assertTrue(plugin.contains("public static int netherWrappedModelCount()"));
 
-            assertTrue(model.contains("private volatile @Nullable BlockStateModel netherInteriorOverlay;"));
-            assertTrue(model.contains("private volatile @Nullable BlockStateModel netherBandOverlay;"));
-            assertTrue(model.contains("if (cached != null || interiorLookupAttempted)"));
-            assertTrue(model.contains("if (cached != null || bandLookupAttempted)"));
-            assertTrue(model.contains("cached = lookup(NetherTweaksOverlayModels.INTERIOR);"));
-            assertTrue(model.contains("cached = lookup(NetherTweaksOverlayModels.UPPER_BAND);"));
-            assertTrue(model.indexOf("netherInteriorOverlay = cached;")
-                    < model.indexOf("interiorLookupAttempted = true;"));
-            assertTrue(model.indexOf("netherBandOverlay = cached;")
-                    < model.indexOf("bandLookupAttempted = true;"));
+            // One retained lookup per overlay and wrapper; RetainedValue keeps a failed (null) lookup too.
+            assertTrue(nether.contains("private final RetainedValue<BlockStateModel> interiorOverlay = new RetainedValue<>();"));
+            assertTrue(nether.contains("this.bandOverlay = netherCue.hasUpperBand() ? new RetainedValue<>() : null;"));
+            assertTrue(nether.contains("interiorOverlay.get(NetherTweaksOverlayModels.INTERIOR,"));
+            assertTrue(nether.contains("bandOverlay.get(NetherTweaksOverlayModels.UPPER_BAND, MinecraftDecorationModel::lookup)"));
+            assertFalse(nether.contains("synchronized") || nether.contains("volatile"),
+                    "publication belongs to RetainedValue, not to a second hand-rolled copy");
+            // A wrapper carries a layer's state only when one of its capabilities draws that layer.
+            assertTrue(model.contains("this.decalLayer = decals == null ? null : new MinecraftDecalLayer("));
+            assertTrue(model.contains("this.netherLayer = netherCue == null ? null : new MinecraftNetherLayer("));
+            assertTrue(model.contains("this.oreBorderLayer = borders == 0L ? null : new MinecraftOreBorderLayer("));
             assertTrue(model.contains("private final Object[] descriptors;"));
             assertFalse(model.contains("private final DecorationRenderDescriptor[]"));
             assertFalse(model.contains("private final VisibilityRenderDescriptor[]"));

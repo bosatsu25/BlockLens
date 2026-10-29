@@ -245,6 +245,48 @@ public final class DecorationDecals {
         };
     }
 
+    /**
+     * Maps {@code decal}'s glyph onto a quad's own bounds on {@code face} and lifts the quad by
+     * {@link #SURFACE_OFFSET} along the face normal.
+     *
+     * <p>{@code positions} holds x, y, z of four vertices and is moved in place; {@code uvs} receives
+     * u, v of each vertex inside the glyph strip {@code [u0, u1] x [v0, v1]}, one vertical cell per
+     * glyph, staying a hair inside the cell so a neighbouring glyph is never sampled. A quad without
+     * extent on the face changes nothing and returns false.</p>
+     */
+    public static boolean layout(int face, long decal, float[] positions, float u0, float u1, float v0, float v1,
+            float[] uvs) {
+        float minRight = Float.POSITIVE_INFINITY, maxRight = Float.NEGATIVE_INFINITY;
+        float minDown = Float.POSITIVE_INFINITY, maxDown = Float.NEGATIVE_INFINITY;
+        for (int vertex = 0; vertex < 4; vertex++) {
+            float x = positions[3 * vertex], y = positions[3 * vertex + 1], z = positions[3 * vertex + 2];
+            minRight = Math.min(minRight, right(face, x, y, z));
+            maxRight = Math.max(maxRight, right(face, x, y, z));
+            minDown = Math.min(minDown, down(face, x, y, z));
+            maxDown = Math.max(maxDown, down(face, x, y, z));
+        }
+        float width = maxRight - minRight, height = maxDown - minDown;
+        if (width < 1.0E-4F || height < 1.0E-4F) {
+            return false;
+        }
+        int turns = quarterTurns(decal);
+        float du = u1 - u0;
+        float cell = (v1 - v0) / GLYPHS;
+        float glyphV0 = v0 + glyph(decal) * cell + cell / 1024.0F;
+        float dv = cell - cell / 512.0F;
+        for (int vertex = 0; vertex < 4; vertex++) {
+            float x = positions[3 * vertex], y = positions[3 * vertex + 1], z = positions[3 * vertex + 2];
+            float s = (right(face, x, y, z) - minRight) / width;
+            float t = (down(face, x, y, z) - minDown) / height;
+            uvs[2 * vertex] = u0 + glyphU(turns, s, t) * du;
+            uvs[2 * vertex + 1] = glyphV0 + glyphV(turns, s, t) * dv;
+            positions[3 * vertex] = x + VX[face] * SURFACE_OFFSET;
+            positions[3 * vertex + 1] = y + VY[face] * SURFACE_OFFSET;
+            positions[3 * vertex + 2] = z + VZ[face] * SURFACE_OFFSET;
+        }
+        return true;
+    }
+
     private static long frameIf(boolean condition, int argb) {
         return condition ? decal(INSET_FRAME, 0, argb) : NONE;
     }

@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.blocklens.core.CapabilityId;
+import dev.blocklens.core.state.SemanticState;
 import org.junit.jupiter.api.Test;
 
 final class NetherTweaksVisualCueTest {
@@ -90,5 +91,25 @@ final class NetherTweaksVisualCueTest {
         assertEquals(down, cue.downFillArgb(), path);
         assertEquals(frame, cue.frameArgb(), path);
         assertFalse(cue.hasUpperBand(), path);
+    }
+
+    @Test
+    void pillarEndsTakeTheUpFillAndOtherBlocksFillByFace() {
+        var cue = new NetherTweaksVisualCue(0xFF000001, 0xFF000002, 0xFF000003, 0xFF000004, NetherTweaksVisualCue.NO_BAND);
+        var none = SemanticState.Axis.NONE;
+        assertEquals(0xFF000002, cue.fillArgb(none, DecorationQuadFace.UP));
+        assertEquals(0xFF000003, cue.fillArgb(none, DecorationQuadFace.DOWN));
+        assertEquals(0xFF000001, cue.fillArgb(none, DecorationQuadFace.NORTH));
+        assertEquals(0xFF000001, cue.fillArgb(none, DecorationQuadFace.NONE));
+        for (DecorationQuadFace face : DecorationQuadFace.values()) {
+            assertEquals(face == DecorationQuadFace.EAST || face == DecorationQuadFace.WEST ? 0xFF000002 : 0xFF000001,
+                    cue.fillArgb(SemanticState.Axis.X, face), "X " + face);
+            assertEquals(face == DecorationQuadFace.UP || face == DecorationQuadFace.DOWN ? 0xFF000002 : 0xFF000001,
+                    cue.fillArgb(SemanticState.Axis.Y, face), "Y " + face);
+            assertEquals(face == DecorationQuadFace.NORTH || face == DecorationQuadFace.SOUTH ? 0xFF000002 : 0xFF000001,
+                    cue.fillArgb(SemanticState.Axis.Z, face), "Z " + face);
+        }
+        assertThrows(NullPointerException.class, () -> cue.fillArgb(null, DecorationQuadFace.UP));
+        assertThrows(NullPointerException.class, () -> cue.fillArgb(none, null));
     }
 }

@@ -1,8 +1,11 @@
 package dev.blocklens.core;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Expected adapter coverage; 26.3 compiles the compatible 26.2 adapters independently.
@@ -17,6 +20,9 @@ final class SupportedVersionFixtures {
     static final String SHARED_PRE_26_3 = "fabric-shared/src/pre26_3/java";
     static final String GAMETEST_PRE_26_3 = "gametest/pre26_3/java";
     private static final String FABRIC_PACKAGE = "dev/blocklens/fabric";
+    /** The shared renderer: the model wrapper and the overlay layers it composes. */
+    static final List<String> RENDERER_FILES = List.of("MinecraftDecorationModel.java",
+            "MinecraftDecalLayer.java", "MinecraftNetherLayer.java", "MinecraftOreBorderLayer.java");
 
     private SupportedVersionFixtures() {
     }
@@ -46,7 +52,18 @@ final class SupportedVersionFixtures {
     }
 
     static Path rendererSource(Path root) {
-        return sharedSource(root, "MinecraftDecorationModel.java");
+        return sharedSource(root, RENDERER_FILES.getFirst());
+    }
+
+    /** Every shared renderer source, concatenated, for contracts that hold for the whole renderer. */
+    static String rendererText(Path root) {
+        return RENDERER_FILES.stream().map(file -> {
+            try {
+                return Files.readString(sharedSource(root, file));
+            } catch (IOException exception) {
+                throw new UncheckedIOException(exception);
+            }
+        }).collect(Collectors.joining("\n"));
     }
 
     static Path testSourceRoot(Path root, String module) {

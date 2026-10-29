@@ -64,12 +64,13 @@ final class SupportedVersionsContractTest {
 
     @Test
     void modernRendererIsSharedWithOnlyAnExplicitLightingBoundary() throws IOException {
-        String modern = Files.readString(SupportedVersionFixtures.rendererSource(root()));
+        String modern = SupportedVersionFixtures.rendererText(root());
         String thirdBuild = Files.readString(root().resolve("versions/mc26_3/build.gradle"));
         assertTrue(thirdBuild.contains("versions/mc26_2/src/main/java"));
         assertTrue(thirdBuild.contains("versions/mc26_2/src/gametest/java"));
-        assertFalse(Files.exists(root().resolve("versions/mc26_3/src/main/java/"
-                + "dev/blocklens/fabric/MinecraftDecorationModel.java")));
+        for (String file : SupportedVersionFixtures.RENDERER_FILES) {
+            assertFalse(Files.exists(root().resolve("versions/mc26_3/src/main/java/dev/blocklens/fabric/" + file)), file);
+        }
         assertTrue(modern.contains("MinecraftQuadLighting.disableDirectionalShade(quad)"));
         assertTrue(modern.contains("quad.emissive(true)"));
         assertTrue(modern.contains("quad.ambientOcclusion(TriState.FALSE)"));

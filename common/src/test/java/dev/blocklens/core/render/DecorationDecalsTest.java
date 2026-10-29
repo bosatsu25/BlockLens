@@ -7,6 +7,7 @@ import static dev.blocklens.core.render.DecorationDecals.INSET_FRAME;
 import static dev.blocklens.core.render.DecorationDecals.NONE;
 import static dev.blocklens.core.render.DecorationDecals.RAILS;
 import static dev.blocklens.core.render.DecorationDecals.SEAM_FRAME;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -346,5 +347,81 @@ final class DecorationDecalsTest {
         assertEquals(INSET_FRAME, DecorationDecals.glyph(decal));
         assertEquals(0, DecorationDecals.quarterTurns(decal));
         assertEquals(color, DecorationDecals.argb(decal));
+    }
+
+    @Test
+    void layoutMapsTheGlyphOntoTheQuadBoundsAndLiftsIt() {
+        // North face of a full block: screen-right is west (-x), screen-down is -y.
+        float[] positions = {0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0};
+        float[] uvs = new float[8];
+        long decal = DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF);
+        assertTrue(DecorationDecals.layout(0, decal, positions, 0.25F, 0.75F, 0.0F, 0.6F, uvs));
+        float cell = 0.6F / DecorationDecals.GLYPHS;
+        float top = RAILS * cell + cell / 1024.0F;
+        float span = cell - cell / 512.0F;
+        // (x, y) = (0,0) is right-bottom on the north face: s = 1, t = 1.
+        assertArrayEquals(new float[] {0.75F, top + span, 0.25F, top + span, 0.25F, top, 0.75F, top}, uvs, 1.0E-6F);
+        float lift = -DecorationDecals.SURFACE_OFFSET;
+        assertArrayEquals(new float[] {0, 0, lift, 1, 0, lift, 1, 1, lift, 0, 1, lift}, positions, 1.0E-7F);
+    }
+
+    @Test
+    void layoutRotatesWithTheDecalAndUsesTheQuadsOwnBounds() {
+        for (int turns = 0; turns < 4; turns++) {
+            // Upper half of the top face (a top slab's face), lifted along +y.
+            float[] positions = {0, 1, 0, 1, 1, 0, 1, 1, 0.5F, 0, 1, 0.5F};
+            float[] uvs = new float[8];
+            long decal = DecorationDecals.decal(ARROW, turns, 0xFFFFFFFF);
+            assertTrue(DecorationDecals.layout(4, decal, positions, 0, 1, 0, 6, uvs));
+            for (int vertex = 0; vertex < 4; vertex++) {
+                float x = vertex == 1 || vertex == 2 ? 1 : 0;
+                float z = vertex >= 2 ? 0.5F : 0;
+                float s = x;                 // up face: screen-right is east (+x)
+                float t = (z - 0) / 0.5F;    // screen-down is south (+z), over the quad's own extent
+                assertEquals(DecorationDecals.glyphU(turns, s, t), uvs[2 * vertex], 1.0E-6F, "u turns " + turns);
+                float expectedV = ARROW + 1.0F / 1024.0F + DecorationDecals.glyphV(turns, s, t) * (1 - 1.0F / 512.0F);
+                assertEquals(expectedV, uvs[2 * vertex + 1], 1.0E-5F, "v turns " + turns);
+                assertEquals(1 + DecorationDecals.SURFACE_OFFSET, positions[3 * vertex + 1], 1.0E-7F);
+            }
+        }
+    }
+
+    @Test
+    void layoutLeavesADegenerateQuadUntouched() {
+        float[] line = {0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0};
+        float[] lineCopy = line.clone();
+        float[] uvs = {9, 9, 9, 9, 9, 9, 9, 9};
+        assertFalse(DecorationDecals.layout(0, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), line, 0, 1, 0, 1, uvs));
+        assertArrayEquals(lineCopy, line);
+        assertArrayEquals(new float[] {9, 9, 9, 9, 9, 9, 9, 9}, uvs);
+        float[] column = {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0};
+        assertFalse(DecorationDecals.layout(0, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), column, 0, 1, 0, 1, uvs));
+    }
+
+    @Test
+    void layoutUsesTheSpriteOffsetsAndAHalfSizeQuadOnAnXFace() {
+        // East face: screen-right is north (-z), screen-down is -y. Quad covers z 0.25..0.75, y 0..0.5.
+        float[] positions = {1, 0, 0.25F, 1, 0, 0.75F, 1, 0.5F, 0.75F, 1, 0.5F, 0.25F};
+        float[] uvs = new float[8];
+        assertTrue(DecorationDecals.layout(1, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), positions,
+                0.25F, 0.75F, 0.1F, 0.7F, uvs));
+        float cell = (0.7F - 0.1F) / DecorationDecals.GLYPHS;
+        float top = 0.1F + RAILS * cell + cell / 1024.0F;
+        float bottom = top + (cell - cell / 512.0F);
+        assertArrayEquals(new float[] {0.75F, bottom, 0.25F, bottom, 0.25F, top, 0.75F, top}, uvs, 1.0E-6F);
+        float lifted = 1 + DecorationDecals.SURFACE_OFFSET;
+        assertArrayEquals(new float[] {lifted, 0, 0.25F, lifted, 0, 0.75F, lifted, 0.5F, 0.75F, lifted, 0.5F, 0.25F},
+                positions, 1.0E-7F);
+    }
+
+    @Test
+    void layoutAcceptsAQuadExactlyAtTheMinimumExtent() {
+        float min = 1.0E-4F;
+        float[] narrow = {0, 0, 0, min, 0, 0, min, 1, 0, 0, 1, 0};
+        assertTrue(DecorationDecals.layout(0, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), narrow, 0, 1, 0, 1,
+                new float[8]), "width at the minimum still draws");
+        float[] flat = {0, 0, 0, 1, 0, 0, 1, min, 0, 0, min, 0};
+        assertTrue(DecorationDecals.layout(0, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), flat, 0, 1, 0, 1,
+                new float[8]), "height at the minimum still draws");
     }
 }

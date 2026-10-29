@@ -178,6 +178,10 @@ Nether overlay models remain lazy and bounded:
 - no registry scan, world scan, or measurement counter was added to quad emission;
 - existing M6/M7 rendered evidence verifies the enabled path continues to render correctly.
 
+Update 2026-10-29: the two hand-written lookup caches above became two `RetainedValue` fields of
+`MinecraftNetherLayer`, which exists only on Nether wrappers. The contract is unchanged: one lookup per
+overlay and wrapper, a failed lookup retained, and nothing on the hot path but one volatile read.
+
 The code contract is protected by repository tests, while retained reload stability is measured in the real Client GameTest.
 
 ## Quality / behavior authority
