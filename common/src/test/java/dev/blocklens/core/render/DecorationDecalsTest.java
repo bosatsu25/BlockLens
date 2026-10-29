@@ -397,4 +397,31 @@ final class DecorationDecalsTest {
         float[] column = {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0};
         assertFalse(DecorationDecals.layout(0, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), column, 0, 1, 0, 1, uvs));
     }
+
+    @Test
+    void layoutUsesTheSpriteOffsetsAndAHalfSizeQuadOnAnXFace() {
+        // East face: screen-right is north (-z), screen-down is -y. Quad covers z 0.25..0.75, y 0..0.5.
+        float[] positions = {1, 0, 0.25F, 1, 0, 0.75F, 1, 0.5F, 0.75F, 1, 0.5F, 0.25F};
+        float[] uvs = new float[8];
+        assertTrue(DecorationDecals.layout(1, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), positions,
+                0.25F, 0.75F, 0.1F, 0.7F, uvs));
+        float cell = (0.7F - 0.1F) / DecorationDecals.GLYPHS;
+        float top = 0.1F + RAILS * cell + cell / 1024.0F;
+        float bottom = top + (cell - cell / 512.0F);
+        assertArrayEquals(new float[] {0.75F, bottom, 0.25F, bottom, 0.25F, top, 0.75F, top}, uvs, 1.0E-6F);
+        float lifted = 1 + DecorationDecals.SURFACE_OFFSET;
+        assertArrayEquals(new float[] {lifted, 0, 0.25F, lifted, 0, 0.75F, lifted, 0.5F, 0.75F, lifted, 0.5F, 0.25F},
+                positions, 1.0E-7F);
+    }
+
+    @Test
+    void layoutAcceptsAQuadExactlyAtTheMinimumExtent() {
+        float min = 1.0E-4F;
+        float[] narrow = {0, 0, 0, min, 0, 0, min, 1, 0, 0, 1, 0};
+        assertTrue(DecorationDecals.layout(0, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), narrow, 0, 1, 0, 1,
+                new float[8]), "width at the minimum still draws");
+        float[] flat = {0, 0, 0, 1, 0, 0, 1, min, 0, 0, min, 0};
+        assertTrue(DecorationDecals.layout(0, DecorationDecals.decal(RAILS, 0, 0xFFFFFFFF), flat, 0, 1, 0, 1,
+                new float[8]), "height at the minimum still draws");
+    }
 }
