@@ -46,6 +46,15 @@ public final class SettingsDraft {
         }
     }
 
+    /** Enables every capability the source resource pack offers, across all categories; keeps the rest. */
+    public void enableSourcePack() {
+        for (CapabilityId capability : CapabilityId.values()) {
+            if (capability.isSourcePackCapability()) {
+                config = config.withEnabled(capability, true);
+            }
+        }
+    }
+
     /** Enables both obsidian controls while preserving every other flag. */
     public void enableObsidianPair() {
         config = config.withEnabled(CapabilityId.OBSIDIAN, true)

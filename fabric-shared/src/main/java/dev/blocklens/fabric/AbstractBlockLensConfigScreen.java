@@ -38,6 +38,7 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     private SettingsLayout layout;
     private final List<Button> footerActions = new ArrayList<>();
     private final List<Button> resourcePresets = new ArrayList<>();
+    private Button sourcePackAction;
     private boolean saveFailed;
 
     protected AbstractBlockLensConfigScreen(Screen parent, Path configDirectory) {
@@ -125,6 +126,14 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
                     int index = footerActions.indexOf(button);
                     if (index == 0) onClose(); else save(index == 2);
                 });
+        // Spans every category, so it sits in the header beside the title on every tab, one column wide.
+        int sourcePackWidth = (layout.contentWidth() - 8) / 3;
+        sourcePackAction = addRenderableWidget(Button.builder(
+                Component.translatable("blocklens.settings.source_pack"), ignored -> {
+                    draft.enableSourcePack();
+                    refreshStates();
+                }).tooltip(Tooltip.create(Component.translatable("blocklens.settings.source_pack.hint")))
+                .bounds(layout.left() + layout.contentWidth() - sourcePackWidth, 8, sourcePackWidth, 20).build());
         positionRows();
         setInitialFocus();
     }
@@ -197,7 +206,9 @@ public abstract class AbstractBlockLensConfigScreen extends Screen {
     @Override
     public final boolean keyPressed(KeyEvent event) {
         if (event.key() == InputConstants.KEY_TAB) {
-            List<Button> order = new ArrayList<>(tabs);
+            List<Button> order = new ArrayList<>();
+            order.add(sourcePackAction);
+            order.addAll(tabs);
             for (int row = 0; row < toggles.size(); row++) {
                 order.add(toggles.get(row));
                 int detail = detailRows.indexOf(row);

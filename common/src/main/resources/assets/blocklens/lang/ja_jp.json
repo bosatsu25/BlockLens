@@ -89,6 +89,8 @@
   "blocklens.settings.close": "保存して閉じる",
   "blocklens.settings.apply": "適用",
   "blocklens.settings.discard": "変更を破棄",
+  "blocklens.settings.source_pack": "元パック37機能ON",
+  "blocklens.settings.source_pack.hint": "元のリソースパックにある37機能（向き・状態13・資源18・見やすさ4・その他2）をすべてONにし、ほかの設定は維持します。適用で保存します。",
   "blocklens.settings.unsaved": "変更はまだ適用されていません。",
   "blocklens.settings.saved_error": "保存失敗。再試行か変更を破棄してください。",
   "blocklens.state.enabled": "有効",

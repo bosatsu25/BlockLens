@@ -38,6 +38,18 @@ Settings keys, existing persisted values and rendered capability behavior are pr
 A save failure retains the screen and draft, leaves runtime settings untouched and displays a
 retry/discard message in a reserved area above the footer. No exception details or paths are displayed.
 
+## Source pack ON
+
+A header action beside the title, on every category tab, enables the source resource pack's 37 options:
+13 Orientation & State, 18 Resources, 4 Visibility and 2 Other, the first 37 capabilities
+(`CapabilityId.isSourcePackCapability`). Every other capability and option keeps its value. The source
+pack itself defaults all 37 options off in its Respackopts configuration, as BlockLens does; this action
+is the one-step equivalent of switching all of them on there. Like the shortcuts below, it edits the
+shared draft only: Apply/Save and close saves it, Esc/Discard drops it, and repeating it on an
+unchanged draft causes no write. The action is one column of the Resources shortcut grid wide, is first
+in Tab order, and the settings visual GameTest requires its English and Japanese labels to fit without
+touching the title or the tabs at 320 x 240.
+
 ## Resources shortcuts
 
 Resources has a separate row below the category tabs with All OFF, Obsidian pair ON, and the existing Ore glow ON.

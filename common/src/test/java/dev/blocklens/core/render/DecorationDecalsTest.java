@@ -180,6 +180,79 @@ final class DecorationDecalsTest {
     }
 
     @Test
+    void anvilDrawsOnlyThePacksTopArrowInThePlacersLookDirection() {
+        Facing[] facings = {Facing.NORTH, Facing.EAST, Facing.SOUTH, Facing.WEST};
+        // Vanilla turns the placer's look direction clockwise into facing, so the look is one
+        // counter-clockwise turn back: facing=east was placed looking north.
+        int[] look = {WEST, NORTH, EAST, SOUTH};
+        for (int front = 0; front < 4; front++) {
+            for (int face : FACES) {
+                long decal = decal(CapabilityId.ANVIL, SemanticState.facing(facings[front]), face);
+                if (face != UP) {
+                    assertEquals(NONE, decal, facings[front] + "/" + face);
+                    continue;
+                }
+                assertEquals(ARROW, DecorationDecals.glyph(decal));
+                assertEquals(DecorationDecals.ARROW_COLOR, DecorationDecals.argb(decal));
+                assertTrue(DecorationDecals.boundaryOnly(decal), "only the top quad, not the lower steps");
+                assertEquals(look[front], pointing(face, decal), facings[front].name());
+            }
+        }
+        assertFalse(DecorationDecals.boundaryOnly(decal(CapabilityId.GLAZED_TERRACOTTA,
+                SemanticState.facing(Facing.NORTH), UP)));
+    }
+
+    @Test
+    void boundaryOnlyKeepsTheDecalAndSkipsInnerQuads() {
+        long plain = DecorationDecals.decal(ARROW, 3, 0xFF102030);
+        long outer = DecorationDecals.onBoundaryOnly(plain);
+        assertTrue(DecorationDecals.boundaryOnly(outer));
+        assertFalse(DecorationDecals.boundaryOnly(plain));
+        assertEquals(ARROW, DecorationDecals.glyph(outer));
+        assertEquals(3, DecorationDecals.quarterTurns(outer));
+        assertEquals(0xFF102030, DecorationDecals.argb(outer));
+        assertEquals(NONE, DecorationDecals.onBoundaryOnly(NONE));
+        assertFalse(DecorationDecals.boundaryOnly(NONE));
+
+        float[] top = {0.2F, 1, 0, 0.8F, 1, 0, 0.8F, 1, 1, 0.2F, 1, 1};
+        float[] step = {0.2F, 0.25F, 0.1F, 0.8F, 0.25F, 0.1F, 0.8F, 0.25F, 0.9F, 0.2F, 0.25F, 0.9F};
+        float[] stepCopy = step.clone();
+        float[] uvs = {9, 9, 9, 9, 9, 9, 9, 9};
+        assertFalse(DecorationDecals.layout(UP, outer, step, 0, 1, 0, 1, uvs), "inner step quad");
+        assertArrayEquals(stepCopy, step);
+        assertArrayEquals(new float[] {9, 9, 9, 9, 9, 9, 9, 9}, uvs);
+        assertTrue(DecorationDecals.layout(UP, plain, step.clone(), 0, 1, 0, 1, uvs), "a plain decal draws on every quad");
+        assertTrue(DecorationDecals.layout(UP, outer, top, 0, 1, 0, 1, uvs));
+        assertEquals(1 + DecorationDecals.SURFACE_OFFSET, top[1], 1.0E-7F);
+    }
+
+    @Test
+    void boundaryPlanesFollowEachFaceNormal() {
+        float[][] planes = {
+                {0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0},     // north: z = 0
+                {1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0},     // east: x = 1
+                {0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1},     // south: z = 1
+                {0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0},     // west: x = 0
+                {0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1},     // up: y = 1
+                {0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1}};    // down: y = 0
+        for (int face : FACES) {
+            assertTrue(DecorationDecals.onBoundary(face, planes[face]), "face " + face);
+            assertFalse(DecorationDecals.onBoundary(DecorationDecals.opposite(face), planes[face]), "opposite " + face);
+            float[] inset = planes[face].clone();
+            int axis = DecorationDecals.normalX(face) != 0 ? 0 : DecorationDecals.normalY(face) != 0 ? 1 : 2;
+            inset[3 * 2 + axis] += DecorationDecals.normalX(face) + DecorationDecals.normalY(face)
+                    + DecorationDecals.normalZ(face) > 0 ? -0.01F : 0.01F;
+            assertFalse(DecorationDecals.onBoundary(face, inset), "one vertex off the plane, face " + face);
+        }
+        float[] nearlyTop = {0, 1 - 5.0E-5F, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1};
+        assertTrue(DecorationDecals.onBoundary(UP, nearlyTop), "baked float noise stays on the plane");
+        float[] atTolerance = {0, 1.0E-4F, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1};
+        assertTrue(DecorationDecals.onBoundary(DOWN, atTolerance), "exactly the tolerance is still on the plane");
+        float[] pastTolerance = {0, 2.0E-4F, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1};
+        assertFalse(DecorationDecals.onBoundary(DOWN, pastTolerance));
+    }
+
+    @Test
     void axisBlocksFrameTheirEndsAndRunRailsAlongTheAxis() {
         Map<Axis, Integer> colors = Map.of(Axis.X, DecorationDecals.AXIS_X, Axis.Y, DecorationDecals.AXIS_Y,
                 Axis.Z, DecorationDecals.AXIS_Z);
@@ -252,7 +325,6 @@ final class DecorationDecalsTest {
 
     @Test
     void facingCuesOutlineOnlyTheFacesTheTintGrammarAlreadySelects() {
-        assertOnlyFrame(CapabilityId.ANVIL, SemanticState.facing(Facing.WEST), WEST, DecorationDecals.DIRECTION);
         assertOnlyFrame(CapabilityId.BEEHIVE, SemanticState.beehive(Facing.NORTH, 5), NORTH, DecorationDecals.HONEY_FULL);
         assertOnlyFrame(CapabilityId.BEEHIVE, SemanticState.beehive(Facing.NORTH, 4), NORTH, DecorationDecals.DIRECTION);
         assertOnlyFrame(CapabilityId.CAMPFIRE, SemanticState.campfire(Facing.EAST, true), EAST, DecorationDecals.LIT);

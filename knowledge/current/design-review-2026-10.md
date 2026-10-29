@@ -63,8 +63,9 @@ So the defensible claims are:
    structural checks (as in `VersionAdapterSingleSourceContractTest`) for new guards. Contracts that hold
    for the whole renderer now read every renderer class through `SupportedVersionFixtures.rendererText`,
    so splitting the model wrapper into layer classes broke three tests instead of every renderer pin.
-3. **Anvil arrow.** The source's top-face arrow is not reproduced because its world direction depends on
-   an unverified vanilla UV rotation; verify against the vanilla model before adding it.
+3. **Anvil arrow.** Done. The top face carries the source's arrow in the placer's look direction; the
+   client GameTest derives the pack's direction from the baked vanilla top quad's UVs on all three lines
+   and requires the rendered decal to match ([`pack-information-parity.md`](pack-information-parity.md) §4).
 4. **Meshing cost.** Done. The JFR profile put decals at 6–10 % of compile samples; encoding decal quads
    once per model brought them to 2.5–3.5 % and per-section compile CPU to parity with the pack on all three
    lines ([`pack-cost-comparison.md`](pack-cost-comparison.md) §6). Keep `pack-cost` as the gate when
