@@ -2,6 +2,17 @@
 
 **Current implementation (post-v0.3.0):** Four analyzers remain: lava source, beacon range, lightning-rod range and villager job-site links. The ancient-debris analyzer was removed; its historical config key is ignored and capability bit 46 remains reserved. The source reference ancient-debris *resource highlight* remains supported. The 19-option/five-analyzer benchmarks and screenshots below refer only to the old v0.3.0 behavior and must not be interpreted as new verification evidence. New hosted CI verification is tracked in [PR #60](https://github.com/bosatsu25/BlockLens/pull/60).
 
+
+**Engine contract (2026-10-29):** `AnalyzerEngine` is a PIT mutation-gate target; it was only
+JaCoCo-gated before, and a local PIT run on it detected 160 of 201 mutants (80 %). The current tests
+pin per-tick cell and cursor counts, multi-candidate publication, pass and village intervals, all six
+lava neighbors, the scan box's far edge, village sites outside an off-origin box and the exact cell
+budget at publication. Removing the debris analyzer had left code that could no longer run: every
+cursor step now reads a cell, so the 512-read budget always binds before the 4096-step limit (which
+stays as a hard bound), a scan cell always lies in its own box, and `Work.sections` is always 0.
+The unreachable box checks are gone. The five surviving mutants are in guards of this kind: the
+village reservation (two), the step limit, the stall counter and the read guard.
+
 ## Archived v0.3.0 design and measurements
 
 Status: implemented and merged by [PR #50](https://github.com/bosatsu25/BlockLens/pull/50), main `90105fb702b30a7619300cd668836a1314f4815b`. [PR CI #328](https://github.com/bosatsu25/BlockLens/actions/runs/38029642258) and [main CI #329](https://github.com/bosatsu25/BlockLens/actions/runs/38030694745) passed shared quality and all three native/build/budget jobs on their first attempts. The PR's three hosted analyzer archives contain 75 SHA-256-verified UI/render frames and passing manifests. This does not identify #43's allocation cause or verify #31's third-party environments.

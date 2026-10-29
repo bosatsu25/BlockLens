@@ -272,4 +272,152 @@ final class AnalyzerEngineTest {
             assertTrue(engine.work().cells()<=512);
         }
     }
+
+    private static AnalyzerOptions small(int kind) {
+        return AnalyzerOptions.defaults().with(kind,0,1).with(kind,1,1).with(kind,3,5);
+    }
+    private static long count(List<AnalyzerEngine.Marker> markers,int kind) {
+        return markers.stream().filter(marker->marker.kind()==kind).count();
+    }
+
+    @Test void renderSnapshotMatchesOnlyItsOwnMaskAndOptions() {
+        var view=new FakeWorld();view.value=AnalyzerEngine.ROD;
+        engine.tick(world,view,EYE,4,small(2));
+        assertFalse(engine.markers().isEmpty());
+        assertSame(engine.markers(),engine.markers(4,small(2)));
+        assertTrue(engine.markers(5,small(2)).isEmpty());
+        assertTrue(engine.markers(4,AnalyzerOptions.defaults()).isEmpty());
+    }
+
+    @Test void aRodScanSpendsExactlyTheCellBudgetAtOneCellPerStep() {
+        var view=new FakeWorld();
+        engine.tick(world,view,EYE,4,AnalyzerOptions.defaults());
+        assertEquals(new AnalyzerEngine.Work(512,0,512,0,0),engine.work());
+        assertEquals(512,view.reads);
+    }
+
+    @Test void switchingAnalyzersDropsTheOldScanAndSamplesVillagesOnlyWhenEnabled() {
+        var view=new FakeWorld() {
+            @Override public AnalyzerEngine.VillageSample villagers(AnalyzerEngine.Point eye,int h,int v,int s,int e,int c) {
+                visits++;
+                return new AnalyzerEngine.VillageSample(List.of(new AnalyzerEngine.Villager(EYE,EYE)),1,1);
+            }
+        };
+        view.value=AnalyzerEngine.ROD;
+        for(int tick=0;tick<5;tick++) engine.tick(world,view,EYE,4,AnalyzerOptions.defaults());
+        assertEquals(0,view.visits,"village sampling ran while disabled");
+        for(int tick=0;tick<60;tick++) {
+            engine.tick(world,view,EYE,1,AnalyzerOptions.defaults());
+            assertEquals(0,count(engine.markers(),2),"a disabled analyzer's scan kept publishing");
+        }
+    }
+
+    @Test void villageSamplesFollowTheIntervalAndReplaceOnlyVillageMarkers() {
+        var view=new FakeWorld() {
+            @Override public AnalyzerEngine.VillageSample villagers(AnalyzerEngine.Point eye,int h,int v,int s,int e,int c) {
+                visits++;
+                var villagers=new java.util.ArrayList<AnalyzerEngine.Villager>();
+                // Exactly as many candidates as requested is within the adapter bound.
+                for(int i=0;i<c;i++) villagers.add(new AnalyzerEngine.Villager(EYE,new AnalyzerEngine.Point(.5,1.5,-.5)));
+                return new AnalyzerEngine.VillageSample(villagers,1,c);
+            }
+        };
+        view.value=AnalyzerEngine.ROD;
+        // Rod passes repeat every 20 ticks, so a village sample cannot hide behind a rod republication.
+        var options=small(2).with(2,3,20).with(3,3,5);
+        for(int tick=1;tick<=11;tick++) {
+            engine.tick(world,view,EYE,12,options);
+            assertEquals(tick<6?1:tick<11?2:3,view.visits,"village samples at ticks 1, 6 and 11");
+            assertEquals(8,count(engine.markers(),2),"a village sample dropped rod markers");
+            assertEquals(12,count(engine.markers(),3),"village markers were not replaced");
+        }
+    }
+
+    @Test void villageSitesOutsideTheAnchoredBoxAreDropped() {
+        var eye=new AnalyzerEngine.Point(100.5,70.5,-50.5);
+        var inside=new AnalyzerEngine.Point(102.5,71.5,-48.5);
+        var view=new FakeWorld() {
+            @Override public AnalyzerEngine.VillageSample villagers(AnalyzerEngine.Point at,int h,int v,int s,int e,int c) {
+                return new AnalyzerEngine.VillageSample(List.of(
+                        new AnalyzerEngine.Villager(at,inside),
+                        new AnalyzerEngine.Villager(at,new AnalyzerEngine.Point(103.5,70.5,-50.5)),
+                        new AnalyzerEngine.Villager(at,new AnalyzerEngine.Point(100.5,72.5,-50.5)),
+                        new AnalyzerEngine.Villager(at,new AnalyzerEngine.Point(100.5,70.5,-53.5))),1,4);
+            }
+        };
+        engine.tick(world,view,eye,8,AnalyzerOptions.defaults().with(3,0,2).with(3,1,1));
+        assertEquals(List.of(new AnalyzerEngine.Marker(3,eye,inside,0)),engine.markers());
+    }
+
+    @Test void everyCandidateOfAPassIsPublishedOnceAndPassesRepeatAtTheInterval() {
+        var view=new FakeWorld() {
+            @Override public int cell(int x,int y,int z) {
+                reads++;
+                return y==1 && (x==1 && z==0 || x==-1 && z==0 || x==0 && z==1) ? AnalyzerEngine.ROD : AnalyzerEngine.OTHER;
+            }
+        };
+        int[] reads={30,33,36,39,42,75};
+        for(int tick=0;tick<6;tick++) {
+            engine.tick(world,view,EYE,4,small(2));
+            assertEquals(reads[tick],view.reads,"tick "+(tick+1));
+            assertEquals(3,engine.markers().size());
+            assertTrue(engine.markers().stream().allMatch(marker->marker.radius()==128));
+        }
+        assertEquals(java.util.Set.of(new AnalyzerEngine.Point(1.5,1.5,.5),new AnalyzerEngine.Point(-.5,1.5,.5),
+                new AnalyzerEngine.Point(.5,1.5,1.5)),
+                engine.markers().stream().map(AnalyzerEngine.Marker::to).collect(java.util.stream.Collectors.toSet()));
+    }
+
+    @Test void aScanCoversItsWholeBoxAndNothingBeyondIt() {
+        var view=new FakeWorld() {
+            @Override public int cell(int x,int y,int z) {
+                reads++;
+                // The far corner of the 3 x 3 x 3 box, and the first cell past its last row.
+                return x==1 && y==2 && z==1 || x==-1 && y==0 && z==2 ? AnalyzerEngine.ROD : AnalyzerEngine.OTHER;
+            }
+        };
+        engine.tick(world,view,EYE,4,small(2));
+        assertEquals(List.of(new AnalyzerEngine.Point(1.5,2.5,1.5)),
+                engine.markers().stream().map(AnalyzerEngine.Marker::to).toList());
+        assertEquals(28,view.reads);
+    }
+
+    @Test void lavaBoundaryReadsEachOfTheSixNeighbors() {
+        int[][] directions={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
+        for(int[] d:directions) {
+            var view=new FakeWorld() {
+                @Override public int cell(int x,int y,int z) {
+                    reads++;
+                    if(x==0 && y==1 && z==0) return AnalyzerEngine.LAVA;
+                    return x==d[0] && y==1+d[1] && z==d[2] ? AnalyzerEngine.OTHER : AnalyzerEngine.UNKNOWN;
+                }
+            };
+            engine.clear();
+            engine.tick(world,view,EYE,1,small(0));
+            assertEquals(1,engine.markers().size(),java.util.Arrays.toString(d));
+        }
+    }
+
+    @Test void publicationMayUseTheLastCellOfTheBudget() {
+        // A 13 x 3 x 13 rod box is 507 reads; the village endpoints bring the scan's completion to
+        // 512 - candidates, so the last candidate fits exactly into the budget.
+        for(int[] scenario:new int[][]{{4,1},{3,2}}) {
+            int candidates=scenario[0],rods=scenario[1];
+            var view=new FakeWorld() {
+                @Override public int cell(int x,int y,int z) {
+                    reads++;
+                    return y==1 && z==0 && (x==0 || rods==2 && x==1) ? AnalyzerEngine.ROD : AnalyzerEngine.OTHER;
+                }
+                @Override public AnalyzerEngine.VillageSample villagers(AnalyzerEngine.Point eye,int h,int v,int s,int e,int c) {
+                    return new AnalyzerEngine.VillageSample(java.util.Collections.nCopies(c,
+                            new AnalyzerEngine.Villager(EYE,new AnalyzerEngine.Point(.5,1.5,-.5))),1,c);
+                }
+            };
+            var options=AnalyzerOptions.defaults().with(2,0,6).with(2,1,1).with(3,2,candidates);
+            engine.clear();
+            engine.tick(world,view,EYE,12,options);
+            assertEquals(512,engine.work().cells(),"candidates "+candidates);
+            assertEquals(rods,count(engine.markers(),2),"candidates "+candidates);
+        }
+    }
 }

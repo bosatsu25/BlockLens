@@ -191,6 +191,33 @@ final class PatternInspectorTest {
     }
 
 
+    @Test void aRescanCountsFromZeroAndReselectionDropsTheOldProperties() {
+        var world = new World(); world.put(0, 0, 0, NORTH); world.put(1, 0, 0, SOUTH);
+        var engine = new PatternInspector(); assertTrue(engine.select(world, world, 0, 0, 0));
+        finish(engine, world);
+        for (int i = 0; i <= PatternInspector.RESCAN_TICKS; i++) engine.tick(world, world, true);
+        finish(engine, world);
+        assertEquals(Map.of("facing", 1, "half", 1), engine.snapshot().propertyMismatches(), "a rescan kept counting");
+        world.put(2, 0, 0, OTHER);
+        assertTrue(engine.select(world, world, 2, 0, 0));
+        assertEquals(Map.of(), engine.snapshot().propertyMismatches(), "the previous reference's properties stayed");
+    }
+
+    @Test void partialProgressFollowsTheDeclaredScanOrder() {
+        // dy varies fastest, then dx, then dz, each from its negative limit: the first tick's 255 cells
+        // are the dz = -8 slab and dz = -7 up to dx = 3, dy = -2.
+        var world = new World(); world.put(0, 0, 0, NORTH);
+        for (int[] cell : new int[][]{{0, 0, -8}, {-8, 0, -7}, {3, -4, -7}}) world.put(cell[0], cell[1], cell[2], SOUTH);
+        var engine = new PatternInspector(); assertTrue(engine.select(world, world, 0, 0, 0));
+        world.visited.clear();
+        engine.tick(world, world, true);
+        assertEquals(255, engine.snapshot().scanned());
+        assertEquals(3, engine.snapshot().compared());
+        assertTrue(world.visited.contains("3,-2,-7"));
+        assertFalse(world.visited.contains("3,-1,-7") || world.visited.contains("4,-4,-7")
+                || world.visited.contains("0,0,-6"), "a cell past the first tick's prefix was read");
+    }
+
     private static void finish(PatternInspector engine, World world) {
         for (int i = 0; i < 12 && !engine.snapshot().complete(); i++) {
             world.calls = 0;

@@ -83,3 +83,8 @@ selected coverage/PIT; three-version native stateful-block prediction and read-o
 checks; rendered panel evidence and reference button interaction; combined existing
 capabilities, reload and disconnect cleanup; reproducible runtime JAR audit and the
 user-authorized 204800-byte release ceiling. No external schematic integration is part of the current runtime.
+
+`PatternInspector` became a PIT target on 2026-10-29: it was JaCoCo-gated only, and PIT detected 76
+of its 81 mutants. Tests now also pin that a rescan counts from zero, that reselection drops the
+previous reference's properties, and the scan order behind each tick's partial counts (dy fastest,
+then dx, then dz, each from its negative limit).
