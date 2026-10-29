@@ -40,7 +40,7 @@ MODEL_PREFIX = "dev.blocklens.fabric.MinecraftDecorationModel."
 PATHS = {
     "emitDecals": "decals", "applyDecal": "decals",
     "emitOreBorder": "oreBorder", "connectedNeighbors": "oreBorder", "fixedOrePart": "oreBorder",
-    "emitNetherOverlay": "netherOverlay", "fillColor": "netherOverlay",
+    "emitNetherOverlay": "netherOverlay",
     "lookupInteriorOverlay": "netherOverlay", "lookupBandOverlay": "netherOverlay",
     "emitLightweightOverlay": "lightweightOverlay",
     "applyNonNetherInstructions": "baseTransform", "applyInstruction": "baseTransform",

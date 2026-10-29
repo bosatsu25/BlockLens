@@ -33,7 +33,8 @@ final class DecorationDecalContractTest {
         assertTrue(model.contains("if (!DECAL_SPRITE.equals(sprite.contents().name()))"),
                 "a missing glyph sprite must never draw the missing-texture checkerboard");
         assertTrue(model.contains("quad.chunkLayer(ChunkSectionLayer.CUTOUT);"));
-        assertTrue(model.contains("DecorationDecals.SURFACE_OFFSET"));
+        // The glyph mapping and the surface lift are DecorationDecals.layout, unit-tested in common.
+        assertTrue(model.contains("DecorationDecals.layout(f, decal, positions,"));
         assertFalse(model.contains("level.getBlockState(pos)"), "decals never inspect world state");
         String decal = model.substring(model.indexOf("private boolean applyDecal("),
                 model.indexOf("private void emitNetherOverlay("));

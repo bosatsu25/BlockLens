@@ -92,4 +92,78 @@ final class ResourceBorderPolicyTest {
         assertFalse(new dev.blocklens.core.extension.OreExtensionCatalog().register(1,"example:ore",id.sourceKey()));
     }
 
+    // Faces by DecorationQuadFace ordinal; steps as Minecraft's Direction.
+    private static final int N = 0, E = 1, S = 2, W = 3, U = 4, D = 5;
+    private static final int[][] STEP = {{0, 0, -1}, {1, 0, 0}, {0, 0, 1}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}};
+
+    @Test
+    void neighborOffsetsMatchTheDirectionTableTheRendererUsedToCarry() {
+        // MinecraftDecorationModel's former table: u = NORTH->WEST, EAST->NORTH, WEST->SOUTH, else EAST;
+        // v = UP->SOUTH, DOWN->NORTH, else DOWN; neighbor = u * U[bit] + v * V[bit].
+        int[] u = {W, N, E, S, E, E};
+        int[] v = {D, D, D, D, S, N};
+        int[] stepsU = {0, 1, 0, -1, 1, 1, -1, -1};
+        int[] stepsV = {-1, 0, 1, 0, -1, 1, 1, -1};
+        for (int face = 0; face < 6; face++) {
+            for (int bit = 0; bit < 8; bit++) {
+                for (int axis = 0; axis < 3; axis++) {
+                    int expected = STEP[u[face]][axis] * stepsU[bit] + STEP[v[face]][axis] * stepsV[bit];
+                    assertEquals(expected, ResourceBorderPolicy.neighborOffset(face, bit, axis),
+                            "face " + face + " bit " + bit + " axis " + axis);
+                }
+            }
+        }
+        // On the north face, screen-up is up and screen-right is west.
+        assertArrayEquals(new int[] {0, 1, 0}, offset(N, 0));
+        assertArrayEquals(new int[] {-1, 0, 0}, offset(N, 1));
+        assertArrayEquals(new int[] {-1, 1, 0}, offset(N, 4));
+    }
+
+    private static int[] offset(int face, int bit) {
+        return new int[] {ResourceBorderPolicy.neighborOffset(face, bit, 0),
+                ResourceBorderPolicy.neighborOffset(face, bit, 1), ResourceBorderPolicy.neighborOffset(face, bit, 2)};
+    }
+
+    @Test
+    void sheetTilesFollowTheNeighborMask() {
+        assertEquals(16, ResourceBorderPolicy.SHEET_TILES);
+        for (int mask = 0; mask < 256; mask++) {
+            assertEquals(mask, ResourceBorderPolicy.sheetRow(mask) * 16 + ResourceBorderPolicy.sheetColumn(mask));
+            assertTrue(ResourceBorderPolicy.sheetColumn(mask) < 16 && ResourceBorderPolicy.sheetRow(mask) < 16);
+        }
+        assertEquals(5, ResourceBorderPolicy.sheetColumn(37));
+        assertEquals(2, ResourceBorderPolicy.sheetRow(37));
+    }
+
+    @Test
+    void unitCubeCornersMatchTheRendererCheckOnEveryLatticePoint() {
+        float[] values = {-1, 0, 0.5f, 1, 2};
+        for (int face = 0; face < 6; face++) {
+            int corners = 0;
+            for (float x : values) {
+                for (float y : values) {
+                    for (float z : values) {
+                        int corner = ResourceBorderPolicy.unitCubeCorner(face, x, y, z);
+                        assertEquals(formerCorner(face, x, y, z), corner, "face " + face + " at " + x + "," + y + "," + z);
+                        if (corner >= 0) {
+                            corners |= 1 << corner;
+                        }
+                    }
+                }
+            }
+            assertEquals(15, corners, "each face has four distinct corners");
+        }
+        assertEquals(-1, ResourceBorderPolicy.unitCubeCorner(N, 0, 0, 1), "south plane is not the north face");
+        assertEquals(3, ResourceBorderPolicy.unitCubeCorner(E, 1, 1, 1));
+    }
+
+    /** The check MinecraftDecorationModel ran per vertex with Direction axis and axis direction. */
+    private static int formerCorner(int face, float x, float y, float z) {
+        if ((x != 0 && x != 1) || (y != 0 && y != 1) || (z != 0 && z != 1)) return -1;
+        int axis = face == E || face == W ? 0 : face == U || face == D ? 1 : 2;
+        boolean positive = face == E || face == S || face == U;
+        float plane = axis == 0 ? x : axis == 1 ? y : z;
+        if (plane != (positive ? 1 : 0)) return -1;
+        return axis == 0 ? (int) y + 2 * (int) z : axis == 1 ? (int) x + 2 * (int) z : (int) x + 2 * (int) y;
+    }
 }

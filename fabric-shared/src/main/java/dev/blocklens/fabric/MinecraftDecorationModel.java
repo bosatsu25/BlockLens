@@ -52,8 +52,6 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private final @Nullable RetainedValue<BlockStateModel> lightweightOverlay;
     private final @Nullable RetainedValue<BlockStateModel> oreBorderOverlay;
     private final @Nullable RetainedValue<BlockStateModel> connectedOreBorderOverlay;
-    private static final int[] NEIGHBOR_U={0,1,0,-1,1,1,-1,-1};
-    private static final int[] NEIGHBOR_V={-1,0,1,0,-1,1,1,-1};
     private final @Nullable RetainedValue<BlockStateModelPart> connectedOrePart;
     private final long oreBorderMask;
     private final int oreBorderTint;
@@ -263,8 +261,10 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         MutableMesh[] groups = new MutableMesh[UNCULLED + 1];
         QuadEmitter[] emitters = new QuadEmitter[UNCULLED + 1];
         QuadEmitter source = Renderer.get().mutableMesh().emitter();
+        float[] positions = new float[12];
+        float[] uvs = new float[8];
         source.pushTransform(quad -> {
-            if (applyDecal(quad, sprite, decalCapabilities)) {
+            if (applyDecal(quad, sprite, decalCapabilities, positions, uvs)) {
                 Direction cullFace = quad.cullFace();
                 int group = cullFace == null ? UNCULLED : cullFace.ordinal();
                 if (groups[group] == null) {
@@ -290,7 +290,8 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
     private record DecalMeshes(long capabilities, TextureAtlasSprite sprite, @Nullable Mesh[] byCullFace) {
     }
 
-    private boolean applyDecal(MutableQuadView quad, TextureAtlasSprite sprite, long decalCapabilities) {
+    private boolean applyDecal(MutableQuadView quad, TextureAtlasSprite sprite, long decalCapabilities,
+            float[] positions, float[] uvs) {
         DecorationQuadFace face = face(quad.nominalFace());
         if (face == DecorationQuadFace.NONE || decalTables == null) {
             return false;
@@ -305,34 +306,18 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         if (decal == DecorationDecals.NONE) {
             return false;
         }
-        float minRight = Float.POSITIVE_INFINITY, maxRight = Float.NEGATIVE_INFINITY;
-        float minDown = Float.POSITIVE_INFINITY, maxDown = Float.NEGATIVE_INFINITY;
         for (int vertex = 0; vertex < 4; vertex++) {
-            float right = DecorationDecals.right(f, quad.x(vertex), quad.y(vertex), quad.z(vertex));
-            float down = DecorationDecals.down(f, quad.x(vertex), quad.y(vertex), quad.z(vertex));
-            minRight = Math.min(minRight, right);
-            maxRight = Math.max(maxRight, right);
-            minDown = Math.min(minDown, down);
-            maxDown = Math.max(maxDown, down);
+            positions[3 * vertex] = quad.x(vertex);
+            positions[3 * vertex + 1] = quad.y(vertex);
+            positions[3 * vertex + 2] = quad.z(vertex);
         }
-        float width = maxRight - minRight, height = maxDown - minDown;
-        if (width < 1.0E-4F || height < 1.0E-4F) {
+        if (!DecorationDecals.layout(f, decal, positions, sprite.getU0(), sprite.getU1(), sprite.getV0(),
+                sprite.getV1(), uvs)) {
             return false;
         }
-        // One vertical strip holds every glyph; stay a hair inside the cell to avoid sampling a neighbour.
-        int turns = DecorationDecals.quarterTurns(decal);
-        float u0 = sprite.getU0(), du = sprite.getU1() - u0;
-        float cell = (sprite.getV1() - sprite.getV0()) / DecorationDecals.GLYPHS;
-        float v0 = sprite.getV0() + DecorationDecals.glyph(decal) * cell + cell / 1024.0F;
-        float dv = cell - cell / 512.0F;
-        float offset = DecorationDecals.SURFACE_OFFSET;
         for (int vertex = 0; vertex < 4; vertex++) {
-            float x = quad.x(vertex), y = quad.y(vertex), z = quad.z(vertex);
-            float s = (DecorationDecals.right(f, x, y, z) - minRight) / width;
-            float t = (DecorationDecals.down(f, x, y, z) - minDown) / height;
-            quad.uv(vertex, u0 + DecorationDecals.glyphU(turns, s, t) * du, v0 + DecorationDecals.glyphV(turns, s, t) * dv);
-            quad.pos(vertex, x + DecorationDecals.normalX(f) * offset, y + DecorationDecals.normalY(f) * offset,
-                    z + DecorationDecals.normalZ(f) * offset);
+            quad.uv(vertex, uvs[2 * vertex], uvs[2 * vertex + 1]);
+            quad.pos(vertex, positions[3 * vertex], positions[3 * vertex + 1], positions[3 * vertex + 2]);
         }
         int argb = DecorationDecals.argb(decal);
         quad.color(argb, argb, argb, argb);
@@ -355,8 +340,7 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         BlockStateModel interior = lookupInteriorOverlay();
         if (interior != null) {
             emitter.pushTransform(quad -> {
-                DecorationQuadFace face = face(quad.nominalFace());
-                quad.multiplyColor(fillColor(face));
+                quad.multiplyColor(netherCue.fillArgb(netherState.axis(), face(quad.nominalFace())));
                 applyNonNetherInstructions(quad, enabledCapabilities);
                 return true;
             });
@@ -421,8 +405,10 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
             Direction direction=quad.cullFace();
             if(sprite!=null && direction!=null && (connectedFaces&(1<<direction.ordinal()))!=0) {
                 int mask=connectedNeighbors(level,pos,state,direction,part);
-                float uOffset=(sprite.getU1()-sprite.getU0())*(mask%16)/16;
-                float vOffset=(sprite.getV1()-sprite.getV0())*(mask/16)/16;
+                float uOffset=(sprite.getU1()-sprite.getU0())*ResourceBorderPolicy.sheetColumn(mask)
+                        /ResourceBorderPolicy.SHEET_TILES;
+                float vOffset=(sprite.getV1()-sprite.getV0())*ResourceBorderPolicy.sheetRow(mask)
+                        /ResourceBorderPolicy.SHEET_TILES;
                 for(int vertex=0;vertex<4;vertex++)quad.uv(vertex,quad.u(vertex)+uOffset,quad.v(vertex)+vOffset);
             }
             quad.chunkLayer(ChunkSectionLayer.CUTOUT);
@@ -439,17 +425,17 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
         }
     }
 
-    private static boolean unitCubeFace(MutableQuadView quad,Direction face) {
-        int corners=0;
-        for(int vertex=0;vertex<4;vertex++) {
-            float x=quad.x(vertex),y=quad.y(vertex),z=quad.z(vertex);
-            if((x!=0&&x!=1)||(y!=0&&y!=1)||(z!=0&&z!=1))return false;
-            float plane=switch(face.getAxis()){case X->x;case Y->y;case Z->z;};
-            if(plane!=(face.getAxisDirection()==Direction.AxisDirection.POSITIVE ? 1 : 0))return false;
-            int corner=switch(face.getAxis()){case X->(int)y+2*(int)z;case Y->(int)x+2*(int)z;case Z->(int)x+2*(int)y;};
-            corners|=1<<corner;
+    private static boolean unitCubeFace(MutableQuadView quad, Direction direction) {
+        int side = face(direction).ordinal();
+        int corners = 0;
+        for (int vertex = 0; vertex < 4; vertex++) {
+            int corner = ResourceBorderPolicy.unitCubeCorner(side, quad.x(vertex), quad.y(vertex), quad.z(vertex));
+            if (corner < 0) {
+                return false;
+            }
+            corners |= 1 << corner;
         }
-        return corners==15;
+        return corners == 15;
     }
     private @Nullable BlockStateModelPart fixedOrePart() {
         return connectedOrePart==null ? null : connectedOrePart.get(wrapped,model->{
@@ -461,13 +447,12 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
     }
     private static int connectedNeighbors(BlockAndTintGetter level,BlockPos pos,BlockState state,Direction face,
             @Nullable BlockStateModelPart part) {
-        Direction u=switch(face){case NORTH->Direction.WEST;case EAST->Direction.NORTH;case WEST->Direction.SOUTH;default->Direction.EAST;};
-        Direction v=switch(face){case UP->Direction.SOUTH;case DOWN->Direction.NORTH;default->Direction.DOWN;};
+        int side = face(face).ordinal();
         var neighbor=new BlockPos.MutableBlockPos();var front=new BlockPos.MutableBlockPos();int mask=0;
         for(int bit=0;bit<8;bit++) {
-            neighbor.set(pos.getX()+u.getStepX()*NEIGHBOR_U[bit]+v.getStepX()*NEIGHBOR_V[bit],
-                    pos.getY()+u.getStepY()*NEIGHBOR_U[bit]+v.getStepY()*NEIGHBOR_V[bit],
-                    pos.getZ()+u.getStepZ()*NEIGHBOR_U[bit]+v.getStepZ()*NEIGHBOR_V[bit]);
+            neighbor.set(pos.getX() + ResourceBorderPolicy.neighborOffset(side, bit, 0),
+                    pos.getY() + ResourceBorderPolicy.neighborOffset(side, bit, 1),
+                    pos.getZ() + ResourceBorderPolicy.neighborOffset(side, bit, 2));
             var adjacent=level.getBlockState(neighbor);
             front.set(neighbor).move(face);
             if(part!=null && adjacent.getBlock()==state.getBlock()
@@ -482,24 +467,6 @@ final class MinecraftDecorationModel extends WrapperBlockStateModel {
 
     private @Nullable BlockStateModel lookupLightweightOverlay(ExtraModelKey<BlockStateModel> key) {
         return lightweightOverlay == null ? null : lightweightOverlay.get(key, MinecraftDecorationModel::lookup);
-    }
-
-    private int fillColor(DecorationQuadFace face) {
-        SemanticState.Axis axis = netherState.axis();
-        if (axis != SemanticState.Axis.NONE) {
-            boolean endFace = switch (axis) {
-                case X -> face == DecorationQuadFace.EAST || face == DecorationQuadFace.WEST;
-                case Y -> face == DecorationQuadFace.UP || face == DecorationQuadFace.DOWN;
-                case Z -> face == DecorationQuadFace.NORTH || face == DecorationQuadFace.SOUTH;
-                case NONE -> false;
-            };
-            return endFace ? netherCue.upFillArgb() : netherCue.sideFillArgb();
-        }
-        return switch (face) {
-            case UP -> netherCue.upFillArgb();
-            case DOWN -> netherCue.downFillArgb();
-            default -> netherCue.sideFillArgb();
-        };
     }
 
     private void applyNonNetherInstructions(MutableQuadView quad, long enabledCapabilities) {
