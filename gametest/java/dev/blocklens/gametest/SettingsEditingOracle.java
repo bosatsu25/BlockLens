@@ -63,6 +63,30 @@ final class SettingsEditingOracle {
                 require(BlockLensRuntime.config().sameCapabilities(original),
                         "ore shortcut discard changed the published config");
 
+                // The source-pack action spans every category and edits only the draft.
+                screen = new BlockLensConfigScreen(previous);
+                BlockLensConfigScreen.show(client, screen);
+                press(screen, "blocklens.settings.source_pack");
+                int sourceRows = 0;
+                for (CapabilityId.Category category : CapabilityId.Category.values()) {
+                    ResponsiveSettingsScreenOracle.select(screen, category);
+                    var rows = dev.blocklens.core.ui.SettingsCatalog.capabilities(category);
+                    var rowButtons = ResponsiveSettingsScreenOracle.buttons(screen).subList(4, 4 + rows.size());
+                    for (int row = 0; row < rows.size(); row++) {
+                        CapabilityId capability = rows.get(row);
+                        boolean expected = capability.isSourcePackCapability() || original.isEnabled(capability);
+                        require(rowButtons.get(row).getMessage().getString().equals(state(expected)),
+                                "source-pack action left " + capability.sourceKey() + " wrong");
+                        if (capability.isSourcePackCapability()) sourceRows++;
+                    }
+                }
+                require(sourceRows == CapabilityId.SOURCE_PACK_CAPABILITIES, "source-pack rows missing");
+                require(BlockLensRuntime.config().sameCapabilities(original),
+                        "source-pack action published its draft before Save");
+                press(screen, "blocklens.settings.discard");
+                require(BlockLensRuntime.config().sameCapabilities(original),
+                        "source-pack discard changed the published config");
+
                 screen = new BlockLensConfigScreen(previous);
                 BlockLensConfigScreen.show(client, screen);
                 pressFirstToggle(screen);

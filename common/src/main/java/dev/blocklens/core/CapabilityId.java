@@ -105,6 +105,12 @@ public enum CapabilityId {
      */
     public static final int MASK_BITS = 2 * Long.SIZE;
 
+    /**
+     * The source resource pack's option count: its 37 Respackopts keys are the first 37 entries, in
+     * the pack's own order (13 deco, 18 gaming, 4 outline, 2 others), and all default to off there.
+     */
+    public static final int SOURCE_PACK_CAPABILITIES = 37;
+
     private static final Map<String, CapabilityId> BY_SOURCE_KEY;
 
     static {
@@ -156,6 +162,11 @@ public enum CapabilityId {
     /** Whether this capability fits mask word 0, so render paths can use {@link #renderBit()}. */
     public boolean hasRenderBit() {
         return bitPosition() < Long.SIZE;
+    }
+
+    /** Whether the source resource pack offers this capability as one of its own options. */
+    public boolean isSourcePackCapability() {
+        return ordinal() < SOURCE_PACK_CAPABILITIES;
     }
 
     public String sourceKey() {

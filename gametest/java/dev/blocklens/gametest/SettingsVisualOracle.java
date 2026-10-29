@@ -88,6 +88,14 @@ final class SettingsVisualOracle {
                 if (client.font.width(button.getMessage()) > button.getWidth() - 8)
                     throw new AssertionError("Settings footer label does not fit");
             }
+            var header = ResponsiveSettingsScreenOracle.buttons(screen).stream()
+                    .filter(button -> button.getY() == 8).toList();
+            if (header.size() != 1) throw new AssertionError("Settings header must hold the source-pack action");
+            var sourcePack = header.getFirst();
+            if (client.font.width(sourcePack.getMessage()) > sourcePack.getWidth() - 8)
+                throw new AssertionError("Source-pack action label does not fit");
+            if (sourcePack.getX() < width / 2 + client.font.width(screen.getTitle()) / 2 + 4 || sourcePack.getBottom() > 34)
+                throw new AssertionError("Source-pack action overlaps the title or the category tabs");
             var actions = ResponsiveSettingsScreenOracle.buttons(screen).stream()
                     .filter(button -> button.getY() == 62).toList();
             if (name.endsWith("-resource") || name.endsWith("-compact")) {

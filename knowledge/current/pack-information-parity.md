@@ -37,7 +37,8 @@ one of six original 32×32 glyphs, stored as one 32×192 strip sprite generated 
 | Slabs | Bottom slab: edge frame on its bottom face. Top slab: edge frame on its top face. Double slab: frame with a centered seam on every side, double frame on top and bottom. Red. |
 | Stairs | Inset outline on every quad, colored by shape (straight green, inner-left cyan, inner-right blue, outer-left orange, outer-right magenta). |
 | Trapdoor | Inset outline on every quad, colored by facing (north blue, east red, south yellow, west green). |
-| Anvil, beehive, campfire, grindstone, fence gate | Inset outline on the faces the M3 grammar already selects, in its semantic colors (honey full, lit/unlit, mount face, open/closed). |
+| Anvil | Arrow on the top face only, pointing in the placer's look direction, white with a dark contour: where the source pack's top-texture arrow points under the vanilla `template_anvil` UVs (§4). Lower steps of the model carry no decal. |
+| Beehive, campfire, grindstone, fence gate | Inset outline on the faces the M3 grammar already selects, in its semantic colors (honey full, lit/unlit, mount face, open/closed). |
 | Stained glass | No decal; the solid-layer behavior is unchanged. |
 
 Glyph rotation is computed from vertex positions in a fixed viewer frame per face (screen-right ×
@@ -60,15 +61,27 @@ step and panel structure.
   checkerboard).
 - Feature OFF restores the unmodified active model; geometry keys still include the enabled mask.
 
-## 4. Residual differences from the source pack
+## 4. Anvil arrow direction
+
+The source pack keeps vanilla `template_anvil` and the vanilla blockstate rotations and replaces only
+the `top` texture with an arrow that points toward -u. Its world direction is therefore decided by the
+vanilla top-face UVs. Reading them locally was impossible (no vanilla assets in the development
+environment), so the direction is fixed in `DecorationDecals.anvilArrow` (one counter-clockwise turn
+from `facing`, which is the placer's look direction because vanilla turns the look clockwise into
+`facing`) and checked where the vanilla model exists: `DecorationDecalOracle` emits the baked vanilla
+anvil for each facing with every decoration off, takes the direction in which u decreases across its
+single top quad, and requires the rendered decal to point the same way, on 26.1.2, 26.2 and 26.3. The
+arrow is drawn only on quads in the block's top plane (`DecorationDecals.onBoundaryOnly`), so the base
+and waist faces under the top carry nothing, as in the pack.
+
+## 5. Residual differences from the source pack
 
 | Capability | Difference | Reason |
 | --- | --- | --- |
-| Anvil | The source draws an arrow on the top texture; BlockLens outlines the facing faces. | The arrow's world direction depends on the vanilla `template_anvil` top-face UV rotation, which is not verified from source data. A wrong arrow would report a false state. |
 | Stairs, trapdoors | The source uses dashed edge marks inside 32×32 textures; BlockLens outlines each quad. | Same information (step/panel structure plus the existing shape/facing legend) with one shared glyph. |
 | Weighted/multipart or wrapped models | Tint fallback. | Their geometry can differ per block, so encoded decal quads could disagree with it. |
 
-## 5. Verification
+## 6. Verification
 
 - `common`: `DecorationDecalsTest` (right-handed viewer frames, rotation math, source template rotation
   table for glazed terracotta, axis/slab/stair/trapdoor semantics, packing and interning; mutation-gated)
@@ -78,7 +91,9 @@ step and panel structure.
   for all four facings, rail orientation and legend color for all three axes, and that only top and
   double slabs mark their upper face. The arrow is read by matching the largest changed region against
   the shipped glyph in each rotation (IoU at least 0.6, margin 0.15); a mismatch logs the scores and a
-  coarse mask, and the CI failure artifact keeps the `decoration-decals` captures.
+  coarse mask, and the CI failure artifact keeps the `decoration-decals` captures. For anvils it also
+  derives the source pack's arrow direction from the baked vanilla top quad (§4) for all four facings
+  and records `pack=` and `decal=` per facing in the manifest.
 - Existing M3/M7/M5/terrain oracles keep their thresholds.
 - The oracle adds about 40 s to each normal client run. 26.3 already measured 21m17s of the former
   22-minute step, so normal client steps get 27 minutes inside 36-minute jobs; no threshold changes.

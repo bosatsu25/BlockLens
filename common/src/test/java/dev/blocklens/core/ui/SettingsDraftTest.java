@@ -55,6 +55,44 @@ final class SettingsDraftTest {
     }
 
     @Test
+    void sourcePackEnablesExactlyThePacksThirtySevenOptionsAcrossCategoriesAndKeepsTheRest() {
+        var original = BlockLensConfig.defaults()
+                .withComfortOptions(new ComfortOptions(2, 43, 58, 91))
+                .withEnabled(CapabilityId.CONNECTED_ORE_EDGES, true)
+                .withEnabled(CapabilityId.STRING_TWEAKS, false);
+        var draft = new SettingsDraft(original);
+        draft.enableSourcePack();
+        int enabled = 0;
+        var categories = new java.util.EnumMap<CapabilityId.Category, Integer>(CapabilityId.Category.class);
+        for (var id : CapabilityId.values()) {
+            if (id.isSourcePackCapability()) {
+                assertTrue(draft.config().isEnabled(id), id.sourceKey());
+                categories.merge(id.category(), 1, Integer::sum);
+                enabled++;
+            } else assertEquals(original.isEnabled(id), draft.config().isEnabled(id), id.sourceKey());
+        }
+        assertEquals(37, enabled);
+        assertEquals(java.util.Map.of(CapabilityId.Category.DECORATION, 13, CapabilityId.Category.RESOURCE, 18,
+                CapabilityId.Category.OUTLINE, 4, CapabilityId.Category.OTHER, 2), categories);
+        assertEquals(original.comfortOptions(), draft.config().comfortOptions());
+        assertEquals(original.analyzerOptions(), draft.config().analyzerOptions());
+        assertEquals(original.sceneFilterOptions(), draft.config().sceneFilterOptions());
+        assertTrue(draft.changed());
+        draft.discard();
+        assertEquals(original, draft.config());
+    }
+
+    @Test
+    void repeatedSourcePackDoesNotRewrite() throws IOException {
+        var draft = new SettingsDraft(BlockLensConfig.defaults());
+        draft.enableSourcePack();
+        assertTrue(draft.save(directory));
+        draft.enableSourcePack();
+        assertFalse(draft.changed());
+        assertFalse(draft.save(directory));
+    }
+
+    @Test
     void obsidianPairPreservesEnabledAndDisabledFlagsOutsideThePair() {
         var original = BlockLensConfig.defaults()
                 .withComfortOptions(new ComfortOptions(0, 45, 62, 88))

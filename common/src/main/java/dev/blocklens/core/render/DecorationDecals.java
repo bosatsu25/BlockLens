@@ -17,8 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Glyph rotation is expressed in a fixed viewer frame per face (screen-right x screen-up is the
  * outward normal) and applied to vertex positions, never model UVs. A decal is a packed long:
- * bits 0-2 hold glyph + 1 ({@link #NONE} is 0), bits 3-4 clockwise quarter turns, bits 32-63 the
- * ARGB tint. Face and enum ordinals index static tables, so nothing here allocates per quad.</p>
+ * bits 0-2 hold glyph + 1 ({@link #NONE} is 0), bits 3-4 clockwise quarter turns, bit 5
+ * {@link #onBoundaryOnly boundary-only}, bits 32-63 the ARGB tint. Face and enum ordinals index
+ * static tables, so nothing here allocates per quad.</p>
  */
 public final class DecorationDecals {
     public static final int INSET_FRAME = 0;
@@ -36,6 +37,7 @@ public final class DecorationDecals {
     /** Outward offset in blocks; above Nether overlays (0.03/16) and ore borders (0.02/16). */
     public static final float SURFACE_OFFSET = 1.0F / 256.0F;
     public static final long NONE = 0L;
+    private static final long BOUNDARY_ONLY = 1L << 5;
 
     public static final int AXIS_X = 0xFFFF3030;
     public static final int AXIS_Y = 0xFF30E030;
@@ -88,6 +90,15 @@ public final class DecorationDecals {
         return (int) (decal >>> 32);
     }
 
+    /** {@code decal}, drawn only on quads that lie in the block-boundary plane of their face. */
+    public static long onBoundaryOnly(long decal) {
+        return decal == NONE ? NONE : decal | BOUNDARY_ONLY;
+    }
+
+    public static boolean boundaryOnly(long decal) {
+        return (decal & BOUNDARY_ONLY) != 0L;
+    }
+
     /**
      * Per-face decals for one (capability, state), indexed by {@link DecorationQuadFace} ordinal.
      * Interned and shared across baked models: callers must never write to the returned array.
@@ -125,7 +136,10 @@ public final class DecorationDecals {
             if (descriptor.capability() == CapabilityId.GLAZED_TERRACOTTA) {
                 return front < 0 ? NONE : decal(ARROW, arrowTurns(face, front), ARROW_COLOR);
             }
-            return frameIf(face == front, DIRECTION);
+            // The anvil, the only other facing marker: the source pack's top-texture arrow, on the top
+            // quad itself and not on the lower steps.
+            return front < 0 || face != UP ? NONE
+                    : onBoundaryOnly(decal(ARROW, quarterTurnsToward(UP, anvilArrow(front)), ARROW_COLOR));
         }
         if (cue == DecorationVisualCue.FACING_LEVEL_MARKER) {
             return frameIf(face == front, state.level() == 5 ? HONEY_FULL : DIRECTION);
@@ -176,6 +190,16 @@ public final class DecorationDecals {
         if (face == front) return 0;
         if (face == look) return 2;
         return quarterTurnsToward(face, look);
+    }
+
+    /**
+     * World direction of the source pack's anvil arrow: its top texture points toward -u, and the
+     * vanilla template_anvil top face turns u by 180 degrees, so the arrow follows the placer's look
+     * direction, one counter-clockwise turn from {@code facing}. DecorationDecalOracle checks the
+     * 180 degrees against the baked vanilla model's UVs on every supported line.
+     */
+    static int anvilArrow(int front) {
+        return (front + 3) % 4;
     }
 
     /** Clockwise quarter turns pointing glyph up toward {@code direction}, or -1 if it is normal. */
@@ -266,7 +290,7 @@ public final class DecorationDecals {
             maxDown = Math.max(maxDown, down(face, x, y, z));
         }
         float width = maxRight - minRight, height = maxDown - minDown;
-        if (width < 1.0E-4F || height < 1.0E-4F) {
+        if (width < 1.0E-4F || height < 1.0E-4F || boundaryOnly(decal) && !onBoundary(face, positions)) {
             return false;
         }
         int turns = quarterTurns(decal);
@@ -283,6 +307,18 @@ public final class DecorationDecals {
             positions[3 * vertex] = x + VX[face] * SURFACE_OFFSET;
             positions[3 * vertex + 1] = y + VY[face] * SURFACE_OFFSET;
             positions[3 * vertex + 2] = z + VZ[face] * SURFACE_OFFSET;
+        }
+        return true;
+    }
+
+    /** Whether all four vertices lie in the block-boundary plane of {@code face}. */
+    static boolean onBoundary(int face, float[] positions) {
+        // A face normal has one non-zero component, +1 or -1: its plane is 1 or 0.
+        float plane = (VX[face] + VY[face] + VZ[face] + 1) / 2;
+        for (int vertex = 0; vertex < 4; vertex++) {
+            float along = VX[face] != 0 ? positions[3 * vertex] : VY[face] != 0 ? positions[3 * vertex + 1]
+                    : positions[3 * vertex + 2];
+            if (Math.abs(along - plane) > 1.0E-4F) return false;
         }
         return true;
     }

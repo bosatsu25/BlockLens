@@ -12,10 +12,20 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.imageio.ImageIO;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 /**
  * Rendered proof that decoration decals carry the source pack's information, read from the face
@@ -64,6 +74,27 @@ final class DecorationDecalOracle {
                 }
                 require(pointing.equals(arrow[1]), "glazed terracotta facing=" + arrow[0]
                         + " must point " + arrow[1] + " on screen but points " + pointing);
+            }
+
+            // Anvil: the source pack swaps only the top texture, whose arrow points toward -u, so the
+            // baked vanilla top quad's UVs decide where the pack's arrow points. The decal must agree.
+            for (String facing : new String[] {"north", "east", "south", "west"}) {
+                install(context, off);
+                String pack = packAnvilArrow(context, facing);
+                Mask mask = decal(context, singleplayer, outputDir, off, CapabilityId.ANVIL,
+                        "anvil[facing=" + facing + "]", "anvil-" + facing);
+                require(mask.count() >= MIN_DECAL_PIXELS, "anvil arrow missing for facing=" + facing
+                        + " pixels=" + mask.count());
+                String pointing = mask.arrowDirection(arrowGlyph);
+                manifest.append("anvil.").append(facing).append(" pack=").append(pack).append(" decal=")
+                        .append(pointing).append(' ')
+                        .append(mask.describe(arrowGlyph).lines().findFirst().orElse("")).append('\n');
+                if (!pointing.equals(pack)) {
+                    System.out.println("BLOCKLENS_DECAL_ANVIL facing=" + facing + " pack=" + pack + " "
+                            + mask.describe(arrowGlyph));
+                }
+                require(pointing.equals(pack), "anvil facing=" + facing + " decal points " + pointing
+                        + " on screen but the source pack's arrow points " + pack);
             }
 
             // Axis: Y is an end face (frame); X and Z show rails parallel to the axis.
@@ -132,6 +163,53 @@ final class DecorationDecalOracle {
         install(context, off.withEnabled(capability, true));
         BufferedImage onImage = capture(context, outputDir, name + "-on");
         return Mask.of(offImage, onImage);
+    }
+
+    /**
+     * Screen direction (top-down, north up) of the source pack's anvil arrow for {@code facing}. The
+     * pack keeps template_anvil and draws its arrow toward -u of the top texture, so the arrow points
+     * where u decreases across the baked vanilla top quad. Read with every decoration off, so the
+     * wrapper emits the unmodified vanilla model.
+     */
+    private static String packAnvilArrow(ClientGameTestContext context, String facing) {
+        return context.computeOnClient(client -> {
+            Direction direction = switch (facing) {
+                case "north" -> Direction.NORTH;
+                case "east" -> Direction.EAST;
+                case "south" -> Direction.SOUTH;
+                default -> Direction.WEST;
+            };
+            BlockState state = Blocks.ANVIL.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, direction);
+            BlockStateModel model = client.getModelManager().getBlockStateModelSet().get(state);
+            double[] gradient = new double[2];
+            int[] tops = new int[1];
+            QuadEmitter emitter = Renderer.get().mutableMesh().emitter();
+            emitter.pushTransform(quad -> {
+                boolean top = quad.nominalFace() == Direction.UP;
+                for (int vertex = 0; vertex < 4 && top; vertex++) top = quad.y(vertex) > 1 - 1.0E-4F;
+                if (top) {
+                    tops[0]++;
+                    double x = 0, z = 0, u = 0;
+                    for (int vertex = 0; vertex < 4; vertex++) {
+                        x += quad.x(vertex) / 4;
+                        z += quad.z(vertex) / 4;
+                        u += quad.u(vertex) / 4;
+                    }
+                    for (int vertex = 0; vertex < 4; vertex++) {
+                        gradient[0] += (quad.x(vertex) - x) * (quad.u(vertex) - u);
+                        gradient[1] += (quad.z(vertex) - z) * (quad.u(vertex) - u);
+                    }
+                }
+                return false;
+            });
+            model.emitQuads(emitter, BlockAndTintGetter.EMPTY, BlockPos.ZERO, state, RandomSource.create(0),
+                    ignored -> false);
+            require(tops[0] == 1, "vanilla anvil " + facing + " must have one top quad, found " + tops[0]);
+            require(Math.abs(gradient[0]) != Math.abs(gradient[1]), "vanilla anvil top UVs have no single axis");
+            // -u is toward -x (screen left) when u grows with x, toward -z (screen up) when u grows with z.
+            return Math.abs(gradient[0]) > Math.abs(gradient[1]) ? gradient[0] > 0 ? "left" : "right"
+                    : gradient[1] > 0 ? "up" : "down";
+        });
     }
 
     /** The shipped arrow glyph (tip toward glyph up) as an occupancy mask: any non-clear texel. */

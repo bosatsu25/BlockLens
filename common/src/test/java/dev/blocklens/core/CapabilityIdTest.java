@@ -86,6 +86,21 @@ final class CapabilityIdTest {
     }
 
     @Test
+    void sourcePackCapabilitiesAreTheFirstThirtySevenInThePacksOptionGroups() {
+        assertEquals(37, CapabilityId.SOURCE_PACK_CAPABILITIES);
+        Map<String, Long> groups = java.util.Arrays.stream(CapabilityId.values())
+                .filter(CapabilityId::isSourcePackCapability)
+                .collect(Collectors.groupingBy(capability -> capability.sourceKey().split("\\.")[0],
+                        Collectors.counting()));
+        assertEquals(Map.of("deco", 13L, "gaming", 18L, "outline", 4L, "others", 2L), groups);
+        for (CapabilityId capability : CapabilityId.values()) {
+            assertEquals(capability.ordinal() < 37, capability.isSourcePackCapability(), capability.name());
+        }
+        assertTrue(CapabilityId.STRING_TWEAKS.isSourcePackCapability());
+        assertFalse(CapabilityId.CRYING_OBSIDIAN.isSourcePackCapability());
+    }
+
+    @Test
     void catalogKeepsKeysWithReviewedVisibilityOffDefaults() {
         Set<String> enabled = java.util.Arrays.stream(CapabilityId.values())
                 .filter(capability -> capability.ordinal() < 40)

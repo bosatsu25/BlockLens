@@ -89,6 +89,8 @@
   "blocklens.settings.close": "Save and close",
   "blocklens.settings.apply": "Apply",
   "blocklens.settings.discard": "Discard",
+  "blocklens.settings.source_pack": "Source pack ON",
+  "blocklens.settings.source_pack.hint": "Enable the source resource pack's 37 options in every category (13 Orientation & State, 18 Resources, 4 Visibility, 2 Other); keep other settings. Apply to save.",
   "blocklens.settings.unsaved": "Changes have not been applied.",
   "blocklens.settings.saved_error": "Save failed. Retry or discard.",
   "blocklens.state.enabled": "Enabled",
