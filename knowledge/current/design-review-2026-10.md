@@ -60,7 +60,9 @@ So the defensible claims are:
    source tree, and the GameTest oracles compare configs with `sameCapabilities`.
 2. **Source-text contract tests.** Many tests assert exact Java source strings. They protected verified
    decisions, but a pure file move required editing eight test files. Prefer behavior-level or
-   structural checks (as in `VersionAdapterSingleSourceContractTest`) for new guards.
+   structural checks (as in `VersionAdapterSingleSourceContractTest`) for new guards. Contracts that hold
+   for the whole renderer now read every renderer class through `SupportedVersionFixtures.rendererText`,
+   so splitting the model wrapper into layer classes broke three tests instead of every renderer pin.
 3. **Anvil arrow.** The source's top-face arrow is not reproduced because its world direction depends on
    an unverified vanilla UV rotation; verify against the vanilla model before adding it.
 4. **Meshing cost.** Done. The JFR profile put decals at 6–10 % of compile samples; encoding decal quads

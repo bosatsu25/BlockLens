@@ -36,15 +36,14 @@ METRICS = (
 # Compile-thread profile (unmeasured JFR passes): each sample belongs to the innermost BlockLens
 # code path on its stack, so a decal quad's lighting counts as decal cost, not as base geometry.
 COMPILE_FRAME = "net.minecraft.client.renderer.chunk.SectionCompiler.compile"
-MODEL_PREFIX = "dev.blocklens.fabric.MinecraftDecorationModel."
-PATHS = {
-    "emitDecals": "decals", "applyDecal": "decals",
-    "emitOreBorder": "oreBorder", "connectedNeighbors": "oreBorder", "fixedOrePart": "oreBorder",
-    "emitNetherOverlay": "netherOverlay",
-    "lookupInteriorOverlay": "netherOverlay", "lookupBandOverlay": "netherOverlay",
+FABRIC_PREFIX = "dev.blocklens.fabric."
+# Each overlay layer is its own class; the model keeps the tint transform and the lightweight overlay.
+LAYERS = {"MinecraftDecalLayer": "decals", "MinecraftOreBorderLayer": "oreBorder",
+          "MinecraftNetherLayer": "netherOverlay"}
+MODEL = "MinecraftDecorationModel"
+MODEL_PATHS = {
     "emitLightweightOverlay": "lightweightOverlay",
     "applyNonNetherInstructions": "baseTransform", "applyInstruction": "baseTransform",
-    "unitCubeFace": "baseTransform",
 }
 CATEGORIES = ("decals", "oreBorder", "netherOverlay", "lightweightOverlay", "baseTransform",
               "wrappedEmission", "blocklensOther", "otherCompile")
@@ -165,15 +164,19 @@ def classify(frames):
         return None
     blocklens = False
     for frame in frames:
-        if frame.startswith(MODEL_PREFIX):
-            method = frame[len(MODEL_PREFIX):]
-            core = method.split("$")[1] if method.startswith("lambda$") else method
-            if method.startswith("lambda$emitQuads$"):
-                return "baseTransform"
-            if core in PATHS:
-                return PATHS[core]
-            if method == "emitQuads":
-                return "wrappedEmission"
+        if frame.startswith(FABRIC_PREFIX):
+            owner, _, method = frame[len(FABRIC_PREFIX):].partition(".")
+            owner = owner.split("$", 1)[0]
+            if owner in LAYERS:
+                return LAYERS[owner]
+            if owner == MODEL:
+                core = method.split("$")[1] if method.startswith("lambda$") else method
+                if method.startswith("lambda$emitQuads$"):
+                    return "baseTransform"
+                if core in MODEL_PATHS:
+                    return MODEL_PATHS[core]
+                if method == "emitQuads":
+                    return "wrappedEmission"
         blocklens = blocklens or frame.startswith("dev.blocklens.")
     return "blocklensOther" if blocklens else "otherCompile"
 

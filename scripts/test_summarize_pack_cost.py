@@ -97,7 +97,7 @@ SAMPLE_TEXT = """jdk.ExecutionSample {
   state = "STATE_RUNNABLE"
   stackTrace = [
     net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoCalculator.compute(MutableQuadViewImpl) line: 3
-    dev.blocklens.fabric.MinecraftDecorationModel.emitDecals(QuadEmitter, BlockPos) line: 234
+    dev.blocklens.fabric.MinecraftDecalLayer.emit(MinecraftDecorationModel, QuadEmitter) line: 58
     dev.blocklens.fabric.MinecraftDecorationModel.emitQuads(QuadEmitter, BlockPos) line: 216
     net.minecraft.client.renderer.chunk.SectionCompiler.compile(SectionPos) line: 90
     ...
@@ -131,27 +131,41 @@ class CompileProfileTest(unittest.TestCase):
     def test_parses_jfr_print_text(self):
         samples = list(summary.parse_samples(SAMPLE_TEXT.splitlines()))
         self.assertEqual([thread for thread, _ in samples], ["Worker-Main-1", "Worker-Main-2", "Render thread"])
-        self.assertEqual(samples[0][1][1], "dev.blocklens.fabric.MinecraftDecorationModel.emitDecals")
+        self.assertEqual(samples[0][1][1], "dev.blocklens.fabric.MinecraftDecalLayer.emit")
         self.assertEqual(len(samples[0][1]), 4, "a truncation marker is not a frame")
 
     def test_innermost_blocklens_path_owns_the_sample(self):
-        model = "dev.blocklens.fabric.MinecraftDecorationModel."
+        fabric = "dev.blocklens.fabric."
+        model, decals, ore, nether = (fabric + name + "." for name in (
+            "MinecraftDecorationModel", "MinecraftDecalLayer", "MinecraftOreBorderLayer", "MinecraftNetherLayer"))
         compile_frame = summary.COMPILE_FRAME
-        cases = {
-            "decals": ["indigo.AoCalculator.compute", model + "lambda$emitDecals$2", model + "emitDecals",
-                       model + "emitQuads", compile_frame],
-            "baseTransform": [model + "lambda$emitQuads$0", model + "emitQuads", compile_frame],
-            "oreBorder": [model + "lambda$emitOreBorder$5", model + "emitOreBorder", compile_frame],
-            "netherOverlay": [model + "emitNetherOverlay", model + "emitQuads", compile_frame],
-            "wrappedEmission": ["indigo.AoCalculator.compute", model + "emitQuads", compile_frame],
-            # Helper frames inside a path belong to that path.
-            "decals ": ["dev.blocklens.core.render.DecorationDecals.right", model + "face",
-                        model + "applyDecal", model + "lambda$emitDecals$1", compile_frame],
-            "blocklensOther": ["dev.blocklens.fabric.MinecraftStateAdapter.state", compile_frame],
-            "otherCompile": ["net.minecraft.client.renderer.block.LiquidBlockRenderer.tesselate", compile_frame],
-        }
-        for expected, frames in cases.items():
-            self.assertEqual(summary.classify(frames), expected.strip(), expected)
+        cases = [
+            ("decals", ["indigo.AoCalculator.compute", decals + "lambda$encode$0", decals + "encode",
+                        decals + "emit", model + "emitQuads", compile_frame]),
+            ("baseTransform", [model + "lambda$emitQuads$0", model + "emitQuads", compile_frame]),
+            ("oreBorder", [ore + "lambda$emit$0", ore + "emit", model + "emitQuads", compile_frame]),
+            ("netherOverlay", [nether + "emit", model + "emitQuads", compile_frame]),
+            ("lightweightOverlay", [model + "lambda$emitLightweightOverlay$1", model + "emitLightweightOverlay",
+                                    model + "emitQuads", compile_frame]),
+            ("wrappedEmission", ["indigo.AoCalculator.compute", model + "emitQuads", compile_frame]),
+            # Helper frames inside a path belong to that path, including the model's shared helpers.
+            ("decals", ["dev.blocklens.core.render.DecorationDecals.layout", model + "face",
+                        decals + "applyDecal", decals + "lambda$encode$0", compile_frame]),
+            ("decals", ["indigo.AoCalculator.compute", model + "emitWrapped", decals + "encode", compile_frame]),
+            ("oreBorder", [fabric + "MinecraftOreExtensions.model", ore + "connectedNeighbors",
+                           ore + "lambda$emit$0", compile_frame]),
+            # Face sorting for connected borders runs inside the base transform but is ore-border cost.
+            ("oreBorder", [ore + "unitCubeFace", ore + "recordCubeFace", model + "lambda$emitQuads$0",
+                           model + "emitQuads", compile_frame]),
+            # The other tint cues on Nether overlay quads are the shared tint transform.
+            ("baseTransform", [model + "applyNonNetherInstructions", nether + "lambda$emit$0", nether + "emit",
+                               compile_frame]),
+            ("decals", [decals + "DecalMeshes.byCullFace", decals + "emit", compile_frame]),
+            ("blocklensOther", [fabric + "MinecraftStateAdapter.state", compile_frame]),
+            ("otherCompile", ["net.minecraft.client.renderer.block.LiquidBlockRenderer.tesselate", compile_frame]),
+        ]
+        for expected, frames in cases:
+            self.assertEqual(summary.classify(frames), expected, frames)
         self.assertIsNone(summary.classify(["java.util.HashMap.get"]), "outside section compiles")
 
     def test_profile_reads_every_condition_through_the_jfr_tool(self):

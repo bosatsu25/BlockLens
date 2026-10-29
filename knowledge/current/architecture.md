@@ -309,3 +309,20 @@ on the current active model, retaining existing OFF/reload/geometry-key semantic
 existing UP shade-direction override. There are no copied full renderer implementations in version
 trees. Existing 55 identities/defaults and historical reserved bits are unchanged. This refactor
 makes no performance improvement claim; all-three native/CI gates still govern acceptance.
+
+## Renderer layers (2026-10-29 refactor)
+
+The shared renderer is four `fabric-shared` classes, all compiled for every target:
+
+- `MinecraftDecorationModel` — the baked-model wrapper. It classifies capabilities at construction,
+  applies the tint cues (`applyNonNetherInstructions`) to the wrapped geometry, emits the glass/kelp
+  overlay and composes the layers below in a fixed order: base, Nether, lightweight, ore border, decals.
+- `MinecraftNetherLayer` — Nether Tweaks frame tint, interior fill and upper band.
+- `MinecraftOreBorderLayer` — emissive ore edges and Connected Ore Edges tiles.
+- `MinecraftDecalLayer` — the cached decal meshes of single-variant decoration models.
+
+A wrapper creates a layer only when one of its capabilities draws it, so most wrappers carry no
+decal, Nether or ore-border state. The pure geometry the layers use (decal layout, neighbor offsets,
+sheet tiles, unit-cube corners, Nether fill colors) is in `common` and unit-tested there. Every lazy
+overlay lookup goes through `RetainedValue`, which also retains a failed lookup. Behavior, OFF paths,
+geometry keys and rendered output are unchanged; the refactor makes no performance claim.

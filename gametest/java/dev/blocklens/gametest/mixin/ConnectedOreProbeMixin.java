@@ -22,19 +22,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(targets="dev.blocklens.fabric.MinecraftDecorationModel",remap=false)
+@Mixin(targets="dev.blocklens.fabric.MinecraftOreBorderLayer",remap=false)
 abstract class ConnectedOreProbeMixin {
     @Unique private static final ThreadLocal<int[]> blocklens$emitting=new ThreadLocal<>();
-    @Inject(method="emitOreBorder",at=@At("HEAD"),remap=false)
+    @Inject(method="emit",at=@At("HEAD"),remap=false)
     private void blocklens$startUv(QuadEmitter emitter,BlockAndTintGetter level,BlockPos pos,BlockState state,
             RandomSource random,Predicate<@Nullable Direction> cullTest,int connectedFaces,CallbackInfo info){
         if(ConnectedOreProbe.active() && connectedFaces>=0)blocklens$emitting.set(new int[]{pos.getX(),pos.getY(),pos.getZ()});
         else blocklens$emitting.remove();
     }
-    @Inject(method="emitOreBorder",at=@At("RETURN"),remap=false)
+    @Inject(method="emit",at=@At("RETURN"),remap=false)
     private void blocklens$finishUv(QuadEmitter emitter,BlockAndTintGetter level,BlockPos pos,BlockState state,
             RandomSource random,Predicate<@Nullable Direction> cullTest,int connectedFaces,CallbackInfo info){blocklens$emitting.remove();}
-    @ModifyArg(method="emitOreBorder",at=@At(value="INVOKE",target="Lnet/fabricmc/fabric/api/client/renderer/v1/mesh/QuadEmitter;pushTransform(Lnet/fabricmc/fabric/api/client/renderer/v1/mesh/QuadTransform;)V"),index=0,remap=false)
+    @ModifyArg(method="emit",at=@At(value="INVOKE",target="Lnet/fabricmc/fabric/api/client/renderer/v1/mesh/QuadEmitter;pushTransform(Lnet/fabricmc/fabric/api/client/renderer/v1/mesh/QuadTransform;)V"),index=0,remap=false)
     private QuadTransform blocklens$actualUv(QuadTransform transform){
         if(!ConnectedOreProbe.active())return transform;
         return quad->{

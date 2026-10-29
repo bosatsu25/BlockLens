@@ -12,21 +12,26 @@ final class SharedTerrainRendererContractTest {
 
     @Test
     void oneTerrainImplementationUsesOnlyThinVersionLightingAdapters() throws IOException {
-        Path shared = ROOT.resolve("fabric-shared/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java");
-        assertTrue(Files.isRegularFile(shared), "shared renderer is missing");
-        String model = Files.readString(shared);
-        assertTrue(model.contains("MinecraftQuadLighting.disableDirectionalShade(quad)"));
-        assertFalse(model.contains("quad.diffuseShade("));
-        assertFalse(model.contains("quad.shadeDirectionOverride("));
-        assertFalse(model.contains("CapabilityId.KELP_HIGHLIGHT.ordinal()"));
-        for (String module : SupportedVersionFixtures.MODULES) {
-            assertFalse(Files.exists(ROOT.resolve("versions/" + module
-                    + "/src/main/java/dev/blocklens/fabric/MinecraftDecorationModel.java")), module);
+        for (String file : SupportedVersionFixtures.RENDERER_FILES) {
+            assertTrue(Files.isRegularFile(SupportedVersionFixtures.sharedSource(ROOT, file)), "shared " + file + " is missing");
+            for (String module : SupportedVersionFixtures.MODULES) {
+                assertFalse(Files.exists(SupportedVersionFixtures.sourceRoot(ROOT, module).resolve(file)), module + " " + file);
+            }
         }
+        String renderer = SupportedVersionFixtures.rendererText(ROOT);
+        assertTrue(renderer.contains("MinecraftQuadLighting.disableDirectionalShade(quad)"));
+        assertFalse(renderer.contains("quad.diffuseShade("));
+        assertFalse(renderer.contains("quad.shadeDirectionOverride("));
+        assertFalse(renderer.contains("CapabilityId.KELP_HIGHLIGHT.ordinal()"));
         for (String adapter : List.of(SupportedVersionFixtures.SHARED_PRE_26_3,
                 "versions/mc26_3/src/main/java")) {
             assertTrue(Files.isRegularFile(ROOT.resolve(adapter
                     + "/dev/blocklens/fabric/MinecraftQuadLighting.java")), adapter);
+        }
+        String convention = Files.readString(ROOT.resolve("gradle/version-module.gradle"));
+        for (String file : SupportedVersionFixtures.RENDERER_FILES) {
+            String compiled = "'dev/blocklens/fabric/" + file.replace(".java", ".class") + "'";
+            assertTrue(convention.contains(compiled), "the runtime JAR audit must require " + compiled);
         }
     }
 }

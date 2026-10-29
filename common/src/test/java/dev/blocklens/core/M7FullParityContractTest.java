@@ -72,15 +72,16 @@ final class M7FullParityContractTest {
         for (String version : SupportedVersionFixtures.MODULES) {
             String plugin = Files.readString(SupportedVersionFixtures.adapterSource(
                     root(), version, "MinecraftDecorationModelPlugin.java"));
-            String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
+            String model = SupportedVersionFixtures.rendererText(root());
             String overlays = Files.readString(SupportedVersionFixtures.adapterSource(
                     root(), version, "NetherTweaksOverlayModels.java"));
 
             assertTrue(plugin.contains("NetherTweaksOverlayModels.register(pluginContext)"));
             assertTrue(plugin.contains("NetherTweaksVisualCue.forTarget(id.getPath())"));
-            assertTrue(model.contains("netherCue.frameArgb()"));
-            assertTrue(model.contains("lookupInteriorOverlay()"));
-            assertTrue(model.contains("lookupBandOverlay()"));
+            assertTrue(model.contains("quad.multiplyColor(netherLayer.frameArgb())"));
+            assertTrue(model.contains("netherLayer.emit(this, emitter, level, pos, state, random, cullTest, tintCapabilities)"));
+            assertTrue(model.contains("interiorOverlay.get(NetherTweaksOverlayModels.INTERIOR,"));
+            assertTrue(model.contains("bandOverlay.get(NetherTweaksOverlayModels.UPPER_BAND,"));
             assertTrue(model.contains("applyNonNetherInstructions(quad, enabledCapabilities)"));
             assertTrue(overlays.contains("SimpleUnbakedExtraModel.blockStateModel"));
         }

@@ -25,25 +25,23 @@ final class DecorationDecalContractTest {
     @Test
     void sharedRendererDrawsDecalsOnlyOverSingleVariantGeometryWithTintFallback() throws IOException {
         String model = Files.readString(SupportedVersionFixtures.rendererSource(root()));
+        String layer = Files.readString(SupportedVersionFixtures.sharedSource(root(), "MinecraftDecalLayer.java"));
         assertTrue(model.contains("boolean decalCapable = wrapped.getClass() == SingleVariant.class;"));
         assertTrue(model.contains("DecorationDecals.table(DecorationRenderDescriptor.of(capability, state))"));
-        assertTrue(model.contains("long decalCapabilities = enabledCapabilities & decalMask;"));
+        assertTrue(model.contains("long decalCapabilities = decalLayer == null ? 0L : enabledCapabilities & decalLayer.mask();"));
+        assertTrue(model.contains("long tintCapabilities = enabledCapabilities & ~decalCapabilities;"));
         assertTrue(model.contains("applyNonNetherInstructions(quad, tintCapabilities)"));
-        assertTrue(model.contains("emitDecals(emitter, level, pos, state, random, cullTest, decalCapabilities)"));
-        assertTrue(model.contains("if (!DECAL_SPRITE.equals(sprite.contents().name()))"),
+        assertTrue(model.contains("decalLayer.emit(this, emitter, level, pos, state, random, cullTest, decalCapabilities)"));
+        assertTrue(layer.contains("if (!DECAL_SPRITE.equals(sprite.contents().name()))"),
                 "a missing glyph sprite must never draw the missing-texture checkerboard");
-        assertTrue(model.contains("quad.chunkLayer(ChunkSectionLayer.CUTOUT);"));
+        assertTrue(layer.contains("quad.chunkLayer(ChunkSectionLayer.CUTOUT);"));
         // The glyph mapping and the surface lift are DecorationDecals.layout, unit-tested in common.
-        assertTrue(model.contains("DecorationDecals.layout(f, decal, positions,"));
-        assertFalse(model.contains("level.getBlockState(pos)"), "decals never inspect world state");
-        String decal = model.substring(model.indexOf("private boolean applyDecal("),
-                model.indexOf("private void emitNetherOverlay("));
-        assertFalse(decal.contains("emissive(") || decal.contains("disableDirectionalShade")
-                || decal.contains("ambientOcclusion("), "decals keep the base face's lighting, as pack textures do");
-        for (String module : SupportedVersionFixtures.MODULES) {
-            assertFalse(Files.exists(SupportedVersionFixtures.sourceRoot(root(), module)
-                    .resolve("MinecraftDecorationModel.java")), module);
-        }
+        assertTrue(layer.contains("DecorationDecals.layout(f, decal, positions,"));
+        // The decal geometry is the wrapped model's own, emitted once with nothing culled.
+        assertTrue(layer.contains("model.emitWrapped(source, level, pos, state, random, direction -> false);"));
+        assertFalse(layer.contains("getBlockState("), "decals never inspect world state");
+        assertFalse(layer.contains("emissive(") || layer.contains("disableDirectionalShade")
+                || layer.contains("ambientOcclusion("), "decals keep the base face's lighting, as pack textures do");
     }
 
     @Test
