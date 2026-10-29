@@ -115,8 +115,9 @@ final class SettingsStateReloadOracle {
 
     private static void verifyDraft(BlockLensConfigScreen screen, boolean expected) {
         List<Button> controls = ResponsiveSettingsScreenOracle.buttons(screen);
+        // Rows plus four tabs, three Resources shortcuts, three footer actions and the header action.
         require(controls.size() == dev.blocklens.core.ui.SettingsCatalog.capabilities(
-                CapabilityId.Category.RESOURCE).size() + 10, "Category changed during rebuild");
+                CapabilityId.Category.RESOURCE).size() + 11, "Category changed during rebuild");
         String state = Component.translatable(expected
                 ? "blocklens.state.enabled" : "blocklens.state.disabled").getString();
         require(controls.get(4).getMessage().getString().equals(state), "Rebuild lost the draft");
