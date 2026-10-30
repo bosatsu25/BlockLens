@@ -26,6 +26,13 @@ class DecorationGlyphsTest(unittest.TestCase):
             for x in range(SIZE // 2):
                 self.assertEqual(arrow(x, y), arrow(SIZE - 1 - x, y))
 
+    def test_lines_glyph_is_opaque_above_and_dashed_by_sixteenths_below(self):
+        lines = GLYPHS["lines"]
+        for y in range(SIZE):
+            for x in range(SIZE):
+                expected = y < SIZE // 2 or (x * 16 // SIZE) % 2 == 1
+                self.assertEqual(expected, lines(x, y)[3] == 255, (x, y))
+
 
 if __name__ == "__main__":
     unittest.main()

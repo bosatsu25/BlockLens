@@ -43,6 +43,9 @@ GLYPHS = {
     "arrow": arrow,
     "seam_frame": lambda x, y: WHITE if ring(x, y) <= 1 or y in (15, 16) else CLEAR,
     "double_frame": lambda x, y: WHITE if ring(x, y) <= 1 or ring(x, y) in (4, 5) else CLEAR,
+    # Upper half opaque for solid lines; lower half one dash per odd sixteenth of a block, so the
+    # phase is absolute along a line rather than mirror symmetric.
+    "lines": lambda x, y: WHITE if y < SIZE // 2 or (x // 2) % 2 == 1 else CLEAR,
 }
 
 

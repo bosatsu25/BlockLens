@@ -316,6 +316,8 @@ tasks.register('versionSmokeContract') {
                     'dev/blocklens/core/render/DecorationTargetCatalog.class',
                     'dev/blocklens/core/render/DecorationQuadCuePolicy.class',
                     'dev/blocklens/core/render/DecorationDecals.class',
+                    'dev/blocklens/core/render/DecorationLines.class',
+                    'dev/blocklens/core/render/DecorationLines$Line.class',
                     'assets/blocklens/textures/block/cue/decal_glyphs.png',
                     'assets/blocklens/lang/en_us.json',
                     'assets/blocklens/lang/ja_jp.json',
