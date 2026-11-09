@@ -115,6 +115,14 @@ final class SettingsDraftStateTransitionTest {
         draft.enableObsidianPair();
         assertClean(draft, allOn);
         assertFalse(draft.save(directory));
+        draft.setComfortOptions(new ComfortOptions(2, 40, 40, 40));   // CLEAN --edit--> DIRTY
+        var dirty = draft.config();
+        draft.enableSourcePack();                             // DIRTY --no-op shortcut--> DIRTY, edit intact
+        draft.enableOreGlowProfile();
+        draft.enableObsidianPair();
+        assertTrue(draft.changed());
+        assertEquals(dirty, draft.config());
+        draft.discard();
         draft.disableResources();                             // CLEAN --shortcut with effect--> DIRTY
         assertTrue(draft.changed());
     }

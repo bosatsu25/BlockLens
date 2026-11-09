@@ -61,8 +61,10 @@ final class BlockLensConfigCodecPartitionTest {
             "others.handheld_size.blocks_percent, 41, 41", "others.handheld_size.blocks_percent, 99, 99",
             "others.handheld_size.blocks_percent, 100, 100", "others.handheld_size.blocks_percent, 101, 70",
             "others.handheld_size.items_percent, 39, 60", "others.handheld_size.items_percent, 40, 40",
+            "others.handheld_size.items_percent, 41, 41", "others.handheld_size.items_percent, 99, 99",
             "others.handheld_size.items_percent, 100, 100", "others.handheld_size.items_percent, 101, 60",
             "others.handheld_size.tools_percent, 39, 75", "others.handheld_size.tools_percent, 40, 40",
+            "others.handheld_size.tools_percent, 41, 41", "others.handheld_size.tools_percent, 99, 99",
             "others.handheld_size.tools_percent, 100, 100", "others.handheld_size.tools_percent, 101, 75",
     })
     void boundedOptionsAcceptBothBoundariesAndFallBackOutsideThem(String key, int value, int expected) {
@@ -78,24 +80,27 @@ final class BlockLensConfigCodecPartitionTest {
                 "an option line changes no other option");
     }
 
-    /** Numeric partitions beyond the range: how the text is written (TD-C4). */
+    /**
+     * Numeric partitions beyond the range: how the text is written (TD-C4). Accepted forms decode to 41,
+     * which is not the default, so a form that silently fell back to the default 70 would be caught.
+     */
     @ParameterizedTest(name = "TD-C4 blocks_percent=[{0}] -> {1}")
     @CsvSource(delimiter = '|', value = {
-            "70      | 70",
-            "+70     | 70",
-            "070     | 70",
-            " 70     | 70",
-            "７０    | 70",
-            "70.0    | 70",
-            "7e1     | 70",
-            "seventy | 70",
-            "99999999999 | 70",
-            "-70     | 70",
-            "        | 70",
             "41      | 41",
+            "+41     | 41",
+            "041     | 41",
+            " 41     | 41",
+            "４１    | 41",
+            "41.0    | 70",
+            "4.1e1   | 70",
+            "forty-one | 70",
+            "99999999999 | 70",
+            "-41     | 70",
+            "        | 70",
+            "41 %    | 70",
     })
     void numericTextPartitions(String text, int expected) {
-        // Only the last row changes the value: every other partition is either a plain 70 or falls back to 70.
+        assertEquals(70, COMFORT.blocksPercent(), "fixture: the fallback is the default 70");
         assertEquals(expected, BlockLensConfigCodec.decode("others.handheld_size.blocks_percent=" + text + "\n")
                 .comfortOptions().blocksPercent());
     }

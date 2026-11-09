@@ -62,7 +62,7 @@ Partitions of one input line (each-choice coverage):
 | TD-C1 | capability key, non-boolean value | `yes`, `1`, empty, `true=false` | default kept |
 | TD-C2 | comment, blank, no separator, unknown key, empty key, wrong key case | `# …`, `   `, `deco.anvil`, `unknown.key=true`, `=true`, `DECO.ANVIL=true` | whole config equals defaults |
 | TD-C3 | bounded comfort option, three-value BVA at both bounds | fire −1/0/1, 1/2/3; percents 39/40/41, 99/100/101 for all three fields | accepted inclusive, default outside |
-| TD-C4 | numeric text forms | `+70`, `070`, ` 70`, full-width `７０` (accepted by `Integer.parseInt`), `70.0`, `7e1`, words, overflow, negative, empty | only decimal integers inside the range are applied; the rest keep the default |
+| TD-C4 | numeric text forms, written around the non-default value 41 so a silent fallback to the default 70 is visible | `+41`, `041`, ` 41`, full-width `４１` (accepted by `Integer.parseInt`); `41.0`, `4.1e1`, words, overflow, negative, empty, `41 %` | only decimal integers inside the range are applied; the rest keep the default |
 | TD-C5 | scene filter mode case, invalid mode, valid list (trim/lower/sort/dedupe), list with an invalid member | see test | last valid rule kept |
 | TD-C6 | error guessing: CRLF and bare CR line endings, duplicate keys, one bad line among good ones, encode→decode identity at the bounds | see tests | later duplicate wins; bad lines isolated |
 
@@ -70,8 +70,8 @@ Analyzer option lines (same `bounded` path) are covered by `AnalyzerConfiguratio
 (`everyNumericLimitRoundTripsWhileLegacyBitsAndComfortRemainIntact`,
 `MalformedOrOutOfRangeValuesPreserveTheLastValidField`).
 
-Coverage: 9/9 capability-line partitions, 6/6 inert partitions, 20/20 comfort boundary items,
-12/12 numeric text partitions.
+Coverage: 9/9 capability-line partitions, 6/6 inert partitions, 24/24 comfort boundary items
+(fire 5, three percent fields × 6: 39/40/41 and 99/100/101), 12/12 numeric text partitions.
 
 ## 5. SettingsDraft — state transition testing (`SettingsDraftStateTransitionTest`)
 
@@ -82,7 +82,7 @@ state / effect; `—` is an invalid or no-op transition that must change nothing
 | From \ Event | toggle | discard | save ok | save fail | no-op shortcut |
 | --- | --- | --- | --- | --- | --- |
 | CLEAN | DIRTY | CLEAN | CLEAN, returns false, **no I/O at all** | CLEAN, returns false, no exception | CLEAN |
-| DIRTY | DIRTY, or CLEAN when the last edit is reverted | CLEAN (original baseline) | CLEAN, baseline advanced, file written | DIRTY, baseline unchanged | — |
+| DIRTY | DIRTY, or CLEAN when the last edit is reverted | CLEAN (original baseline) | CLEAN, baseline advanced, file written | DIRTY, baseline unchanged | DIRTY, the pending edit intact |
 
 | ID | Transitions | Test |
 | --- | --- | --- |
@@ -91,10 +91,10 @@ state / effect; `—` is an invalid or no-op transition that must change nothing
 | TD-S3 | CLEAN + save (both paths): invalid transitions refused before I/O | `saveWhileCleanIsANoOpEvenIntoAnUnwritablePath` |
 | TD-S4 | DIRTY→CLEAN by save ok; the new baseline is what discard returns to | `successfulSaveAdvancesTheBaselineSoDiscardKeepsTheSavedEdits` |
 | TD-S5 | DIRTY→DIRTY by save fail; discard returns to the old baseline | `failedSaveKeepsTheDraftDirtyAndTheBaselineUnchanged` |
-| TD-S6 | CLEAN + shortcuts with and without effect | `shortcutsThatChangeNothingKeepTheDraftClean` |
+| TD-S6 | CLEAN and DIRTY + no-op shortcuts (the DIRTY edit stays intact); CLEAN + a shortcut with effect | `shortcutsThatChangeNothingKeepTheDraftClean` |
 | TD-S7 | decision table of `changed()`: C1 capabilities, C2 comfort, C3 analyzer, C4 scene filter; any true → changed | `changedIsTrueWhenAnySingleDimensionDiffers` |
 
-Coverage: all 9 valid transitions (0-switch, 100 %), 2 invalid transitions attempted, 5/5
+Coverage: all 10 valid transitions (0-switch, 100 %), 2 invalid transitions attempted, 5/5
 decision-table rules (the 16-row table collapses to any-true plus all-false).
 
 ## 6. PaleOakPalette — BVA and decision table (`PaleOakPaletteBoundaryTest`)
