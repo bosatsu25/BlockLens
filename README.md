@@ -410,6 +410,7 @@ flowchart LR
 - [`knowledge/current/source-raw-parity-audit.md`](knowledge/current/source-raw-parity-audit.md) — raw-source/RPO parity audit
 - [`knowledge/current/chisetweaks-migration.md`](knowledge/current/chisetweaks-migration.md) — ChiseTweaks → BlockLens migration
 - [`knowledge/current/quality-strategy.md`](knowledge/current/quality-strategy.md) — quality strategy
+- [`knowledge/current/test-design-ctfl.md`](knowledge/current/test-design-ctfl.md) — technique-driven test designs (CTFL chapter 4)
 - [`knowledge/current/performance-strategy.md`](knowledge/current/performance-strategy.md) — performance strategy
 - [`knowledge/current/m8-performance.md`](knowledge/current/m8-performance.md) — M8 evidence
 - [`knowledge/current/release-readiness.md`](knowledge/current/release-readiness.md) — M9/release evidence

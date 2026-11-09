@@ -31,6 +31,7 @@ jacoco {
 
 def coverageGateClasses = [
         'dev/blocklens/core/ui/SettingsDraft*.class',
+        'dev/blocklens/core/ui/SettingsLayout*.class',
         'dev/blocklens/core/CapabilityId*.class',
         'dev/blocklens/core/ComfortOptions*.class',
         'dev/blocklens/core/analyzer/AnalyzerOptions*.class',
@@ -113,6 +114,7 @@ jacocoTestCoverageVerification {
 pitest {
     targetClasses = [
             'dev.blocklens.core.ui.SettingsDraft',
+            'dev.blocklens.core.ui.SettingsLayout',
             'dev.blocklens.core.CapabilityId',
             'dev.blocklens.core.ComfortOptions',
             'dev.blocklens.core.analyzer.AnalyzerOptions',
@@ -159,15 +161,20 @@ pitest {
     // M0 target/palette data tables; deterministic product-policy logic remains mutation-gated.
     targetTests = [
             'dev.blocklens.core.ui.SettingsDraftTest',
+            'dev.blocklens.core.ui.SettingsDraftStateTransitionTest',
+            'dev.blocklens.core.ui.SettingsLayoutTest',
+            'dev.blocklens.core.ui.SettingsLayoutBoundaryTest',
             'dev.blocklens.core.CapabilityIdTest',
             'dev.blocklens.core.BlockLensConfigTest',
             'dev.blocklens.core.BlockLensConfigCodecTest',
+            'dev.blocklens.core.BlockLensConfigCodecPartitionTest',
             'dev.blocklens.core.ComfortConfigTest',
             'dev.blocklens.core.analyzer.AnalyzerConfigurationTest',
             'dev.blocklens.core.analyzer.AnalyzerOptionsContractTest',
             'dev.blocklens.core.analyzer.AnalyzerEngineTest',
             'dev.blocklens.core.analyzer.AnalyzerSceneVisibilityTest',
             'dev.blocklens.core.scene.SceneFilterOptionsTest',
+            'dev.blocklens.core.scene.SceneFilterOptionsBoundaryTest',
             'dev.blocklens.core.scene.SceneFilterPolicyTest',
             'dev.blocklens.core.scene.SceneFilterConfigurationTest',
             'dev.blocklens.core.BuilderCapabilitiesTest',
@@ -177,6 +184,7 @@ pitest {
             'dev.blocklens.core.ui.ComfortSettingsDraftTest',
             'dev.blocklens.core.render.ComfortRenderPolicyTest',
             'dev.blocklens.core.render.PaleOakPaletteTest',
+            'dev.blocklens.core.render.PaleOakPaletteBoundaryTest',
             'dev.blocklens.core.render.CompactModelTransformsTest',
             'dev.blocklens.core.render.SimplifiedTerrainPolicyTest',
             'dev.blocklens.core.render.VisualResourceReloadPolicyTest',

@@ -55,6 +55,9 @@ Target deterministic common code:
 - version-parity policy
 
 Use parameterized tests, equivalence partitioning, boundary-value analysis, and state-transition tests where appropriate.
+The technique-driven designs, their coverage items and the test classes that implement them are
+recorded in [`test-design-ctfl.md`](test-design-ctfl.md), which also lists the surviving mutants
+that are equivalent and the defect candidates the designs surfaced.
 
 ### Layer B — Repository/contract tests
 

@@ -72,3 +72,4 @@ If future documents are placed under `archive`, `deprecated`, or `superseded`, u
 - [Remaining delivery and revised size contract](current/remaining-delivery.md) — size contract history (200 KiB from 2026-10-11, now 250 KiB from 2026-10-27), preserved gates and evidence links.
 
 - [Supplied-pack parity reassessment](current/supplied-pack-parity-reassessment.md) — six-input audit, shared renderer, fail-closed evidence and remaining native behavior gaps.
+- [Technique-driven test design](current/test-design-ctfl.md) — CTFL chapter 4 designs (equivalence partitioning, boundary values, decision tables, state transitions) over the common policies, their coverage items, equivalent mutants and the defect candidates they surfaced.
