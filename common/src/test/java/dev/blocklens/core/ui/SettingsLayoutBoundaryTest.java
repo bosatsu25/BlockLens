@@ -32,13 +32,14 @@ final class SettingsLayoutBoundaryTest {
             // far below both bounds: still laid out, never an exception
             "1, 1, false, 160, 156", "0, 0, true, 160, 180",
     })
-    void sizesBelowTheMinimumAreLaidOutAsTheMinimumAndAlwaysShowTheFirstRow(int width, int height,
+    void sizesBelowTheMinimumAreLaidOutAsTheMinimum(int width, int height,
             boolean actions, int laidOutWidth, int laidOutHeight) {
         var layout = SettingsLayout.create(width, height, 5, 0, 48, actions);
         var reference = SettingsLayout.create(laidOutWidth, laidOutHeight, 5, 0, 48, actions);
         assertEquals(reference, layout);
         assertEquals(SettingsLayout.minHeight(actions), actions ? 180 : 156);
-        assertTrue(layout.visible(0), "the first row is visible at every size");
+        // Within the layout; a window really smaller than the minimum clips what lies past its edge.
+        assertTrue(layout.visible(0), "the first row is visible within the layout at every size");
         assertTrue(layout.listBottom() - layout.listTop() >= SettingsLayout.MIN_ROW_HEIGHT);
         assertEquals(laidOutHeight - 28, layout.footerY());
     }

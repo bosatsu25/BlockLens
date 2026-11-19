@@ -30,8 +30,8 @@ public record SettingsLayout(
     /**
      * Lays out {@code count} rows in a window of {@code width} x {@code height}. A window smaller than
      * {@link #MIN_WIDTH} x {@link #minHeight} is laid out as if it were that size, so the screen never
-     * fails to open and the first row is always visible; the footer then runs past the window edge,
-     * as it would in any screen too small for its content.
+     * fails to open; in such a window the controls past its edge are clipped, as in any screen too
+     * small for its content. At or above the minimum the first row is visible and every row reachable.
      */
     public static SettingsLayout create(
             int width, int height, int count, int requestedScroll, int requestedRowHeight, boolean resourceActions) {

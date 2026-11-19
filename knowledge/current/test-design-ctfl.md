@@ -43,7 +43,7 @@ scroll < 0 / 0..maxScroll / > maxScroll. All ordered, so three-value BVA applies
 
 | ID | Coverage items (boundary, neighbours) | Expected | Test |
 | --- | --- | --- | --- |
-| TD-L1 | width 159/160/161; height 155/156/157 and 179/180/181 with the action row; 1×1 and 0×0 | below the minimum the layout equals the minimum's, the first row is visible at every size | `sizesBelowTheMinimumAreLaidOutAsTheMinimumAndAlwaysShowTheFirstRow`, `everyRowIsReachableAtEveryHeightFromOneToThreeHundred` |
+| TD-L1 | width 159/160/161; height 155/156/157 and 179/180/181 with the action row; 1×1 and 0×0 | below the minimum the layout equals the minimum's; within the layout the first row is visible at every size | `sizesBelowTheMinimumAreLaidOutAsTheMinimum`, `everyRowIsReachableAtEveryHeightFromOneToThreeHundred` |
 | TD-L1b | count −1/0/1 and 63/64/65 | reject outside, accept inclusive | `itemCountIsCheckedAtBothBoundaries` |
 | TD-L2 | width 643/644/645 (content width cap 620) | 619/620/620, centered | `contentWidthIsCappedAtSixHundredTwentyAndCentered` |
 | TD-L3 | requested row height 41/42/43 and 125/126/127 (span 126) | 42/42/43 and 125/126/126 | `rowHeightIsClampedBetweenFortyTwoAndTheListSpan` |
@@ -163,10 +163,12 @@ Designing the boundaries surfaced four behaviors the test basis did not decide. 
    height is clamped up to 42 px, so no row was ever visible; below 140 the constructor threw, and
    `AbstractBlockLensConfigScreen.init` calls it with the scaled window size without catching.
    **Resolved:** the size guard is a clamp. A window below 160 × 156 (180 with the action row) is laid
-   out as that size, so the screen always opens and the first row is always visible; only the footer
-   may run past the edge. `everyRowIsReachableAtEveryHeightFromOneToThreeHundred` sweeps every height
-   from 1 to 300 with both action-row states. The item-count guard still throws: that is a programming
-   error, not a window size.
+   out as that size, so the screen always opens with a consistent layout; at or above that size the
+   first row is visible and every row reachable, and in a window that really is smaller the controls
+   past its edge are clipped (the layout cannot make a 100 px window hold a 160 px row, and a clipped
+   screen beats a failed `init`). `everyRowIsReachableAtEveryHeightFromOneToThreeHundred` sweeps every
+   height from 1 to 300 with both action-row states and checks reachability within the layout. The
+   item-count guard still throws: that is a programming error, not a window size.
 2. **A trailing comma rejected the whole list (error guessing, TD-C5).** `minecraft:stone,` produced
    an empty final element, which failed the ID grammar, so the line was dropped and the previous list
    kept. **Resolved:** `parseList` skips empty elements (trailing, leading, doubled, blank); an invalid
