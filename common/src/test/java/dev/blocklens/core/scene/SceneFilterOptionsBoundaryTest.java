@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
@@ -68,6 +69,29 @@ final class SceneFilterOptionsBoundaryTest {
         var oneId = new SceneFilterOptions.Rule(SceneFilterOptions.Mode.WHITELIST, List.of(),
                 List.of("t:" + "c".repeat(64)));
         assertEquals(1, new SceneFilterOptions(blocks, oneId).entities().whitelist().size());
+    }
+
+    @ParameterizedTest(name = "TD-F6 parseList [{0}] -> {1}")
+    @CsvSource(delimiter = '|', value = {
+            "t:a,            | t:a",
+            ",t:a            | t:a",
+            "t:a,,t:b        | t:a;t:b",
+            "t:a, ,t:b       | t:a;t:b",
+            ",               | ",
+            ",,,             | ",
+            "                | ",
+            "T:A , t:a       | t:a",
+    })
+    void emptyElementsBetweenCommasAreSkipped(String text, String expected) {
+        List<String> parsed = SceneFilterOptions.parseList(text == null ? "" : text);
+        assertEquals(expected == null ? List.of() : List.of(expected.split(";")), parsed);
+    }
+
+    @Test
+    void anEmptyIdGivenDirectlyIsStillRejected() {
+        assertThrows(IllegalArgumentException.class, () -> SceneFilterOptions.normalize(List.of("")));
+        assertThrows(IllegalArgumentException.class, () -> SceneFilterOptions.normalize(List.of(" ")));
+        assertThrows(IllegalArgumentException.class, () -> SceneFilterOptions.parseList("t:a,t:"));
     }
 
     @ParameterizedTest(name = "TD-F4 rejected segment form [{0}]")

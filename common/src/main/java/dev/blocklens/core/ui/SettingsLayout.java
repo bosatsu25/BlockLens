@@ -14,16 +14,37 @@ public record SettingsLayout(
         return create(width, height, count, requestedScroll, requestedRowHeight, false);
     }
 
+    /** Smallest row the list draws; the window is treated as at least tall enough for one. */
+    public static final int MIN_ROW_HEIGHT = 42;
+    public static final int MIN_WIDTH = 160;
+
+    /** Smallest height at which one row fits between the list top and the footer. */
+    public static int minHeight(boolean resourceActions) {
+        return listTop(resourceActions) + MIN_ROW_HEIGHT + 22 + 28;
+    }
+
+    private static int listTop(boolean resourceActions) {
+        return resourceActions ? 88 : 64;
+    }
+
+    /**
+     * Lays out {@code count} rows in a window of {@code width} x {@code height}. A window smaller than
+     * {@link #MIN_WIDTH} x {@link #minHeight} is laid out as if it were that size, so the screen never
+     * fails to open and the first row is always visible; the footer then runs past the window edge,
+     * as it would in any screen too small for its content.
+     */
     public static SettingsLayout create(
             int width, int height, int count, int requestedScroll, int requestedRowHeight, boolean resourceActions) {
-        if (width < 160 || height < 140 || count < 0 || count > 64) {
-            throw new IllegalArgumentException("Settings layout dimensions or item count are invalid");
+        if (count < 0 || count > 64) {
+            throw new IllegalArgumentException("Settings layout item count is invalid");
         }
+        width = Math.max(MIN_WIDTH, width);
+        height = Math.max(minHeight(resourceActions), height);
         int contentWidth = Math.min(620, width - 24);
         int footerY = height - 28;
-        int listTop = resourceActions ? 88 : 64;
+        int listTop = listTop(resourceActions);
         int listBottom = footerY - 22;
-        int rowHeight = Math.max(42, Math.min(requestedRowHeight, listBottom - listTop));
+        int rowHeight = Math.max(MIN_ROW_HEIGHT, Math.min(requestedRowHeight, listBottom - listTop));
         int maxScroll = Math.max(0, count * rowHeight - (listBottom - listTop));
         return new SettingsLayout((width - contentWidth) / 2, contentWidth, listTop, listBottom,
                 footerY, rowHeight, count, Math.clamp(requestedScroll, 0, maxScroll), maxScroll);

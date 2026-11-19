@@ -21,6 +21,9 @@ Select a category to view its option rows. Each row shows a name, a short explan
 a separate localized Enabled/Disabled button. The tooltip and keyboard narration include
 the complete name. Long names are ellipsized; descriptions wrap within the row.
 All categories share the same local draft, with a separate bounded scroll position per category.
+The layout never rejects a window size: a window narrower than 160 or shorter than 156 scaled pixels
+(180 with the Resources action row) is laid out as if it were that size, so the screen always opens
+and the first row is always visible; only the footer may run past the edge of such a window.
 A dark panel behind the list and status area keeps names and explanations readable on bright
 menu/world backgrounds. Framebuffer tests check the complete viewport and a bounded dark backdrop.
 

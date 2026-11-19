@@ -122,8 +122,14 @@ final class BlockLensConfigCodecPartitionTest {
         assertEquals(List.of("minecraft:dirt", "minecraft:stone"), lists.blocks().blacklist(),
                 "trimmed, lower-cased, sorted and deduplicated");
         assertEquals(List.of("minecraft:oak_log"), lists.blocks().whitelist());
-        assertEquals(List.of(), lists.entities().whitelist(),
-                "a trailing comma makes the whole line invalid, so the previous (empty) list stays");
+        assertEquals(List.of("minecraft:item"), lists.entities().whitelist(),
+                "a trailing comma is an empty element, which is skipped");
+        var invalid = BlockLensConfigCodec.decode("""
+                scene.entity_filter.whitelist=minecraft:item
+                scene.entity_filter.whitelist=minecraft:item,minecraft:stone[axis=x]
+                """).sceneFilterOptions();
+        assertEquals(List.of("minecraft:item"), invalid.entities().whitelist(),
+                "an invalid member still makes the whole line invalid, so the previous list stays");
     }
 
     /** Error guessing (TD-C6): the ways a hand-edited properties file differs from an encoded one. */
@@ -136,6 +142,18 @@ final class BlockLensConfigCodecPartitionTest {
         var mixed = BlockLensConfigCodec.decode("deco.anvil=true\rdeco.stairs=true\nothers.low_fire.size=2\r\n");
         assertTrue(mixed.isEnabled(CapabilityId.ANVIL));
         assertTrue(mixed.isEnabled(CapabilityId.STAIRS));
+    }
+
+    @Test
+    void aLeadingByteOrderMarkDoesNotHideTheFirstLine() {
+        var config = BlockLensConfigCodec.decode("\uFEFFdeco.anvil=true\ndeco.stairs=true\n");
+        assertTrue(config.isEnabled(CapabilityId.ANVIL), "the first key is read without the BOM");
+        assertTrue(config.isEnabled(CapabilityId.STAIRS));
+        assertEquals(DEFAULTS, BlockLensConfigCodec.decode("\uFEFF"), "a BOM alone is an empty file");
+        assertEquals(DEFAULTS, BlockLensConfigCodec.decode("\uFEFF\n# only a comment\n"));
+        var inner = BlockLensConfigCodec.decode("deco.anvil=true\n\uFEFFdeco.stairs=true\n");
+        assertTrue(inner.isEnabled(CapabilityId.ANVIL));
+        assertFalse(inner.isEnabled(CapabilityId.STAIRS), "only a leading BOM is a BOM; elsewhere it is text");
     }
 
     @Test

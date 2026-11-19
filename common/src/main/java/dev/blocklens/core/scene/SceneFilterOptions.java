@@ -1,5 +1,6 @@
 package dev.blocklens.core.scene;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -84,11 +85,15 @@ public record SceneFilterOptions(Rule blocks, Rule entities) {
         return new SceneFilterOptions(blocks, rule);
     }
 
+    /** Comma-separated IDs; an empty element (a trailing or doubled comma) is skipped, not an error. */
     public static List<String> parseList(String text) {
         Objects.requireNonNull(text, "text");
         if (text.length() > MAX_TOTAL_CHARS) throw new IllegalArgumentException("filter text limit exceeded");
-        if (text.isEmpty()) return List.of();
-        return normalize(List.of(text.split(",", -1)));
+        var ids = new ArrayList<String>();
+        for (String element : text.split(",", -1)) {
+            if (!element.isBlank()) ids.add(element);
+        }
+        return normalize(ids);
     }
 
     public static List<String> normalize(List<String> ids) {

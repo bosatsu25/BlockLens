@@ -48,6 +48,9 @@ public final class BlockLensConfigCodec {
         if (text == null || text.isBlank()) {
             return BlockLensConfig.defaults();
         }
+        if (text.charAt(0) == '\uFEFF') {
+            text = text.substring(1); // A byte-order mark from an editor is not part of the first key.
+        }
 
         AnalyzerOptions analyzers = AnalyzerOptions.defaults();
         SceneFilterOptions scene = SceneFilterOptions.defaults();
