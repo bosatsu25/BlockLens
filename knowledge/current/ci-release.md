@@ -1,6 +1,6 @@
 # CI scope and automatic release
 
-Status: current (2026-10-27; Gradle cache 2026-10-28). Supersedes the `workflow_run` Release workflow described in
+Status: current (2026-10-27; Gradle cache 2026-10-28; resolution retry 2026-11-20). Supersedes the `workflow_run` Release workflow described in
 `release-readiness.md`, which skipped every merge after v0.4.7 because the version never changed.
 
 ## Verification scope
@@ -47,8 +47,20 @@ keys.
   only in `gradle.properties` keeps the old entry, and each job downloads the new artifact itself.
 - Gradle's default download timeouts stay. Longer ones (60 s, 5 tentatives) were tried and did not
   prevent the same failure; it only arrived after 21 minutes instead of 7–17.
-- `scripts/test_ci_gradle_cache.py` fails if a job leaves the basic provider, if another job saves,
-  or if a Gradle job stops needing `common-quality`.
+- Every Gradle command in the workflows runs through `scripts/ci_gradle.sh`. When Gradle fails with
+  `Could not find`, `Could not resolve`, `Could not GET/HEAD` or `Could not download`, the script waits
+  60 s and runs the same command once more with `--refresh-dependencies`; any other failure, and a
+  second resolution failure, end the step with Gradle's exit code. Why (2026-11-20): Maven Central
+  answered 404 for valid artifacts (the Minecraft libraries' parent POMs, `asm-analysis`, and on a cold
+  main gate the Loom plugin's own dependencies) to single runners, within a second and for the whole
+  batch, while sibling jobs restoring the same cache entry resolved the same modules in the same
+  minutes. Gradle records such a 404 as a missing module in the cache, so the retry has to bypass it.
+- `common-quality` saves with `cache-overwrite-existing: true`. A gate that failed in resolution still
+  saves its entry, which then holds almost nothing; the next green gate replaces it, instead of every
+  job downloading everything from `maven.fabricmc.net` until the build files change.
+- `scripts/test_ci_gradle_cache.py` fails if a job leaves the basic provider, if another job saves or
+  overwrites, if a Gradle job stops needing `common-quality`, or if a Gradle command bypasses the
+  wrapper; it also runs the wrapper against a fake `gradle` for the four outcomes.
 
 Why (2026-10-28): with the enhanced provider every job saved its own Gradle User Home entry of about
 1 GB, keyed by job, matrix and commit, so one full run wrote about 28 GB against GitHub's 10 GB

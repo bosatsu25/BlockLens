@@ -88,7 +88,7 @@ jobs:
           --destination 'build/external/${{ matrix.minecraft }}-${{ matrix.profile }}'
       - name: Build and audit the packaged runtime
         run: >-
-          gradle --stacktrace
+          scripts/ci_gradle.sh gradle --stacktrace
           -PclientTestFocus=external
           -PconnectedExternalOnly=${{ inputs.connected_only }}
           -PverifyPackagedRuntime=true
@@ -104,7 +104,7 @@ jobs:
         # remain unchanged.
         timeout-minutes: 35
         run: >-
-          xvfb-run -a gradle --stacktrace
+          scripts/ci_gradle.sh xvfb-run -a gradle --stacktrace
           -PclientTestFocus=external
           -PconnectedExternalOnly=${{ inputs.connected_only }}
           -PverifyPackagedRuntime=true

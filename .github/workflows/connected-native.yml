@@ -42,7 +42,7 @@ jobs:
       - name: Test packaged connected ore rendering
         timeout-minutes: 14
         run: >-
-          xvfb-run -a gradle --stacktrace -PverifyPackagedRuntime=true -PclientTestFocus=connected
+          scripts/ci_gradle.sh xvfb-run -a gradle --stacktrace -PverifyPackagedRuntime=true -PclientTestFocus=connected
           :versions:${{ matrix.module }}:runClientGameTest
       - name: Verify the complete connected graph
         run: >-
