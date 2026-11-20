@@ -133,6 +133,16 @@ class GradleCacheTest(unittest.TestCase):
             self.assertEqual((3, 1), (code, len(calls_made)), "any other failure keeps its exit code, no retry")
             self.assertNotIn("::warning::", output)
 
+    def test_a_central_mirror_follows_maven_central_in_both_repository_lists(self):
+        # Central's CDN answered 404 for valid artifacts to single runners, twice in a row 60 s apart,
+        # so the retry alone did not recover; Gradle goes on to the next repository after a 404.
+        mirror = "maven { url = 'https://maven-central.storage-download.googleapis.com/maven2/' }"
+        for name in ("settings.gradle", "build.gradle"):
+            lines = [line.strip() for line in (ROOT / name).read_text(encoding="utf-8").splitlines()
+                     if line.strip() and not line.strip().startswith("//")]
+            self.assertIn(mirror, lines, name)
+            self.assertEqual("mavenCentral()", lines[lines.index(mirror) - 1], f"{name}: Central first, mirror next")
+
     def test_downloads_keep_gradle_default_timeouts(self):
         # Longer timeouts only delayed the same mercury-0.4.3.jar failure (21 min instead of 8).
         self.assertNotIn("org.gradle.internal.http", (ROOT / "gradle.properties").read_text(encoding="utf-8"))

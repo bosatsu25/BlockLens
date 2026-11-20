@@ -55,6 +55,14 @@ keys.
   main gate the Loom plugin's own dependencies) to single runners, within a second and for the whole
   batch, while sibling jobs restoring the same cache entry resolved the same modules in the same
   minutes. Gradle records such a 404 as a missing module in the cache, so the retry has to bypass it.
+- `settings.gradle` (plugin repositories) and `build.gradle` (project repositories) list Google's
+  mirror of Maven Central, `maven-central.storage-download.googleapis.com`, right after
+  `mavenCentral()`. Gradle asks the next repository after a 404, so a runner that Central's CDN
+  (Cloudflare, since late 2026) answers with 404s still resolves from the mirror; on an ordinary run
+  the mirror answers nothing, because Central answers first. Why (2026-11-20): on the first run of
+  the retry wrapper, `pack-cost / 26.3` failed the same `Could not find` batch twice, 60 s apart,
+  with `--refresh-dependencies` on the second try, while twelve sibling jobs on other runners
+  resolved the same modules; the retry alone cannot outlast a broken Central edge.
 - A gate that failed in resolution still saves its entry, which then holds almost nothing, and the
   basic provider cannot replace an existing entry (`cache-overwrite-existing` and `cache-write-only`
   are not available with it, and the former only controls restoring over an existing Gradle User

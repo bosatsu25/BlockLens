@@ -10,6 +10,9 @@ allprojects {
 
     repositories {
         mavenCentral()
+        // Google's mirror of Maven Central, on separate infrastructure: Central's CDN has answered
+        // 404 for valid artifacts to single CI runners (knowledge/current/ci-release.md).
+        maven { url = 'https://maven-central.storage-download.googleapis.com/maven2/' }
         maven { url = 'https://maven.fabricmc.net/' }
         maven { url = 'https://maven.terraformersmc.com/' }
         maven {
