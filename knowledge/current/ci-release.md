@@ -55,12 +55,17 @@ keys.
   main gate the Loom plugin's own dependencies) to single runners, within a second and for the whole
   batch, while sibling jobs restoring the same cache entry resolved the same modules in the same
   minutes. Gradle records such a 404 as a missing module in the cache, so the retry has to bypass it.
-- `common-quality` saves with `cache-overwrite-existing: true`. A gate that failed in resolution still
-  saves its entry, which then holds almost nothing; the next green gate replaces it, instead of every
-  job downloading everything from `maven.fabricmc.net` until the build files change.
-- `scripts/test_ci_gradle_cache.py` fails if a job leaves the basic provider, if another job saves or
-  overwrites, if a Gradle job stops needing `common-quality`, or if a Gradle command bypasses the
-  wrapper; it also runs the wrapper against a fake `gradle` for the four outcomes.
+- A gate that failed in resolution still saves its entry, which then holds almost nothing, and the
+  basic provider cannot replace an existing entry (`cache-overwrite-existing` and `cache-write-only`
+  are not available with it, and the former only controls restoring over an existing Gradle User
+  Home). Every later job then downloads what the entry lacks, under the same retry. The entry is
+  discarded only when its key changes: edit a build file, or wait for GitHub to evict an entry that
+  was not restored for seven days. This happened once (2026-11-20 00:08 UTC, main gate after the #95
+  merge); the re-run of that gate and the release jobs passed on the near-empty entry.
+- `scripts/test_ci_gradle_cache.py` fails if a job leaves the basic provider, if another job saves,
+  if a job sets a cache input the basic provider ignores, if a Gradle job stops needing
+  `common-quality`, or if a Gradle command bypasses the wrapper; it also runs the wrapper against a
+  fake `gradle` for the four outcomes.
 
 Why (2026-10-28): with the enhanced provider every job saved its own Gradle User Home entry of about
 1 GB, keyed by job, matrix and commit, so one full run wrote about 28 GB against GitHub's 10 GB

@@ -121,9 +121,6 @@ jobs:
           # (knowledge/current/ci-release.md).
           cache-provider: basic
           cache-read-only: false
-          # A run that failed in dependency resolution still saves its entry; the next green gate
-          # replaces it instead of leaving a near-empty entry in place until the build files change.
-          cache-overwrite-existing: true
       # The discovery suite covers sanitizer, external compatibility, source-pack audit,
       # and clean-room render asset helper regressions without duplicated invocations.
       - name: Verify clean-room generated render assets

@@ -61,12 +61,11 @@ class GradleCacheTest(unittest.TestCase):
             expected = "cache-read-only: false" if (workflow, job) == WRITER else "cache-read-only: true"
             self.assertEqual([expected], [line for line in block if line.startswith("cache-read-only:")],
                              f"{workflow}:{job}")
-            # Only the writer replaces its entry, so a gate that failed in dependency resolution and
-            # saved a near-empty entry is healed by the next green gate instead of staying until the
-            # build files change.
-            overwrite = [line for line in block if line.startswith("cache-overwrite-existing:")]
-            self.assertEqual(["cache-overwrite-existing: true"] if (workflow, job) == WRITER else [],
-                             overwrite, f"{workflow}:{job}")
+            # Basic caching has no write-only or overwrite mode (setup-gradle docs, "Basic Caching"),
+            # so those inputs would be silently ignored here.
+            self.assertEqual([], [line for line in block if line.startswith(("cache-overwrite-existing:",
+                                                                               "cache-write-only:"))],
+                             f"{workflow}:{job}")
 
     def test_every_gradle_invocation_retries_dependency_resolution_once(self):
         # Maven Central answered 404 for valid artifacts to single runners while sibling jobs resolved
