@@ -40,8 +40,11 @@ keys.
 - `common-quality` is the only job that saves it (`cache-read-only: false`). Every other Gradle job in
   `ci.yml` needs `common-quality`, so it starts after the entry exists and restores it with
   `cache-read-only: true`. Every Gradle invocation first resolves the Fabric Loom plugin classpath,
-  including `mercury`, where every observed timeout occurred, and the common gate also configures the
-  three version modules, so the entry holds what each job used to download.
+  including `mercury`, where every observed timeout occurred; the common gate also configures the
+  three version modules and runs `resolveCiDependencies` on each, which downloads their compile,
+  runtime, test and gametest classpaths, so the entry holds what the matrix jobs resolve. Why
+  (2026-11-20): configuring alone left those classpaths out, so nineteen matrix jobs fetched the same
+  artifacts from Maven Central at once, and its CDN answered 429 Too Many Requests.
 - An unchanged build restores the entry, so no job downloads again what it holds. A build-file
   change starts one new entry, which only `common-quality` downloads. A dependency bumped
   only in `gradle.properties` keeps the old entry, and each job downloads the new artifact itself.
@@ -56,13 +59,13 @@ keys.
   batch, while sibling jobs restoring the same cache entry resolved the same modules in the same
   minutes. Gradle records such a 404 as a missing module in the cache, so the retry has to bypass it.
 - `settings.gradle` (plugin repositories) and `build.gradle` (project repositories) list Google's
-  mirror of Maven Central, `maven-central.storage-download.googleapis.com`, right after
-  `mavenCentral()`. Gradle asks the next repository after a 404, so a runner that Central's CDN
-  (Cloudflare, since late 2026) answers with 404s still resolves from the mirror; on an ordinary run
-  the mirror answers nothing, because Central answers first. Why (2026-11-20): on the first run of
-  the retry wrapper, `pack-cost / 26.3` failed the same `Could not find` batch twice, 60 s apart,
-  with `--refresh-dependencies` on the second try, while twelve sibling jobs on other runners
-  resolved the same modules; the retry alone cannot outlast a broken Central edge.
+  mirror of Maven Central, `maven-central.storage-download.googleapis.com`, right before
+  `mavenCentral()`. The mirror is a Google Cloud Storage copy of Central on separate infrastructure
+  with no observed rate limit; an artifact it does not hold yet answers 404, and Gradle then asks
+  Central. Gradle stops at any other status, so Central's 429 could not be escaped by a mirror listed
+  after it. Why (2026-11-20): Central's CDN (Cloudflare) answered single runners with 404 for valid
+  artifacts (three runs) and then with 429 Too Many Requests (`pack-cost / 26.3`, twice 60 s apart
+  with `--refresh-dependencies`), while sibling jobs on other runners resolved the same modules.
 - A gate that failed in resolution still saves its entry, which then holds almost nothing, and the
   basic provider cannot replace an existing entry (`cache-overwrite-existing` and `cache-write-only`
   are not available with it, and the former only controls restoring over an existing Gradle User

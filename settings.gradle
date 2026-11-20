@@ -2,10 +2,10 @@ pluginManagement {
     repositories {
         maven { url = 'https://maven.fabricmc.net/' }
         gradlePluginPortal()
-        mavenCentral()
-        // Google's mirror of Maven Central, on separate infrastructure: Central's CDN has answered
-        // 404 for valid artifacts to single CI runners (knowledge/current/ci-release.md).
+        // Google's mirror of Maven Central first: Central's CDN rate-limits CI runners (429) and has
+        // answered 404 for valid artifacts; Central itself is the fallback (knowledge/current/ci-release.md).
         maven { url = 'https://maven-central.storage-download.googleapis.com/maven2/' }
+        mavenCentral()
     }
 }
 

@@ -130,8 +130,12 @@ jobs:
           PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_decoration_glyphs.py --check
       - name: Test CI helper contracts (discovery)
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_*.py' -v
-      - name: Run shared quality gate
-        run: scripts/ci_gradle.sh gradle --stacktrace :common:qualityGate
+      - name: Run shared quality gate and fill the shared Gradle cache
+        run: >-
+          scripts/ci_gradle.sh gradle --stacktrace :common:qualityGate
+          :versions:mc26_1_2:resolveCiDependencies
+          :versions:mc26_2:resolveCiDependencies
+          :versions:mc26_3:resolveCiDependencies
 
   version-build:
     name: ${{ matrix.minecraft }} / build + client smoke + budget

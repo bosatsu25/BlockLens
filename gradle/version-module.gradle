@@ -482,6 +482,25 @@ tasks.register('verifyRuntimeJarBudget') {
     }
 }
 
+// The one CI job that saves the shared Gradle cache entry runs this for the three version modules,
+// so the entry holds every classpath the matrix jobs resolve; otherwise nineteen jobs fetch the same
+// artifacts from Maven Central at once, which its CDN answers with 429 (knowledge/current/ci-release.md).
+tasks.register('resolveCiDependencies') {
+    group = 'verification'
+    description = 'Downloads the compile, runtime, test and gametest classpaths into the Gradle User Home.'
+    def names = ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath',
+                 'gametestCompileClasspath', 'gametestRuntimeClasspath']
+    doLast {
+        names.each { name ->
+            def configuration = configurations.findByName(name)
+            if (configuration == null) {
+                throw new GradleException("resolveCiDependencies: configuration ${name} no longer exists")
+            }
+            logger.lifecycle("resolveCiDependencies ${project.path} ${name}: ${configuration.resolve().size()} files")
+        }
+    }
+}
+
 tasks.named('check') {
     dependsOn tasks.named('versionSmokeContract')
     dependsOn tasks.named('writeRuntimeJarSizeReport')

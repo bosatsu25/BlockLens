@@ -133,15 +133,25 @@ class GradleCacheTest(unittest.TestCase):
             self.assertEqual((3, 1), (code, len(calls_made)), "any other failure keeps its exit code, no retry")
             self.assertNotIn("::warning::", output)
 
-    def test_a_central_mirror_follows_maven_central_in_both_repository_lists(self):
-        # Central's CDN answered 404 for valid artifacts to single runners, twice in a row 60 s apart,
-        # so the retry alone did not recover; Gradle goes on to the next repository after a 404.
+    def test_a_central_mirror_precedes_maven_central_in_both_repository_lists(self):
+        # Central's CDN answered 429 (and earlier 404) to single runners; Gradle stops at a 429, so
+        # the mirror must be asked first, and only a 404 there goes on to Central.
         mirror = "maven { url = 'https://maven-central.storage-download.googleapis.com/maven2/' }"
         for name in ("settings.gradle", "build.gradle"):
             lines = [line.strip() for line in (ROOT / name).read_text(encoding="utf-8").splitlines()
                      if line.strip() and not line.strip().startswith("//")]
             self.assertIn(mirror, lines, name)
-            self.assertEqual("mavenCentral()", lines[lines.index(mirror) - 1], f"{name}: Central first, mirror next")
+            self.assertEqual("mavenCentral()", lines[lines.index(mirror) + 1], f"{name}: mirror first, Central next")
+
+    def test_the_writer_resolves_every_version_module_before_saving(self):
+        # The matrix jobs restore the writer's entry read-only; what it lacks, nineteen jobs fetch at
+        # once from Central, which answered 429 on 2026-11-20.
+        text = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
+        step = re.search(r"- name: Run shared quality gate.*?(?=\n      - name: |\n  [a-z])", text, re.S).group(0)
+        for module in ("mc26_1_2", "mc26_2", "mc26_3"):
+            self.assertIn(f":versions:{module}:resolveCiDependencies", step, module)
+        self.assertIn(":common:qualityGate", step)
+        self.assertIn("resolveCiDependencies", (ROOT / "gradle" / "version-module.gradle").read_text(encoding="utf-8"))
 
     def test_downloads_keep_gradle_default_timeouts(self):
         # Longer timeouts only delayed the same mercury-0.4.3.jar failure (21 min instead of 8).
