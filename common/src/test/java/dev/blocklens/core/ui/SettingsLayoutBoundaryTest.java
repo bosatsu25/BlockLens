@@ -21,26 +21,52 @@ final class SettingsLayoutBoundaryTest {
     private static final int SPAN = 126;
     private static final int MAX_SCROLL = 21 * 48 - SPAN;
 
-    @ParameterizedTest(name = "TD-L1 {0}x{1} count={2} accepted={3}")
+    @ParameterizedTest(name = "TD-L1 {0}x{1} actions={2} -> laid out as {3}x{4}")
     @CsvSource({
-            // width boundary 160 (3-value), height and count nominal
-            "159, 240, 5, false", "160, 240, 5, true", "161, 240, 5, true",
-            // height boundary 140
-            "320, 139, 5, false", "320, 140, 5, true", "320, 141, 5, true",
-            // count lower boundary 0
-            "320, 240, -1, false", "320, 240, 0, true", "320, 240, 1, true",
-            // count upper boundary 64
-            "320, 240, 63, true", "320, 240, 64, true", "320, 240, 65, false",
+            // width boundary 160 (3-value): below it the layout is that of 160
+            "159, 240, false, 160, 240", "160, 240, false, 160, 240", "161, 240, false, 161, 240",
+            // height boundary 156 without the resource action row (64 + 42 + 22 + 28)
+            "320, 155, false, 320, 156", "320, 156, false, 320, 156", "320, 157, false, 320, 157",
+            // height boundary 180 with it (88 + 42 + 22 + 28)
+            "320, 179, true, 320, 180", "320, 180, true, 320, 180", "320, 181, true, 320, 181",
+            // far below both bounds: still laid out, never an exception
+            "1, 1, false, 160, 156", "0, 0, true, 160, 180",
     })
-    void acceptedDimensionsAndCountsAreInclusiveAtEveryDeclaredBoundary(int width, int height, int count,
-            boolean accepted) {
+    void sizesBelowTheMinimumAreLaidOutAsTheMinimum(int width, int height,
+            boolean actions, int laidOutWidth, int laidOutHeight) {
+        var layout = SettingsLayout.create(width, height, 5, 0, 48, actions);
+        var reference = SettingsLayout.create(laidOutWidth, laidOutHeight, 5, 0, 48, actions);
+        assertEquals(reference, layout);
+        assertEquals(SettingsLayout.minHeight(actions), actions ? 180 : 156);
+        // Within the layout; a window really smaller than the minimum clips what lies past its edge.
+        assertTrue(layout.visible(0), "the first row is visible within the layout at every size");
+        assertTrue(layout.listBottom() - layout.listTop() >= SettingsLayout.MIN_ROW_HEIGHT);
+        assertEquals(laidOutHeight - 28, layout.footerY());
+    }
+
+    @ParameterizedTest(name = "TD-L1b count {0} accepted={1}")
+    @CsvSource({"-1, false", "0, true", "1, true", "63, true", "64, true", "65, false"})
+    void itemCountIsCheckedAtBothBoundaries(int count, boolean accepted) {
         if (accepted) {
-            var layout = SettingsLayout.create(width, height, count, 0);
-            assertEquals(count, layout.count());
-            assertTrue(layout.listTop() < layout.listBottom() || height == 140 || height == 141,
-                    "a list must have height except at the very smallest accepted window");
+            assertEquals(count, SettingsLayout.create(320, 240, count, 0).count());
         } else {
-            assertThrows(IllegalArgumentException.class, () -> SettingsLayout.create(width, height, count, 0));
+            assertThrows(IllegalArgumentException.class, () -> SettingsLayout.create(320, 240, count, 0));
+        }
+    }
+
+    @Test
+    void everyRowIsReachableAtEveryHeightFromOneToThreeHundred() {
+        for (boolean actions : new boolean[] {false, true}) {
+            for (int height = 1; height <= 300; height++) {
+                for (int width : new int[] {1, 160, 854}) {
+                    var top = SettingsLayout.create(width, height, 22, 0, 48, actions);
+                    assertTrue(top.visible(0), width + "x" + height + " actions=" + actions);
+                    for (int index = 0; index < 22; index++) {
+                        var scrolled = SettingsLayout.create(width, height, 22, top.scrollToReveal(index), 48, actions);
+                        assertTrue(scrolled.visible(index), width + "x" + height + " row " + index);
+                    }
+                }
+            }
         }
     }
 

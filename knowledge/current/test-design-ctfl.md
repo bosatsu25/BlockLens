@@ -37,20 +37,22 @@ so a failure traces back to its row here.
 ## 3. SettingsLayout — BVA and decision table (`SettingsLayoutBoundaryTest`)
 
 Equivalence partitions of `create(width, height, count, scroll, rowHeight, resourceActions)`:
-width < 160 (invalid) / ≥ 160; height < 140 / ≥ 140; count < 0 / 0..64 / > 64; requested row
-height < 42 / 42..span / > span; requested scroll < 0 / 0..maxScroll / > maxScroll. All ordered, so
-three-value BVA applies.
+width < 160 (laid out as 160) / ≥ 160; height < 156 (laid out as 156; 180 with the resource action
+row) / ≥ 156; count < 0 / 0..64 / > 64; requested row height < 42 / 42..span / > span; requested
+scroll < 0 / 0..maxScroll / > maxScroll. All ordered, so three-value BVA applies.
 
 | ID | Coverage items (boundary, neighbours) | Expected | Test |
 | --- | --- | --- | --- |
-| TD-L1 | width 159/160/161; height 139/140/141; count −1/0/1 and 63/64/65 | reject below, accept at and above (inclusive) | `acceptedDimensionsAndCountsAreInclusiveAtEveryDeclaredBoundary` |
+| TD-L1 | width 159/160/161; height 155/156/157 and 179/180/181 with the action row; 1×1 and 0×0 | below the minimum the layout equals the minimum's; within the layout the first row is visible at every size | `sizesBelowTheMinimumAreLaidOutAsTheMinimum`, `everyRowIsReachableAtEveryHeightFromOneToThreeHundred` |
+| TD-L1b | count −1/0/1 and 63/64/65 | reject outside, accept inclusive | `itemCountIsCheckedAtBothBoundaries` |
 | TD-L2 | width 643/644/645 (content width cap 620) | 619/620/620, centered | `contentWidthIsCappedAtSixHundredTwentyAndCentered` |
 | TD-L3 | requested row height 41/42/43 and 125/126/127 (span 126) | 42/42/43 and 125/126/126 | `rowHeightIsClampedBetweenFortyTwoAndTheListSpan` |
 | TD-L4 | requested scroll −1/0/1 and 881/882/883 (maxScroll 882), int extremes | clamped inclusive | `scrollIsClampedToZeroAndMaxScrollInclusive` |
 | TD-L5 | decision table of `visible` (C1 index ≥ 0, C2 index < count, C3 rowY ≥ listTop, C4 rowY + rowHeight ≤ listBottom): all-true; each single false; both equalities | 8 rules, 7 feasible (C2 false alone is infeasible: a row past the last is always below the list) | `visibilityDecisionTable` |
 | TD-L6 | `scrollToReveal`: already visible; one pixel above; one pixel below; far away; index −1/0/count−1/count | smallest move, clamped; reject outside | `scrollToRevealMovesByTheSmallestAmountAndClamps`, `scrollToRevealRejectsIndexesOutsideTheCategoryAtBothEnds` |
 
-Coverage: 12 of 12 boundary items (TD-L1), 3/3, 6/6, 6/6, 7/7 feasible rules, 9/9 reveal items.
+Coverage: 11/11 size items and 6/6 count items (TD-L1, TD-L1b), 3/3, 6/6, 6/6, 7/7 feasible rules,
+9/9 reveal items.
 
 ## 4. BlockLensConfigCodec — EP, BVA and error guessing (`BlockLensConfigCodecPartitionTest`)
 
@@ -63,8 +65,8 @@ Partitions of one input line (each-choice coverage):
 | TD-C2 | comment, blank, no separator, unknown key, empty key, wrong key case | `# …`, `   `, `deco.anvil`, `unknown.key=true`, `=true`, `DECO.ANVIL=true` | whole config equals defaults |
 | TD-C3 | bounded comfort option, three-value BVA at both bounds | fire −1/0/1, 1/2/3; percents 39/40/41, 99/100/101 for all three fields | accepted inclusive, default outside |
 | TD-C4 | numeric text forms, written around the non-default value 41 so a silent fallback to the default 70 is visible | `+41`, `041`, ` 41`, full-width `４１` (accepted by `Integer.parseInt`); `41.0`, `4.1e1`, words, overflow, negative, empty, `41 %` | only decimal integers inside the range are applied; the rest keep the default |
-| TD-C5 | scene filter mode case, invalid mode, valid list (trim/lower/sort/dedupe), list with an invalid member | see test | last valid rule kept |
-| TD-C6 | error guessing: CRLF and bare CR line endings, duplicate keys, one bad line among good ones, encode→decode identity at the bounds | see tests | later duplicate wins; bad lines isolated |
+| TD-C5 | scene filter mode case, invalid mode, valid list (trim/lower/sort/dedupe), trailing comma (skipped), list with an invalid member (line dropped) | see test | last valid rule kept |
+| TD-C6 | error guessing: CRLF and bare CR line endings, duplicate keys, a leading byte-order mark (stripped; one inside the file is text), one bad line among good ones, encode→decode identity at the bounds | see tests | later duplicate wins; bad lines isolated |
 
 Analyzer option lines (same `bounded` path) are covered by `AnalyzerConfigurationTest`
 (`everyNumericLimitRoundTripsWhileLegacyBitsAndComfortRemainIntact`,
@@ -115,6 +117,7 @@ green-vs-blue equalities had no test, and PIT reported both boundary mutants as 
 | TD-F2 | raw ID length 255/256/257, and 256/257 with leading spaces (the raw length is checked before trimming) | 256 inclusive | `idLengthBoundaryIsTwoHundredFiftySixRawCharactersInclusive` |
 | TD-F3 | encoded text over the four lists at exactly 49,152 chars, 49,153, and the same characters without a separator | separators count once per list | `encodedTextBoundaryCountsSeparatorsAcrossAllFourLists` |
 | TD-F4/F5 | path-segment partitions: `.`/`..`/empty segments rejected; dots inside segments and namespaces accepted | per `scene-filter.md` | `pathSegmentsMustBeNonEmptyAndNotDots`, `dotsInsideSegmentsAndNamespacesAreAllowed` |
+| TD-F6 | `parseList` empty elements: trailing, leading, doubled and blank elements; a lone comma; an empty ID given directly | empty elements skipped; a direct empty ID still rejected | `emptyElementsBetweenCommasAreSkipped`, `anEmptyIdGivenDirectlyIsStillRejected` |
 
 Coverage: 3/3, 5/5, 3/3 boundary items; 9 invalid and 7 valid segment partitions.
 
@@ -138,7 +141,7 @@ Mutants that no test can kill because the mutated program is observationally ide
 
 | Class : line | Mutant | Why equivalent |
 | --- | --- | --- |
-| `SettingsLayout` : 51, 53 | `y < listTop` → `<=`, `y + rowHeight > listBottom` → `>=` | At equality the recomputed scroll equals the current scroll, so both branches return the same value. |
+| `SettingsLayout` : 72, 74 | `y < listTop` → `<=`, `y + rowHeight > listBottom` → `>=` | At equality the recomputed scroll equals the current scroll, so both branches return the same value. |
 | `ResourceBorderPolicy` : 66 | `nx + ny + nz > 0` → `>= 0` | The sum of one face normal's components is ±1, never 0. |
 | `DecorationLines` : 129 | `nx > 0` → `>= 0` inside `nx != 0` | Guarded: `nx` is ±1 there. |
 | `CapabilityId` : 164 | `bitPosition() < 64` → `<=` | No capability sits at position 64; the enum has 61 entries. The guard exists for future additions and is exercised by `CapabilityRenderBitContractTest` structurally. |
@@ -150,32 +153,30 @@ Residual real gaps left for a later design (not equivalent): `AnalyzerEngine` li
 fixture whose cell budget lands exactly on the limit; the current fixtures reach the limit but not
 its neighbours.
 
-## 10. Findings (defect candidates and open questions)
+## 10. Findings and their resolution
 
-Designing the boundaries surfaced behavior the tests do not pin because the test basis does not
-decide it. Each needs a product decision before a test can assert it.
+Designing the boundaries surfaced four behaviors the test basis did not decide. Three were changed
+(2026-11-19) and are now pinned by the tests named; the fourth is recorded as accepted behavior.
 
-1. **Smallest accepted window shows no row (BVA, TD-L1).** `SettingsLayout.create` accepts
-   height 140, but at 140 the list span is 26 px (2 px with the Resources action row) while the row
-   height is clamped up to 42 px, so `visible(i)` is false for every row and `scrollToReveal`
-   cannot help. Rows become visible only from height 156 (180 with the action row). Below 140 the
-   constructor throws, and `AbstractBlockLensConfigScreen.init` calls it with the scaled window
-   size without catching, so a scaled height under 140 would fail the screen. Minecraft's automatic
-   GUI scale keeps the scaled size at or above 320×240 whenever the window is at least that large;
-   smaller physical windows are the only way to reach this. Options: raise the minimum height to
-   156/180 and clamp instead of throwing, or let the row height shrink below 42 at small heights.
-2. **A trailing comma rejects the whole list (error guessing, TD-C5).** `scene.block_filter.blacklist=minecraft:stone,`
-   yields an empty final element, which fails the ID grammar, so the line is dropped and the previous
-   list is kept. This follows `scene-filter.md` ("invalid file entries retain the last valid rule"),
-   but a hand-edited file loses a whole list over one character. Ignoring empty elements would be a
-   one-line change in `parseList`; whether to make it is a specification decision.
-3. **A UTF-8 byte-order mark hides the first line (error guessing).** `﻿deco.anvil=true` is read
-   as the key `﻿deco.anvil`, which is unknown, so the line is ignored. Files written by BlockLens
-   never carry a BOM; editors on Windows may add one. Stripping a leading U+FEFF before parsing is a
-   one-line change.
+1. **Smallest accepted window showed no row (BVA, TD-L1).** `SettingsLayout.create` accepted
+   height 140, but at 140 the list span was 26 px (2 px with the Resources action row) while the row
+   height is clamped up to 42 px, so no row was ever visible; below 140 the constructor threw, and
+   `AbstractBlockLensConfigScreen.init` calls it with the scaled window size without catching.
+   **Resolved:** the size guard is a clamp. A window below 160 × 156 (180 with the action row) is laid
+   out as that size, so the screen always opens with a consistent layout; at or above that size the
+   first row is visible and every row reachable, and in a window that really is smaller the controls
+   past its edge are clipped (the layout cannot make a 100 px window hold a 160 px row, and a clipped
+   screen beats a failed `init`). `everyRowIsReachableAtEveryHeightFromOneToThreeHundred` sweeps every
+   height from 1 to 300 with both action-row states and checks reachability within the layout. The
+   item-count guard still throws: that is a programming error, not a window size.
+2. **A trailing comma rejected the whole list (error guessing, TD-C5).** `minecraft:stone,` produced
+   an empty final element, which failed the ID grammar, so the line was dropped and the previous list
+   kept. **Resolved:** `parseList` skips empty elements (trailing, leading, doubled, blank); an invalid
+   member still drops the line, and an empty ID passed to `normalize` directly is still rejected
+   (`scene-filter.md` updated).
+3. **A UTF-8 byte-order mark hid the first line (error guessing).** `\uFEFFdeco.anvil=true` was read
+   as the unknown key `\uFEFFdeco.anvil`. **Resolved:** `decode` strips one leading U+FEFF; a BOM
+   anywhere else stays text (`aLeadingByteOrderMarkDoesNotHideTheFirstLine`).
 4. **Full-width digits are accepted (TD-C4).** `others.handheld_size.blocks_percent=７０` decodes to
    70 because `Integer.parseInt` accepts any Unicode digit. Harmless; recorded so the behavior is
    known, not because it should change.
-
-Items 1–3 are not changed by this document's tests; the tests assert the current behavior only where
-the specification already states it (item 2) and leave items 1 and 3 unasserted.
