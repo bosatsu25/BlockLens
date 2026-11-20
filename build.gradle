@@ -9,6 +9,9 @@ allprojects {
     version = project.mod_version
 
     repositories {
+        // Google's mirror of Maven Central first: Central's CDN rate-limits CI runners (429) and has
+        // answered 404 for valid artifacts; Central itself is the fallback (knowledge/current/ci-release.md).
+        maven { url = 'https://maven-central.storage-download.googleapis.com/maven2/' }
         mavenCentral()
         maven { url = 'https://maven.fabricmc.net/' }
         maven { url = 'https://maven.terraformersmc.com/' }

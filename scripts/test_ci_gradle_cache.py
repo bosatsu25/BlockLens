@@ -5,7 +5,10 @@ full run against GitHub's 10 GB limit, so the shared dependency entry was evicte
 still restored its own stale entry first. Jobs then downloaded everything from maven.fabricmc.net,
 where mercury-0.4.3.jar kept timing out (knowledge/current/ci-release.md).
 """
+import os
 import re
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -58,6 +61,25 @@ class GradleCacheTest(unittest.TestCase):
             expected = "cache-read-only: false" if (workflow, job) == WRITER else "cache-read-only: true"
             self.assertEqual([expected], [line for line in block if line.startswith("cache-read-only:")],
                              f"{workflow}:{job}")
+            # Basic caching has no write-only or overwrite mode (setup-gradle docs, "Basic Caching"),
+            # so those inputs would be silently ignored here.
+            self.assertEqual([], [line for line in block if line.startswith(("cache-overwrite-existing:",
+                                                                               "cache-write-only:"))],
+                             f"{workflow}:{job}")
+
+    def test_every_gradle_invocation_retries_dependency_resolution_once(self):
+        # Maven Central answered 404 for valid artifacts to single runners while sibling jobs resolved
+        # the same modules; scripts/ci_gradle.sh retries that one failure class with
+        # --refresh-dependencies and nothing else.
+        invocations = []
+        for path in sorted(WORKFLOWS.glob("*.yml")):
+            for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                code = line.split("#", 1)[0]
+                if re.search(r"(^|\s)(xvfb-run -a )?gradle\s", code):
+                    invocations.append((path.name, number, code.strip()))
+                    self.assertIn("scripts/ci_gradle.sh ", code, f"{path.name}:{number}: {code.strip()}")
+                    self.assertRegex(code, r"scripts/ci_gradle\.sh (xvfb-run -a )?gradle\s", f"{path.name}:{number}")
+        self.assertGreaterEqual(len(invocations), 10, invocations)
 
     def test_every_gradle_job_starts_after_the_writer_saved(self):
         jobs = ci_jobs()
@@ -66,6 +88,70 @@ class GradleCacheTest(unittest.TestCase):
         self.assertTrue(gradle_jobs <= set(jobs), "a Gradle job was renamed")
         for job in gradle_jobs:
             self.assertIn(WRITER[1], jobs[job], job)
+
+    def test_wrapper_retries_only_a_resolution_failure_and_only_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fake = Path(directory) / "gradle"
+            calls = Path(directory) / "calls"
+            fake.write_text(
+                "#!/usr/bin/env bash\n"
+                f"echo \"$*\" >> '{calls}'\n"
+                "case \"$FAKE_GRADLE\" in\n"
+                "  ok) echo BUILD SUCCESSFUL; exit 0;;\n"
+                "  resolution) for a in \"$@\"; do [ \"$a\" = --refresh-dependencies ] && exit 0; done;\n"
+                "    echo '   > Could not find com.google.code.gson:gson:2.14.0.' >&2; exit 1;;\n"
+                "  resolution-twice) echo 'Could not resolve all artifacts for configuration classpath.'; exit 1;;\n"
+                "  compile) echo 'error: cannot find symbol'; exit 3;;\n"
+                "esac\n", encoding="utf-8")
+            fake.chmod(0o755)
+            env = dict(os.environ, PATH=f"{directory}:{os.environ['PATH']}", CI_GRADLE_RETRY_PAUSE_SECONDS="0")
+
+            def run(mode, *command):
+                calls.write_text("", encoding="utf-8")
+                result = subprocess.run([str(ROOT / "scripts" / "ci_gradle.sh"), *command],
+                                        env=dict(env, FAKE_GRADLE=mode), capture_output=True, text=True)
+                return result.returncode, calls.read_text(encoding="utf-8").splitlines(), result.stdout
+
+            code, calls_made, _ = run("ok", "gradle", "--stacktrace", ":common:qualityGate")
+            self.assertEqual((0, ["--stacktrace :common:qualityGate"]), (code, calls_made))
+
+            code, calls_made, output = run("resolution", "gradle", "--stacktrace", ":common:qualityGate")
+            self.assertEqual(0, code)
+            self.assertEqual(["--stacktrace :common:qualityGate",
+                              "--refresh-dependencies --stacktrace :common:qualityGate"], calls_made)
+            self.assertIn("::warning::", output)
+
+            code, calls_made, _ = run("resolution", "env", "DISPLAY=:1", "gradle", "-Pflag=true", ":x:runClientGameTest")
+            self.assertEqual(0, code, "the flag goes after the gradle token, not after the wrapper")
+            self.assertEqual(["-Pflag=true :x:runClientGameTest",
+                              "--refresh-dependencies -Pflag=true :x:runClientGameTest"], calls_made)
+
+            code, calls_made, _ = run("resolution-twice", "gradle", ":x")
+            self.assertEqual((1, 2), (code, len(calls_made)), "a second resolution failure is final")
+
+            code, calls_made, output = run("compile", "gradle", ":x")
+            self.assertEqual((3, 1), (code, len(calls_made)), "any other failure keeps its exit code, no retry")
+            self.assertNotIn("::warning::", output)
+
+    def test_a_central_mirror_precedes_maven_central_in_both_repository_lists(self):
+        # Central's CDN answered 429 (and earlier 404) to single runners; Gradle stops at a 429, so
+        # the mirror must be asked first, and only a 404 there goes on to Central.
+        mirror = "maven { url = 'https://maven-central.storage-download.googleapis.com/maven2/' }"
+        for name in ("settings.gradle", "build.gradle"):
+            lines = [line.strip() for line in (ROOT / name).read_text(encoding="utf-8").splitlines()
+                     if line.strip() and not line.strip().startswith("//")]
+            self.assertIn(mirror, lines, name)
+            self.assertEqual("mavenCentral()", lines[lines.index(mirror) + 1], f"{name}: mirror first, Central next")
+
+    def test_the_writer_resolves_every_version_module_before_saving(self):
+        # The matrix jobs restore the writer's entry read-only; what it lacks, nineteen jobs fetch at
+        # once from Central, which answered 429 on 2026-11-20.
+        text = (WORKFLOWS / "ci.yml").read_text(encoding="utf-8")
+        step = re.search(r"- name: Run shared quality gate.*?(?=\n      - name: |\n  [a-z])", text, re.S).group(0)
+        for module in ("mc26_1_2", "mc26_2", "mc26_3"):
+            self.assertIn(f":versions:{module}:resolveCiDependencies", step, module)
+        self.assertIn(":common:qualityGate", step)
+        self.assertIn("resolveCiDependencies", (ROOT / "gradle" / "version-module.gradle").read_text(encoding="utf-8"))
 
     def test_downloads_keep_gradle_default_timeouts(self):
         # Longer timeouts only delayed the same mercury-0.4.3.jar failure (21 min instead of 8).

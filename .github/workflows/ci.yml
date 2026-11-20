@@ -130,8 +130,12 @@ jobs:
           PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_decoration_glyphs.py --check
       - name: Test CI helper contracts (discovery)
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_*.py' -v
-      - name: Run shared quality gate
-        run: gradle --stacktrace :common:qualityGate
+      - name: Run shared quality gate and fill the shared Gradle cache
+        run: >-
+          scripts/ci_gradle.sh gradle --stacktrace :common:qualityGate
+          :versions:mc26_1_2:resolveCiDependencies
+          :versions:mc26_2:resolveCiDependencies
+          :versions:mc26_3:resolveCiDependencies
 
   version-build:
     name: ${{ matrix.minecraft }} / build + client smoke + budget
@@ -167,7 +171,7 @@ jobs:
           cache-read-only: true
       - name: Build and verify Minecraft ${{ matrix.minecraft }}
         run: >-
-          gradle --stacktrace
+          scripts/ci_gradle.sh gradle --stacktrace
           :versions:${{ matrix.module }}:build
           :versions:${{ matrix.module }}:versionSmokeContract
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
@@ -183,7 +187,7 @@ jobs:
             exit 1
           fi
           first_sha="$(sha256sum "${first_candidates[0]}" | cut -d' ' -f1)"
-          gradle --stacktrace :common:clean :versions:${{ matrix.module }}:clean :versions:${{ matrix.module }}:build
+          scripts/ci_gradle.sh gradle --stacktrace :common:clean :versions:${{ matrix.module }}:clean :versions:${{ matrix.module }}:build
           mapfile -t second_candidates < <(find "$runtime_dir" -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print)
           if [[ "${#second_candidates[@]}" -ne 1 ]]; then
             echo "Expected one second-build runtime JAR, found ${#second_candidates[@]}" >&2
@@ -209,7 +213,7 @@ jobs:
           # SDL3 uses EGL for an sRGB-capable OpenGL framebuffer under Xvfb.
           SDL_VIDEO_FORCE_EGL: ${{ matrix.module == 'mc26_3' && '1' || '0' }}
         run: >-
-          xvfb-run -a gradle --stacktrace -PverifyPackagedRuntime=true
+          scripts/ci_gradle.sh xvfb-run -a gradle --stacktrace -PverifyPackagedRuntime=true
           -Pm8Compilation=c2-batch -Pm8FpsLimit=60
           :versions:${{ matrix.module }}:runClientGameTest
       - name: Verify BlockLens model resources resolved Minecraft ${{ matrix.minecraft }}
@@ -864,7 +868,7 @@ jobs:
           cache-read-only: true
       - name: Build, audit and budget the v${{ needs.plan.outputs.version }} JAR for Minecraft ${{ matrix.minecraft }}
         run: >-
-          gradle --stacktrace -Pmod_version="$VERSION"
+          scripts/ci_gradle.sh gradle --stacktrace -Pmod_version="$VERSION"
           :versions:${{ matrix.module }}:build
           :versions:${{ matrix.module }}:versionSmokeContract
           :versions:${{ matrix.module }}:verifyRuntimeJarBudget
